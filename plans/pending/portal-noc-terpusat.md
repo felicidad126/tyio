@@ -1,7 +1,7 @@
 # Portal NOC Terpusat (Tyio) — Rencana
 
 Ticket: belum ada (tracker belum ditentukan)
-Status: **DRAFT v3 — menunggu persetujuan atas rekomendasi di bagian 5 dan 9.**
+Status: **Rekomendasi bagian 5 dan urutan rilis bagian 8 DISETUJUI.** Langkah teknis per rilis: [langkah-teknis.md](langkah-teknis.md).
 Belum ada kode atau config yang dibuat.
 
 ## 1. Latar belakang
@@ -283,4 +283,4 @@ List Report Teknisi, Shared.
 | Rilis | Status |
 | --- | --- |
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
-| R0–R8 | Belum mulai — menunggu persetujuan bagian 5 |
+| R0–R8 | Belum mulai — langkah teknis ditulis, menunggu persetujuan |
