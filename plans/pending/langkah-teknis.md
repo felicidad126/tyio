@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **DRAFT — menunggu persetujuan sebelum kode pertama ditulis.**
+Status: **R0 berjalan — 0.1 selesai.** Keputusan teknis T1–T12 menunggu konfirmasi sebelum 0.3 dan 0.5.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -23,6 +23,17 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T10 | Linimasa tiket hanya-tambah: tidak ada UPDATE/DELETE pada tabel tindakan | R-F |
 | T11 | Uji: Vitest + database PostgreSQL asli untuk API; Playwright untuk alur layar | Uji di jahitan tinggi, bukan mock |
 | T12 | Waktu `timestamptz` UTC; zona tampilan mengikuti lokasi remote, dengan pilihan zona pengguna | R-H |
+
+**Pilihan versi yang diambil saat 0.1** (ikut dikonfirmasi bersama T1–T12; semua dipin persis):
+
+| Komponen | Versi | Alasan |
+| --- | --- | --- |
+| Node.js | 26 LTS | Active LTS sampai Okt 2027, didukung sampai Apr 2029; Node 22 berakhir Apr 2027 |
+| pnpm | 12.21.0 | Versi terbaru; setelan di `pnpm-workspace.yaml`, install script dependensi diblokir bawaan |
+| NestJS | 12 (ESM) | Nest 12 sudah ESM; API ikut ESM sesuai templat resminya |
+| TypeScript | 6.0.3 | TypeScript 7 belum didukung typescript-eslint (peer `<6.1.0`) |
+| Vitest | 5 tanpa SWC | Transform Vite 8 (Oxc) sudah memancarkan metadata dekorator; dibuktikan uji mutasi |
+| Lint | ESLint 10 + typescript-eslint + eslint-plugin-vue, tanpa info tipe | Satu konfigurasi untuk Vue dan Nest; cek tipe di `pnpm build` |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
@@ -263,4 +274,7 @@ Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai b
 ## Progres
 | Langkah | Status |
 | --- | --- |
-| Semua | Belum mulai — menunggu persetujuan |
+| 0.1 Kerangka repo dan pipeline | **Selesai 2026-11-16** (commit `e27430e`). `pnpm lint && pnpm build && pnpm test:api health` lulus dari salinan bersih (Node 26.13.1, pnpm 12.21.0). CI run #1 di GitHub hijau: lint, build, 2 uji health lulus. API hasil build dijalankan: `GET /health` → 200 `{"status":"ok"}`. Uji mutasi: mematikan metadata dekorator membuat uji merah. Workflow belum diperiksa actionlint (unduhan biner ditolak izin sesi); validitasnya dibuktikan oleh run CI. |
+| 0.2 Lingkungan lokal dan staging | Siap dikerjakan — menunggu persetujuan lanjut |
+| 0.3, 0.5 | Menunggu konfirmasi T1–T12 dan pilihan versi di bagian A |
+| 0.4, 0.6, R1–R8 | Belum mulai |
