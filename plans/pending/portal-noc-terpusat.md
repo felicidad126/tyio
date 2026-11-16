@@ -1,240 +1,263 @@
 # Portal NOC Terpusat (Tyio) — Rencana
 
-Ticket: belum ada (repo masih kosong, tracker belum ditentukan)
-Status: **DRAFT — menunggu jawaban pertanyaan & persetujuan.** Belum ada kode atau config yang dibuat.
+Ticket: belum ada (tracker belum ditentukan)
+Status: **DRAFT v2 — menunggu persetujuan atas rekomendasi di bagian 5 dan 9.**
+Belum ada kode atau config yang dibuat.
 
 ## 1. Latar belakang
 
 Perusahaan bergerak di monitoring jaringan ATM / VSAT. Tim NOC/SOC memakai dashboard
-"Network Problem Report" untuk mencatat gangguan per remote (site ATM/VSAT) milik customer
-(mis. bank). Portal baru menggantikan/menyatukan dashboard itu menjadi satu pintu kerja
-(*centralized*): tiket, gangguan massal, data remote, SLA, laporan, dan dokumen bersama.
+"Network Problem Report" untuk mencatat gangguan per remote (site ATM/VSAT) milik customer.
+Portal baru **menggantikan total** dashboard itu dan menjadi satu pintu kerja: alert, tiket,
+gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 
-## 2. Yang terbaca dari dashboard existing (5 screenshot)
+## 2. Keputusan yang sudah diambil
 
-| Menu | Sub-menu | Tafsiran saya (perlu dikonfirmasi) |
+| # | Keputusan | Sumber |
 | --- | --- | --- |
-| Home | — | Halaman awal |
-| NPR | New NPR, Detail NPR, Report NPR, Service Level Agreement, List Report Teknisi | Tiket gangguan per remote + laporan + SLA + laporan teknisi lapangan |
-| Gamas | Gamas List, Report | Gangguan massal (satu penyebab, banyak remote) |
-| Remote | List Remote | Master data site/remote |
-| Shared | (isi belum terlihat) | Dokumen/berkas bersama |
-| Profil user | (isi belum terlihat) | Akun |
+| K1 | Ganti total; mulai dari data kosong/dummy. Tidak ada migrasi data lama. | User |
+| K2 | Contoh data lama tidak tersedia; model data disusun dari screenshot. | User |
+| K3 | Portal berbentuk PWA; harus mudah dikelola dan dioperasikan, tampilan ramah pengguna. | User |
+| K4 | Tiket hanya boleh ditutup oleh L2–L3. | User |
+| K5 | Gamas = gangguan massal. Gamas List mencatat kapan terjadi, lama penanganan, troubleshooting yang dikerjakan, dan penyelesaiannya. | User |
+| K6 | Home = ringkasan monitoring dan analitik kejadian. | User |
+| K7 | Tiket dibuat otomatis dari alert monitoring, lalu dikoreksi/diverifikasi manusia. | User |
+| K8 | Sistem customer eksternal bisa membuat tiket otomatis sesuai tenant. | User |
+| K9 | Notifikasi: bot Telegram, email, dan alert di dashboard (ditampilkan 24/7 di monitor). | User |
+| K10 | Laporan memakai template yang kita buat. | User |
+| K11 | Jarkom = Jaringan Komputer. | User |
+
+**Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
+Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
+
+## 3. Yang terbaca dari dashboard lama (10 screenshot)
+
+**Menu:** Home · NPR (New NPR, Detail NPR, Report NPR, Service Level Agreement,
+List Report Teknisi) · Gamas (Gamas List, Report) · Remote (List Remote) · Shared · profil.
 
 **Form New NPR:** Category, Customer, Remote Name, Remote Status, Jarkom, Address, Province,
 City, Date & Time, NPR Number, Created By, Notes.
 
-**Tabel Detail NPR:** No, No. NPR, No. TT, Customer, Remote Name, System, Date/Time,
-Last Action, Category, Status, Pending By, Created By, Action. Filter: customer, kategori
-(contoh: Corrective Maintenance), system, pencarian bebas.
+**Daftar NPR:** No. NPR, No. TT, Customer, Remote Name, System, Date/Time, Last Action,
+Category, Status, Pending By, Created By, Action. Filter: customer, kategori, system, pencarian.
 
-**Kelemahan yang terlihat (bahan perbaikan):**
-- Navigasi disusun per *modul*, bukan per *pekerjaan*. Operator harus tahu harus buka menu mana.
-- Address/Province/City/Jarkom diketik ulang di form, padahal itu atribut remote — seharusnya
-  terisi otomatis begitu remote dipilih.
-- Tidak terlihat antrean kerja ("apa yang harus saya kerjakan sekarang"), hitung mundur SLA,
-  atau hubungan NPR ↔ Gamas.
-- Tabel 13 kolom tanpa prioritas visual; status dan "Pending By" tidak menonjol.
+**Detail tiket:** kepala "Remote Information" (Remote Info, Status, Contact, Problem,
+Network Details) + linimasa TT (Date/Time, Taken Action, Teknisi) + linimasa NPR (Date/Time,
+Taken Action, Status, Category Pending, Pending Desc., Device Failure, Prob. Cause, File,
+Created By, Delete).
 
-### Tambahan dari screenshot gelombang 2 (detail tiket, Add Action, Report NPR)
+**Form Add Action:** data remote (NPR No, IP SNMP, IP LAN, User IP, User ID, Pengelola,
+Alamat/Telp, Remote Status) + hasil (Take Action: Cek Lokasi / Problem / Eskalasi To NOC /
+Bebas / Eskalasi To SD / Close; Date/Time; unggah berkas klik atau tempel; Notes; Status;
+Category Pending; Pending By TM / Customer; bendera).
 
-**Halaman detail tiket** = kepala "Remote Information" + dua linimasa:
-- Kepala: Remote Info (Name berupa ID remote, Location, City, Province) · Status (Status,
-  Type mis. ATM, Escalate) · Contact (Name, Phone, Position) · Problem (Failure, Cause,
-  Pending) · Network Details (IP SNMP, IP LAN, User IP).
-- Linimasa TT: No, Date/Time, Taken Action, Teknisi.
-- Linimasa NPR: Date/Time, Taken Action, Status, Category Pending, Pending Desc.,
-  Device Failure, Prob. Cause, File, Created By, Delete.
+**Report NPR:** filter customer, rentang tanggal, system, kategori, status; ekspor Excel;
+baris bisa dibuka untuk rincian tindakan.
 
-**Form Add Action:** kiri "Process Methods" (NPR No, IP SNMP, IP LAN #1/#2, User IP #1/#2,
-User ID #1/#2, Pengelola, Alamat/Telp, Remote Status); kanan "Results of the Process"
-(Take Action: Cek Lokasi / Problem / Eskalasi To NOC / Bebas / Eskalasi To SD / Close;
-Date/Time; unggah berkas dengan klik atau tempel; Notes; Status; Category Pending;
-Pending By TM / Customer; penanda bendera).
-
-**Report NPR:** filter customer, rentang tanggal, system, kategori, status, pencarian; ekspor
-Excel; kolom NPR No, Notiket, Customer, Remote Name, Start, Close, Location, Category, System,
-Status; baris bisa dibuka untuk melihat rincian tindakan.
-
-**Yang sekarang jelas:**
-- Penomoran: `JENIS/JARKOM/CUSTOMER/TAHUN/BULAN/urut` (NPR/… dan TT/…).
-- **TT = Trouble Ticket internal** yang dibuat dari NPR saat dieskalasi untuk penugasan
-  teknisi — bukan nomor tiket pihak luar (koreksi asumsi awal).
-- Status tiket: PENDING, ESKALASI, CLOSE. Pending By: Customer atau TM (pihak internal).
+**Yang jelas dari data:**
+- Penomoran `JENIS/JARKOM/CUSTOMER/TAHUN/BULAN/urut` untuk NPR dan TT.
+- TT = Trouble Ticket internal, dibuat dari NPR saat dieskalasi ke teknisi.
+- Status: PENDING, ESKALASI, CLOSE. Pending By: Customer atau TM.
 - Kategori: Remote Down, Corrective Maintenance, Preventive Maintenance.
-- "System" = platform satelit/layanan yang dipakai remote.
-- Nomor tiket milik customer saat ini diketik di teks bebas pada catatan tindakan.
 
-**Kelemahan tambahan:**
-- Setiap baris tindakan punya tombol hapus, dan tanggal tindakan bisa diubah bebas — jejak
-  audit dan perhitungan SLA tidak bisa dipercaya.
-- Data master remote (IP, pengelola, alamat) bisa diubah dari form tindakan.
-- Kolom kontak dipakai untuk catatan bebas (tanggal online, kanwil, kanca) — butuh kolom
-  terstruktur sendiri.
-- Nomor tiket customer tidak punya kolom, jadi tidak bisa dicari atau dilaporkan.
-- Hasil ping ditempel sebagai teks mentah; Failure/Cause di kepala sering kosong.
-- "Take Action" dan "Status" tumpang tindih (Close ada di keduanya).
+**Kelemahan yang diperbaiki di portal baru:**
+- Navigasi per modul, bukan per pekerjaan; tidak ada antrean kerja atau hitung mundur SLA.
+- Alamat/kota/provinsi/jarkom diketik ulang, padahal atribut remote.
+- Tindakan bisa dihapus dan tanggalnya bisa diubah bebas — jejak audit dan SLA tidak andal.
+- Data master remote bisa diubah dari form tindakan.
+- Kolom kontak dipakai untuk catatan bebas; nomor tiket customer tidak punya kolom.
+- "Take Action" dan "Status" tumpang tindih.
 
-**Implikasi desain:**
-- Detail tiket: kepala remote ringkas (hanya-baca, tautan ke halaman remote), satu linimasa
-  gabungan NPR + TT, dan form tindakan singkat yang hanya berisi hasil tindakan.
-- Tindakan tidak bisa dihapus; koreksi dicatat sebagai entri baru. Waktu diisi sistem,
-  waktu kejadian boleh diisi terpisah.
-- Kolom terstruktur: nomor tiket customer, penyebab, perangkat rusak, kanwil/kanca,
-  tanggal online.
-- Jenis tindakan menentukan status berikutnya (satu pilihan, bukan dua).
+## 4. Referensi
 
-## 3. Referensi: cara mengemas dashboard multifungsi yang terpusat
+Sebagian besar sumber adalah blog vendor/praktisi: panduan praktik, bukan standar resmi.
 
-Ringkasan riset (sumber di bagian 9). Sebagian besar sumber adalah blog vendor/praktisi,
-jadi diperlakukan sebagai panduan praktik, bukan standar resmi.
+### 4.1 Cara mengemas dashboard multifungsi yang terpusat
+1. "Single pane of glass" adalah arah, bukan satu layar berisi segalanya; layar yang terlalu
+   penuh diabaikan.
+2. Seluruh dashboard dan tiap kelompoknya terlihat sekaligus; warna punya makna tetap.
+3. Tampilan per peran, bukan satu dashboard dengan tombol disembunyikan.
+4. Sidebar vertikal untuk hierarki dalam; pengelompokan logis dan konsisten.
+5. Fokus bergeser seiring kematangan: dari menyatukan alert + tiket ke wawasan operasional.
+6. Runbook/basis pengetahuan dan pelatihan menentukan adopsi.
 
-1. **"Single pane of glass" adalah arah, bukan satu layar berisi segalanya.** Layar yang
-   dijejali terlalu banyak informasi justru diabaikan. Tujuannya informasi yang bisa
-   ditindaklanjuti dengan cepat.
-2. **Fokus bergeser seiring kematangan NOC:** mula-mula menyatukan alarm/event dan tiket,
-   kemudian wawasan operasional (beban kerja, kinerja, SLA).
-3. **Seluruh dashboard — dan tiap kelompoknya — terlihat sekaligus** tanpa scroll; warna dan
-   bentuk dipakai dengan makna tetap (merah = butuh tindakan, bukan dekorasi).
-4. **Tampilan per peran, bukan satu dashboard dengan tombol disembunyikan.** Halaman awal
-   tiap peran berisi angka dan aksi cepat miliknya.
-5. **Sidebar vertikal untuk hierarki dalam;** kelompokkan secara logis, tata letak konsisten.
-6. **Alur ITIL:** deteksi → kategorisasi → penugasan → kontrol SLA → diagnosis → resolusi →
-   tinjauan pasca-insiden. *Major incident* punya jalur sendiri (= Gamas). Jeda SLA harus
-   beralasan dan tercatat (= "Pending By").
-7. **Runbook/basis pengetahuan** supaya penanganan tidak mengandalkan ingatan operator.
-8. **Adopsi:** dashboard gagal bila tim tidak dilatih; perlu peninjauan metrik berkala.
-9. **Produk pembanding untuk pola (bukan untuk dipasang):** GLPI dan iTop (ITSM + CMDB/aset,
-   SLA), Zammad (helpdesk), Zabbix (monitoring). Polanya: tiket selalu menempel ke *aset*.
+### 4.2 Alur tiket bertingkat (L1–L3)
+- L1 = kontak pertama dan perbaikan dasar; L2 = analisis lebih dalam; L3 = ahli/arsitektur.
+- Eskalasi terjadi saat L1 tidak selesai dalam jendela waktu yang disepakati (contoh vendor:
+  15–30 menit); catatan, hasil tes, dan grafik ikut berpindah bersama tiket.
+- Catatan serah terima terstruktur: apa yang sudah dicoba, dampak, akses yang dibutuhkan,
+  apa yang sudah disampaikan ke customer.
+- Sumber berbeda pendapat soal siapa yang menutup tiket; keputusan kita K4 (L2–L3).
+- Alur ITIL: deteksi → kategorisasi → penugasan → kontrol SLA → diagnosis → resolusi →
+  tinjauan pasca-insiden. Jeda SLA harus beralasan dan tercatat.
 
-### Prinsip pengemasan yang diusulkan untuk portal ini
+**Usulan alur status (bahan diskusi dengan user):**
 
-- **Satu entitas pusat: Remote.** Tiket, Gamas, SLA, laporan teknisi, riwayat, dan dokumen
-  semuanya menempel ke remote. Halaman remote = "rekam medis" site.
-- **Tiga lapis layar:** (a) *Overview* — kondisi sekarang, (b) *Antrean kerja* — daftar yang
-  bisa ditindak, (c) *Detail* — satu tiket/remote lengkap dengan linimasa.
-- **Navigasi per pekerjaan:** Overview · Tiket · Gamas · Remote · Laporan · Dokumen · Admin.
-- **Aksi global selalu ada:** pencarian (no. NPR, no. TT, nama remote) dan tombol "Buat tiket".
-- **Status + SLA selalu terlihat** di setiap baris dan setiap detail tiket.
-- **Jejak audit:** setiap perubahan status tercatat siapa dan kapan.
+```
+Alert masuk ──► KANDIDAT ──(L1 verifikasi)──► TERBUKA ──► DIKERJAKAN ──► SELESAI ──(L2/L3)──► DITUTUP
+                   │                             │  ▲          │
+                   └─► BUKAN GANGGUAN            ▼  │          ▼
+                       (alarm palsu)           PENDING       ESKALASI (L2 / L3 / teknisi → TT)
+                                          (Customer / TM)
+```
 
-## 4. Peta modul (usulan)
+### 4.3 Alat monitoring: apa yang dipakai di industri
+- **Monitoring ATM komersial** (SIX Monitoring, MAXIMUS, FSS ATM Monitor, Diebold Nixdorf
+  AllConnect, KIXOperator, NCR Atleos) memantau *kesehatan terminal* lewat agen di mesin atau
+  feed dari switch. Itu wilayah bank/pengelola ATM, bukan lapisan jaringan kita. Klaim skala
+  mereka berasal dari materi pemasaran dan tidak diverifikasi.
+- **Lapisan jaringan** (yang relevan untuk kita) umumnya memakai NMS umum: Zabbix, LibreNMS,
+  PRTG. Ketiganya bisa ICMP dan SNMP. Zabbix dan PRTG punya proxy/probe untuk lokasi
+  terpencil; PRTG berbayar per sensor sehingga mahal untuk ribuan remote.
+- **VSAT:** hub biasanya punya NMS bawaan vendor dengan protokol sendiri; telemetri modem/hub
+  bisa butuh MIB vendor atau poller khusus. (Sebagian adalah inferensi saya.)
+- **Pola alert → tiket:** ID event dari NMS jadi kunci korelasi; pemulihan memperbarui tiket
+  yang sama, bukan membuat tiket baru; ID tiket harus ikut di setiap pembaruan agar tidak
+  dobel; kunci deduplikasi sebaiknya host + item, bukan ID trigger.
+
+## 5. Rekomendasi yang butuh "ya"
+
+**R-A. Bentuk sistem: satu aplikasi (monolit modular), satu database.**
+Paling mudah dikelola: satu yang di-deploy, satu yang di-backup, satu log. Modul dipisah di
+dalam kode, bukan menjadi banyak layanan.
+
+**R-B. Stack:** antarmuka web PWA (Vue 3), API TypeScript (NestJS), database PostgreSQL,
+dijalankan dengan Docker Compose di satu server. Alasan: satu bahasa di depan dan belakang,
+PostgreSQL cukup untuk tiket + laporan + antrean pekerjaan di tahap awal, dan seluruh sistem
+bisa dipindah/di-restore sebagai satu paket. Komponen tambahan (antrean terpisah, cache)
+baru ditambahkan bila terbukti perlu.
+
+**R-C. Portal tidak terikat pada satu alat monitoring.** Portal punya satu "pintu masuk
+alert" yang seragam; alat apa pun mengirim ke sana. Kandidat pertama: Zabbix (sumber terbuka,
+ICMP + SNMP, proxy untuk lokasi jauh, tanpa biaya per sensor). Pilihan final setelah tahu
+merek hub/modem VSAT yang dipakai.
+
+**R-D. Alert menjadi tiket KANDIDAT, bukan tiket penuh.** L1 memverifikasi: benar gangguan →
+jadi tiket; alarm palsu → ditandai dengan alasan. Alert berulang untuk remote yang sama
+menempel ke tiket yang masih terbuka. Banyak remote turun bersamaan → portal menyarankan Gamas.
+
+**R-E. Multi-tenant sejak awal.** Setiap customer = tenant; setiap remote, tiket, dan laporan
+punya tenant. Penomoran mengikuti pola lama. Ini murah dipasang di awal, mahal bila menyusul.
+
+**R-F. Jejak audit tidak bisa dihapus.** Tindakan dikoreksi dengan entri baru; waktu
+pencatatan diisi sistem, waktu kejadian diisi terpisah.
+
+**R-G. Tiga lingkungan:** pengembangan (data dummy) → staging (uji bersama user) → produksi.
+Setiap rilis lewat staging dan disetujui user sebelum naik ke produksi.
+
+## 6. Prinsip pengemasan
+
+- **Remote sebagai pusat:** alert, tiket, Gamas, SLA, kunjungan teknisi, dan dokumen menempel
+  ke remote. Halaman remote = rekam medis site.
+- **Tiga lapis layar:** Overview (kondisi sekarang) → Antrean (yang harus ditindak) → Detail.
+- **Dua mode tampilan:** mode kerja (operator, padat, bisa diklik) dan mode monitor 24/7
+  (layar dinding, tanpa interaksi, teks besar, berputar otomatis, berbunyi saat alert kritis).
+- **Navigasi per pekerjaan:** Overview · Alert · Tiket · Gamas · Remote · Laporan · Dokumen · Admin.
+- **Aksi global:** pencarian (no. NPR, no. TT, no. tiket customer, nama remote) dan "Buat tiket".
+- **Status + SLA selalu terlihat** di setiap baris dan detail.
+
+## 7. Peta modul
 
 | Modul | Isi | Asal di sistem lama |
 | --- | --- | --- |
-| Overview | Tiket terbuka per status/prioritas, SLA hampir lewat, Gamas aktif, antrean saya | Home |
-| Tiket (NPR) | Daftar + filter tersimpan, buat tiket, detail dengan linimasa tindakan | New/Detail NPR |
-| Gamas | Insiden massal, daftar remote terdampak, tiket anak yang tertaut | Gamas List |
-| Remote | Master data site, status, jarkom, lokasi, riwayat gangguan | List Remote |
-| Kunjungan teknisi | Laporan lapangan yang tertaut ke tiket | List Report Teknisi |
-| SLA | Aturan per customer/kategori, pemantauan, pelanggaran | Service Level Agreement |
-| Laporan | Rekap NPR, Gamas, SLA; ekspor | Report NPR, Gamas Report |
+| Overview | Ringkasan monitoring + analitik kejadian; mode monitor 24/7 | Home |
+| Alert | Alert masuk, verifikasi, kandidat tiket, saran Gamas | (baru) |
+| Tiket (NPR) | Antrean, buat tiket, detail dengan satu linimasa NPR + TT | New/Detail NPR |
+| Gamas | Kapan terjadi, durasi, remote terdampak, troubleshooting, penyelesaian | Gamas List |
+| Remote | Master data site, jaringan, kontak, riwayat gangguan | List Remote |
+| Kunjungan teknisi | TT dan laporan lapangan | List Report Teknisi |
+| SLA | Aturan, hitung mundur, pelanggaran | Service Level Agreement |
+| Laporan | Template laporan, ekspor Excel/PDF | Report NPR, Gamas Report |
+| Notifikasi | Di dashboard, Telegram, email | (baru) |
 | Dokumen | Berkas bersama, runbook | Shared |
-| Admin | User, peran, master customer/kategori/system | (belum terlihat) |
+| Integrasi | Pintu masuk alert, API tiket untuk sistem customer | (baru) |
+| Admin | Tenant, user, peran, master kategori/system | (belum terlihat) |
 
-## 5. Fase
+## 8. Fase rilis (deploy)
 
-Urutan: risiko tertinggi dulu, tiap fase satu alur utuh dari data sampai layar.
-Langkah detail (file, perintah verifikasi) baru bisa ditulis setelah stack diputuskan.
+Setiap rilis: dibangun dengan data dummy → naik ke staging → diuji user → naik ke produksi.
+Tiap rilis berguna sendiri dan bisa dibatalkan tanpa merusak rilis sebelumnya.
+Langkah teknis per rilis (file, perintah verifikasi) ditulis setelah R-A s.d. R-G disetujui.
 
-### Fase 0 — Penemuan (tanpa kode)
-Terverifikasi bila: semua menu lama terpetakan, glosarium disetujui, pertanyaan bagian 6 terjawab.
-- Kumpulkan screenshot sisanya (Home, Detail tiket, Gamas, Remote, Shared, SLA, Report, profil).
-- Glosarium: NPR, TT, Gamas, Jarkom, Remote, System, Pending By, Last Action.
-- Daftar peran dan apa yang boleh dilakukan tiap peran.
-- Alur status tiket dan aturan SLA yang berlaku sekarang.
+| Rilis | Isi | Selesai bila | Bergantung pada |
+| --- | --- | --- | --- |
+| **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
+| **R1 Remote + Tiket** | Master remote, buat tiket (data remote terisi otomatis), linimasa tindakan, antrean, penutupan oleh L2/L3, pencarian | Satu gangguan bisa dicatat dari awal sampai ditutup tanpa sistem lama | R0, alur status disetujui |
+| **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, mode layar dinding, alert di dashboard | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
+| **R3 Gamas + TT/teknisi** | Gamas dengan remote terdampak dan tiket anak; TT dan laporan lapangan | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
+| **R4 SLA + Laporan** | Aturan SLA, hitung mundur, jeda saat pending; template laporan + ekspor | Laporan bulanan dihasilkan tanpa olah manual di Excel | R1, sesi SLA |
+| **R5 Notifikasi** | Bot Telegram dan email: tiket baru, eskalasi, SLA hampir lewat, Gamas | Notifikasi sampai dalam hitungan detik dan tidak dobel | R4 untuk SLA |
+| **R6 Alert otomatis** | Pintu masuk alert, kandidat tiket, verifikasi L1, deduplikasi, saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Alat monitoring dipilih |
+| **R7 Integrasi customer** | API pembuatan tiket per tenant, nomor tiket customer tersinkron | Sistem customer uji membuat tiket di tenant yang benar | R6, kebutuhan eksternal nyata |
+| **R8 Go-live penuh** | Hak akses rinci, dokumen/runbook, pengerasan keamanan, pelatihan, sistem lama dimatikan | Semua shift bekerja di portal baru selama satu periode laporan | Sesi hak akses |
 
-### Fase 1 — Arsitektur informasi & desain
-Terverifikasi bila: peta halaman + wireframe 3 layar inti (Overview, Antrean tiket, Detail tiket)
-disetujui.
-- Peta halaman, navigasi, model data konseptual (Remote sebagai pusat).
-- Arah visual + sistem desain (warna status, tipografi, kepadatan tabel).
+**Urutan dan alasannya:** R1 lebih dulu karena semua modul lain bergantung pada tiket dan
+remote. R2 segera setelahnya karena layar 24/7 adalah yang paling terlihat oleh tim. R6
+(alert otomatis) sengaja belakangan: paling berisiko, bergantung pada alat yang belum dipilih,
+dan tiket manual harus sudah stabil sebelum dibanjiri alert.
 
-### Fase 2 — Fondasi
-Terverifikasi bila: login berjalan, peran membatasi menu, master data bisa dikelola.
-- Kerangka aplikasi, autentikasi, peran, master Customer/Remote/Kategori/System.
+**Yang bisa berjalan paralel:** R3 dan R4 setelah R1; riset alat monitoring (untuk R6) sejak R0.
 
-### Fase 3 — Tiket NPR (alur inti)
-Terverifikasi bila: operator bisa buat tiket dari remote (alamat terisi otomatis), memperbarui
-tindakan, menunda dengan alasan, menutup; semua tercatat di linimasa.
+## 9. Pertanyaan yang masih terbuka
 
-### Fase 4 — Overview & SLA
-Terverifikasi bila: Overview menampilkan angka yang cocok dengan daftar tiket; SLA menghitung
-mundur dan berhenti saat tiket ditunda.
+Gerbang sekarang (jawab "ya" = setuju rekomendasi):
+1. Setuju R-A s.d. R-G di bagian 5?
+2. **Hosting:** server internal/on-premise atau cloud? Rekomendasi: satu server internal
+   (aturan customer bank biasanya mengharuskan), dengan backup ke lokasi kedua.
+3. **Urutan rilis** di bagian 8 sudah sesuai prioritas, atau ada yang harus lebih dulu?
+4. **Alat monitoring saat ini:** bagaimana tim sekarang tahu sebuah remote turun (ping manual,
+   NMS hub VSAT, laporan customer)? Ini menentukan R6.
 
-### Fase 5 — Gamas
-Terverifikasi bila: satu Gamas bisa menautkan banyak remote/tiket dan menutupnya sekaligus.
-
-### Fase 6 — Kunjungan teknisi, Laporan, Dokumen
-Terverifikasi bila: laporan lama (Report NPR, Gamas Report, List Report Teknisi) bisa
-dihasilkan ulang dari portal baru dan diekspor.
-
-### Fase 7 — Migrasi data & peluncuran
-Terverifikasi bila: data lama termuat, tim sudah dilatih, sistem lama bisa dibaca saja.
-
-## 6. Pertanyaan yang harus dijawab sebelum mulai
-
-Setiap pertanyaan punya rekomendasi; jawab "ya" = setuju rekomendasi.
-
-1. **Ganti total atau berdampingan?** Rekomendasi: portal baru menggantikan yang lama, data
-   lama dimigrasi di Fase 7.
-2. **Stack.** Sistem lama pakai apa (terlihat seperti PHP + Bootstrap + DataTables)? Rekomendasi:
-   tentukan setelah tahu kemampuan tim yang akan merawat dan tempat hosting.
-3. **Hosting.** Server sendiri (on-premise/jaringan internal) atau cloud? Rekomendasi: ikuti
-   aturan customer bank — kemungkinan besar internal.
-4. **Integrasi monitoring.** Apakah tiket dibuat otomatis dari alarm (NMS/Zabbix/lainnya)?
-   Rekomendasi: versi pertama tiket manual, tetapi model data disiapkan untuk sumber otomatis.
-5. **Pengguna di luar NOC.** Apakah teknisi lapangan dan customer ikut login? Rekomendasi:
-   versi pertama hanya NOC/SOC + admin; teknisi menyusul di Fase 6.
-6. **"SOC".** Apakah ada tiket keamanan yang alurnya berbeda dari gangguan jaringan?
-   Rekomendasi: tidak di versi pertama.
-7. **Eskalasi.** Apa beda "Eskalasi To NOC" dan "Eskalasi To SD", dan kapan TT dibuat?
-   Rekomendasi: TT dibuat otomatis saat tiket dieskalasi ke teknisi lapangan.
-7a. **Hapus tindakan.** Setuju tindakan tidak bisa dihapus, hanya dikoreksi oleh entri baru
-   (admin tetap bisa membatalkan dengan alasan)? Rekomendasi: ya.
-7b. **Nomor tiket customer.** Setuju dijadikan kolom tersendiri yang bisa dicari? Rekomendasi: ya.
-8. **Bahasa antarmuka.** Rekomendasi: Indonesia, dengan istilah teknis tetap (NPR, Gamas, SLA).
-9. **Notifikasi.** Perlu email/WhatsApp/Telegram saat SLA hampir lewat? Rekomendasi: tidak di
-   versi pertama.
-10. **Nama & tampilan.** Pakai identitas perusahaan yang ada atau tampilan baru?
+Sesi berikutnya bersama user: aturan SLA · detail Gamas · arti Take Action · hak akses per
+peran · arti System, TM, SD · isi laporan wajib · screenshot Home, Gamas, List Remote, SLA,
+List Report Teknisi, Shared.
 
 ### Asumsi saya (koreksi bila salah)
 1. NPR = satu tiket gangguan untuk satu remote.
-2. Gamas = gangguan massal yang membawahi banyak remote/NPR.
-3. Jarkom = jenis jaringan komunikasi remote (mis. VSAT, M2M).
-4. "System" di tabel = layanan/platform yang dipakai remote.
-5. "Pending By" = pihak yang sedang ditunggu, dan menghentikan jam SLA.
-6. Jumlah pengguna puluhan, bukan ribuan; jumlah remote ribuan.
-7. Pemakaian utama di layar desktop/monitor NOC, bukan ponsel.
+2. "Pending By" menghentikan jam SLA.
+3. Pengguna puluhan orang; remote ribuan; tersebar di seluruh Indonesia.
+4. Mode kerja dipakai di desktop; PWA di ponsel terutama untuk notifikasi dan teknisi.
+5. Koneksi di ruang NOC stabil; mode offline hanya dibutuhkan teknisi lapangan (R3).
+6. Antarmuka berbahasa Indonesia dengan istilah teknis tetap (NPR, TT, Gamas, SLA).
 
-## 7. Belum ditentukan
-- Fase 2–7: struktur file, perintah verifikasi, titik uji — menunggu keputusan stack.
-- Aturan SLA sebenarnya (target per customer/kategori) — menunggu Fase 0.
-- Isi menu Shared dan profil — menunggu screenshot.
-- Migrasi: bentuk dan kualitas data lama belum diketahui.
+## 10. Belum ditentukan
+- Langkah teknis per rilis — menunggu persetujuan bagian 5.
+- Aturan SLA, alur Gamas, hak akses rinci — menunggu sesi dengan user.
+- Alat monitoring dan merek hub/modem VSAT — riset berjalan sejak R0.
+- Bentuk integrasi sistem customer (R7) — kabur sampai ada kebutuhan eksternal nyata.
 
-## 8. Selalu / Tidak pernah
-- Selalu: setiap tiket menempel ke satu remote; setiap perubahan status tercatat; status dan
-  SLA terlihat di daftar.
-- Tidak pernah (versi pertama): membuat ulang NMS/alat monitoring; aplikasi ponsel; portal
-  customer; menyalin kode atau config dari sistem lama.
+## 11. Selalu / Tidak pernah
+- Selalu: setiap tiket menempel ke satu remote dan satu tenant; setiap perubahan tercatat;
+  status dan SLA terlihat di daftar; setiap rilis lewat staging.
+- Tidak pernah: membuat ulang alat monitoring; menyalin kode/config sistem lama; memigrasi
+  data lama; menghapus jejak tindakan; menaikkan ke produksi tanpa uji user.
 
-## 9. Sumber
+## 12. Sumber
 - https://inoc.com/blog/noc-dashboards
 - https://www.inoc.com/blog/noc-best-practices-10-ways-to-improve-your-operation
 - https://www.inoc.com/blog/incident-management-the-foundation-of-a-successful-noc
-- https://www.inoc.com/blog/itil-service-operation
+- https://inoc.com/blog/itil-incident-management
 - https://firstwave.com/whitepapers/a-single-pane-of-glass-with-opcharts-and-nmis
 - https://medium.com/site-reliability-engineering-leadership/the-single-pain-of-glass-6e42930e966
-- https://app.site24x7.com/blog/network-monitoring-custom-dashboard
 - https://www.orbix.studio/blogs/multi-tenant-dashboard-design
 - https://fanruan.com/en/blog/dashboard-navigation-best-practices
-- https://manageengine.com/products/service-desk/itil-incident-management-guide.html
-- https://www.servicenow.com/community/itsm-articles/incident-management-best-practice/ta-p/2304946
-- https://www.nocobase.com/en/blog/open-source-ticketing-systems
+- https://extnoc.com/learn/general/it-support-tiers
+- https://docs.meghnacloud.com/docs/Resources/ticket-management
+- https://blog.happyfox.com/ticket-escalation
+- https://www.kommunicate.io/learning-center/ticket-escalation-process
+- https://www.six-group.com/en/products-services/banking-services/atm-services/managed-services/monitoring.html
+- https://www.maximusinfoware.in/offerings/atm-monitoring
+- https://fsstech.com/fssmonitoring
+- https://www.ir.com/guides/atm-monitoring-software
+- https://www.zabbix.com/br/network_monitoring
+- https://cloudzy.com/blog/self-hosted-prtg-solarwinds-alternatives/
+- https://www.rfwireless-world.com/tutorials/vsat-nms-network-management-system-tutorial
+- https://oneuptime.com/docs/as-markdown/en/integrations/zabbix
+- https://support.site24x7.com/portal/en/kb/articles/preventing-duplicate-tickets-with-webhooks
+- https://www.zabbix.com/forum/zabbix-help/468200-duplicate-triggers-and-alerts?p=468215
 
 ## Progres
-| Fase | Status |
+| Rilis | Status |
 | --- | --- |
-| 0 Penemuan | Berjalan — 10 screenshot diterima; belum ada: Home, Gamas, List Remote, SLA, List Report Teknisi, Shared, profil |
-| 1–7 | Belum mulai |
+| Penemuan | Berjalan — 10 screenshot, 11 keputusan tercatat |
+| R0–R8 | Belum mulai — menunggu persetujuan bagian 5 |
