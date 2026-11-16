@@ -87,6 +87,7 @@ jobs:
         run: docker build -f deploy/Dockerfile -t "$TYIO_IMAGE" .
 
       - name: Jalankan image dengan compose staging
+        id: staging
         run: |
           echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)" > "$GITHUB_WORKSPACE/../staging-ci.env"
           $STAGING up -d --wait
@@ -99,10 +100,12 @@ jobs:
         env:
           E2E_BASE_URL: http://localhost:8080
 
+      # Dua langkah terakhir hanya bila stack sempat dinyalakan; bila build gagal atau run
+      # dibatalkan lebih awal, tidak ada yang perlu dibaca atau dibersihkan.
       - name: Log container bila gagal
-        if: failure()
+        if: failure() && steps.staging.conclusion != 'skipped'
         run: $STAGING logs --no-color
 
       - name: Bersihkan
-        if: always()
+        if: always() && steps.staging.conclusion != 'skipped'
         run: $STAGING down --volumes
