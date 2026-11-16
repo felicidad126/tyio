@@ -1,0 +1,18 @@
+# Konteks build image adalah akar repo; kirim hanya yang dibutuhkan untuk build.
+**/node_modules
+**/dist
+**/coverage
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+**/*.log
+.git
+.github
+docs
+plans
+deploy
+!deploy/Dockerfile
+*.md
+.env
+.env.*
+*.env

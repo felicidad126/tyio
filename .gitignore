@@ -1,13 +1,18 @@
 node_modules/
 dist/
 coverage/
+test-results/
+playwright-report/
 *.tsbuildinfo
 *.log
 
-# Rahasia dan konfigurasi lokal tidak pernah masuk repo
+# Rahasia dan konfigurasi lokal tidak pernah masuk repo; hanya contoh *.example yang boleh.
 .env
 .env.*
+*.env
 !.env.example
+!*.env.example
+deploy/certs/
 
 .DS_Store
 .idea/

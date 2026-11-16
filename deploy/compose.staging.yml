@@ -1,0 +1,49 @@
+# Lingkungan staging: menjalankan image yang sudah dibangun dan diuji CI, tidak membangun sendiri.
+#   docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml up -d --wait
+# Isi deploy/staging.env dari deploy/staging.env.example (berkas .env tidak pernah masuk git).
+name: tyio-staging
+
+x-app: &app
+  image: ${TYIO_IMAGE:?TYIO_IMAGE wajib diisi dengan image hasil CI}
+  pull_policy: missing
+  environment:
+    TYIO_ENV: staging
+    DATABASE_URL: postgres://tyio:${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}@db:5432/tyio
+
+services:
+  db:
+    image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tyio
+      POSTGRES_PASSWORD: ${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}
+      POSTGRES_DB: tyio
+      TZ: UTC
+    # Tanpa port ke host: database hanya bisa dicapai dari jaringan internal compose.
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U tyio -d tyio]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *app
+    command: [node, dist/db/migrate.js, up]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    <<: *app
+    restart: unless-stopped
+    ports:
+      # Bawaan hanya 127.0.0.1. TLS dan akses dari jaringan lain menunggu keputusan hosting.
+      - ${TYIO_APP_BIND:-127.0.0.1}:${TYIO_APP_PORT:-8080}:3000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:

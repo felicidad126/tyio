@@ -19,7 +19,13 @@ export default defineConfig(
     },
   },
   {
-    files: ['*.js', 'apps/api/**/*.ts', 'packages/shared/**/*.ts', 'apps/web/vite.config.ts'],
+    files: [
+      '*.js',
+      'apps/api/**/*.ts',
+      'packages/shared/**/*.ts',
+      'apps/web/*.config.ts',
+      'apps/web/e2e/**/*.ts',
+    ],
     languageOptions: { globals: globals.node },
   },
   {

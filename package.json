@@ -13,7 +13,11 @@
     "lint": "eslint . --max-warnings 0",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "test:api": "pnpm --filter @tyio/api test"
+    "test:api": "pnpm --filter @tyio/api test",
+    "e2e": "pnpm --filter @tyio/web e2e",
+    "dev:up": "docker compose -f deploy/compose.dev.yml up -d --build --wait",
+    "dev:down": "docker compose -f deploy/compose.dev.yml down",
+    "dev:reset": "docker compose -f deploy/compose.dev.yml down --volumes"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

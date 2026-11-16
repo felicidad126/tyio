@@ -16,23 +16,28 @@ Langkah teknis dan progres: [plans/pending/langkah-teknis.md](plans/pending/lang
 | `apps/api` | API NestJS 12 (ESM). Satu modul per domain di `src/modules/<nama>` |
 | `apps/web` | Antarmuka Vue 3 + Vite (kelak PWA) |
 | `packages/shared` | Tipe dan konstanta yang dipakai API dan web |
-| `.github/workflows/ci.yml` | CI: lint, build, uji di setiap push |
+| `deploy/` | Dockerfile (satu image API + web), compose dev dan staging |
+| `docs/operasi/` | Cara menjalankan dan mengoperasikan |
+| `.github/workflows/ci.yml` | CI: lint, build, uji, dan uji asap image lewat compose staging di setiap push |
 
 ## Perintah
 
 ```bash
 pnpm install          # pasang dependensi (lockfile wajib ikut di-commit)
+pnpm dev:up           # Docker: Postgres + migrasi + seed + aplikasi di http://localhost:8080
 pnpm lint             # ESLint seluruh repo; peringatan pun dianggap gagal
 pnpm build            # cek tipe + build semua paket (shared lebih dulu)
-pnpm test             # semua uji
+pnpm test             # semua uji (uji API memakai Postgres dari dev:up)
 pnpm test:api health  # uji API yang path berkasnya memuat "health"
+pnpm e2e smoke        # uji layar (Playwright) terhadap aplikasi yang sedang jalan
+pnpm dev:down         # hentikan stack dev (dev:reset juga menghapus datanya)
 ```
 
-Urutan pada clone baru: `pnpm install` → `pnpm build` → `pnpm test`. API memakai hasil build
-`packages/shared/dist`, jadi uji API butuh build lebih dulu.
+Urutan pada clone baru: `pnpm install` → `pnpm dev:up` → `pnpm build` → `pnpm test`.
+Uji API butuh Postgres asli (database `tyio_test`) dan hasil build `packages/shared/dist`.
 
-Menjalankan API hasil build: `pnpm build && node apps/api/dist/main.js` (port dari `PORT`,
-bawaan 3000), lalu buka `http://localhost:3000/health`.
+Cara menjalankan, variabel lingkungan, staging, dan jaringan kantor dengan proxy TLS:
+[docs/operasi/menjalankan.md](docs/operasi/menjalankan.md).
 
 ## Catatan penting
 
@@ -44,5 +49,6 @@ bawaan 3000), lalu buka `http://localhost:3000/health`.
 - **Dependensi dipin persis** (tanpa `^`/`~`). Bawaan pnpm 11+ juga menolak versi yang terbit
   kurang dari 1 hari dan memblokir install script dependensi; izinkan per paket lewat
   `allowBuilds` di `pnpm-workspace.yaml` hanya bila memang perlu.
-- **Rahasia tidak pernah masuk repo.** Berkas `.env*` diabaikan git; contoh nilai kelak di
-  `.env.example`.
+- **Rahasia tidak pernah masuk repo.** Berkas `.env*`, `*.env`, dan `deploy/certs/` diabaikan
+  git; hanya contoh `*.env.example` yang boleh di-commit. Kredensial `tyio`/`tyio` di
+  `deploy/compose.dev.yml` khusus Postgres dev lokal yang terikat ke 127.0.0.1.

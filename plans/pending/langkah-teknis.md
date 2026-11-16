@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 berjalan — 0.1 selesai.** Keputusan teknis T1–T12 menunggu konfirmasi sebelum 0.3 dan 0.5.
+Status: **R0 berjalan — 0.1 dan 0.2 selesai** (staging menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -24,7 +24,7 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T11 | Uji: Vitest + database PostgreSQL asli untuk API; Playwright untuk alur layar | Uji di jahitan tinggi, bukan mock |
 | T12 | Waktu `timestamptz` UTC; zona tampilan mengikuti lokasi remote, dengan pilihan zona pengguna | R-H |
 
-**Pilihan versi yang diambil saat 0.1** (ikut dikonfirmasi bersama T1–T12; semua dipin persis):
+**Pilihan versi yang diambil saat 0.1** (disetujui bersama T1–T12; semua dipin persis):
 
 | Komponen | Versi | Alasan |
 | --- | --- | --- |
@@ -34,6 +34,17 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | TypeScript | 6.0.3 | TypeScript 7 belum didukung typescript-eslint (peer `<6.1.0`) |
 | Vitest | 5 tanpa SWC | Transform Vite 8 (Oxc) sudah memancarkan metadata dekorator; dibuktikan uji mutasi |
 | Lint | ESLint 10 + typescript-eslint + eslint-plugin-vue, tanpa info tipe | Satu konfigurasi untuk Vue dan Nest; cek tipe di `pnpm build` |
+
+**Keputusan yang diambil saat 0.2** (mohon dicek; turunan R-A, R-B, T3, T5, T11, T12):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T13 | Satu image Docker berisi API + hasil build web; API di `/api`, web di jalur lain, satu origin | R-A satu yang di-deploy; cookie sesi (T5) tanpa CORS; tanpa web server tambahan |
+| T14 | Migrasi dan seed adalah langkah terpisah dari image yang sama, sebelum aplikasi start; aplikasi tidak menjalankan migrasi sendiri | Migrasi gagal = rilis gagal yang terlihat, bukan aplikasi yang restart berulang |
+| T15 | `TYIO_ENV` wajib tanpa nilai bawaan; seed data dummy ditolak bila `production` | Produksi tidak pernah diam-diam dianggap dev |
+| T16 | PostgreSQL 18 dipin digest, sama di dev, CI, dan staging; sesi database dipaksa UTC | Migrasi diuji di versi yang sama dengan yang dipasang; T12 |
+| T17 | TypeORM 1.1 (stabil, mendukung ESM); daftar entity/migrasi eksplisit di satu berkas (`db/registry.ts`) | Tanpa glob yang rapuh di ESM; konfigurasi aplikasi dan skrip migrasi tidak bisa menyimpang |
+| — | Registry image untuk staging: **belum diputuskan** | Bergantung pada hosting (lihat bagian D) |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
@@ -256,7 +267,7 @@ Langkah paling berisiko dikerjakan paling awal di rilisnya: 0.4 (isolasi tenant)
 
 | Dibutuhkan | Untuk langkah | Dari |
 | --- | --- | --- |
-| Keputusan hosting + server staging | 0.6 | Anda |
+| Keputusan hosting + server staging + registry image | 0.2 (pemasangan staging), 0.6 | Anda |
 | Alur status tiket disetujui | 1.4 | Sesi dengan user |
 | Server produksi (dua unit) | 1.7 | Anda |
 | Detail Gamas, arti eskalasi/Take Action | 3.1, 3.2 | Sesi dengan user |
@@ -275,6 +286,7 @@ Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai b
 | Langkah | Status |
 | --- | --- |
 | 0.1 Kerangka repo dan pipeline | **Selesai 2026-11-16** (commit `e27430e`). `pnpm lint && pnpm build && pnpm test:api health` lulus dari salinan bersih (Node 26.13.1, pnpm 12.21.0). CI run #1 di GitHub hijau: lint, build, 2 uji health lulus. API hasil build dijalankan: `GET /health` → 200 `{"status":"ok"}`. Uji mutasi: mematikan metadata dekorator membuat uji merah. Workflow belum diperiksa actionlint (unduhan biner ditolak izin sesi); validitasnya dibuktikan oleh run CI. |
-| 0.2 Lingkungan lokal dan staging | Siap dikerjakan — menunggu persetujuan lanjut |
-| 0.3, 0.5 | Menunggu konfirmasi T1–T12 dan pilihan versi di bagian A |
+| 0.2 Lingkungan lokal dan staging | **Selesai 2026-11-16; pemasangan staging menunggu hosting.** `pnpm dev:up && pnpm e2e smoke` lulus dari salinan bersih dengan database baru: Postgres 18 + migrasi + seed + aplikasi sehat dalam ±25 detik, 3 uji asap lulus. 19 uji API lulus terhadap PostgreSQL asli. Uji mutasi pada 4 penjaga (zona waktu UTC, aset hilang = 404, seed ditolak di produksi, health 503) masing-masing membuat uji merah. Compose staging dijalankan lokal dengan image hasil build dan lolos uji asap; job CI `image` melakukan hal yang sama di setiap push. **Belum:** registry image dan pemasangan di server staging (bagian D); seeder masih kosong sampai 0.3 menambah tenant dan pengguna; "uji di halaman login" diganti halaman utama karena login baru ada di 0.3. |
+| 0.3 Tenant, pengguna, login | Siap dikerjakan (T1–T12 disetujui) |
+| 0.5 Kerangka PWA dan navigasi | Siap setelah 0.3 |
 | 0.4, 0.6, R1–R8 | Belum mulai |

@@ -1,35 +1,41 @@
-import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import type { HealthResponse } from '@tyio/shared';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { AppModule } from '../src/app.module.js';
+import { DataSource } from 'typeorm';
+import { afterEach, describe, expect, it } from 'vitest';
+import { createTestApp } from './create-test-app.js';
 
-// Uji lewat HTTP terhadap AppModule utuh (bukan mock), sesuai T11.
-// Health controller bergantung pada HealthService lewat injeksi konstruktor,
-// jadi uji ini juga membuktikan metadata dekorator ikut terpancar di Vitest.
-describe('GET /health', () => {
-  let app: INestApplication;
+// Uji lewat HTTP terhadap AppModule utuh dan PostgreSQL asli (T11).
+// HealthService di-inject lewat konstruktor, jadi uji ini juga menjaga metadata dekorator.
+describe('GET /api/health', () => {
+  let app: INestApplication | undefined;
 
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication();
-    await app.init();
+  afterEach(async () => {
+    await app?.close();
+    app = undefined;
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  it('menjawab 200 bila database terhubung', async () => {
+    app = await createTestApp();
 
-  it('menjawab 200 dengan status ok dalam JSON', async () => {
-    const res = await request(app.getHttpServer()).get('/health').expect(200);
+    const res = await request(app.getHttpServer()).get('/api/health').expect(200);
 
     expect(res.headers['content-type']).toMatch(/application\/json/);
-    expect(res.body).toEqual({ status: 'ok' } satisfies HealthResponse);
+    expect(res.body).toEqual({ status: 'ok', database: 'ok' } satisfies HealthResponse);
   });
 
-  it('menolak rute yang tidak ada dengan 404', async () => {
-    await request(app.getHttpServer()).get('/tidak-ada').expect(404);
+  it('menjawab 503 bila koneksi database putus', async () => {
+    app = await createTestApp();
+    await app.get(DataSource).destroy();
+
+    const res = await request(app.getHttpServer()).get('/api/health').expect(503);
+
+    expect(res.body).toEqual({ status: 'error', database: 'error' } satisfies HealthResponse);
+  });
+
+  it('tidak lagi melayani /health tanpa prefix', async () => {
+    app = await createTestApp();
+
+    await request(app.getHttpServer()).get('/health').expect(404);
   });
 });
