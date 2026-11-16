@@ -29,6 +29,11 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K12 | Sumber data status remote: SNMP/ping dari NOC dan sistem monitoring VSAT yang sudah ada. Portal menerima alert dari sana, tidak mengumpulkan metrik sendiri. | User |
 | K13 | Monitoring perangkat ATM (mesin) ada di sisi bank sebagai end user; di luar lingkup versi ini. | User (tafsiran saya, perlu dikonfirmasi) |
 | K14 | Agent di site ATM belum pasti; tidak direncanakan. Bila kelak dipilih, menjadi rilis tersendiri setelah R6. | User |
+| K15 | Menu NPR: New NPR = buat NPR baru; Detail NPR = NPR yang masih aktif; Report NPR = riwayat (aktif maupun sudah close). | User (operator NOC) |
+| K16 | **NPR ≠ TT.** Open NPR = catatan downtime suatu lokasi beserta penyebabnya (paling sering listrik padam), tanpa kunjungan. Open Ticket (TT) = eskalasi ke tim Service Delivery (SD), pasti ada kunjungan teknisi, untuk problem jarkom di lokasi. | User (operator NOC) |
+| K17 | SD = Service Delivery. | User (operator NOC) |
+| K18 | SLA dan master List Remote adalah ranah admin, bukan operator. | User (operator NOC) |
+| K19 | Data awal: remote dummy + nama bank sebagai customer. | User (operator NOC) |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
@@ -59,7 +64,7 @@ baris bisa dibuka untuk rincian tindakan.
 
 **Yang jelas dari data:**
 - Penomoran `JENIS/JARKOM/CUSTOMER/TAHUN/BULAN/urut` untuk NPR dan TT.
-- TT = Trouble Ticket internal, dibuat dari NPR saat dieskalasi ke teknisi.
+- TT = Trouble Ticket, dibuat dari NPR saat dieskalasi ke tim Service Delivery untuk kunjungan teknisi (K16).
 - Status: PENDING, ESKALASI, CLOSE. Pending By: Customer atau TM.
 - Kategori: Remote Down, Corrective Maintenance, Preventive Maintenance.
 
@@ -199,7 +204,7 @@ Langkah teknis per rilis (file, perintah verifikasi) ditulis setelah R-A s.d. R-
 | **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis, audit log, checklist kepatuhan bank/OJK | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
 | **R1 Remote + Tiket** | Master remote, buat tiket (data remote terisi otomatis), linimasa tindakan, antrean, penutupan oleh L2/L3, pencarian | Satu gangguan bisa dicatat dari awal sampai ditutup tanpa sistem lama | R0, alur status disetujui |
 | **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, peta remote berwarna status, mode layar dinding, alert di dashboard, indikator "data terakhir diterima" | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
-| **R3 Gamas + TT/teknisi** | Gamas dengan remote terdampak dan tiket anak; TT dan laporan lapangan | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
+| **R3 Gamas + laporan teknisi** | Gamas dengan remote terdampak dan tiket anak; laporan lapangan teknisi (TT dasar pindah ke R1, lihat K16) | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
 | **R4 SLA + Laporan** | Aturan SLA, hitung mundur, jeda saat pending; template laporan + ekspor | Laporan bulanan dihasilkan tanpa olah manual di Excel | R1, sesi SLA |
 | **R5 Notifikasi** | Bot Telegram dan email: tiket baru, eskalasi, SLA hampir lewat, Gamas | Notifikasi sampai dalam hitungan detik dan tidak dobel | R4 untuk SLA |
 | **R6 Alert otomatis** | Pintu masuk alert dari SNMP/ping NOC dan dari sistem VSAT, kandidat tiket, verifikasi L1, deduplikasi, debounce untuk gangguan sesaat (rain fade), dugaan penyebab (link / perangkat / listrik / cuaca), saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Akses ke alat SNMP dan sistem VSAT yang ada |
@@ -229,7 +234,7 @@ peran · arti System, TM, SD · isi laporan wajib · screenshot Home, Gamas, Lis
 List Report Teknisi, Shared.
 
 ### Asumsi saya (koreksi bila salah)
-1. NPR = satu tiket gangguan untuk satu remote.
+1. NPR = satu catatan downtime untuk satu remote; satu NPR bisa punya nol atau lebih TT.
 2. "Pending By" menghentikan jam SLA.
 3. Pengguna puluhan orang; remote ribuan; tersebar di seluruh Indonesia.
 4. Mode kerja dipakai di desktop; PWA di ponsel terutama untuk notifikasi dan teknisi.
