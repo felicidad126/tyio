@@ -45,7 +45,7 @@ Selesai bila: aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-r
 - Uji di: halaman login terbuka · Menunggu: 0.1
 
 **0.3 Tenant, pengguna, login (M)**
-- Terima: login/logout dengan sesi; pengguna terikat ke tenant dan peran (L1, L2, L3, admin); percobaan login gagal dibatasi.
+- Terima: login/logout dengan sesi; pengguna terikat ke tenant dan peran (L1 Monitoring, L2 NOC, L3, SD, admin — lihat K20); percobaan login gagal dibatasi.
 - Verifikasi: `pnpm test:api auth && pnpm e2e auth`
 - Berkas: `apps/api/src/modules/{tenants,users,auth}/`, `apps/web/src/pages/login/`, migrasi awal
 - Uji di: `POST /auth/login`, alur login di browser · Menunggu: 0.2
@@ -158,7 +158,7 @@ Selesai bila: satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa
 - Terima: eskalasi ke lapangan membuat TT bernomor `TT/…`; tindakan TT tampil di linimasa tiket yang sama; satu tiket bisa punya lebih dari satu TT.
 - Verifikasi: `pnpm test:api trouble-tickets && pnpm e2e tt`
 - Berkas: `apps/api/src/modules/trouble-tickets/`
-- Menunggu: 1.5b · **Butuh: arti Eskalasi To NOC**
+- Menunggu: 1.5b
 
 **3.3 Laporan lapangan di ponsel (M)**
 - Terima: teknisi mengisi laporan dan foto dari ponsel; isian tersimpan saat sinyal hilang dan terkirim saat tersambung.

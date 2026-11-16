@@ -34,6 +34,7 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K17 | SD = Service Delivery. | User (operator NOC) |
 | K18 | SLA dan master List Remote adalah ranah admin, bukan operator. | User (operator NOC) |
 | K19 | Data awal: remote dummy + nama bank sebagai customer. | User (operator NOC) |
+| K20 | **Tingkatan tim:** L1 = tim monitoring (pengguna utama dashboard, paling sering memantau); L2 = NOC; SD = Service Delivery (kunjungan teknisi). "Eskalasi To NOC" = eskalasi dari L1 ke L2. Isi L3 belum diketahui. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
