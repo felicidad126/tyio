@@ -124,7 +124,7 @@ Selesai bila: satu gangguan tercatat dari awal sampai ditutup tanpa sistem lama.
 - Menunggu: 1.4
 
 **1.5b Open Ticket (TT) ke Service Delivery (M)** — dipindah dari 3.2 (K16)
-- Terima: dari NPR aktif, operator membuat TT bernomor `TT/…` berisi problem jarkom dan lokasi; TT tampil di linimasa NPR yang sama; satu NPR bisa punya lebih dari satu TT; daftar TT aktif terpisah dari daftar NPR aktif.
+- Terima: dari NPR aktif, operator membuat TT bernomor `TT/…` berisi problem jarkom dan lokasi; TT tampil di linimasa NPR yang sama; satu NPR bisa punya lebih dari satu TT; daftar TT aktif terpisah dari daftar NPR aktif; tombol "salin ringkasan TT" menyalin teks siap tempel ke chat (no. TT, remote, lokasi, problem, kontak) dan tercatat di linimasa (K25).
 - Verifikasi: `pnpm test:api trouble-tickets && pnpm e2e tt`
 - Berkas: `apps/api/src/modules/trouble-tickets/`, `apps/web/src/pages/tickets/tt/`
 - Menunggu: 1.4

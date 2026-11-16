@@ -39,6 +39,7 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K22 | Data dummy memakai nama bank samaran dulu. | User |
 | K23 | Tim SD tidak login ke portal; SD menerima TT lewat notifikasi. Hasil kunjungan dicatat L1/L2 di linimasa TT. | User |
 | K24 | Peran L3 dibahas nanti; R0 hanya memasang L1, L2, admin. | User |
+| K25 | Sampai R5, TT diteruskan ke SD secara manual lewat tombol "salin ringkasan TT"; notifikasi otomatis ke SD menyusul di R5. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
