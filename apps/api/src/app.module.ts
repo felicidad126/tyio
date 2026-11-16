@@ -1,7 +1,8 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import type { AppConfig } from './config.js';
+import { APP_CONFIG, type AppConfig } from './config.js';
 import { dataSourceOptions } from './db/options.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 
 @Module({})
@@ -10,7 +11,14 @@ export class AppModule {
   static register(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [TypeOrmModule.forRoot(dataSourceOptions(config.databaseUrl)), HealthModule],
+      global: true,
+      imports: [
+        TypeOrmModule.forRoot(dataSourceOptions(config.databaseUrl)),
+        AuthModule,
+        HealthModule,
+      ],
+      providers: [{ provide: APP_CONFIG, useValue: config }],
+      exports: [APP_CONFIG],
     };
   }
 }

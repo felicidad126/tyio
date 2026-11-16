@@ -10,6 +10,8 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     port: 0,
     databaseUrl: process.env.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL,
     webDistDir: undefined,
+    sessionCookieSecure: false,
+    trustProxyHops: 0,
     ...overrides,
   };
 }

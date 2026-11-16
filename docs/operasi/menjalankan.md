@@ -26,9 +26,21 @@ database tidak bisa dihubungi.
 | `DATABASE_URL` | ya | `postgres://pengguna:sandi@host:5432/nama_db` |
 | `PORT` | tidak | Bawaan 3000 |
 | `WEB_DIST_DIR` | tidak | Folder hasil build web; di image sudah diisi `/app/public` |
+| `SESSION_COOKIE_SECURE` | tidak | `true`/`false`. Bawaan `true` di staging dan produksi: cookie sesi hanya lewat HTTPS dan bernama `__Host-tyio_sid`. Browser memperlakukan `http://localhost` sebagai aman, jadi uji lokal tetap jalan |
+| `TRUST_PROXY_HOPS` | tidak | Jumlah reverse proxy di depan aplikasi (0–5, bawaan 0). Isi dengan tepat: alamat IP klien dipakai untuk membatasi percobaan login |
+| `TYIO_SEED_PASSWORD` | untuk seed di staging | Kata sandi pengguna contoh, minimal 12 karakter. Dev memakai bawaan di bawah |
 
 Aplikasi menolak start bila konfigurasi tidak sah dan menyebut variabel yang bermasalah,
 tanpa mencetak nilainya.
+
+### Masuk dan sesi
+
+- Semua endpoint API wajib login kecuali `/api/health`, `/api/auth/login`, dan `/api/auth/logout`.
+- Sesi berakhir setelah 12 jam tidak dipakai, dan paling lama 7 hari sejak login.
+- Setelah 5 kali gagal untuk satu nama pengguna, atau 20 kali gagal dari satu alamat IP,
+  dalam 15 menit, percobaan ditahan sampai jendela itu lewat (HTTP 429 dengan `Retry-After`).
+- Peran di R0: `L1` (L1 Monitoring), `L2` (L2 NOC), `admin`. Pengguna melihat semua
+  customer, atau hanya customer tertentu bila dibatasi.
 
 ## Lingkungan lokal (pengembang)
 
@@ -42,6 +54,14 @@ pnpm e2e smoke       # uji asap terhadap http://localhost:8080
 
 - Aplikasi: http://localhost:8080 · Postgres: `localhost:5432`, pengguna/sandi `tyio`/`tyio`
   (database dev `tyio`, database uji `tyio_test`). Semua port hanya terikat ke 127.0.0.1.
+- Akun contoh dari seed (khusus dev, kata sandi `contoh-dev-2026`; semua nama rekaan):
+
+  | Nama pengguna | Peran | Customer yang terlihat |
+  | --- | --- | --- |
+  | `admin.contoh` | admin | Semua |
+  | `l2.contoh` | L2 NOC | Semua |
+  | `l1.contoh` | L1 Monitoring | Semua |
+  | `l1.merapi` | L1 Monitoring | Hanya Bank Merapi Sejahtera |
 - Uji API (`pnpm test:api`) memakai database `tyio_test` di Postgres yang sama, jadi
   `pnpm dev:up` harus sudah jalan. Sasaran lain: set `TEST_DATABASE_URL`.
 - Setelah mengubah kode API, jalankan `pnpm dev:up` lagi (image dibangun ulang).
@@ -90,8 +110,12 @@ curl -s http://127.0.0.1:8080/api/health
 - Kata sandi database: `openssl rand -hex 24` (heksadesimal aman di dalam URL).
 - Migrasi berjalan otomatis sebelum aplikasi. Membatalkan satu migrasi:
   `docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm app node dist/db/migrate.js down`
-- Data dummy untuk uji bersama pengguna (opsional):
-  `docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm app node dist/seed/run.js`
+- Data dummy dan akun contoh untuk uji bersama pengguna (opsional; kata sandi akun contoh
+  wajib diberikan, tidak ada bawaan di staging):
+  `docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm -e TYIO_SEED_PASSWORD=<sandi> app node dist/seed/run.js`
+- Staging hanya bisa dipakai login lewat HTTPS, kecuali dibuka dari `localhost` di server
+  itu sendiri (cookie sesi `Secure`). Sebelum TLS siap, `SESSION_COOKIE_SECURE=false`
+  bisa dipakai sementara di jaringan tertutup; jangan di produksi.
 - Database tidak membuka port ke host. Aplikasi terikat ke `127.0.0.1:8080` secara bawaan;
   akses dari jaringan lain dan TLS (R-I) disiapkan bersama keputusan hosting.
 - Uji asap terhadap staging dari mesin pengembang:

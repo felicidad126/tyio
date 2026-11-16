@@ -9,6 +9,8 @@ x-app: &app
   environment:
     TYIO_ENV: staging
     DATABASE_URL: postgres://tyio:${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}@db:5432/tyio
+    SESSION_COOKIE_SECURE: ${TYIO_SESSION_COOKIE_SECURE:-true}
+    TRUST_PROXY_HOPS: ${TYIO_TRUST_PROXY_HOPS:-0}
 
 services:
   db:

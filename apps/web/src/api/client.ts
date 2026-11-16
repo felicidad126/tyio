@@ -1,0 +1,41 @@
+import { API_PREFIX, type ApiErrorBody } from '@tyio/shared';
+
+/** Galat dari API dengan pesan yang siap ditampilkan ke pengguna. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+    readonly retryAfterSeconds?: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+const NETWORK_MESSAGE = 'Server tidak bisa dihubungi. Periksa koneksi, lalu coba lagi.';
+const SERVER_MESSAGE = 'Terjadi gangguan di server. Coba lagi sebentar lagi.';
+
+/** Satu-satunya pintu ke API: satu origin, cookie sesi ikut otomatis. */
+export async function apiRequest<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`/${API_PREFIX}${path}`, {
+      method,
+      credentials: 'same-origin',
+      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError(0, NETWORK_MESSAGE);
+  }
+  if (res.status === 204) return undefined as T;
+
+  const data: unknown = await res.json().catch(() => undefined);
+  if (!res.ok) {
+    const error = (data ?? {}) as Partial<ApiErrorBody>;
+    // Pesan 4xx ditulis API untuk pengguna; rincian galat 5xx tidak ditampilkan.
+    const message = res.status < 500 && typeof error.message === 'string' ? error.message : SERVER_MESSAGE;
+    throw new ApiError(res.status, message, error.retryAfterSeconds);
+  }
+  return data as T;
+}

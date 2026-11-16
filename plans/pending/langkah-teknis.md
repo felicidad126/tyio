@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 berjalan — 0.1 dan 0.2 selesai** (staging menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
+Status: **R0 berjalan — 0.1, 0.2, 0.3 selesai** (pemasangan staging menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16; 0.1–0.2 masuk `main` lewat PR #1.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -35,7 +35,7 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | Vitest | 5 tanpa SWC | Transform Vite 8 (Oxc) sudah memancarkan metadata dekorator; dibuktikan uji mutasi |
 | Lint | ESLint 10 + typescript-eslint + eslint-plugin-vue, tanpa info tipe | Satu konfigurasi untuk Vue dan Nest; cek tipe di `pnpm build` |
 
-**Keputusan yang diambil saat 0.2** (mohon dicek; turunan R-A, R-B, T3, T5, T11, T12):
+**Keputusan yang diambil saat 0.2** (turunan R-A, R-B, T3, T5, T11, T12):
 
 | # | Keputusan | Alasan |
 | --- | --- | --- |
@@ -45,6 +45,17 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T16 | PostgreSQL 18 dipin digest, sama di dev, CI, dan staging; sesi database dipaksa UTC | Migrasi diuji di versi yang sama dengan yang dipasang; T12 |
 | T17 | TypeORM 1.1 (stabil, mendukung ESM); daftar entity/migrasi eksplisit di satu berkas (`db/registry.ts`) | Tanpa glob yang rapuh di ESM; konfigurasi aplikasi dan skrip migrasi tidak bisa menyimpang |
 | — | Registry image untuk staging: **belum diputuskan** | Bergantung pada hosting (lihat bagian D) |
+
+**Keputusan yang diambil saat 0.3** (mohon dicek; turunan R-E, R-I, T5, T9, K20–K24):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T18 | Pengguna punya satu peran (L1, L2, admin) dan cakupan tenant: **semua customer** atau **daftar customer tertentu** (`user_tenants`). Tabel pengguna sendiri tanpa `tenant_id` | Tim NOC memantau semua bank; pembatasan per bank tetap mungkin; akun pihak bank kelak cukup diberi satu tenant |
+| T19 | Sesi disimpan di PostgreSQL; cookie berisi token acak 256-bit, database hanya menyimpan hash SHA-256-nya. Cookie `HttpOnly`, `SameSite=Lax`; di staging/produksi `Secure` dengan awalan `__Host-`. Berakhir setelah 12 jam tidak dipakai, paling lama 7 hari | T5 tanpa komponen baru; isi database yang bocor tidak bisa dipakai untuk masuk |
+| T20 | Kata sandi di-hash argon2id dari modul `crypto` bawaan Node 26 (parameter OWASP), tanpa dependensi native | T5 tanpa install script dan tanpa toolchain build di image |
+| T21 | Pembatasan login: 5 gagal per nama pengguna atau 20 gagal per IP dalam 15 menit → HTTP 429; dicatat di PostgreSQL dengan nama pengguna di-hash | Berlaku di kedua server produksi sekaligus; isian salah ketik tidak tersimpan apa adanya |
+| T22 | Semua endpoint wajib login (guard global); yang publik harus ditandai `@Public()` | Endpoint baru otomatis terlindungi; lupa menandai berarti tertutup, bukan terbuka |
+| T23 | Entity memakai `EntitySchema` tanpa dekorator, nama constraint eksplisit; uji memastikan hasil migrasi sama persis dengan entity | Sesuai pedoman database Anda; menghindari masalah relasi melingkar di ESM |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
@@ -293,6 +304,7 @@ Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai b
 | --- | --- |
 | 0.1 Kerangka repo dan pipeline | **Selesai 2026-11-16** (commit `e27430e`). `pnpm lint && pnpm build && pnpm test:api health` lulus dari salinan bersih (Node 26.13.1, pnpm 12.21.0). CI run #1 di GitHub hijau: lint, build, 2 uji health lulus. API hasil build dijalankan: `GET /health` → 200 `{"status":"ok"}`. Uji mutasi: mematikan metadata dekorator membuat uji merah. Workflow belum diperiksa actionlint (unduhan biner ditolak izin sesi); validitasnya dibuktikan oleh run CI. |
 | 0.2 Lingkungan lokal dan staging | **Selesai 2026-11-16; pemasangan staging menunggu hosting.** `pnpm dev:up && pnpm e2e smoke` lulus dari salinan bersih dengan database baru: Postgres 18 + migrasi + seed + aplikasi sehat dalam ±25 detik, 3 uji asap lulus. 19 uji API lulus terhadap PostgreSQL asli. Uji mutasi pada 4 penjaga (zona waktu UTC, aset hilang = 404, seed ditolak di produksi, health 503) masing-masing membuat uji merah. Compose staging dijalankan lokal dengan image hasil build dan lolos uji asap. CI run #9 (commit `8606787`, memuat kode 0.2 `5003862` + perbaikan CI `1b1f86c`) hijau: job `verify` lint/build/uji API dengan service PostgreSQL 18; job `image` membangun image, menjalankannya dengan compose staging, 3 uji asap lulus, lalu dibersihkan. Run #3–#8 dibatalkan oleh push berikutnya ke branch yang sama (aturan concurrency), bukan gagal. **Belum:** registry image dan pemasangan di server staging (bagian D); seeder masih kosong sampai 0.3 menambah tenant dan pengguna; "uji di halaman login" diganti halaman utama karena login baru ada di 0.3. |
-| 0.3 Tenant, pengguna, login | Siap dikerjakan (T1–T12 disetujui) |
-| 0.5 Kerangka PWA dan navigasi | Siap setelah 0.3 |
-| 0.4, 0.6, R1–R8 | Belum mulai |
+| 0.3 Tenant, pengguna, login | **Selesai 2026-11-16.** `pnpm test:api auth && pnpm e2e auth` lulus dari salinan bersih dengan database baru (18 uji API, 5 uji layar); seluruh uji API 50 lulus. Uji mutasi pada 9 kontrol masing-masing membuat uji merah: guard global dicabut, token disimpan mentah, pembatasan dilewati, pengguna nonaktif boleh masuk, tanpa hash palsu (waktu jawab membocorkan nama pengguna), sesi kedaluwarsa tidak dihapus, perpanjangan tanpa batas absolut, cookie tanpa `HttpOnly`, dan `next` tanpa penyaringan (open redirect). Uji skema mendeteksi beda panjang kolom dan nama FK antara migrasi dan entity. Compose staging dengan image hasil build: cookie `__Host-tyio_sid` `Secure` dan uji login lulus. Screenshot terang/gelap, 375 px dan desktop, diperiksa; tiga cacat tampilan ditemukan dan diperbaiki (tinggi kolom sandi, kotak berbayang di pesan galat, pesan ganda setelah login gagal), serta satu bug: klik "Masuk" hilang karena tata letak bergeser. **Belum:** halaman kelola pengguna dan reset kata sandi (admin, R1/R8); router dan store minimal ikut dibuat untuk alur login, diperluas di 0.5. |
+| 0.4 Isolasi tenant dan audit log | Siap dikerjakan |
+| 0.5 Kerangka PWA dan navigasi | Siap dikerjakan |
+| 0.6, R1–R8 | Belum mulai |

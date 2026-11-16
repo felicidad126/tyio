@@ -7,6 +7,13 @@ export interface AppConfig {
   databaseUrl: string;
   /** Folder hasil build web yang dilayani di luar /api. Kosong = API saja (mis. saat uji). */
   webDistDir: string | undefined;
+  /** Cookie sesi hanya dikirim lewat HTTPS. Bawaan: aktif di staging dan produksi. */
+  sessionCookieSecure: boolean;
+  /**
+   * Jumlah reverse proxy tepercaya di depan aplikasi (untuk alamat IP klien yang benar).
+   * 0 = tidak ada proxy; header X-Forwarded-For diabaikan.
+   */
+  trustProxyHops: number;
 }
 
 /**
@@ -31,7 +38,18 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     problems.push('PORT harus bilangan bulat 1–65535');
   }
 
-  if (problems.length > 0 || !isTyioEnv(env) || !databaseUrl) {
+  const secureDefault = env === 'staging' || env === 'production';
+  const sessionCookieSecure = parseBoolean(source.SESSION_COOKIE_SECURE, secureDefault);
+  if (sessionCookieSecure === undefined) {
+    problems.push('SESSION_COOKIE_SECURE harus true atau false');
+  }
+
+  const trustProxyHops = Number(source.TRUST_PROXY_HOPS ?? 0);
+  if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 5) {
+    problems.push('TRUST_PROXY_HOPS harus bilangan bulat 0–5');
+  }
+
+  if (problems.length > 0 || !isTyioEnv(env) || !databaseUrl || sessionCookieSecure === undefined) {
     throw new Error(`Konfigurasi tidak valid:\n- ${problems.join('\n- ')}`);
   }
 
@@ -40,6 +58,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     port,
     databaseUrl,
     webDistDir: source.WEB_DIST_DIR || undefined,
+    sessionCookieSecure,
+    trustProxyHops,
   };
 }
 
@@ -55,3 +75,13 @@ function isPostgresUrl(value: string): boolean {
     return false;
   }
 }
+
+function parseBoolean(value: string | undefined, fallback: boolean): boolean | undefined {
+  if (value === undefined || value === '') return fallback;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}
+
+/** Token injeksi Nest untuk AppConfig. */
+export const APP_CONFIG = 'APP_CONFIG';

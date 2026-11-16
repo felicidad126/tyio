@@ -6,5 +6,7 @@ export default defineConfig({
     environment: 'node',
     // Uji memakai PostgreSQL asli (T11); global setup menjalankan migrasi sekali.
     globalSetup: ['test/global-setup.ts'],
+    // Uji berbagi satu database dan mengosongkan tabel; berkas uji dijalankan berurutan.
+    fileParallelism: false,
   },
 });

@@ -60,7 +60,7 @@ jobs:
         run: pnpm test
 
   image:
-    name: Image + uji asap lewat compose staging
+    name: Image + uji asap dan login lewat compose staging
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Image dibangun sekali, lalu dijalankan dengan berkas compose staging yang sama
@@ -92,11 +92,19 @@ jobs:
           echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)" > "$GITHUB_WORKSPACE/../staging-ci.env"
           $STAGING up -d --wait
 
+      # Pengguna contoh dengan kata sandi acak per run (disamarkan di log), seperti di staging.
+      - name: Isi data contoh
+        run: |
+          SEED_PASSWORD="$(openssl rand -hex 16)"
+          echo "::add-mask::$SEED_PASSWORD"
+          echo "E2E_PASSWORD=$SEED_PASSWORD" >> "$GITHUB_ENV"
+          $STAGING run --rm -T -e TYIO_SEED_PASSWORD="$SEED_PASSWORD" app node dist/seed/run.js
+
       - name: Pasang Chromium untuk Playwright
         run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
 
-      - name: Uji asap
-        run: pnpm e2e smoke
+      - name: Uji asap dan login
+        run: pnpm e2e smoke auth
         env:
           E2E_BASE_URL: http://localhost:8080
 
