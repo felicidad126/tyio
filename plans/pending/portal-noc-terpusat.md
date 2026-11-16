@@ -18,7 +18,7 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K1 | Ganti total; mulai dari data kosong/dummy. Tidak ada migrasi data lama. | User |
 | K2 | Contoh data lama tidak tersedia; model data disusun dari screenshot. | User |
 | K3 | Portal berbentuk PWA; harus mudah dikelola dan dioperasikan, tampilan ramah pengguna. | User |
-| K4 | Tiket hanya boleh ditutup oleh L2–L3. | User |
+| K4 | Tiket hanya boleh ditutup oleh L2–L3. **Diperjelas oleh K21.** | User |
 | K5 | Gamas = gangguan massal. Gamas List mencatat kapan terjadi, lama penanganan, troubleshooting yang dikerjakan, dan penyelesaiannya. | User |
 | K6 | Home = ringkasan monitoring dan analitik kejadian. | User |
 | K7 | Tiket dibuat otomatis dari alert monitoring, lalu dikoreksi/diverifikasi manusia. | User |
@@ -35,6 +35,8 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K18 | SLA dan master List Remote adalah ranah admin, bukan operator. | User (operator NOC) |
 | K19 | Data awal: remote dummy + nama bank sebagai customer. | User (operator NOC) |
 | K20 | **Tingkatan tim:** L1 = tim monitoring (pengguna utama dashboard, paling sering memantau); L2 = NOC; SD = Service Delivery (kunjungan teknisi). "Eskalasi To NOC" = eskalasi dari L1 ke L2. Isi L3 belum diketahui. | User |
+| K21 | **Penutupan:** L1 boleh menutup NPR yang tidak punya TT (mis. listrik padam lalu pulih). NPR yang punya TT, dan TT itu sendiri, hanya ditutup L2 ke atas. | User |
+| K22 | Data dummy memakai nama bank samaran dulu. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
@@ -96,7 +98,7 @@ Sebagian besar sumber adalah blog vendor/praktisi: panduan praktik, bukan standa
   15–30 menit); catatan, hasil tes, dan grafik ikut berpindah bersama tiket.
 - Catatan serah terima terstruktur: apa yang sudah dicoba, dampak, akses yang dibutuhkan,
   apa yang sudah disampaikan ke customer.
-- Sumber berbeda pendapat soal siapa yang menutup tiket; keputusan kita K4 (L2–L3).
+- Sumber berbeda pendapat soal siapa yang menutup tiket; keputusan kita K4 + K21.
 - Alur ITIL: deteksi → kategorisasi → penugasan → kontrol SLA → diagnosis → resolusi →
   tinjauan pasca-insiden. Jeda SLA harus beralasan dan tercatat.
 

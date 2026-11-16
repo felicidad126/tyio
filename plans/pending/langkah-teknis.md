@@ -107,8 +107,8 @@ Selesai bila: satu gangguan tercatat dari awal sampai ditutup tanpa sistem lama.
 - Berkas: `apps/api/src/modules/trouble-tickets/`, `apps/web/src/pages/tickets/tt/`
 - Menunggu: 1.4
 
-**1.6 Penutupan oleh L2/L3 dan halaman riwayat remote (S)**
-- Terima: L1 tidak bisa menutup (ditolak API, bukan hanya tombol disembunyikan); penutupan wajib isi penyebab dan penyelesaian; halaman remote menampilkan seluruh riwayat tiketnya.
+**1.6 Aturan penutupan dan halaman riwayat remote (S)**
+- Terima: L1 bisa menutup NPR tanpa TT; NPR dengan TT dan TT itu sendiri hanya bisa ditutup L2 ke atas (K21; ditolak API, bukan hanya tombol disembunyikan); penutupan wajib isi penyebab dan penyelesaian; halaman remote menampilkan seluruh riwayat tiketnya.
 - Verifikasi: `pnpm test:api tickets.close && pnpm e2e ticket-close`
 - Menunggu: 1.4
 
