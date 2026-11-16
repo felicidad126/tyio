@@ -123,6 +123,12 @@ Selesai bila: satu gangguan tercatat dari awal sampai ditutup tanpa sistem lama.
 - Berkas: `apps/web/src/pages/tickets/list/`, `apps/api/src/modules/search/`
 - Menunggu: 1.4
 
+**1.5b Open Ticket (TT) ke Service Delivery (M)** — dipindah dari 3.2 (K16)
+- Terima: dari NPR aktif, operator membuat TT bernomor `TT/…` berisi problem jarkom dan lokasi; TT tampil di linimasa NPR yang sama; satu NPR bisa punya lebih dari satu TT; daftar TT aktif terpisah dari daftar NPR aktif.
+- Verifikasi: `pnpm test:api trouble-tickets && pnpm e2e tt`
+- Berkas: `apps/api/src/modules/trouble-tickets/`, `apps/web/src/pages/tickets/tt/`
+- Menunggu: 1.4
+
 **1.6 Penutupan oleh L2/L3 dan halaman riwayat remote (S)**
 - Terima: L1 tidak bisa menutup (ditolak API, bukan hanya tombol disembunyikan); penutupan wajib isi penyebab dan penyelesaian; halaman remote menampilkan seluruh riwayat tiketnya.
 - Verifikasi: `pnpm test:api tickets.close && pnpm e2e ticket-close`
@@ -161,7 +167,7 @@ Selesai bila: angka Overview cocok dengan daftar tiket; layar dinding jalan 24 j
 - Berkas: `apps/web/src/pages/wall/`
 - Menunggu: 2.2
 
-### R3 — Gamas + TT/teknisi
+### R3 — Gamas + laporan teknisi
 Selesai bila: satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket.
 
 **3.1 Gamas: buat, tautkan, tutup (M)**
@@ -170,11 +176,11 @@ Selesai bila: satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa
 - Berkas: `apps/api/src/modules/gamas/`, `apps/web/src/pages/gamas/`
 - Menunggu: 1.6 · **Butuh: sesi detail Gamas**
 
-**3.2 TT dan penugasan teknisi (M)**
+**3.2 Penugasan teknisi pada TT (S)** — TT dasar sudah dibuat di 1.5b
 - Terima: eskalasi ke lapangan membuat TT bernomor `TT/…`; tindakan TT tampil di linimasa tiket yang sama; satu tiket bisa punya lebih dari satu TT.
 - Verifikasi: `pnpm test:api trouble-tickets && pnpm e2e tt`
 - Berkas: `apps/api/src/modules/trouble-tickets/`
-- Menunggu: 1.4 · **Butuh: arti Eskalasi To NOC / To SD**
+- Menunggu: 1.5b · **Butuh: arti Eskalasi To NOC**
 
 **3.3 Laporan lapangan di ponsel (M)**
 - Terima: teknisi mengisi laporan dan foto dari ponsel; isian tersimpan saat sinyal hilang dan terkirim saat tersambung.
