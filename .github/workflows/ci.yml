@@ -1,0 +1,111 @@
+name: CI
+
+# Berjalan di setiap push ke branch mana pun. Status ceknya menempel ke commit,
+# jadi pull request dari branch yang sama ikut menampilkan hasilnya.
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, build, uji
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Uji API memakai PostgreSQL asli (T11), versi sama dengan dev dan staging.
+    services:
+      postgres:
+        image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+        env:
+          POSTGRES_USER: tyio
+          POSTGRES_PASSWORD: tyio
+          POSTGRES_DB: tyio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tyio -d tyio_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgres://tyio:tyio@localhost:5432/tyio_test
+    steps:
+      # Action dipin ke SHA commit, bukan tag, agar tag yang dipindahkan tidak ikut terpakai.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Versi pnpm dibaca dari "packageManager" di package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Pasang dependensi
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Uji
+        run: pnpm test
+
+  image:
+    name: Image + uji asap lewat compose staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Image dibangun sekali, lalu dijalankan dengan berkas compose staging yang sama
+    # seperti di server staging. Yang lolos uji asap inilah artefak untuk staging.
+    env:
+      TYIO_IMAGE: tyio-app:ci-${{ github.sha }}
+      STAGING: docker compose --env-file ${{ github.workspace }}/../staging-ci.env -f deploy/compose.staging.yml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Pasang dependensi (untuk Playwright)
+        run: pnpm install --frozen-lockfile
+
+      - name: Bangun image
+        run: docker build -f deploy/Dockerfile -t "$TYIO_IMAGE" .
+
+      - name: Jalankan image dengan compose staging
+        id: staging
+        run: |
+          echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)" > "$GITHUB_WORKSPACE/../staging-ci.env"
+          $STAGING up -d --wait
+
+      - name: Pasang Chromium untuk Playwright
+        run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
+
+      - name: Uji asap
+        run: pnpm e2e smoke
+        env:
+          E2E_BASE_URL: http://localhost:8080
+
+      # Dua langkah terakhir hanya bila stack sempat dinyalakan; bila build gagal atau run
+      # dibatalkan lebih awal, tidak ada yang perlu dibaca atau dibersihkan.
+      - name: Log container bila gagal
+        if: failure() && steps.staging.conclusion != 'skipped'
+        run: $STAGING logs --no-color
+
+      - name: Bersihkan
+        if: always() && steps.staging.conclusion != 'skipped'
+        run: $STAGING down --volumes

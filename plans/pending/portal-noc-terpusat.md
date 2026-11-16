@@ -2,7 +2,7 @@
 
 Ticket: belum ada (tracker belum ditentukan)
 Status: **Rekomendasi bagian 5 dan urutan rilis bagian 8 DISETUJUI.** Langkah teknis per rilis: [langkah-teknis.md](langkah-teknis.md).
-Belum ada kode atau config yang dibuat.
+Kode dimulai di branch `claude/r0-fondasi` (langkah 0.1 selesai); progres rinci di langkah-teknis.md.
 
 ## 1. Latar belakang
 
@@ -294,4 +294,5 @@ List Report Teknisi, Shared.
 | Rilis | Status |
 | --- | --- |
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
-| R0–R8 | Belum mulai — langkah teknis ditulis, menunggu persetujuan |
+| R0 Fondasi | Berjalan — 0.1 selesai; lihat Progres di langkah-teknis.md |
+| R1–R8 | Belum mulai |

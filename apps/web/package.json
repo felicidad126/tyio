@@ -1,0 +1,25 @@
+{
+  "name": "@tyio/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Antarmuka web (PWA) portal NOC",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && vite build",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@tyio/shared": "workspace:*",
+    "vue": "3.5.45"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "26.6.6",
+    "@vitejs/plugin-vue": "6.0.11",
+    "typescript": "6.0.3",
+    "vite": "8.3.8",
+    "vue-tsc": "3.3.14"
+  }
+}
