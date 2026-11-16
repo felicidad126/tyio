@@ -45,7 +45,7 @@ Selesai bila: aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-r
 - Uji di: halaman login terbuka · Menunggu: 0.1
 
 **0.3 Tenant, pengguna, login (M)**
-- Terima: login/logout dengan sesi; pengguna terikat ke tenant dan peran (L1 Monitoring, L2 NOC, L3, SD, admin — lihat K20); percobaan login gagal dibatasi.
+- Terima: login/logout dengan sesi; pengguna terikat ke tenant dan peran (L1 Monitoring, L2 NOC, admin — lihat K20, K23, K24; L3 menyusul); percobaan login gagal dibatasi.
 - Verifikasi: `pnpm test:api auth && pnpm e2e auth`
 - Berkas: `apps/api/src/modules/{tenants,users,auth}/`, `apps/web/src/pages/login/`, migrasi awal
 - Uji di: `POST /auth/login`, alur login di browser · Menunggu: 0.2
@@ -160,11 +160,11 @@ Selesai bila: satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa
 - Berkas: `apps/api/src/modules/trouble-tickets/`
 - Menunggu: 1.5b
 
-**3.3 Laporan lapangan di ponsel (M)**
-- Terima: teknisi mengisi laporan dan foto dari ponsel; isian tersimpan saat sinyal hilang dan terkirim saat tersambung.
-- Verifikasi: `pnpm e2e field-report` (dengan simulasi offline)
-- Berkas: `apps/web/src/pages/field/`
-- Menunggu: 3.2 · **Butuh: keputusan apakah teknisi ikut login**
+**3.3 Hasil kunjungan SD (S)** — diubah karena SD tidak login (K23)
+- Terima: L1/L2 mencatat hasil kunjungan SD (waktu tiba, temuan, perangkat diganti, foto dari SD) di linimasa TT; TT tidak bisa ditutup tanpa hasil kunjungan.
+- Verifikasi: `pnpm test:api trouble-tickets.visit && pnpm e2e tt-visit`
+- Berkas: `apps/api/src/modules/trouble-tickets/`, `apps/web/src/pages/tickets/tt/`
+- Menunggu: 3.2
 
 ### R4 — SLA + Laporan
 Selesai bila: laporan bulanan dihasilkan tanpa olah manual di Excel.

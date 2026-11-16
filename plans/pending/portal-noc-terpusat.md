@@ -37,6 +37,8 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K20 | **Tingkatan tim:** L1 = tim monitoring (pengguna utama dashboard, paling sering memantau); L2 = NOC; SD = Service Delivery (kunjungan teknisi). "Eskalasi To NOC" = eskalasi dari L1 ke L2. Isi L3 belum diketahui. | User |
 | K21 | **Penutupan:** L1 boleh menutup NPR yang tidak punya TT (mis. listrik padam lalu pulih). NPR yang punya TT, dan TT itu sendiri, hanya ditutup L2 ke atas. | User |
 | K22 | Data dummy memakai nama bank samaran dulu. | User |
+| K23 | Tim SD tidak login ke portal; SD menerima TT lewat notifikasi. Hasil kunjungan dicatat L1/L2 di linimasa TT. | User |
+| K24 | Peran L3 dibahas nanti; R0 hanya memasang L1, L2, admin. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
@@ -207,7 +209,7 @@ Langkah teknis per rilis (file, perintah verifikasi) ditulis setelah R-A s.d. R-
 | **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis, audit log, checklist kepatuhan bank/OJK | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
 | **R1 Remote + Tiket** | Master remote, buat tiket (data remote terisi otomatis), linimasa tindakan, antrean, penutupan oleh L2/L3, pencarian | Satu gangguan bisa dicatat dari awal sampai ditutup tanpa sistem lama | R0, alur status disetujui |
 | **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, peta remote berwarna status, mode layar dinding, alert di dashboard, indikator "data terakhir diterima" | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
-| **R3 Gamas + laporan teknisi** | Gamas dengan remote terdampak dan tiket anak; laporan lapangan teknisi (TT dasar pindah ke R1, lihat K16) | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
+| **R3 Gamas + laporan teknisi** | Gamas dengan remote terdampak dan tiket anak; pencatatan hasil kunjungan SD oleh L1/L2 (TT dasar pindah ke R1, lihat K16; SD tidak login, K23) | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
 | **R4 SLA + Laporan** | Aturan SLA, hitung mundur, jeda saat pending; template laporan + ekspor | Laporan bulanan dihasilkan tanpa olah manual di Excel | R1, sesi SLA |
 | **R5 Notifikasi** | Bot Telegram dan email: tiket baru, eskalasi, SLA hampir lewat, Gamas | Notifikasi sampai dalam hitungan detik dan tidak dobel | R4 untuk SLA |
 | **R6 Alert otomatis** | Pintu masuk alert dari SNMP/ping NOC dan dari sistem VSAT, kandidat tiket, verifikasi L1, deduplikasi, debounce untuk gangguan sesaat (rain fade), dugaan penyebab (link / perangkat / listrik / cuaca), saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Akses ke alat SNMP dan sistem VSAT yang ada |
