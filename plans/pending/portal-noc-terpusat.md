@@ -1,7 +1,7 @@
 # Portal NOC Terpusat (Tyio) — Rencana
 
 Ticket: belum ada (tracker belum ditentukan)
-Status: **DRAFT v2 — menunggu persetujuan atas rekomendasi di bagian 5 dan 9.**
+Status: **DRAFT v3 — menunggu persetujuan atas rekomendasi di bagian 5 dan 9.**
 Belum ada kode atau config yang dibuat.
 
 ## 1. Latar belakang
@@ -26,6 +26,9 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K9 | Notifikasi: bot Telegram, email, dan alert di dashboard (ditampilkan 24/7 di monitor). | User |
 | K10 | Laporan memakai template yang kita buat. | User |
 | K11 | Jarkom = Jaringan Komputer. | User |
+| K12 | Sumber data status remote: SNMP/ping dari NOC dan sistem monitoring VSAT yang sudah ada. Portal menerima alert dari sana, tidak mengumpulkan metrik sendiri. | User |
+| K13 | Monitoring perangkat ATM (mesin) ada di sisi bank sebagai end user; di luar lingkup versi ini. | User (tafsiran saya, perlu dikonfirmasi) |
+| K14 | Agent di site ATM belum pasti; tidak direncanakan. Bila kelak dipilih, menjadi rilis tersendiri setelah R6. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
@@ -122,7 +125,10 @@ Paling mudah dikelola: satu yang di-deploy, satu yang di-backup, satu log. Modul
 dalam kode, bukan menjadi banyak layanan.
 
 **R-B. Stack:** antarmuka web PWA (Vue 3), API TypeScript (NestJS), database PostgreSQL,
-dijalankan dengan Docker Compose di satu server. Alasan: satu bahasa di depan dan belakang,
+dijalankan dengan Docker Compose. Pengembangan, staging, dan pilot cukup satu server.
+**Produksi memakai dua server** (utama + cadangan dengan replika database), backup
+terenkripsi di lokasi lain, dan pemantauan dari luar terhadap portal itu sendiri.
+Kubernetes tidak dipakai karena bertentangan dengan syarat mudah dikelola. Alasan: satu bahasa di depan dan belakang,
 PostgreSQL cukup untuk tiket + laporan + antrean pekerjaan di tahap awal, dan seluruh sistem
 bisa dipindah/di-restore sebagai satu paket. Komponen tambahan (antrean terpisah, cache)
 baru ditambahkan bila terbukti perlu.
@@ -141,6 +147,15 @@ punya tenant. Penomoran mengikuti pola lama. Ini murah dipasang di awal, mahal b
 
 **R-F. Jejak audit tidak bisa dihapus.** Tindakan dikoreksi dengan entri baru; waktu
 pencatatan diisi sistem, waktu kejadian diisi terpisah.
+
+**R-H. Waktu dan sumber data.** Semua waktu disimpan dalam UTC dan ditampilkan sesuai
+WIB/WITA/WIT. Setiap alert menyimpan waktu kejadian dan waktu diterima, supaya "remote turun"
+bisa dibedakan dari "datanya belum sampai".
+
+**R-I. Keamanan dan kepatuhan sebagai syarat produksi.** TLS di semua koneksi; tidak ada data
+kartu atau nasabah yang masuk ke portal; audit log siapa melihat dan mengubah apa; SSO bila
+bank/perusahaan punya; checklist kebijakan bank dan ketentuan OJK (manajemen risiko TI,
+lokasi data) dipenuhi sebelum R1 naik ke produksi.
 
 **R-G. Tiga lingkungan:** pengembangan (data dummy) → staging (uji bersama user) → produksi.
 Setiap rilis lewat staging dan disetujui user sebelum naik ke produksi.
@@ -181,13 +196,13 @@ Langkah teknis per rilis (file, perintah verifikasi) ditulis setelah R-A s.d. R-
 
 | Rilis | Isi | Selesai bila | Bergantung pada |
 | --- | --- | --- | --- |
-| **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
+| **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis, audit log, checklist kepatuhan bank/OJK | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
 | **R1 Remote + Tiket** | Master remote, buat tiket (data remote terisi otomatis), linimasa tindakan, antrean, penutupan oleh L2/L3, pencarian | Satu gangguan bisa dicatat dari awal sampai ditutup tanpa sistem lama | R0, alur status disetujui |
-| **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, mode layar dinding, alert di dashboard | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
+| **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, peta remote berwarna status, mode layar dinding, alert di dashboard, indikator "data terakhir diterima" | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
 | **R3 Gamas + TT/teknisi** | Gamas dengan remote terdampak dan tiket anak; TT dan laporan lapangan | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
 | **R4 SLA + Laporan** | Aturan SLA, hitung mundur, jeda saat pending; template laporan + ekspor | Laporan bulanan dihasilkan tanpa olah manual di Excel | R1, sesi SLA |
 | **R5 Notifikasi** | Bot Telegram dan email: tiket baru, eskalasi, SLA hampir lewat, Gamas | Notifikasi sampai dalam hitungan detik dan tidak dobel | R4 untuk SLA |
-| **R6 Alert otomatis** | Pintu masuk alert, kandidat tiket, verifikasi L1, deduplikasi, saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Alat monitoring dipilih |
+| **R6 Alert otomatis** | Pintu masuk alert dari SNMP/ping NOC dan dari sistem VSAT, kandidat tiket, verifikasi L1, deduplikasi, debounce untuk gangguan sesaat (rain fade), dugaan penyebab (link / perangkat / listrik / cuaca), saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Akses ke alat SNMP dan sistem VSAT yang ada |
 | **R7 Integrasi customer** | API pembuatan tiket per tenant, nomor tiket customer tersinkron | Sistem customer uji membuat tiket di tenant yang benar | R6, kebutuhan eksternal nyata |
 | **R8 Go-live penuh** | Hak akses rinci, dokumen/runbook, pengerasan keamanan, pelatihan, sistem lama dimatikan | Semua shift bekerja di portal baru selama satu periode laporan | Sesi hak akses |
 
@@ -205,8 +220,9 @@ Gerbang sekarang (jawab "ya" = setuju rekomendasi):
 2. **Hosting:** server internal/on-premise atau cloud? Rekomendasi: satu server internal
    (aturan customer bank biasanya mengharuskan), dengan backup ke lokasi kedua.
 3. **Urutan rilis** di bagian 8 sudah sesuai prioritas, atau ada yang harus lebih dulu?
-4. **Alat monitoring saat ini:** bagaimana tim sekarang tahu sebuah remote turun (ping manual,
-   NMS hub VSAT, laporan customer)? Ini menentukan R6.
+4. **Alat monitoring yang ada:** nama produk alat SNMP di NOC dan sistem VSAT (apakah
+   "Jupiter" = Hughes JUPITER?), dan apakah keduanya bisa mengirim alert keluar (webhook,
+   SNMP trap, email, atau API). Ini menentukan bentuk R6.
 
 Sesi berikutnya bersama user: aturan SLA · detail Gamas · arti Take Action · hak akses per
 peran · arti System, TM, SD · isi laporan wajib · screenshot Home, Gamas, List Remote, SLA,
@@ -225,6 +241,13 @@ List Report Teknisi, Shared.
 - Aturan SLA, alur Gamas, hak akses rinci — menunggu sesi dengan user.
 - Alat monitoring dan merek hub/modem VSAT — riset berjalan sejak R0.
 - Bentuk integrasi sistem customer (R7) — kabur sampai ada kebutuhan eksternal nyata.
+
+### Sengaja ditunda (bukan ditolak)
+- MQTT + store-and-forward + sertifikat per perangkat: hanya relevan bila ada agent di site (K14).
+- TimescaleDB: hanya relevan bila portal menyimpan metrik sendiri. Selama metrik tinggal di
+  alat monitoring dan portal menyimpan kejadian naik/turun, PostgreSQL biasa cukup; ekstensi
+  ini bisa ditambahkan kemudian tanpa ganti database.
+- Monitoring kesehatan mesin ATM: milik bank (K13).
 
 ## 11. Selalu / Tidak pernah
 - Selalu: setiap tiket menempel ke satu remote dan satu tenant; setiap perubahan tercatat;
@@ -259,5 +282,5 @@ List Report Teknisi, Shared.
 ## Progres
 | Rilis | Status |
 | --- | --- |
-| Penemuan | Berjalan — 10 screenshot, 11 keputusan tercatat |
+| Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
 | R0–R8 | Belum mulai — menunggu persetujuan bagian 5 |
