@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Rahasia dan konfigurasi lokal tidak pernah masuk repo
+.env
+.env.*
+!.env.example
+
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
