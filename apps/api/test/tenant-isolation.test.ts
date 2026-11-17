@@ -25,7 +25,13 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   let b: Tenant;
   let aIds: string[];
   let bIds: string[];
-  const cookies: Record<'a' | 'semua' | 'kosong', string> = { a: '', semua: '', kosong: '' };
+  const cookies: Record<'a' | 'semua' | 'kosong' | 'adminA' | 'adminSemua', string> = {
+    a: '',
+    semua: '',
+    kosong: '',
+    adminA: '',
+    adminSemua: '',
+  };
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -40,10 +46,14 @@ describe('isolasi tenant di semua rute terdaftar', () => {
     await createUser(ds, { username: 'l1.hanya-a', allTenants: false, tenants: [a] });
     await createUser(ds, { username: 'l2.semua', role: 'L2', allTenants: true });
     await createUser(ds, { username: 'l1.kosong', allTenants: false, tenants: [] });
+    await createUser(ds, { username: 'admin.hanya-a', role: 'admin', allTenants: false, tenants: [a] });
+    await createUser(ds, { username: 'admin.semua', role: 'admin', allTenants: true });
     for (const [key, username] of [
       ['a', 'l1.hanya-a'],
       ['semua', 'l2.semua'],
       ['kosong', 'l1.kosong'],
+      ['adminA', 'admin.hanya-a'],
+      ['adminSemua', 'admin.semua'],
     ] as const) {
       const res = await request(app.getHttpServer())
         .post('/api/auth/login')
@@ -58,10 +68,15 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   });
 
   const scopedRoutes = () => routes.filter((r) => r.policy?.kind === 'scoped');
+  const allTenantRoutes = () => routes.filter((r) => r.policy?.kind === 'all');
   const fill = (path: string, id: string) => path.replace(/:[A-Za-z]+/g, id);
   const hasParams = (path: string) => /:[A-Za-z]+/.test(path);
   const get = (path: string, who: keyof typeof cookies) =>
     request(app.getHttpServer()).get(path).set('Cookie', cookies[who]);
+  const call = (method: string, path: string, who?: keyof typeof cookies) => {
+    const req = request(app.getHttpServer())[method.toLowerCase() as 'get'](path);
+    return who ? req.set('Cookie', cookies[who]) : req;
+  };
   const bMarkers = () => [...bIds, b.code, b.name];
 
   it('setiap rute menyatakan kebijakan tenant', () => {
@@ -133,9 +148,32 @@ describe('isolasi tenant di semua rute terdaftar', () => {
     }
   });
 
-  it('tanpa login, rute tenant menjawab 401', async () => {
-    for (const route of scopedRoutes()) {
-      await request(app.getHttpServer()).get(fill(route.path, a.id)).expect(401);
+  // Rute lintas customer (@AllTenants, mis. master data) hanya untuk pengguna dengan akses
+  // semua customer. Admin yang dibatasi ke sebagian customer ditolak untuk setiap metode,
+  // sebelum isian dibaca, dan jawabannya tidak memuat data tenant lain.
+  it('rute lintas customer menolak pengguna yang dibatasi ke sebagian customer, termasuk admin', async () => {
+    expect(allTenantRoutes().length).toBeGreaterThan(0);
+    for (const route of allTenantRoutes()) {
+      for (const who of ['a', 'adminA'] as const) {
+        const res = await call(route.method, fill(route.path, b.id), who).send({});
+        expect(res.status, `${route.method} ${route.path} oleh ${who}`).toBe(403);
+        for (const marker of bMarkers()) {
+          expect(JSON.stringify(res.body), `${route.method} ${route.path}`).not.toContain(marker);
+        }
+      }
+    }
+  });
+
+  it('rute lintas customer melayani admin dengan akses semua customer', async () => {
+    for (const route of allTenantRoutes().filter((r) => r.method === 'GET' && !hasParams(r.path))) {
+      await get(route.path, 'adminSemua').expect(200);
+    }
+  });
+
+  it('tanpa login, rute tenant dan rute lintas customer menjawab 401', async () => {
+    for (const route of [...scopedRoutes(), ...allTenantRoutes()]) {
+      const res = await call(route.method, fill(route.path, a.id));
+      expect(res.status, `${route.method} ${route.path}`).toBe(401);
     }
   });
 });

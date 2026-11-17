@@ -5,7 +5,8 @@ import { UserTenantEntity } from '../src/modules/users/user-tenant.entity.js';
 import { UserEntity } from '../src/modules/users/user.entity.js';
 import { DEV_SEED_PASSWORD, seedPassword } from '../src/seed/seed-password.js';
 import { seed } from '../src/seed/seed.js';
-import { createSeeders, DEMO_TENANTS, DEMO_USERS } from '../src/seed/seeders.js';
+import { createSeeders, DEMO_MASTER, DEMO_TENANTS, DEMO_USERS } from '../src/seed/seeders.js';
+import { MASTER_ENTITIES } from '../src/modules/master/master.entities.js';
 import { resetData, testDataSource } from './db.js';
 
 describe('data contoh (tenant dan pengguna)', () => {
@@ -35,6 +36,16 @@ describe('data contoh (tenant dan pengguna)', () => {
     }
   });
 
+  it('mengisi master contoh: kategori dari dashboard lama, system dan jarkom contoh', async () => {
+    await seed(ds, 'development', createSeeders({ password: 'sandi-contoh-panjang' }));
+
+    const codes = async (list: 'kategori' | 'system' | 'jarkom') =>
+      (await ds.getRepository(MASTER_ENTITIES[list]).find({ order: { code: 'ASC' } })).map((r) => r.code);
+    expect(await codes('kategori')).toEqual(['CM', 'PM', 'RD']);
+    expect(await codes('system')).toEqual(['SYSA', 'SYSB']);
+    expect(await codes('jarkom')).toEqual(['JKCA', 'VSAT']);
+  });
+
   it('pengguna l1.merapi hanya terikat ke tenant MRS', async () => {
     await seed(ds, 'development', createSeeders({ password: 'sandi-contoh-panjang' }));
 
@@ -52,6 +63,11 @@ describe('data contoh (tenant dan pengguna)', () => {
     expect(await ds.getRepository(TenantEntity).count()).toBe(DEMO_TENANTS.length);
     expect(await ds.getRepository(UserEntity).count()).toBe(DEMO_USERS.length);
     expect(await ds.getRepository(UserTenantEntity).count()).toBe(1);
+    for (const [list, rows] of Object.entries(DEMO_MASTER)) {
+      expect(await ds.getRepository(MASTER_ENTITIES[list as keyof typeof DEMO_MASTER]).count()).toBe(
+        rows.length,
+      );
+    }
     const admin = await ds.getRepository(UserEntity).findOneByOrFail({ username: 'admin.contoh' });
     expect(await verifyPassword('sandi-pertama-panjang', admin.passwordHash)).toBe(true);
   });

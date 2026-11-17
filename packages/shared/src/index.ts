@@ -16,5 +16,24 @@ export type {
   UserRole,
 } from './auth.js';
 export type { HealthResponse, HealthState } from './health.js';
+export {
+  MASTER_CODE_PATTERN,
+  MASTER_LABELS,
+  MASTER_LISTS,
+  MASTER_NAME_MAX,
+  MASTER_NAME_MIN,
+  masterCodeError,
+  masterNameError,
+  normalizeMasterCode,
+  normalizeMasterName,
+} from './master.js';
+export type {
+  CreateMasterItemRequest,
+  MasterItem,
+  MasterItemResponse,
+  MasterList,
+  MasterListResponse,
+  UpdateMasterItemRequest,
+} from './master.js';
 export { APP_MODULES, canOpenModule, MODULE_ROLES } from './modules.js';
 export type { AppModule } from './modules.js';

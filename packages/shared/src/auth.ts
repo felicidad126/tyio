@@ -35,6 +35,8 @@ export interface ApiErrorBody {
   message: string;
   /** Hanya pada 429: berapa detik lagi boleh mencoba. */
   retryAfterSeconds?: number;
+  /** Kolom isian yang bermasalah, agar pesan tampil di bawah kolom itu. */
+  field?: string;
 }
 
 export interface TenantListResponse {

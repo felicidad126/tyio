@@ -21,7 +21,7 @@ export class TenantPolicyCheck implements OnApplicationBootstrap {
     if (missing.length > 0) {
       const list = missing.map((r) => `${r.method} ${r.path} (${r.route})`).join(', ');
       throw new Error(
-        `Rute tanpa kebijakan tenant; tandai dengan @TenantScoped() atau @NoTenantData('alasan'): ${list}`,
+        `Rute tanpa kebijakan tenant; tandai dengan @TenantScoped(), @NoTenantData('alasan'), atau @AllTenants('alasan'): ${list}`,
       );
     }
   }

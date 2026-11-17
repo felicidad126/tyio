@@ -12,7 +12,10 @@ import { type TenantAccess, tenantAccessOf } from './tenant-access.js';
 
 export const TENANT_POLICY = 'tyio:tenant-policy';
 
-export type TenantPolicy = { kind: 'scoped' } | { kind: 'none'; reason: string };
+export type TenantPolicy =
+  | { kind: 'scoped' }
+  | { kind: 'none'; reason: string }
+  | { kind: 'all'; reason: string };
 
 /**
  * Rute ini membaca atau mengubah data milik tenant. Wajib memakai TenantScopedRepository;
@@ -23,6 +26,13 @@ export const TenantScoped = () => SetMetadata(TENANT_POLICY, { kind: 'scoped' } 
 /** Rute ini tidak menyentuh data milik tenant; alasannya wajib ditulis. */
 export const NoTenantData = (reason: string) =>
   SetMetadata(TENANT_POLICY, { kind: 'none', reason } satisfies TenantPolicy);
+
+/**
+ * Rute ini melayani data lintas semua customer (mis. master data). Hanya untuk pengguna
+ * dengan akses ke semua customer; pengguna yang dibatasi ditolak 403 oleh SessionGuard.
+ */
+export const AllTenants = (reason: string) =>
+  SetMetadata(TENANT_POLICY, { kind: 'all', reason } satisfies TenantPolicy);
 
 /** Tenant yang boleh dibaca pengguna sesi pada permintaan ini. */
 export const CurrentTenantAccess = createParamDecorator(
