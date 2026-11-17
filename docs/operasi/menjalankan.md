@@ -78,6 +78,33 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   `ON DELETE RESTRICT`. Uji `pnpm test:api master` gagal bila ada yang memakai CASCADE,
   karena menghapus master akan ikut menghapus data yang merujuknya.
 
+### Remote
+
+- **Remote** di menu: daftar remote yang boleh dilihat pengguna (dibatasi customer), 50 per
+  halaman. Cari Site ID, nama, kota, atau kanca; saring customer, provinsi, jarkom, status.
+  Pencarian dan saringan tersimpan di alamat halaman, jadi bisa dibagikan.
+- Detail remote: lokasi, zona waktu (WIB/WITA/WIT, mengikuti provinsi), jaringan, kanwil/kanca,
+  tanggal online, dan kontak.
+- Remote **tidak pernah dihapus** (tiket akan merujuknya); ubah statusnya menjadi Nonaktif atau
+  Dibongkar.
+- **Mengisi dan mengubah remote: Remote › Impor dari Excel**, khusus admin dengan akses semua
+  customer (K18):
+  1. Unduh template. Lembar "Remote" berisi judul kolom; lembar "Petunjuk" berisi aturan tiap
+     kolom. Kolom wajib: Site ID, Nama Remote, Jarkom (kode di master data), Kota, Provinsi.
+  2. Pilih customer, lalu pilih file .xlsx (paling banyak 10.000 remote, 20 MB). File dibaca di
+     browser; server hanya menerima isi selnya.
+  3. Periksa hasil: jumlah baru, diperbarui, tidak berubah, dan baris yang gagal beserta kolom
+     dan masalahnya. **Bila ada satu baris saja yang gagal, tidak ada yang disimpan**; perbaiki
+     di Excel lalu pilih filenya lagi.
+  4. Simpan. Site ID yang sudah ada di customer itu diperbarui. Kolom yang **tidak ada** di file
+     tidak mengubah data; sel yang **kosong** mengosongkan nilainya. Impor ulang file yang sama
+     tidak mengubah apa pun.
+- Telepon dan Site ID berawalan nol: isi sebagai teks di Excel (template sudah begitu), agar
+  angka nolnya tidak hilang.
+- Database: pencarian memakai ekstensi `pg_trgm` (dipasang migrasi; termasuk ekstensi
+  "trusted", jadi cukup hak CREATE di database). Saat peran database produksi dipisah,
+  pastikan migrasi tetap boleh membuat ekstensi ini, atau pasang lebih dulu oleh DBA.
+
 ### Memasang aplikasi (PWA)
 
 - Desktop (Chrome/Edge): ikon "Pasang" di bilah alamat. Ponsel Android: menu browser →
@@ -133,6 +160,8 @@ pnpm e2e smoke       # uji asap terhadap http://localhost:8080
   | `l2.contoh` | L2 NOC | Semua |
   | `l1.contoh` | L1 Monitoring | Semua |
   | `l1.merapi` | L1 Monitoring | Hanya Bank Merapi Sejahtera |
+
+  Seed dev juga mengisi 25 remote rekaan per customer contoh, tersebar di ketiga zona waktu.
 - Uji API (`pnpm test:api`) memakai database `tyio_test` di Postgres yang sama, jadi
   `pnpm dev:up` harus sudah jalan. Sasaran lain: set `TEST_DATABASE_URL`.
 - Setelah mengubah kode API, jalankan `pnpm dev:up` lagi (image dibangun ulang).

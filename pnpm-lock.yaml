@@ -269,6 +269,9 @@ importers:
       '@tyio/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       pinia:
         specifier: 4.1.0
         version: 4.1.0(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.45(typescript@6.0.3))
@@ -297,6 +300,9 @@ importers:
       vite-plugin-pwa:
         specifier: 2.0.0
         version: 2.0.0(vite@8.3.8(@types/node@26.6.6)(terser@5.51.2))(workbox-build@7.4.1)(workbox-window@7.4.1)
+      vitest:
+        specifier: 5.1.0
+        version: 5.1.0(@types/node@26.6.6)(vite@8.3.8(@types/node@26.6.6)(terser@5.51.2))
       vue-tsc:
         specifier: 3.3.14
         version: 3.3.14(typescript@6.0.3)
@@ -2058,6 +2064,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   file-entry-cache@11.1.5:
     resolution: {integrity: sha512-+PFTHITI08JIGhnNpGNI8T8inUpgZfk3GNEqfT9R2zZV2iFXg3CvqzSl/uEhs7TSGujYRELEANyDvS8Fj7+S7Q==}
@@ -5528,6 +5537,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
+
+  fflate@0.8.3: {}
 
   file-entry-cache@11.1.5:
     dependencies:

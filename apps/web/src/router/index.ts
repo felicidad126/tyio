@@ -18,7 +18,8 @@ const OverviewPage = () => import('../pages/overview/OverviewPage.vue');
 const ModulePage = () => import('../pages/ModulePage.vue');
 
 // Satu rute per modul. Halaman modul yang belum dibangun memakai halaman penanda.
-const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.filter((item) => item.module !== 'admin').map(
+const BUILT_MODULES: readonly AppModule[] = ['admin', 'remote'];
+const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.filter((item) => !BUILT_MODULES.includes(item.module)).map(
   (item) => ({
     path: item.path === '/' ? '' : item.path.slice(1),
     name: item.module,
@@ -26,6 +27,28 @@ const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.filter((item) => item.module !=
     meta: { module: item.module, title: item.label },
   }),
 );
+
+// Remote (1.2): daftar dan detail untuk semua peran; impor khusus admin (K18).
+const remoteRoutes: RouteRecordRaw[] = [
+  {
+    path: 'remote',
+    name: 'remote',
+    component: () => import('../pages/remotes/RemoteListPage.vue'),
+    meta: { module: 'remote', title: 'Remote' },
+  },
+  {
+    path: 'remote/impor',
+    name: 'remote-import',
+    component: () => import('../pages/remotes/RemoteImportPage.vue'),
+    meta: { module: 'admin', title: 'Impor remote' },
+  },
+  {
+    path: 'remote/:id',
+    name: 'remote-detail',
+    component: () => import('../pages/remotes/RemoteDetailPage.vue'),
+    meta: { module: 'remote', title: 'Remote' },
+  },
+];
 
 // Admin: untuk sekarang hanya master data (1.1); daftar yang dibuka tersimpan di alamat.
 const adminRoutes: RouteRecordRaw[] = [
@@ -52,6 +75,7 @@ export const router = createRouter({
       component: () => import('../layouts/AppLayout.vue'),
       children: [
         ...moduleRoutes,
+        ...remoteRoutes,
         ...adminRoutes,
         {
           path: 'tanpa-akses',

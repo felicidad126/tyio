@@ -24,4 +24,9 @@ export const masterApi = {
   },
 
   remove: (list: MasterList, id: string) => apiRequest<void>('DELETE', `${base(list)}/${id}`),
+
+  /** Pilihan aktif untuk form dan saringan; bisa dibaca semua peran. */
+  async options(list: Exclude<MasterList, 'customer'>): Promise<MasterItem[]> {
+    return (await apiRequest<MasterListResponse>('GET', `/master/${list}`)).items;
+  },
 };

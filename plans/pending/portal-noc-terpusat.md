@@ -295,5 +295,5 @@ List Report Teknisi, Shared.
 | --- | --- |
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
 | R0 Fondasi | 0.1–0.5 selesai (0.1–0.2 di `main` lewat PR #1); pemasangan staging dan 0.6 menunggu keputusan hosting; lihat Progres di langkah-teknis.md |
-| R1 Remote + Tiket | Berjalan — 1.1 (master data) selesai |
+| R1 Remote + Tiket | Berjalan — 1.1 (master data) dan 1.2 (remote: daftar, detail, impor Excel) selesai |
 | R2–R8 | Belum mulai |

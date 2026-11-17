@@ -2,6 +2,8 @@ import { expect, type Page, test } from '@playwright/test';
 import { expectNoPageOverflow, expectPath, signInAs } from './helpers';
 
 const OPERATIONAL = ['Overview', 'Alert', 'Tiket', 'Gamas', 'Remote', 'Laporan', 'Dokumen'];
+/** Modul yang sudah punya halaman sungguhan, bukan halaman penanda. */
+const BUILT = ['Overview', 'Remote'];
 const PAGES: Record<string, string> = {
   Overview: '/',
   Alert: '/alert',
@@ -28,6 +30,8 @@ test.describe('navigasi per peran', () => {
       await expect(mainMenu(page).getByRole('link', { name: label })).toHaveAttribute('aria-current', 'page');
       if (label !== 'Overview') {
         await expect(page.getByRole('heading', { level: 1 })).toHaveText(label);
+      }
+      if (!BUILT.includes(label)) {
         await expect(page.getByText(`Modul ${label} sedang dibangun`)).toBeVisible();
       }
     }

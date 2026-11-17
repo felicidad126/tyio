@@ -8,6 +8,8 @@ export class ApiError extends Error {
     readonly retryAfterSeconds?: number,
     /** Kolom isian yang bermasalah, bila API menyebutnya. */
     readonly field?: string,
+    /** Isi jawaban galat apa adanya, mis. laporan impor pada 422. */
+    readonly body?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -41,7 +43,7 @@ export async function apiRequest<T>(
     const error = (data ?? {}) as Partial<ApiErrorBody>;
     // Pesan 4xx ditulis API untuk pengguna; rincian galat 5xx tidak ditampilkan.
     const message = res.status < 500 && typeof error.message === 'string' ? error.message : SERVER_MESSAGE;
-    throw new ApiError(res.status, message, error.retryAfterSeconds, error.field);
+    throw new ApiError(res.status, message, error.retryAfterSeconds, error.field, data);
   }
   return data as T;
 }
