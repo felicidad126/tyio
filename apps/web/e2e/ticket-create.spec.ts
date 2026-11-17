@@ -34,6 +34,10 @@ async function submitAndReadNumber(page: Page): Promise<string> {
 test.describe('buat tiket', () => {
   test('L1 memilih remote, data lokasi terisi hanya-baca, lalu tiket bernomor dibuat', async ({ page }) => {
     await signInAs(page, 'l1.contoh');
+    // Kolom System dihapus (K29).
+    await page.goto('/tiket/baru');
+    await expect(page.getByLabel('Kategori')).toBeVisible();
+    await expect(page.getByText('System', { exact: true })).toHaveCount(0);
     await page.getByRole('banner').getByRole('link', { name: 'Buat tiket' }).click();
     await expectPath(page, '/tiket/baru');
 

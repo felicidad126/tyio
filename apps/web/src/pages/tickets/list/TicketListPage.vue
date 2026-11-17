@@ -6,6 +6,8 @@ import {
   type MasterItem,
   PENDING_PARTY_LABELS,
   type TenantRef,
+  TICKET_ACTION_TYPE_LABELS,
+  TICKET_FLAG_DAYS,
   TICKET_QUEUE_VIEWS,
   TICKET_STATUS_LABELS,
   TICKET_VIEW_LABELS,
@@ -15,6 +17,7 @@ import {
   type TicketListResponse,
   type TicketQueueView,
   type TicketView,
+  ticketNeedsUpdate,
 } from '@tyio/shared';
 import { storeToRefs } from 'pinia';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
@@ -34,7 +37,7 @@ const router = useRouter();
 const { user } = storeToRefs(useAuthStore());
 const canCreate = computed(() => (user.value ? canOpenModule(user.value.role, 'tiket') : false));
 
-type FilterKey = 'q' | 'customer' | 'kategori' | 'system' | 'jarkom';
+type FilterKey = 'q' | 'customer' | 'kategori' | 'jarkom';
 const one = (value: LocationQuery[string] | undefined) => (typeof value === 'string' ? value : '');
 const filters = computed(() => ({
   tampilan: (TICKET_VIEWS as readonly string[]).includes(one(route.query.tampilan))
@@ -43,22 +46,19 @@ const filters = computed(() => ({
   q: one(route.query.q),
   customer: one(route.query.customer),
   kategori: one(route.query.kategori),
-  system: one(route.query.system),
   jarkom: one(route.query.jarkom),
   halaman: Math.max(1, Number(one(route.query.halaman)) || 1),
 }));
 const hasFilters = computed(() => {
   const f = filters.value;
-  return Boolean(f.q || f.customer || f.kategori || f.system || f.jarkom);
+  return Boolean(f.q || f.customer || f.kategori || f.jarkom);
 });
 
 const tenants = ref<TenantRef[]>([]);
 const categories = ref<MasterItem[]>([]);
-const systems = ref<MasterItem[]>([]);
 const jarkoms = ref<MasterItem[]>([]);
 void tenantsApi.list().then((list) => (tenants.value = list)).catch(() => undefined);
 void masterApi.options('kategori').then((list) => (categories.value = list)).catch(() => undefined);
-void masterApi.options('system').then((list) => (systems.value = list)).catch(() => undefined);
 void masterApi.options('jarkom').then((list) => (jarkoms.value = list)).catch(() => undefined);
 const showCustomer = computed(() => tenants.value.length > 1);
 // Jumlah di tab hanya untuk antrean; riwayat (Selesai, Semua) menampilkan totalnya di bawah daftar.
@@ -66,6 +66,8 @@ const isQueueView = (view: TicketView): view is TicketQueueView =>
   (TICKET_QUEUE_VIEWS as readonly string[]).includes(view);
 
 const result = ref<TicketListResponse | null>(null);
+// Waktu acuan tanda "≥ 7 hari", diperbarui setiap daftar dimuat.
+let now = new Date();
 const state = ref<'loading' | 'ready' | 'error'>('loading');
 const loadError = ref('');
 let latest = 0;
@@ -78,7 +80,6 @@ async function load(): Promise<void> {
     q: f.q || undefined,
     tenantId: f.customer || undefined,
     categoryId: f.kategori || undefined,
-    systemId: f.system || undefined,
     jarkomId: f.jarkom || undefined,
     page: f.halaman,
   };
@@ -86,6 +87,7 @@ async function load(): Promise<void> {
   try {
     const response = await ticketsApi.list(query);
     if (request !== latest) return; // jawaban lama datang setelah yang baru
+    now = new Date();
     result.value = response;
     state.value = 'ready';
   } catch (error) {
@@ -100,7 +102,7 @@ watch(filters, load, { immediate: true, deep: true });
 function viewQuery(view: TicketView): Record<string, string> {
   const f = filters.value;
   const query: Record<string, string> = view === 'aktif' ? {} : { tampilan: view };
-  for (const key of ['q', 'customer', 'kategori', 'system', 'jarkom'] as const) if (f[key]) query[key] = f[key];
+  for (const key of ['q', 'customer', 'kategori', 'jarkom'] as const) if (f[key]) query[key] = f[key];
   return query;
 }
 
@@ -276,29 +278,6 @@ function lastActionText(item: TicketListItem): string {
               :value="c.id"
             >
               {{ c.name }}
-            </option>
-          </select>
-        </div>
-        <div class="col-6 col-lg-2">
-          <label
-            class="form-label"
-            for="ticket-system"
-          >System</label>
-          <select
-            id="ticket-system"
-            class="form-select"
-            :value="filters.system"
-            @change="setFilter('system', ($event.target as HTMLSelectElement).value)"
-          >
-            <option value="">
-              Semua
-            </option>
-            <option
-              v-for="s in systems"
-              :key="s.id"
-              :value="s.id"
-            >
-              {{ s.name }}
             </option>
           </select>
         </div>
@@ -489,13 +468,16 @@ function lastActionText(item: TicketListItem): string {
             <td class="d-none d-md-table-cell text-nowrap">
               {{ formatInZone(item.occurredAt, item.remote.timeZone) }}
               <div class="small text-secondary">
-                {{ item.category.name }}<template v-if="item.system">
-                  · {{ item.system.name }}
-                </template>
+                {{ item.category.name }}
               </div>
             </td>
             <td class="status-cell">
               <span :class="TICKET_STATUS_BADGE[item.status]">{{ TICKET_STATUS_LABELS[item.status] }}</span>
+              <span
+                v-if="ticketNeedsUpdate(item, now)"
+                class="badge bg-danger text-white ms-1"
+                :title="`Masih aktif setelah ${TICKET_FLAG_DAYS} hari sejak kejadian: perbarui NPR ini.`"
+              >≥ {{ TICKET_FLAG_DAYS }} hari</span>
               <div
                 v-if="item.pending"
                 class="small mt-1"
@@ -513,6 +495,7 @@ function lastActionText(item: TicketListItem): string {
                   {{ item.lastAction.createdBy.displayName }}
                 </div>
                 <div class="last-action-text">
+                  <strong v-if="item.lastAction.type !== 'catatan'">{{ TICKET_ACTION_TYPE_LABELS[item.lastAction.type] }}:</strong>
                   {{ lastActionText(item) }}
                 </div>
               </template>

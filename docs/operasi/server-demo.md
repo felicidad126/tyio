@@ -228,11 +228,13 @@ Kategori dari dashboard lama; System dan Jarkom berisi nilai contoh.
    remote.
 2. **Buat tiket untuk remote ini**: data lokasi dan jaringan terisi sendiri, dan nomor NPR
    dibuat sistem.
-3. Di halaman tiket, **Tambah tindakan**: ubah status, pending dengan pihak dan alasan, lalu
-   tempel tangkapan layar (Ctrl+V) sebagai lampiran.
+3. Di halaman tiket, **Tambah tindakan**: pilih jenis **Cek lokasi** (minta PIC mengecek),
+   lalu **Problem** (hasil cek PIC); ubah status ke Pending dengan pihak TM atau Customer; tempel
+   tangkapan layar (Ctrl+V) sebagai lampiran.
 4. **Koreksi** sebuah entri. Linimasa tidak bisa diubah atau dihapus.
-5. Buka menu **Tiket**: tab Aktif, Milik saya, dan Pending, dengan status dan pihak yang
-   ditunggu terlihat tanpa membuka tiketnya. Lalu cari potongan nomor tiket atau nama lokasi
+5. Buka menu **Tiket**: tab Aktif, Milik saya, dan Pending, dengan status, pihak yang
+   ditunggu, dan tanda merah "≥ 7 hari" untuk NPR yang sudah lama down terlihat tanpa membuka
+   tiketnya. Lalu cari potongan nomor tiket atau nama lokasi
    di kotak cari header.
 6. Masuk sebagai `l1.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
    terlihat, juga di pencarian.

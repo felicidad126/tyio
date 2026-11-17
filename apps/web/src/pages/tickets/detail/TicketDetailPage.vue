@@ -6,6 +6,8 @@ import {
   TICKET_STATUS_LABELS,
   type TicketAction,
   type TicketDetail,
+  TICKET_FLAG_DAYS,
+  ticketNeedsUpdate,
 } from '@tyio/shared';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
@@ -114,6 +116,11 @@ function onSaved(result: AddTicketActionResponse): void {
           data-testid="status-tiket"
         >{{ TICKET_STATUS_LABELS[ticket.status] }}</span>
         <span
+          v-if="ticketNeedsUpdate(ticket)"
+          class="badge bg-danger text-white"
+          :title="`Masih aktif setelah ${TICKET_FLAG_DAYS} hari sejak kejadian: perbarui NPR ini.`"
+        >Down ≥ {{ TICKET_FLAG_DAYS }} hari</span>
+        <span
           v-if="ticket.pending"
           class="text-secondary"
         >Menunggu {{ PENDING_PARTY_LABELS[ticket.pending.party] }}: {{ ticket.pending.reason }}</span>
@@ -205,14 +212,6 @@ function onSaved(result: AddTicketActionResponse): void {
                 </dt>
                 <dd class="datagrid-content">
                   {{ ticket.category.name }}
-                </dd>
-              </div>
-              <div class="datagrid-item">
-                <dt class="datagrid-title">
-                  System
-                </dt>
-                <dd class="datagrid-content">
-                  {{ ticket.system?.name ?? '—' }}
                 </dd>
               </div>
               <div class="datagrid-item">

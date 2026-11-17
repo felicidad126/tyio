@@ -8,13 +8,18 @@ import {
   ATTACHMENT_TYPES,
   localInputToUtc,
   PENDING_PARTIES,
+  PENDING_PARTY_HINTS,
   PENDING_PARTY_LABELS,
   PENDING_REASON_MAX,
   PENDING_REASON_MIN,
   type PendingParty,
+  TICKET_ACTION_TYPE_HINTS,
+  TICKET_ACTION_TYPE_LABELS,
+  TICKET_ACTION_TYPES,
   TICKET_FUTURE_TOLERANCE_MINUTES,
   TICKET_STATUS_LABELS,
   TICKET_TRANSITIONS,
+  type TicketActionType,
   type TicketDetail,
   type TicketStatus,
   timeZoneLabel,
@@ -30,12 +35,13 @@ import { formatBytes } from './ticket-display';
 const props = defineProps<{ ticket: TicketDetail }>();
 const emit = defineEmits<{ saved: [result: AddTicketActionResponse]; stale: [message: string] }>();
 
-const ids = { time: useId(), status: useId(), reason: useId(), note: useId(), files: useId() };
+const ids = { type: useId(), time: useId(), status: useId(), reason: useId(), note: useId(), files: useId() };
 const fileInput = useTemplateRef<HTMLInputElement>('file-input');
 const zone = computed(() => props.ticket.remote.timeZone);
 const nextStatuses = computed(() => TICKET_TRANSITIONS[props.ticket.status]);
 
 const form = reactive({
+  type: 'catatan' as TicketActionType,
   occurredAt: utcToLocalInput(new Date(), zone.value),
   statusTo: '' as TicketStatus | '',
   pendingParty: '' as PendingParty | '',
@@ -72,7 +78,12 @@ const errors = computed(() => {
         : ''),
     note:
       serverErrors.note ||
-      (show && !form.note.trim() && !form.statusTo ? 'Tulis catatan atau ubah status.' : ''),
+      (show && !form.note.trim() && form.type !== 'catatan'
+        ? `Tulis catatan untuk tindakan ${TICKET_ACTION_TYPE_LABELS[form.type]}.`
+        : show && !form.note.trim() && !form.statusTo
+          ? 'Tulis catatan atau ubah status.'
+          : ''),
+    type: serverErrors.type || '',
     statusTo: serverErrors.statusTo || '',
     lampiran: serverErrors.lampiran || '',
   };
@@ -126,6 +137,7 @@ async function submit(): Promise<void> {
     const result = await ticketsApi.addAction(
       props.ticket.id,
       {
+        type: form.type,
         occurredAt: localInputToUtc(form.occurredAt, zone.value)!,
         note: form.note.trim() || undefined,
         ...(form.statusTo
@@ -142,6 +154,7 @@ async function submit(): Promise<void> {
     );
     emit('saved', result);
     Object.assign(form, {
+      type: 'catatan',
       occurredAt: utcToLocalInput(new Date(), zone.value),
       statusTo: '',
       pendingParty: '',
@@ -190,6 +203,43 @@ async function submit(): Promise<void> {
         {{ formError }}
       </div>
       <div class="row g-3">
+        <fieldset class="col-12">
+          <legend class="form-label">
+            Jenis tindakan
+          </legend>
+          <div
+            class="form-selectgroup"
+            :aria-describedby="`${ids.type}-hint`"
+          >
+            <label
+              v-for="type in TICKET_ACTION_TYPES"
+              :key="type"
+              class="form-selectgroup-item"
+            >
+              <input
+                v-model="form.type"
+                type="radio"
+                name="jenis-tindakan"
+                :value="type"
+                class="form-selectgroup-input"
+                @change="clearServer('type'); clearServer('note')"
+              >
+              <span class="form-selectgroup-label target-type">{{ TICKET_ACTION_TYPE_LABELS[type] }}</span>
+            </label>
+          </div>
+          <div
+            :id="`${ids.type}-hint`"
+            class="form-hint mt-1"
+          >
+            {{ TICKET_ACTION_TYPE_HINTS[form.type] }}
+          </div>
+          <div
+            v-if="errors.type"
+            class="invalid-feedback d-block"
+          >
+            {{ errors.type }}
+          </div>
+        </fieldset>
         <div class="col-12 col-md-6">
           <label
             class="form-label required"
@@ -247,23 +297,32 @@ async function submit(): Promise<void> {
             <legend class="form-label required">
               Menunggu pihak
             </legend>
-            <div class="d-flex gap-3">
-              <label
+            <div class="d-flex flex-column gap-1">
+              <div
                 v-for="party in PENDING_PARTIES"
                 :key="party"
-                class="form-check target-check"
               >
-                <input
-                  v-model="form.pendingParty"
-                  class="form-check-input"
-                  :class="{ 'is-invalid': errors.pendingParty }"
-                  type="radio"
-                  name="pihak-pending"
-                  :value="party"
-                  @change="clearServer('pendingParty')"
+                <label class="form-check target-check mb-0">
+                  <input
+                    v-model="form.pendingParty"
+                    class="form-check-input"
+                    :class="{ 'is-invalid': errors.pendingParty }"
+                    type="radio"
+                    name="pihak-pending"
+                    :value="party"
+                    :aria-describedby="`${ids.reason}-${party}`"
+                    @change="clearServer('pendingParty')"
+                  >
+                  <span class="form-check-label">{{ PENDING_PARTY_LABELS[party] }}</span>
+                </label>
+                <!-- Keterangan di luar label: nama radio tetap "TM"/"Customer", keterangan sebagai deskripsi. -->
+                <div
+                  :id="`${ids.reason}-${party}`"
+                  class="small text-secondary party-hint"
                 >
-                <span class="form-check-label">{{ PENDING_PARTY_LABELS[party] }}</span>
-              </label>
+                  {{ PENDING_PARTY_HINTS[party] }}
+                </div>
+              </div>
             </div>
             <div
               v-if="errors.pendingParty"
@@ -404,6 +463,17 @@ async function submit(): Promise<void> {
 </template>
 
 <style scoped>
+/* Keterangan pihak pending sejajar dengan teks pilihannya. */
+.party-hint {
+  margin-left: 2rem;
+  margin-top: -0.25rem;
+}
+/* Pilihan jenis tindakan memenuhi tinggi sentuh. */
+.target-type {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 .target {
   min-height: 44px;
   min-width: 44px;

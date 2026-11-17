@@ -4,6 +4,7 @@ import {
   ACTION_NOTE_MAX,
   formatInZone,
   PENDING_PARTY_LABELS,
+  TICKET_ACTION_TYPE_LABELS,
   TICKET_STATUS_LABELS,
   type AddTicketActionResponse,
   type TicketAction,
@@ -59,6 +60,10 @@ async function saveCorrection(): Promise<void> {
   >
     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
       <strong>{{ formatInZone(action.occurredAt, zone) }}</strong>
+      <span
+        v-if="action.type !== 'catatan'"
+        class="badge bg-azure-lt"
+      >{{ TICKET_ACTION_TYPE_LABELS[action.type] }}</span>
       <span class="text-secondary small">· dicatat {{ formatInZone(action.createdAt, zone) }} oleh {{ action.createdBy.displayName }}</span>
       <span
         v-if="action.correctedBy.length > 0"

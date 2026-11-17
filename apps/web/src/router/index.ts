@@ -1,6 +1,6 @@
-import { type AppModule, APP_NAME, canOpenModule, MASTER_LISTS } from '@tyio/shared';
+import { type AppModule, APP_NAME, canOpenModule } from '@tyio/shared';
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import { NAV_ITEMS } from '../navigation';
+import { ADMIN_MASTER_LISTS, NAV_ITEMS } from '../navigation';
 import { useAuthStore } from '../stores/auth';
 import { safeRedirectTarget } from './safe-redirect';
 
@@ -76,7 +76,7 @@ const ticketRoutes: RouteRecordRaw[] = [
 const adminRoutes: RouteRecordRaw[] = [
   { path: 'admin', name: 'admin', redirect: { name: 'admin-master', params: { list: 'customer' } } },
   {
-    path: `admin/master/:list(${MASTER_LISTS.join('|')})`,
+    path: `admin/master/:list(${ADMIN_MASTER_LISTS.join('|')})`,
     name: 'admin-master',
     component: () => import('../pages/admin/master/MasterDataPage.vue'),
     meta: { module: 'admin', title: 'Master data' },

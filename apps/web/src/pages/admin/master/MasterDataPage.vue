@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { IconAlertTriangle, IconDatabase, IconPlus } from '@tabler/icons-vue';
-import { MASTER_LABELS, MASTER_LISTS, type MasterItem, type MasterList } from '@tyio/shared';
+import { MASTER_LABELS, type MasterItem, type MasterList } from '@tyio/shared';
+import { ADMIN_MASTER_LISTS } from '../../../navigation';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '../../../api/client';
@@ -77,7 +78,7 @@ function onRemoved(item: MasterItem): void {
   >
     <ul class="nav nav-tabs flex-nowrap">
       <li
-        v-for="option in MASTER_LISTS"
+        v-for="option in ADMIN_MASTER_LISTS"
         :key="option"
         class="nav-item"
       >

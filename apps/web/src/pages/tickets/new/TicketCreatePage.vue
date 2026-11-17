@@ -26,16 +26,14 @@ import RemotePicker from './RemotePicker.vue';
 // dibaca; operator hanya mengisi apa yang terjadi.
 const route = useRoute();
 const router = useRouter();
-const ids = { category: useId(), system: useId(), occurred: useId(), problem: useId(), confirm: useId() };
+const ids = { category: useId(), occurred: useId(), problem: useId(), confirm: useId() };
 
 const categories = ref<MasterItem[]>([]);
-const systems = ref<MasterItem[]>([]);
 void masterApi.options('kategori').then((list) => (categories.value = list)).catch(() => undefined);
-void masterApi.options('system').then((list) => (systems.value = list)).catch(() => undefined);
 
 const remote = ref<RemoteDetail | null>(null);
 const openTickets = ref<TicketSummary[]>([]);
-const form = reactive({ categoryId: '', systemId: '', occurredAt: '', problem: '', confirm: false });
+const form = reactive({ categoryId: '', occurredAt: '', problem: '', confirm: false });
 const touched = reactive({ categoryId: false, occurredAt: false, problem: false });
 const serverErrors = reactive<Record<string, string>>({});
 const submitted = ref(false);
@@ -85,7 +83,6 @@ const errors = computed(() => {
   return {
     remoteId: serverErrors.remoteId || (submitted.value && !remote.value ? 'Pilih remote.' : ''),
     categoryId: serverErrors.categoryId || (show('categoryId') && !form.categoryId ? 'Pilih kategori.' : ''),
-    systemId: serverErrors.systemId || '',
     occurredAt:
       serverErrors.occurredAt ||
       (show('occurredAt') && !occurredUtc
@@ -120,7 +117,6 @@ async function submit(): Promise<void> {
     const ticket = await ticketsApi.create({
       remoteId: remote.value.id,
       categoryId: form.categoryId,
-      systemId: form.systemId || null,
       occurredAt: localInputToUtc(form.occurredAt, zone.value)!,
       problem: form.problem,
       confirmOpenTickets: openTickets.value.length > 0 && form.confirm,
@@ -370,36 +366,6 @@ const dash = (value: string | null | undefined) => value || '—';
               class="invalid-feedback"
             >
               {{ errors.categoryId }}
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <label
-              class="form-label"
-              :for="ids.system"
-            >System</label>
-            <select
-              :id="ids.system"
-              v-model="form.systemId"
-              class="form-select target"
-              :class="{ 'is-invalid': errors.systemId }"
-              @change="edited('systemId')"
-            >
-              <option value="">
-                Tidak diisi
-              </option>
-              <option
-                v-for="sys in systems"
-                :key="sys.id"
-                :value="sys.id"
-              >
-                {{ sys.name }}
-              </option>
-            </select>
-            <div
-              v-if="errors.systemId"
-              class="invalid-feedback"
-            >
-              {{ errors.systemId }}
             </div>
           </div>
           <div class="col-12 col-md-6">

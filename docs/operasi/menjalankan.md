@@ -64,7 +64,8 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
 
 ### Master data (Admin › Master data)
 
-- Empat daftar: **Customer**, **Kategori**, **System**, **Jarkom**. Hanya untuk admin dengan
+- Tiga daftar: **Customer**, **Kategori**, **Jarkom**. (Daftar System tidak dipakai lagi dan
+  tidak tampil; datanya tetap di database.) Hanya untuk admin dengan
   akses ke semua customer, karena daftar ini berlaku untuk semua customer.
 - **Kode**: huruf besar dan angka, 2–16 karakter, unik per daftar. Kode tidak bisa diubah
   setelah disimpan (kode customer dan jarkom menjadi bagian nomor tiket). Salah ketik: hapus
@@ -150,6 +151,22 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   di database. **Backup harus mencakup volume ini bersama database**, karena keduanya saling
   merujuk.
 
+### Jenis tindakan, pihak pending, dan tanda 7 hari (1.5c)
+
+- **Jenis tindakan** di form Tambah tindakan (nama dari sistem lama):
+  - **Bebas** (bawaan): catatan apa saja, perubahan status, atau lampiran.
+  - **Cek lokasi**: minta PIC di lokasi mengecek. Wajib catatan, mis. siapa yang dihubungi.
+  - **Problem**: hasil pengecekan PIC, yaitu penyebab masalahnya. Wajib catatan.
+
+  Jenisnya tampil sebagai lencana di linimasa dan di kolom Tindakan terakhir daftar tiket.
+  Eskalasi To SD (TT) dan Close menyusul di langkah 1.5b dan 1.6.
+- **Pihak pending**: **TM** untuk problem jaringan (jarkom) di lokasi; **Customer** untuk
+  listrik, obstacle, renovasi, atau part ATM yang belum siap.
+- **Tanda "Down ≥ 7 hari"**: tiket yang belum Selesai dan waktu kejadiannya sudah 7 hari atau
+  lebih ditandai merah di daftar dan detail, sebagai pengingat untuk memperbarui NPR.
+- Kolom **System** tidak dipakai lagi dan tidak tampil di layar. Status remote yang dibongkar
+  bernama **Dismantle**; impor Excel menerima "Dismantle" atau "Dibongkar".
+
 ### Daftar tiket dan pencarian
 
 - **Tiket** di menu: daftar tiket yang boleh dilihat pengguna (dibatasi customer), 50 per
@@ -160,7 +177,7 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
 
   Angka di tab Aktif, Milik saya, Pending, dan Eskalasi ikut pencarian dan saringan yang
   sedang dipakai.
-- Saringan: customer, kategori, system, jarkom. Kotak **Cari** menerima potongan no. NPR
+- Saringan: customer, kategori, jarkom. Kotak **Cari** menerima potongan no. NPR
   (mis. `2026/11/0002`), no. tiket customer, Site ID, nama, kota, atau kanca remote.
 - Tab, pencarian, saringan, dan halaman tersimpan di alamat halaman. Alamatnya bisa
   dibagikan atau ditandai di browser, dan tombol kembali dari tiket membuka tab yang sama.

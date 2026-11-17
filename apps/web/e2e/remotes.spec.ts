@@ -71,6 +71,14 @@ test.describe('daftar dan detail remote', () => {
     await expectPath(page, '/tanpa-akses');
   });
 
+  test('status remote yang dibongkar bernama Dismantle', async ({ page }) => {
+    await signInAs(page, 'l1.contoh');
+    await page.goto('/remote');
+    await expect(page.getByLabel('Status').locator('option')).toHaveText(['Semua', 'Aktif', 'Nonaktif', 'Dismantle']);
+    await page.getByLabel('Status').selectOption({ label: 'Dismantle' });
+    await expect(rows(page).first()).toContainText('Dismantle');
+  });
+
   test('ponsel 375 px: daftar dan detail tanpa gulir samping', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
     await signInAs(page, 'l1.contoh');

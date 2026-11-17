@@ -2,13 +2,12 @@ import {
   IconAlertOctagon,
   IconAntenna,
   IconBellRinging,
-  IconFolder,
   IconLayoutDashboard,
   IconReportAnalytics,
   IconSettings,
   IconTicket,
 } from '@tabler/icons-vue';
-import type { AppModule } from '@tyio/shared';
+import type { AppModule, MasterList } from '@tyio/shared';
 import type { Component } from 'vue';
 
 export interface NavItem {
@@ -73,14 +72,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     summary: 'Template laporan NPR, Gamas, SLA, dan teknisi dengan ekspor Excel dan PDF.',
   },
   {
-    module: 'dokumen',
-    label: 'Dokumen',
-    path: '/dokumen',
-    icon: IconFolder,
-    release: 'R8',
-    summary: 'Berkas bersama dan runbook yang tertaut ke kategori tiket.',
-  },
-  {
     module: 'admin',
     label: 'Admin',
     path: '/admin',
@@ -95,3 +86,6 @@ export function navItem(module: AppModule): NavItem {
   if (!item) throw new Error(`Modul tanpa menu: ${module}`);
   return item;
 }
+
+/** Daftar master yang dikelola di Admin. System disembunyikan (K29); datanya tetap di database. */
+export const ADMIN_MASTER_LISTS: readonly MasterList[] = ['customer', 'kategori', 'jarkom'];

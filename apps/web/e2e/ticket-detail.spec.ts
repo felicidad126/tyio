@@ -123,6 +123,78 @@ test.describe('detail tiket dan linimasa', () => {
     expect(await statusOptions(page)).toEqual(['Tetap Dikerjakan', 'Pending', 'Eskalasi', 'Selesai']);
   });
 
+  test('jenis tindakan Cek lokasi dan Problem wajib catatan, tampil di linimasa dan di daftar', async ({ page }) => {
+    await signInAs(page, 'l1.contoh');
+    const ticket = await openNewTicket(page);
+    const types = page.getByRole('group', { name: 'Jenis tindakan' });
+    await expect(types.getByRole('radio', { name: 'Bebas' })).toBeChecked();
+
+    await types.getByText('Cek lokasi').click();
+    await expect(page.getByText('Minta PIC di lokasi mengecek.')).toBeVisible();
+    await page.getByRole('button', { name: 'Simpan tindakan' }).click();
+    await expect(page.getByText('Tulis catatan untuk tindakan Cek lokasi.')).toBeVisible();
+
+    await page.getByLabel('Catatan').fill('Hubungi PIC lokasi untuk cek lampu modem');
+    await page.getByRole('button', { name: 'Simpan tindakan' }).click();
+    await expect(timeline(page).first()).toContainText('Cek lokasi');
+    await expect(timeline(page).first()).toContainText('Hubungi PIC lokasi untuk cek lampu modem');
+    // Form kembali ke Bebas setelah disimpan.
+    await expect(types.getByRole('radio', { name: 'Bebas' })).toBeChecked();
+
+    await types.getByText('Problem').click();
+    await page.getByLabel('Catatan').fill('PIC: modem mati, adaptor rusak');
+    await page.getByRole('button', { name: 'Simpan tindakan' }).click();
+    await expect(timeline(page).first()).toContainText('Problem');
+
+    await page.goto(`/tiket?q=${encodeURIComponent(ticket.number)}`);
+    await expect(page.getByRole('row').filter({ hasText: ticket.number })).toContainText('Problem: PIC: modem mati');
+  });
+
+  test('pilihan pihak pending menjelaskan kapan memilih TM atau Customer', async ({ page }) => {
+    await signInAs(page, 'l1.contoh');
+    await openNewTicket(page);
+    await page.getByLabel('Ubah status').selectOption({ label: 'Pending' });
+    const parties = page.getByRole('group', { name: 'Menunggu pihak' });
+    // Nama pilihan tetap singkat; keterangannya dibacakan sebagai deskripsi.
+    await expect(parties.getByRole('radio', { name: 'TM', exact: true })).toHaveAccessibleDescription(
+      'Problem jaringan (jarkom) di lokasi',
+    );
+    await expect(parties.getByRole('radio', { name: 'Customer', exact: true })).toHaveAccessibleDescription(
+      'Listrik, obstacle, renovasi, atau part ATM belum siap',
+    );
+  });
+
+  test('tiket aktif yang sudah down 7 hari ditandai di detail dan di daftar; tiket baru tidak', async ({ page }) => {
+    await signInAs(page, 'l1.contoh');
+    const remote = (await (await page.request.get('/api/remotes?q=MRS-006')).json()).items[0];
+    const categories = (await (await page.request.get('/api/master/kategori')).json()).items as Array<{ id: string; code: string }>;
+    const create = async (daysAgo: number) => {
+      const res = await page.request.post('/api/tickets', {
+        data: {
+          remoteId: remote.id,
+          categoryId: categories.find((c) => c.code === 'RD')!.id,
+          occurredAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+          problem: `Uji tanda ${daysAgo} hari`,
+          confirmOpenTickets: true,
+        },
+      });
+      expect(res.status()).toBe(201);
+      return (await res.json()).ticket as { id: string; number: string };
+    };
+    const old = await create(8);
+    const fresh = await create(6);
+
+    await page.goto(`/tiket/${old.id}`);
+    await expect(page.getByText('Down ≥ 7 hari')).toBeVisible();
+    await page.goto(`/tiket/${fresh.id}`);
+    await expect(page.getByTestId('status-tiket')).toBeVisible();
+    await expect(page.getByText('Down ≥ 7 hari')).toHaveCount(0);
+
+    await page.goto('/tiket?q=MRS-006');
+    await expect(page.getByRole('row').filter({ hasText: old.number })).toContainText('≥ 7 hari');
+    await expect(page.getByRole('row').filter({ hasText: fresh.number })).not.toContainText('≥ 7 hari');
+  });
+
   test('ponsel 375 px: detail tiket tanpa gulir samping', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
     await signInAs(page, 'l1.contoh');

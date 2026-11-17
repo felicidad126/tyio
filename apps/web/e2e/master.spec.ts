@@ -42,6 +42,15 @@ test.describe('master data (admin)', () => {
     await expect(row(page, 'Remote Down')).toBeVisible();
   });
 
+  test('daftar System tidak ditampilkan lagi (kolom System dihapus)', async ({ page }) => {
+    await signInAs(page, 'admin.contoh');
+    await page.goto('/admin/master/customer');
+    const tabs = page.getByRole('navigation', { name: 'Daftar master' }).getByRole('link');
+    await expect(tabs).toHaveText(['Customer', 'Kategori', 'Jarkom']);
+    await page.goto('/admin/master/system');
+    await expect(page.getByRole('heading', { level: 1 })).not.toHaveText('Master data');
+  });
+
   test('tambah, ganti nama di tempat, nonaktifkan, lalu hapus kategori', async ({ page }) => {
     const code = uniqueCode();
     const name = `Kategori Uji ${code}`;

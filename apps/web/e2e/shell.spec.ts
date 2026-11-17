@@ -1,7 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
 import { expectNoPageOverflow, expectPath, signInAs } from './helpers';
 
-const OPERATIONAL = ['Overview', 'Alert', 'Tiket', 'Gamas', 'Remote', 'Laporan', 'Dokumen'];
+// Menu Dokumen (Shared) tidak dibuat (K31).
+const OPERATIONAL = ['Overview', 'Alert', 'Tiket', 'Gamas', 'Remote', 'Laporan'];
 /** Modul yang sudah punya halaman sungguhan, bukan halaman penanda. */
 const BUILT = ['Overview', 'Remote', 'Tiket'];
 const PAGES: Record<string, string> = {
@@ -11,7 +12,6 @@ const PAGES: Record<string, string> = {
   Gamas: '/gamas',
   Remote: '/remote',
   Laporan: '/laporan',
-  Dokumen: '/dokumen',
 };
 
 const mainMenu = (page: Page) => page.getByRole('navigation', { name: 'Menu utama' });
