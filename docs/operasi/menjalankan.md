@@ -244,7 +244,7 @@ yang sama). Staging tidak membangun image sendiri.
 menerbitkan image yang lolos semua uji ke `ghcr.io/felicidad126/tyio` (tag `sha-<commit>`,
 dan tag `demo` untuk versi terbaru yang hijau di branch `claude/r0-fondasi`).
 `deploy/scripts/server.sh` memasang, memperbarui, dan memeriksanya, dengan HTTPS lewat Caddy
-(`deploy/compose.https.yml`).
+(`deploy/compose.https.yml`), atau di belakang Nginx panel server seperti aaPanel (`--panel`).
 
 Langkah manual tanpa HTTPS, untuk pemeriksaan di server itu sendiri:
 

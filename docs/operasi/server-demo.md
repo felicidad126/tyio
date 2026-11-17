@@ -23,16 +23,118 @@ Versi yang gagal uji tidak pernah mendapat tag `demo`, jadi tidak bisa terpasang
 | | |
 | --- | --- |
 | Sistem | Linux 64-bit **x86_64/amd64** (image belum dibangun untuk ARM), mis. Ubuntu 24.04 |
-| Ukuran | Perkiraan untuk demo: 2 vCPU, minimal 2 GB RAM (4 GB lebih lega), 20 GB disk |
+| Ukuran | Perkiraan untuk demo: 2 vCPU, minimal 2 GB RAM (4 GB lebih lega), 20 GB disk kosong |
 | Perangkat lunak | Docker Engine dengan plugin Compose v2, `git`, `curl`, `openssl` |
 | Jaringan | Port **80** dan **443** terbuka ke arah penonton. Server perlu bisa mengakses `github.com` dan `ghcr.io` |
 | Alamat | Disarankan **subdomain** (mis. `noc-demo.perusahaan.co.id`) dengan DNS A mengarah ke IP server |
 
-Memasang Docker di Ubuntu: ikuti https://docs.docker.com/engine/install/ubuntu/ (paket
-`docker-ce` dan `docker-compose-plugin`). Jalankan skrip sebagai root, atau sebagai pengguna
-anggota grup `docker`.
+Jalankan semua perintah di bawah sebagai root (atau dengan `sudo`).
 
-## Pasang pertama kali
+Ada dua cara pasang. Pilih salah satu:
+- **A. Server dengan aaPanel** (atau panel lain yang Nginx-nya sudah memakai port 80/443): panel
+  mengurus domain dan SSL, portal berjalan di belakangnya.
+- **B. Server kosong:** skrip memasang Caddy yang mengurus HTTPS sendiri.
+
+Skrip menolak cara B bila port 80/443 sudah dipakai, dan menyarankan cara A.
+
+## A. Server dengan aaPanel
+
+Portal hanya terbuka di `127.0.0.1:8080`, jadi tidak bisa dibuka langsung dari luar. Nginx
+aaPanel menerima pengunjung di 443 (SSL dari aaPanel), lalu meneruskannya ke portal. Nama menu
+aaPanel bisa sedikit berbeda antarversi.
+
+### A1. Docker dan alat dasar
+
+```bash
+docker compose version
+```
+
+Bila perintah itu menampilkan `Docker Compose version v2.x` atau lebih baru, lanjut ke A2.
+Bila tidak:
+
+```bash
+apt-get update && apt-get install -y git curl openssl
+curl -fsSL https://get.docker.com | sh
+docker compose version
+```
+
+`get.docker.com` adalah skrip resmi Docker yang memasang Docker Engine dan plugin Compose.
+Jangan jalankan bila Docker sudah dipasang lewat App Store aaPanel. Cukup pastikan
+`docker compose version` jalan.
+
+### A2. Pasang portal
+
+```bash
+git clone -b claude/r0-fondasi https://github.com/felicidad126/tyio.git /opt/tyio
+cd /opt/tyio
+deploy/scripts/server.sh pasang noc-demo.perusahaan.co.id --panel
+```
+
+Ganti `noc-demo.perusahaan.co.id` dengan domain Anda. Skrip mencetak akun dan kata sandi
+contoh, lalu menyebut bahwa HTTPS **belum** bisa diakses. Itu wajar sampai langkah A3 selesai.
+
+Bila port 8080 sudah dipakai aplikasi lain, pilih port lain dan pakai angka yang sama di A3:
+`TYIO_APP_PORT=8081 deploy/scripts/server.sh pasang <domain> --panel`.
+
+### A3. Situs, SSL, dan penerusan di aaPanel
+
+1. Arahkan DNS domain (record **A**) ke IP server, lalu tunggu sampai aktif.
+2. **Website → Add site.** Domain: domain Anda. FTP dan database: tidak perlu. PHP: **Static**
+   (tanpa PHP).
+3. Di situs itu, **SSL → Let's Encrypt.** Pilih domain → **Apply**, lalu aktifkan **Force
+   HTTPS**.
+4. Di situs itu, buka **Config** (berkas konfigurasi Nginx situs). Tempel potongan berikut
+   tepat **di bawah baris `#SSL-END`**, lalu **Save**:
+
+   ```nginx
+       # --- Portal NOC (tyio) ---
+       # Lampiran 5 x 5 MB per tindakan dan impor Excel 12 MB; bawaan Nginx hanya 1 MB.
+       client_max_body_size 30m;
+       # Verifikasi Let's Encrypt milik aaPanel tetap dilayani dari folder situs.
+       location ^~ /.well-known/acme-challenge/ {
+           allow all;
+       }
+       # ^~ : semua alamat lain ke portal, termasuk .js/.png yang di konfigurasi bawaan
+       # aaPanel dilayani dari folder situs.
+       location ^~ / {
+           proxy_pass http://127.0.0.1:8080;
+           proxy_http_version 1.1;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+           proxy_read_timeout 120s;
+       }
+       # --- akhir Portal NOC ---
+   ```
+
+   **Jangan** memakai menu **Reverse proxy** aaPanel untuk situs ini. Menu itu membuat aturan
+   `location /` kedua, sehingga Nginx menolak konfigurasinya.
+5. Kembali ke server:
+
+   ```bash
+   cd /opt/tyio && deploy/scripts/server.sh status
+   ```
+
+   Harus tampil `Aplikasi: OK` dan `HTTPS: OK`. Bila tampil "API menjawab, tetapi halaman atau
+   berkas aplikasi (.js/.png) tidak sampai", aturan `location` di konfigurasi situs belum
+   memakai `^~` seperti di atas.
+
+Port 8080 **tidak perlu** dibuka di firewall aaPanel. Portal sengaja hanya bisa dicapai dari
+server itu sendiri.
+
+Kenapa tiap baris itu perlu (sudah diuji dengan konfigurasi bawaan situs aaPanel):
+- tanpa `client_max_body_size`, lampiran lebih dari 1 MB ditolak Nginx (413);
+- dengan `location /` biasa, berkas `.js` dan `.png` portal dicari di folder situs dan tidak
+  ditemukan, sehingga halaman portal rusak;
+- tanpa aturan `acme-challenge`, perpanjangan SSL Let's Encrypt oleh aaPanel gagal;
+- portal mempercayai tepat satu proxy di depannya (`TYIO_TRUST_PROXY_HOPS=1`, diisi skrip).
+  Dengan angka lebih besar, alamat IP palsu dari header `X-Forwarded-For` ikut dipercaya,
+  sehingga pembatasan percobaan login per IP bisa diakali.
+
+## B. Server kosong (HTTPS oleh Caddy)
+
+Pasang Docker seperti di A1, lalu:
 
 ```bash
 git clone -b claude/r0-fondasi https://github.com/felicidad126/tyio.git /opt/tyio
@@ -48,10 +150,7 @@ Skrip ini:
 4. mengisi data contoh, memeriksa portal lewat HTTPS, lalu mencetak alamat, akun, dan kata
    sandinya.
 
-Bila terhenti di tengah (mis. image belum bisa ditarik), perbaiki penyebabnya lalu jalankan
-perintah yang sama lagi. Konfigurasi yang sudah dibuat dipakai ulang.
-
-### Sertifikat HTTPS
+Cara A melakukan hal yang sama, kecuali Caddy.
 
 | Alamat yang dipakai | Sertifikat | Di browser penonton |
 | --- | --- | --- |
@@ -73,6 +172,10 @@ Salin `tyio-ca.crt` ke laptop itu, lalu:
   "Caddy Local Authority" → Trust → **Always Trust**.
 - **Android/iPhone:** lebih repot. Untuk demo di ponsel, pakai domain publik.
 
+Bila `pasang` terhenti di tengah (mis. image belum bisa ditarik), perbaiki penyebabnya lalu
+jalankan perintah yang sama lagi. Konfigurasi yang sudah dibuat dipakai ulang. Ini berlaku
+untuk kedua cara.
+
 ## Memperbarui ke progres terbaru
 
 ```bash
@@ -81,10 +184,11 @@ deploy/scripts/server.sh perbarui
 ```
 
 - Data tetap, dan migrasi database berjalan otomatis. Skrip mencetak versi sebelumnya dan
-  versi yang sekarang berjalan (commit, tanggal, judul).
+  versi yang sekarang berjalan (commit, tanggal, judul), lalu memeriksa portal lewat HTTPS.
 - Aplikasi start ulang selama beberapa detik. **Jangan jalankan saat demo berlangsung.** Pengguna
   yang sedang membuka portal akan melihat "Versi baru portal tersedia".
-- Bila sudah versi terbaru, tidak ada yang diubah.
+- Bila sudah versi terbaru, aplikasi tidak di-start ulang.
+- Image versi lama dihapus otomatis agar disk tidak penuh.
 - Opsional, perbarui otomatis tiap malam pukul 02.00 (waktu server) lewat `crontab -e` milik
   root:
 
@@ -137,13 +241,16 @@ Gamas, SLA, dan laporan. Halaman menu yang belum dibangun menjelaskan isinya dan
 ## Bila ada masalah
 
 ```bash
-deploy/scripts/server.sh log app       # atau: log caddy, log db, log migrate
+deploy/scripts/server.sh log app       # atau: log db, log migrate, log caddy (cara B)
 ```
 
 | Gejala | Penyebab dan jalan keluar |
 | --- | --- |
-| `image ... tidak bisa ditarik` | Paket di GHCR masih privat. Di GitHub: profil → Packages → `tyio` → Package settings → Change visibility → Public. Atau login dengan token yang punya izin `read:packages`: `docker login ghcr.io -u <pengguna-github>` |
-| `HTTPS: BELUM bisa diakses` (domain publik) | DNS belum mengarah ke server, atau port 80/443 tertutup firewall. Lihat `log caddy`. Setelah diperbaiki, Caddy mencoba lagi sendiri |
+| `port 80/443 di server ini sudah dipakai` | Ada web server lain (mis. aaPanel). Pakai cara A: `pasang <domain> --panel` |
+| `image ... tidak bisa ditarik` | Server tidak bisa mengakses `ghcr.io`, atau paketnya privat. Paket saat ini publik dan bisa ditarik tanpa login |
+| `HTTPS: BELUM bisa diakses` | Cara A: situs, SSL, atau potongan konfigurasi di A3 belum selesai. Cara B: DNS belum mengarah ke server, atau port 80/443 tertutup firewall; lihat `log caddy` |
+| `API menjawab, tetapi halaman atau berkas aplikasi (.js/.png) tidak sampai` | Konfigurasi situs aaPanel belum memakai `location ^~ /` (A3) |
+| Lampiran gagal diunggah (413) | `client_max_body_size 30m;` belum ada di konfigurasi situs (A3) |
 | `ada perubahan lokal di checkout ini` | Ada berkas di `/opt/tyio` yang diubah tangan. Konfigurasi server hanya di `deploy/staging.env`. Lihat `git status`, lalu kembalikan dengan `git checkout -- <berkas>` |
 | `stack tidak sehat` | Skrip mencetak log migrasi dan aplikasi. Versi yang lama tetap berjalan bila migrasi gagal |
 | Login ditolak "terlalu banyak percobaan" | Setelah 5 kali gagal per akun atau 20 kali per alamat IP dalam 15 menit. Tunggu 15 menit |
