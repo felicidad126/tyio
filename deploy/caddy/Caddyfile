@@ -1,0 +1,31 @@
+# Caddy: HTTPS di depan aplikasi (R-I). Dipasang oleh deploy/compose.https.yml.
+#   TYIO_DOMAIN     alamat portal: nama domain, atau alamat IP server
+#   TYIO_TLS_MODE   acme      sertifikat Let's Encrypt otomatis dan diperpanjang sendiri.
+#                             Syarat: domain mengarah ke server, port 80 dan 443 terbuka dari internet.
+#                   internal  sertifikat dari CA milik Caddy sendiri, untuk alamat IP atau jaringan
+#                             tertutup. Browser memperingatkan sampai CA itu dipercaya
+#                             (`deploy/scripts/server.sh sertifikat`).
+# HTTP ke port 80 dialihkan ke HTTPS secara otomatis.
+
+{
+	# Klien yang membuka alamat IP tidak mengirim SNI, dan di dalam container Caddy hanya melihat
+	# alamat IP container; tanpa ini sertifikat untuk IP server tidak terpilih.
+	default_sni {$TYIO_DOMAIN}
+}
+
+(tls-acme) {
+	# Bawaan Caddy: sertifikat publik dari Let's Encrypt atau ZeroSSL.
+}
+
+(tls-internal) {
+	tls internal
+}
+
+{$TYIO_DOMAIN} {
+	import tls-{$TYIO_TLS_MODE:acme}
+	encode zstd gzip
+	# Satu-satunya proxy di depan aplikasi: aplikasi memakai TRUST_PROXY_HOPS=1 dan membaca
+	# alamat klien dari X-Forwarded-For yang ditulis ulang Caddy (header kiriman klien diabaikan).
+	reverse_proxy app:3000
+	log
+}

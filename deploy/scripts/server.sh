@@ -1,0 +1,291 @@
+#!/usr/bin/env bash
+# Menjalankan portal di server staging/demo dengan image yang sudah lolos CI.
+# Panduan lengkap: docs/operasi/server-demo.md
+#
+#   deploy/scripts/server.sh pasang <domain-atau-ip> [--sertifikat-internal]
+#   deploy/scripts/server.sh perbarui      ke versi terbaru yang lolos semua uji CI
+#   deploy/scripts/server.sh status        versi yang berjalan dan kesehatan
+#   deploy/scripts/server.sh ulang-data    hapus semua data, isi ulang data contoh
+#   deploy/scripts/server.sh sertifikat    CA sertifikat internal (mode IP/jaringan tertutup)
+#   deploy/scripts/server.sh log [layanan] log berjalan (app, caddy, db, migrate)
+#
+# Variabel lingkungan (opsional): TYIO_KANAL (bawaan "demo") memilih tag image yang diikuti.
+#
+# Seluruh isi skrip ada di dalam fungsi dan baru dijalankan di baris terakhir: `perbarui`
+# memindahkan checkout ke commit image yang dipasang, termasuk berkas ini sendiri.
+set -euo pipefail
+
+ENV_FILE=deploy/staging.env
+PROJECT=tyio-staging
+REVISION_LABEL=org.opencontainers.image.revision
+
+say() { printf '%s\n' "$*"; }
+fail() { printf 'GAGAL: %s\n' "$*" >&2; exit 1; }
+
+compose() {
+  docker compose -p "$PROJECT" --env-file "$ENV_FILE" \
+    -f deploy/compose.staging.yml -f deploy/compose.https.yml "$@"
+}
+
+env_get() { sed -n "s/^$1=//p" "$ENV_FILE" | tail -n 1; }
+
+env_set() {
+  local key="$1" value="$2" tmp
+  tmp="$(mktemp "$ENV_FILE.XXXXXX")"
+  grep -v "^$key=" "$ENV_FILE" > "$tmp" || true
+  printf '%s=%s\n' "$key" "$value" >> "$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$ENV_FILE"
+}
+
+need() {
+  local cmd
+  for cmd in "$@"; do
+    command -v "$cmd" > /dev/null || fail "perintah '$cmd' tidak ditemukan. Pasang dulu (lihat docs/operasi/server-demo.md)."
+  done
+  docker compose version > /dev/null 2>&1 || fail "Docker Compose v2 (docker compose) tidak ditemukan."
+  docker info > /dev/null 2>&1 || fail "tidak bisa menghubungi Docker. Jalankan sebagai root atau anggota grup docker."
+}
+
+# Image di GHCR untuk repo ini: ghcr.io/<pemilik>/<repo>, huruf kecil.
+default_image_repo() {
+  local url path
+  url="$(git remote get-url origin)"
+  path="${url#*github.com[:/]}"
+  path="${path%.git}"
+  [ "$path" != "$url" ] || fail "remote origin bukan GitHub ($url). Isi TYIO_IMAGE_REPO di $ENV_FILE."
+  printf 'ghcr.io/%s\n' "$(printf '%s' "$path" | tr '[:upper:]' '[:lower:]')"
+}
+
+is_ip() { [[ "$1" =~ ^[0-9]+(\.[0-9]+){3}$ || "$1" == *:* ]]; }
+
+# Menarik image kanal terbaru, mencatat digest-nya di env, dan mengembalikan revisinya.
+pull_latest() {
+  local repo channel ref digest revision
+  repo="$(env_get TYIO_IMAGE_REPO)"
+  channel="${TYIO_KANAL:-demo}"
+  ref="$repo:$channel"
+  say "Menarik $ref ..." >&2
+  if ! docker pull --quiet "$ref" > /dev/null; then
+    fail "image $ref tidak bisa ditarik. Bila paket GHCR masih privat, jadikan publik atau login:
+  docker login ghcr.io -u <pengguna-github>   (token dengan izin read:packages)"
+  fi
+  digest="$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$ref" | grep -m1 "^$repo@")" \
+    || fail "digest $ref tidak ditemukan setelah ditarik."
+  revision="$(docker image inspect --format "{{index .Config.Labels \"$REVISION_LABEL\"}}" "$ref")"
+  [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || fail "image $ref tidak membawa label revisi commit ($REVISION_LABEL)."
+  env_set TYIO_IMAGE "$digest"
+  printf '%s\n' "$revision"
+}
+
+# Berkas compose dan skrip mengikuti commit yang sama dengan image yang dipasang.
+checkout_revision() {
+  local revision="$1"
+  if [ "$(git rev-parse HEAD)" = "$revision" ]; then return; fi
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    fail "ada perubahan lokal di checkout ini ($(pwd)). Simpan atau buang dulu: git status"
+  fi
+  git cat-file -e "$revision^{commit}" 2> /dev/null || git fetch --quiet origin "$revision" \
+    || fail "commit $revision tidak bisa diambil dari origin."
+  git checkout --quiet --detach "$revision"
+}
+
+describe_revision() {
+  git log -1 --date=format:'%Y-%m-%d %H:%M' --format='%h · %cd · %s' "$1" 2> /dev/null || printf '%s\n' "$1"
+}
+
+# Dibaca dari container aplikasi, bukan dari image: setelah tag pindah, image lama tidak lagi
+# bisa dicari lewat digest-nya.
+running_app() { compose ps -q app 2> /dev/null || true; }
+
+running_revision() {
+  local id
+  id="$(running_app)"
+  [ -z "$id" ] || docker inspect --format "{{index .Config.Labels \"$REVISION_LABEL\"}}" "$id" 2> /dev/null || true
+}
+
+running_image_id() {
+  local id
+  id="$(running_app)"
+  [ -z "$id" ] || docker inspect --format '{{.Image}}' "$id" 2> /dev/null || true
+}
+
+start_stack() {
+  say "Menjalankan migrasi dan aplikasi ..."
+  if ! compose up -d --wait --remove-orphans; then
+    compose ps -a >&2 || true
+    compose logs --no-color --tail 80 migrate app caddy >&2 || true
+    fail "stack tidak sehat. Log di atas; detail: deploy/scripts/server.sh log"
+  fi
+}
+
+seed_demo() {
+  say "Mengisi data contoh ..."
+  # Database sudah berjalan dan termigrasi oleh start_stack.
+  compose run --rm --no-deps -T -e TYIO_SEED_PASSWORD="$(env_get TYIO_SEED_PASSWORD)" app node dist/seed/run.js
+}
+
+ca_file() {
+  local file
+  file="$(mktemp)"
+  compose exec -T caddy cat /data/caddy/pki/authorities/local/root.crt > "$file" 2> /dev/null || true
+  printf '%s\n' "$file"
+}
+
+port_suffix() {
+  local port
+  port="$(env_get TYIO_HTTPS_PORT)"
+  if [ -n "$port" ] && [ "$port" != 443 ]; then printf ':%s' "$port"; fi
+}
+
+# Memeriksa portal lewat HTTPS dari server ini sendiri: tanpa bergantung pada DNS, dan tanpa
+# proxy keluar yang mungkin terpasang di server (HTTPS_PROXY).
+check_https() {
+  local domain mode url ca=""
+  local curl_args=(-fsS --noproxy '*' --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors)
+  domain="$(env_get TYIO_DOMAIN)"
+  mode="$(env_get TYIO_TLS_MODE)"
+  url="https://$domain$(port_suffix)/api/health"
+  is_ip "$domain" || curl_args+=(--connect-to "::127.0.0.1:")
+  if [ "$mode" = internal ]; then
+    ca="$(ca_file)"
+    curl_args+=(--cacert "$ca")
+  fi
+  if curl "${curl_args[@]}" "$url" > /dev/null; then
+    say "HTTPS: OK ($url)"
+  else
+    say "HTTPS: BELUM bisa diakses ($url)."
+    [ "$mode" = acme ] && say "  Pastikan domain mengarah ke server ini dan port 80/443 terbuka; lihat: deploy/scripts/server.sh log caddy"
+  fi
+  [ -z "$ca" ] || rm -f "$ca"
+}
+
+print_accounts() {
+  local domain
+  domain="$(env_get TYIO_DOMAIN)"
+  say ""
+  say "Portal: https://$domain$(port_suffix)"
+  say "Akun contoh (kata sandi sama untuk semua): $(env_get TYIO_SEED_PASSWORD)"
+  say "  admin.contoh  Admin, semua customer"
+  say "  l2.contoh     L2 NOC, semua customer"
+  say "  l1.contoh     L1 Monitoring, semua customer"
+  say "  l1.merapi     L1 Monitoring, hanya Bank Merapi Sejahtera"
+  say "Kata sandi tersimpan di $ENV_FILE (hanya bisa dibaca root/pemilik)."
+}
+
+cmd_pasang() {
+  local domain="${1:-}" mode=acme revision
+  [ -n "$domain" ] || fail "sebutkan domain atau alamat IP portal: deploy/scripts/server.sh pasang noc-demo.contoh.co.id"
+  [[ "$domain" =~ ^[A-Za-z0-9.:-]+$ ]] || fail "domain '$domain' tidak sah (tanpa https:// dan tanpa garis miring)."
+  shift
+  if [ "${1:-}" = --sertifikat-internal ] || is_ip "$domain"; then mode=internal; fi
+  need docker git openssl curl
+  if [ -e "$ENV_FILE" ]; then
+    # Mengulang pasang yang terhenti (mis. image belum bisa ditarik): konfigurasi lama dipakai.
+    [ "$(env_get TYIO_DOMAIN)" = "$domain" ] \
+      || fail "$ENV_FILE sudah ada untuk domain $(env_get TYIO_DOMAIN). Pakai 'perbarui', atau hapus berkas itu untuk mulai dari awal."
+    say "Memakai konfigurasi yang sudah ada: $ENV_FILE"
+  else
+    (
+      umask 077
+      {
+        printf '# Dibuat oleh deploy/scripts/server.sh pasang pada %s. Jangan masuk git.\n' "$(date -u +%Y-%m-%dT%H:%MZ)"
+        printf 'TYIO_DOMAIN=%s\n' "$domain"
+        printf 'TYIO_TLS_MODE=%s\n' "$mode"
+        printf 'TYIO_IMAGE_REPO=%s\n' "${TYIO_IMAGE_REPO:-$(default_image_repo)}"
+        printf 'TYIO_DB_PASSWORD=%s\n' "$(openssl rand -hex 24)"
+        printf 'TYIO_SEED_PASSWORD=Demo-%s\n' "$(openssl rand -hex 6)"
+      } > "$ENV_FILE"
+    )
+    say "Konfigurasi dibuat: $ENV_FILE (domain $domain, sertifikat $mode)."
+  fi
+  mode="$(env_get TYIO_TLS_MODE)"
+  revision="$(pull_latest)"
+  checkout_revision "$revision"
+  start_stack
+  seed_demo
+  check_https
+  say "Versi berjalan: $(describe_revision "$revision")"
+  print_accounts
+  if [ "$mode" = internal ]; then
+    say ""
+    say "Sertifikat internal: browser memperingatkan sampai CA-nya dipasang di komputer penonton."
+    say "  deploy/scripts/server.sh sertifikat > tyio-ca.crt"
+  fi
+}
+
+cmd_perbarui() {
+  local before before_image revision
+  need docker git curl
+  [ -e "$ENV_FILE" ] || fail "server belum dipasang. Jalankan dulu: deploy/scripts/server.sh pasang <domain>"
+  before="$(running_revision)"
+  before_image="$(running_image_id)"
+  revision="$(pull_latest)"
+  if [ -n "$before" ] && [ "$revision" = "$before" ]; then
+    say "Sudah versi terbaru: $(describe_revision "$revision")"
+    return
+  fi
+  checkout_revision "$revision"
+  start_stack
+  # Image versi lama (±400 MB) tidak dipakai lagi; gagal dihapus bukan masalah.
+  if [ -n "$before_image" ] && [ "$before_image" != "$(running_image_id)" ]; then
+    docker image rm "$before_image" > /dev/null 2>&1 || true
+  fi
+  check_https
+  [ -z "$before" ] || say "Sebelumnya: $(describe_revision "$before")"
+  say "Versi berjalan: $(describe_revision "$revision")"
+}
+
+cmd_status() {
+  local revision
+  [ -e "$ENV_FILE" ] || fail "server belum dipasang."
+  compose ps
+  revision="$(running_revision)"
+  say ""
+  say "Versi berjalan: $(describe_revision "${revision:-tidak diketahui}")"
+  check_https
+}
+
+cmd_ulang_data() {
+  local answer
+  [ -e "$ENV_FILE" ] || fail "server belum dipasang."
+  if [ "${1:-}" != --ya ]; then
+    say "Semua data di portal ini (tiket, remote, lampiran, audit) akan DIHAPUS lalu diisi data contoh."
+    read -r -p "Ketik HAPUS untuk melanjutkan: " answer
+    [ "$answer" = HAPUS ] || fail "dibatalkan."
+  fi
+  # Hanya database dan lampiran; volume sertifikat Caddy tetap.
+  compose rm --stop --force app migrate db
+  docker volume rm "${PROJECT}_db-data" "${PROJECT}_attachments"
+  start_stack
+  seed_demo
+  print_accounts
+}
+
+cmd_sertifikat() {
+  local ca
+  [ -e "$ENV_FILE" ] || fail "server belum dipasang."
+  [ "$(env_get TYIO_TLS_MODE)" = internal ] || fail "server ini memakai sertifikat publik; tidak ada CA untuk dipasang."
+  ca="$(ca_file)"
+  [ -s "$ca" ] || { rm -f "$ca"; fail "CA belum dibuat. Pastikan Caddy berjalan (deploy/scripts/server.sh status)."; }
+  cat "$ca"
+  rm -f "$ca"
+}
+
+main() {
+  cd "$(dirname "$0")/../.."
+  local command="${1:-}"
+  [ $# -eq 0 ] || shift
+  case "$command" in
+    pasang) cmd_pasang "$@" ;;
+    perbarui) cmd_perbarui ;;
+    status) cmd_status ;;
+    ulang-data) cmd_ulang_data "$@" ;;
+    sertifikat) cmd_sertifikat ;;
+    log) [ -e "$ENV_FILE" ] || fail "server belum dipasang."; compose logs --tail 200 -f "$@" ;;
+    *) sed -n '2,13p' deploy/scripts/server.sh | sed 's/^# \{0,1\}//'; [ -z "$command" ] || exit 2 ;;
+  esac
+}
+
+main "$@"
+exit

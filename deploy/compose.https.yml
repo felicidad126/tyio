@@ -1,0 +1,33 @@
+# HTTPS untuk staging: Caddy di depan aplikasi. Dipakai bersama compose.staging.yml:
+#   docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml -f deploy/compose.https.yml up -d --wait
+# Biasanya lewat deploy/scripts/server.sh (lihat docs/operasi/server-demo.md).
+services:
+  app:
+    environment:
+      # Caddy satu-satunya proxy di depan aplikasi. Bila ada load balancer lain di depan Caddy,
+      # naikkan angka ini sesuai jumlahnya (dipakai untuk membatasi percobaan login per IP).
+      TRUST_PROXY_HOPS: 1
+
+  caddy:
+    image: caddy:2.11.9@sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b
+    restart: unless-stopped
+    environment:
+      TYIO_DOMAIN: ${TYIO_DOMAIN:?TYIO_DOMAIN wajib diisi dengan domain atau alamat IP portal}
+      TYIO_TLS_MODE: ${TYIO_TLS_MODE:-acme}
+    ports:
+      - ${TYIO_HTTP_PORT:-80}:80
+      - ${TYIO_HTTPS_PORT:-443}:443
+      - ${TYIO_HTTPS_PORT:-443}:443/udp
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Sertifikat dan kunci CA internal. Jangan dihapus: menerbitkan ulang sertifikat
+      # berulang kali bisa terkena batas Let's Encrypt.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  caddy-data:
+  caddy-config:

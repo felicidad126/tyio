@@ -64,9 +64,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Image dibangun sekali, lalu dijalankan dengan berkas compose staging yang sama
-    # seperti di server staging. Yang lolos uji asap inilah artefak untuk staging.
+    # seperti di server staging. Yang lolos uji layar inilah artefak untuk staging:
+    # di branch demo, image yang sama persis diterbitkan ke GHCR (tanpa build ulang).
+    permissions:
+      contents: read
+      packages: write
     env:
-      TYIO_IMAGE: tyio-app:ci-${{ github.sha }}
+      TYIO_IMAGE: ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
       STAGING: docker compose --env-file ${{ github.workspace }}/../staging-ci.env -f deploy/compose.staging.yml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,8 +87,14 @@ jobs:
       - name: Pasang dependensi (untuk Playwright)
         run: pnpm install --frozen-lockfile
 
+      # Label revisi dibaca deploy/scripts/server.sh untuk memasang berkas compose dari
+      # commit yang sama dan menampilkan versi yang berjalan.
       - name: Bangun image
-        run: docker build -f deploy/Dockerfile -t "$TYIO_IMAGE" .
+        run: >-
+          docker build -f deploy/Dockerfile -t "$TYIO_IMAGE"
+          --label org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          --label org.opencontainers.image.revision=${{ github.sha }}
+          .
 
       - name: Jalankan image dengan compose staging
         id: staging
@@ -109,6 +119,16 @@ jobs:
         env:
           E2E_BASE_URL: http://localhost:8080
 
+      # Hanya push ke branch demo, dan hanya setelah semua uji layar di atas lulus.
+      # Tag `demo` baru dipindahkan oleh job `demo` setelah job verify juga hijau.
+      - name: Terbitkan image teruji ke GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/claude/r0-fondasi'
+        run: |
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$TYIO_IMAGE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # Dua langkah terakhir hanya bila stack sempat dinyalakan; bila build gagal atau run
       # dibatalkan lebih awal, tidak ada yang perlu dibaca atau dibersihkan.
       - name: Log container bila gagal
@@ -118,3 +138,24 @@ jobs:
       - name: Bersihkan
         if: always() && steps.staging.conclusion != 'skipped'
         run: $STAGING down --volumes
+
+  # Server demo mengikuti tag `demo`: versi terbaru yang lolos lint, build, uji API, dan uji
+  # layar. Hanya memindahkan tag ke image yang sudah diuji di job `image`; tidak membangun ulang.
+  demo:
+    name: Tandai image sebagai versi demo
+    needs: [verify, image]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/claude/r0-fondasi'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - name: Pindahkan tag demo
+        run: |
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker buildx imagetools create --tag "$IMAGE:demo" "$IMAGE:sha-$GITHUB_SHA"
+          docker buildx imagetools inspect "$IMAGE:demo"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
