@@ -2,12 +2,13 @@
 # Menjalankan portal di server staging/demo dengan image yang sudah lolos CI.
 # Panduan lengkap: docs/operasi/server-demo.md
 #
-#   deploy/scripts/server.sh pasang <domain-atau-ip> [--sertifikat-internal]
+#   deploy/scripts/server.sh pasang <domain-atau-ip> [--sertifikat-internal | --panel]
+#       --panel: domain dan HTTPS diurus panel server (aaPanel/Nginx); aplikasi hanya di 127.0.0.1
 #   deploy/scripts/server.sh perbarui      ke versi terbaru yang lolos semua uji CI
 #   deploy/scripts/server.sh status        versi yang berjalan dan kesehatan
 #   deploy/scripts/server.sh ulang-data    hapus semua data, isi ulang data contoh
 #   deploy/scripts/server.sh sertifikat    CA sertifikat internal (mode IP/jaringan tertutup)
-#   deploy/scripts/server.sh log [layanan] log berjalan (app, caddy, db, migrate)
+#   deploy/scripts/server.sh log [layanan] log berjalan (app, db, migrate, caddy)
 #
 # Variabel lingkungan (opsional): TYIO_KANAL (bawaan "demo") memilih tag image yang diikuti.
 #
@@ -22,9 +23,12 @@ REVISION_LABEL=org.opencontainers.image.revision
 say() { printf '%s\n' "$*"; }
 fail() { printf 'GAGAL: %s\n' "$*" >&2; exit 1; }
 
+# Mode panel: Nginx milik panel server (mis. aaPanel) sudah memakai port 80/443 dan mengurus
+# HTTPS, jadi Caddy tidak dijalankan.
 compose() {
-  docker compose -p "$PROJECT" --env-file "$ENV_FILE" \
-    -f deploy/compose.staging.yml -f deploy/compose.https.yml "$@"
+  local files=(-f deploy/compose.staging.yml)
+  [ "$(env_get TYIO_TLS_MODE)" = panel ] || files+=(-f deploy/compose.https.yml)
+  docker compose -p "$PROJECT" --env-file "$ENV_FILE" "${files[@]}" "$@"
 }
 
 env_get() { sed -n "s/^$1=//p" "$ENV_FILE" | tail -n 1; }
@@ -114,10 +118,15 @@ start_stack() {
   say "Menjalankan migrasi dan aplikasi ..."
   if ! compose up -d --wait --remove-orphans; then
     compose ps -a >&2 || true
-    compose logs --no-color --tail 80 migrate app caddy >&2 || true
+    compose logs --no-color --tail 40 >&2 || true
+    if [ "$(env_get TYIO_TLS_MODE)" != panel ]; then
+      say "Bila port 80/443 sudah dipakai web server lain (mis. Nginx aaPanel), pasang ulang dengan --panel." >&2
+    fi
     fail "stack tidak sehat. Log di atas; detail: deploy/scripts/server.sh log"
   fi
 }
+
+port_in_use() { (exec 3<> "/dev/tcp/127.0.0.1/$1") 2> /dev/null; }
 
 seed_demo() {
   say "Mengisi data contoh ..."
@@ -138,24 +147,46 @@ port_suffix() {
   if [ -n "$port" ] && [ "$port" != 443 ]; then printf ':%s' "$port"; fi
 }
 
+app_port() { env_get TYIO_APP_PORT | grep . || echo 8080; }
+
 # Memeriksa portal lewat HTTPS dari server ini sendiri: tanpa bergantung pada DNS, dan tanpa
-# proxy keluar yang mungkin terpasang di server (HTTPS_PROXY).
-check_https() {
-  local domain mode url ca=""
-  local curl_args=(-fsS --noproxy '*' --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors)
+# proxy keluar yang mungkin terpasang di server (HTTPS_PROXY). Selain API, halaman dan berkas
+# .js/.png juga harus sampai: konfigurasi bawaan panel bisa melayani berkas statis sendiri.
+check_portal() {
+  local domain mode base ca="" err index asset=""
+  local curl_args=(-fsS --noproxy '*' --max-time 10)
   domain="$(env_get TYIO_DOMAIN)"
   mode="$(env_get TYIO_TLS_MODE)"
-  url="https://$domain$(port_suffix)/api/health"
+  base="https://$domain$(port_suffix)"
+  if [ "$mode" = panel ]; then
+    if curl "${curl_args[@]}" -o /dev/null "http://127.0.0.1:$(app_port)/api/health"; then
+      say "Aplikasi: OK (http://127.0.0.1:$(app_port), hanya dari server ini)"
+    else
+      say "Aplikasi: TIDAK menjawab di http://127.0.0.1:$(app_port). Lihat: deploy/scripts/server.sh log app"
+      return
+    fi
+  fi
   is_ip "$domain" || curl_args+=(--connect-to "::127.0.0.1:")
   if [ "$mode" = internal ]; then
     ca="$(ca_file)"
     curl_args+=(--cacert "$ca")
   fi
-  if curl "${curl_args[@]}" "$url" > /dev/null; then
-    say "HTTPS: OK ($url)"
+  if ! err="$(curl "${curl_args[@]}" --retry 5 --retry-delay 3 --retry-all-errors -o /dev/null "$base/api/health" 2>&1)"; then
+    say "HTTPS: BELUM bisa diakses ($base): $(printf '%s' "$err" | tail -n 1)"
+    case "$mode" in
+      acme) say "  Pastikan domain mengarah ke server ini dan port 80/443 terbuka; lihat: deploy/scripts/server.sh log caddy" ;;
+      panel) say "  Atur situs, SSL, dan reverse proxy di panel: docs/operasi/server-demo.md, bagian aaPanel." ;;
+    esac
   else
-    say "HTTPS: BELUM bisa diakses ($url)."
-    [ "$mode" = acme ] && say "  Pastikan domain mengarah ke server ini dan port 80/443 terbuka; lihat: deploy/scripts/server.sh log caddy"
+    index="$(curl "${curl_args[@]}" "$base/" 2> /dev/null || true)"
+    [[ "$index" =~ (/assets/[^\"]+\.js) ]] && asset="${BASH_REMATCH[1]}"
+    if [ -n "$asset" ] && curl "${curl_args[@]}" -o /dev/null "$base$asset" 2> /dev/null \
+      && curl "${curl_args[@]}" -o /dev/null "$base/pwa-192.png" 2> /dev/null; then
+      say "HTTPS: OK ($base)"
+    else
+      say "HTTPS: API menjawab, tetapi halaman atau berkas aplikasi (.js/.png) tidak sampai ($base)."
+      [ "$mode" != panel ] || say "  Konfigurasi situs di panel melayani berkas statis sendiri: pakai 'location ^~ /' (docs/operasi/server-demo.md, bagian aaPanel)."
+    fi
   fi
   [ -z "$ca" ] || rm -f "$ca"
 }
@@ -178,8 +209,17 @@ cmd_pasang() {
   [ -n "$domain" ] || fail "sebutkan domain atau alamat IP portal: deploy/scripts/server.sh pasang noc-demo.contoh.co.id"
   [[ "$domain" =~ ^[A-Za-z0-9.:-]+$ ]] || fail "domain '$domain' tidak sah (tanpa https:// dan tanpa garis miring)."
   shift
-  if [ "${1:-}" = --sertifikat-internal ] || is_ip "$domain"; then mode=internal; fi
+  case "${1:-}" in
+    --panel) mode=panel ;;
+    --sertifikat-internal) mode=internal ;;
+    '') is_ip "$domain" && mode=internal ;;
+    *) fail "pilihan '$1' tidak dikenal. Pilihan: --panel atau --sertifikat-internal" ;;
+  esac
   need docker git openssl curl
+  if [ ! -e "$ENV_FILE" ] && [ "$mode" != panel ] && { port_in_use 80 || port_in_use 443; }; then
+    fail "port 80/443 di server ini sudah dipakai (mis. Nginx milik aaPanel). Biarkan panel yang mengurus domain dan HTTPS:
+  deploy/scripts/server.sh pasang $domain --panel"
+  fi
   if [ -e "$ENV_FILE" ]; then
     # Mengulang pasang yang terhenti (mis. image belum bisa ditarik): konfigurasi lama dipakai.
     [ "$(env_get TYIO_DOMAIN)" = "$domain" ] \
@@ -195,6 +235,11 @@ cmd_pasang() {
         printf 'TYIO_IMAGE_REPO=%s\n' "${TYIO_IMAGE_REPO:-$(default_image_repo)}"
         printf 'TYIO_DB_PASSWORD=%s\n' "$(openssl rand -hex 24)"
         printf 'TYIO_SEED_PASSWORD=Demo-%s\n' "$(openssl rand -hex 6)"
+        if [ "$mode" = panel ]; then
+          # Nginx panel satu-satunya proxy di depan aplikasi.
+          printf 'TYIO_TRUST_PROXY_HOPS=1\n'
+          printf 'TYIO_APP_PORT=%s\n' "${TYIO_APP_PORT:-8080}"
+        fi
       } > "$ENV_FILE"
     )
     say "Konfigurasi dibuat: $ENV_FILE (domain $domain, sertifikat $mode)."
@@ -204,13 +249,18 @@ cmd_pasang() {
   checkout_revision "$revision"
   start_stack
   seed_demo
-  check_https
+  check_portal
   say "Versi berjalan: $(describe_revision "$revision")"
   print_accounts
   if [ "$mode" = internal ]; then
     say ""
     say "Sertifikat internal: browser memperingatkan sampai CA-nya dipasang di komputer penonton."
     say "  deploy/scripts/server.sh sertifikat > tyio-ca.crt"
+  elif [ "$mode" = panel ]; then
+    say ""
+    say "Berikutnya di aaPanel: buat situs $domain, pasang SSL, dan reverse proxy ke"
+    say "http://127.0.0.1:$(app_port) (docs/operasi/server-demo.md, bagian aaPanel)."
+    say "Lalu periksa: deploy/scripts/server.sh status"
   fi
 }
 
@@ -221,17 +271,26 @@ cmd_perbarui() {
   before="$(running_revision)"
   before_image="$(running_image_id)"
   revision="$(pull_latest)"
+  checkout_revision "$revision"
+  # Sisa langkah memakai skrip dari commit yang baru dipasang, bukan salinan lama yang sedang
+  # berjalan: berkas compose dan cara menjalankannya bisa berubah bersama versi baru.
+  exec bash deploy/scripts/server.sh _perbarui-lanjut "$revision" "$before" "$before_image"
+}
+
+cmd_perbarui_lanjut() {
+  local revision="$1" before="${2:-}" before_image="${3:-}"
   if [ -n "$before" ] && [ "$revision" = "$before" ]; then
+    # Tetap pastikan semua layanan berjalan (tanpa start ulang yang tidak berubah).
+    compose up -d --wait --remove-orphans > /dev/null 2>&1 || start_stack
     say "Sudah versi terbaru: $(describe_revision "$revision")"
     return
   fi
-  checkout_revision "$revision"
   start_stack
   # Image versi lama (±400 MB) tidak dipakai lagi; gagal dihapus bukan masalah.
   if [ -n "$before_image" ] && [ "$before_image" != "$(running_image_id)" ]; then
     docker image rm "$before_image" > /dev/null 2>&1 || true
   fi
-  check_https
+  check_portal
   [ -z "$before" ] || say "Sebelumnya: $(describe_revision "$before")"
   say "Versi berjalan: $(describe_revision "$revision")"
 }
@@ -243,7 +302,7 @@ cmd_status() {
   revision="$(running_revision)"
   say ""
   say "Versi berjalan: $(describe_revision "${revision:-tidak diketahui}")"
-  check_https
+  check_portal
 }
 
 cmd_ulang_data() {
@@ -254,7 +313,7 @@ cmd_ulang_data() {
     read -r -p "Ketik HAPUS untuk melanjutkan: " answer
     [ "$answer" = HAPUS ] || fail "dibatalkan."
   fi
-  # Hanya database dan lampiran; volume sertifikat Caddy tetap.
+  # Hanya database dan lampiran; volume sertifikat Caddy (bila ada) tetap.
   compose rm --stop --force app migrate db
   docker volume rm "${PROJECT}_db-data" "${PROJECT}_attachments"
   start_stack
@@ -265,7 +324,11 @@ cmd_ulang_data() {
 cmd_sertifikat() {
   local ca
   [ -e "$ENV_FILE" ] || fail "server belum dipasang."
-  [ "$(env_get TYIO_TLS_MODE)" = internal ] || fail "server ini memakai sertifikat publik; tidak ada CA untuk dipasang."
+  case "$(env_get TYIO_TLS_MODE)" in
+    internal) ;;
+    panel) fail "sertifikat diurus panel server (aaPanel), bukan oleh skrip ini." ;;
+    *) fail "server ini memakai sertifikat publik; tidak ada CA untuk dipasang." ;;
+  esac
   ca="$(ca_file)"
   [ -s "$ca" ] || { rm -f "$ca"; fail "CA belum dibuat. Pastikan Caddy berjalan (deploy/scripts/server.sh status)."; }
   cat "$ca"
@@ -279,6 +342,7 @@ main() {
   case "$command" in
     pasang) cmd_pasang "$@" ;;
     perbarui) cmd_perbarui ;;
+    _perbarui-lanjut) cmd_perbarui_lanjut "$@" ;;
     status) cmd_status ;;
     ulang-data) cmd_ulang_data "$@" ;;
     sertifikat) cmd_sertifikat ;;
