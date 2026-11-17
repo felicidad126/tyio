@@ -35,5 +35,36 @@ export type {
   MasterListResponse,
   UpdateMasterItemRequest,
 } from './master.js';
+export {
+  findProvince,
+  PROVINCES,
+  REMOTE_IMPORT_COLUMNS,
+  REMOTE_IMPORT_FIELDS,
+  REMOTE_IMPORT_MAX_ROWS,
+  REMOTE_MAX_CONTACTS,
+  REMOTE_PAGE_SIZE,
+  REMOTE_STATUS_LABELS,
+  REMOTE_STATUSES,
+  TIME_ZONES,
+} from './remotes.js';
+export type {
+  JarkomRef,
+  Province,
+  RemoteContact,
+  RemoteDetail,
+  RemoteImportColumn,
+  RemoteImportFailure,
+  RemoteImportField,
+  RemoteImportRequest,
+  RemoteImportResult,
+  RemoteImportRow,
+  RemoteListQuery,
+  RemoteListResponse,
+  RemoteResponse,
+  RemoteStatus,
+  RemoteSummary,
+  TimeZoneLabel,
+  TimeZoneName,
+} from './remotes.js';
 export { APP_MODULES, canOpenModule, MODULE_ROLES } from './modules.js';
 export type { AppModule } from './modules.js';

@@ -33,6 +33,14 @@ export class MasterService {
     return rows.map(toItem);
   }
 
+  /** Hanya yang aktif, untuk pilihan di form dan saringan. */
+  async listActive(list: Exclude<MasterList, 'customer'>): Promise<MasterItem[]> {
+    const rows = await this.dataSource
+      .getRepository(MASTER_ENTITIES[list])
+      .find({ where: { active: true }, order: { code: 'ASC' } });
+    return rows.map(toItem);
+  }
+
   async create(list: MasterList, input: CreateMasterItemRequest, actor: Actor): Promise<MasterItem> {
     return this.write(list, actor, input, async (repo) => toItem(await repo.save(repo.create(input))));
   }

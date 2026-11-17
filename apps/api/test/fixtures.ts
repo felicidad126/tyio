@@ -1,7 +1,10 @@
 import type { UserRole } from '@tyio/shared';
 import type { DataSource } from 'typeorm';
 import { type Actor, withActor } from '../src/common/audit/actor.js';
+import type { MasterRow } from '../src/db/master-entity.js';
 import { hashPassword } from '../src/modules/auth/password.js';
+import { JarkomEntity } from '../src/modules/master/master.entities.js';
+import { RemoteEntity, type Remote } from '../src/modules/remotes/remote.entity.js';
 import { TenantEntity, type Tenant } from '../src/modules/tenants/tenant.entity.js';
 import { UserTenantEntity } from '../src/modules/users/user-tenant.entity.js';
 import { UserEntity, type User } from '../src/modules/users/user.entity.js';
@@ -51,4 +54,32 @@ export function sessionCookieFrom(setCookie: string | string[] | undefined): str
   const header = [setCookie ?? []].flat().find((c) => c.includes('tyio_sid='));
   if (!header) throw new Error('Jawaban tidak memasang cookie sesi');
   return header.split(';')[0] ?? '';
+}
+
+/** Jarkom uji; dibuat sekali per kode. */
+export async function ensureJarkom(ds: DataSource, code = 'UJI', name = `Jarkom ${code}`): Promise<MasterRow> {
+  const existing = await ds.getRepository(JarkomEntity).findOneBy({ code });
+  return existing ?? withActor(ds, TEST_ACTOR, (m) => m.getRepository(JarkomEntity).save({ code, name }));
+}
+
+/** Remote uji minimal milik `tenant`; kolom lain bisa ditimpa lewat `overrides`. */
+export async function createRemote(
+  ds: DataSource,
+  tenant: Tenant,
+  siteId: string,
+  overrides: Partial<Remote> = {},
+): Promise<Remote> {
+  const jarkom = await ensureJarkom(ds);
+  return withActor(ds, TEST_ACTOR, (m) =>
+    m.getRepository(RemoteEntity).save({
+      tenantId: tenant.id,
+      siteId,
+      name: `Remote ${siteId}`,
+      jarkomId: jarkom.id,
+      city: 'Kota Uji',
+      province: 'Jawa Timur',
+      timeZone: 'Asia/Jakarta',
+      ...overrides,
+    }),
+  );
 }

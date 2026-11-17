@@ -7,6 +7,7 @@ import { dataSourceOptions } from './db/options.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MasterModule } from './modules/master/master.module.js';
+import { RemotesModule } from './modules/remotes/remotes.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 
 @Module({})
@@ -24,6 +25,7 @@ export class AppModule {
         HealthModule,
         TenantsModule,
         MasterModule,
+        RemotesModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],

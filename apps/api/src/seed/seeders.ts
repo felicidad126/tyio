@@ -1,8 +1,9 @@
-import type { UserRole } from '@tyio/shared';
+import { findProvince, TIME_ZONES, type UserRole } from '@tyio/shared';
 import type { EntityManager, EntityTarget, ObjectLiteral } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
 import { hashPassword } from '../modules/auth/password.js';
-import { MASTER_ENTITIES } from '../modules/master/master.entities.js';
+import { JarkomEntity, MASTER_ENTITIES } from '../modules/master/master.entities.js';
+import { RemoteEntity, type Remote } from '../modules/remotes/remote.entity.js';
 import { TenantEntity } from '../modules/tenants/tenant.entity.js';
 import { UserTenantEntity } from '../modules/users/user-tenant.entity.js';
 import { UserEntity } from '../modules/users/user.entity.js';
@@ -35,6 +36,64 @@ export const DEMO_MASTER = {
   ],
 } as const;
 
+/**
+ * Kota tempat remote rekaan tiap customer contoh, dengan koordinat kira-kira. Dipilih
+ * tersebar di ketiga zona waktu. Nama remote, kontak, dan alamat IP semuanya rekaan.
+ */
+const DEMO_CITIES: Record<string, Array<[city: string, province: string, lat: number, lon: number]>> = {
+  MRS: [
+    ['Yogyakarta', 'DI Yogyakarta', -7.797, 110.37],
+    ['Sleman', 'DI Yogyakarta', -7.716, 110.355],
+    ['Magelang', 'Jawa Tengah', -7.47, 110.217],
+    ['Klaten', 'Jawa Tengah', -7.706, 110.606],
+    ['Boyolali', 'Jawa Tengah', -7.533, 110.596],
+  ],
+  BCN: [
+    ['Jayapura', 'Papua', -2.533, 140.718],
+    ['Merauke', 'Papua Selatan', -8.493, 140.401],
+    ['Sorong', 'Papua Barat Daya', -0.876, 131.255],
+    ['Ambon', 'Maluku', -3.695, 128.181],
+    ['Ternate', 'Maluku Utara', 0.79, 127.384],
+  ],
+  BLH: [
+    ['Malang', 'Jawa Timur', -7.983, 112.621],
+    ['Denpasar', 'Bali', -8.65, 115.216],
+    ['Makassar', 'Sulawesi Selatan', -5.148, 119.432],
+    ['Balikpapan', 'Kalimantan Timur', -1.265, 116.831],
+    ['Medan', 'Sumatera Utara', 3.595, 98.672],
+  ],
+};
+const DEMO_PLACES = ['Pasar Raya', 'Kantor Cabang', 'Terminal', 'Rumah Sakit', 'Kampus'];
+
+function demoRemotes(tenantId: string, code: string, tenantIndex: number, jarkomIds: string[]): Array<Partial<Remote>> {
+  return Array.from({ length: 25 }, (_, n) => {
+    const i = n + 1;
+    const [city, province, lat, lon] = DEMO_CITIES[code]![n % 5]!;
+    const zone = findProvince(province)!.zone;
+    return {
+      tenantId,
+      siteId: `${code}-${String(i).padStart(3, '0')}`,
+      name: `ATM ${DEMO_PLACES[Math.floor(n / 5)]} ${city}`,
+      jarkomId: jarkomIds[i % 4 === 0 ? 1 : 0],
+      status: i % 20 === 0 ? 'dibongkar' : i % 12 === 0 ? 'nonaktif' : 'aktif',
+      address: `Jl. Contoh No. ${i}, ${city}`,
+      city,
+      province,
+      timeZone: TIME_ZONES[zone],
+      latitude: (lat + n * 0.001).toFixed(6),
+      longitude: (lon + n * 0.001).toFixed(6),
+      ipSnmp: `10.${10 + tenantIndex}.0.${i}`,
+      ipLan: `10.${100 + tenantIndex}.${i}.0/29`,
+      kanwil: `Kanwil Contoh ${tenantIndex + 1}`,
+      kanca: `KC ${city}`,
+      onlineDate: `2023-${String((n % 12) + 1).padStart(2, '0')}-15`,
+      contacts: [
+        { name: `Petugas Contoh ${i}`, role: 'Pengelola', phone: `021-0000-${String(i).padStart(4, '0')}`, email: null },
+      ],
+    };
+  });
+}
+
 export const DEMO_USERS: ReadonlyArray<{
   username: string;
   displayName: string;
@@ -64,6 +123,22 @@ export function createSeeders(options: { password: string }): Seeder[] {
           await insertIgnoringExisting(manager, MASTER_ENTITIES[list as keyof typeof DEMO_MASTER], [
             ...rows,
           ]);
+        }
+      },
+    },
+    {
+      name: 'remote contoh',
+      run: async (manager) => {
+        const jarkoms = await Promise.all(
+          DEMO_MASTER.jarkom.map((j) => manager.findOneByOrFail(JarkomEntity, { code: j.code })),
+        );
+        for (const [index, demo] of DEMO_TENANTS.entries()) {
+          const tenant = await manager.findOneByOrFail(TenantEntity, { code: demo.code });
+          await insertIgnoringExisting(
+            manager,
+            RemoteEntity,
+            demoRemotes(tenant.id, demo.code, index, jarkoms.map((j) => j.id)),
+          );
         }
       },
     },
