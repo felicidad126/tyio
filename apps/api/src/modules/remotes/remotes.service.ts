@@ -40,7 +40,11 @@ export class RemotesService {
   }
 
   /** Satu halaman daftar remote yang boleh dilihat, urut Site ID. */
-  async list(access: TenantAccess, query: RemoteListQuery & { page: number }): Promise<RemoteListResponse> {
+  async list(
+    access: TenantAccess,
+    query: RemoteListQuery & { page: number },
+    pageSize = REMOTE_PAGE_SIZE,
+  ): Promise<RemoteListResponse> {
     const qb = this.remotes.query(access, 'r');
     if (query.q) qb.andWhere(`${REMOTE_SEARCH_EXPRESSION('r')} ILIKE :q`, { q: likePattern(query.q) });
     if (query.tenantId) qb.andWhere('r.tenantId = :tenantId', { tenantId: query.tenantId });
@@ -51,11 +55,11 @@ export class RemotesService {
     const total = await qb.getCount();
     const rows = await qb
       .orderBy('r.siteId', 'ASC')
-      .offset((query.page - 1) * REMOTE_PAGE_SIZE)
-      .limit(REMOTE_PAGE_SIZE)
+      .offset((query.page - 1) * pageSize)
+      .limit(pageSize)
       .getMany();
     const refs = await this.refsFor(rows);
-    return { items: rows.map((r) => toSummary(r, refs)), total, page: query.page, pageSize: REMOTE_PAGE_SIZE };
+    return { items: rows.map((r) => toSummary(r, refs)), total, page: query.page, pageSize };
   }
 
   /** 404 juga untuk remote customer lain, agar keberadaannya tidak terungkap (T27). */

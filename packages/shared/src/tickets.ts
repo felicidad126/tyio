@@ -175,3 +175,70 @@ export interface OpenTicketsConflict {
   message: string;
   openTickets: TicketSummary[];
 }
+
+/**
+ * Tampilan daftar tiket (tab di halaman Tiket). "Aktif" = belum Selesai; "Milik saya" = tiket
+ * aktif yang saya buat atau pernah saya beri tindakan.
+ */
+export const TICKET_VIEWS = ['aktif', 'saya', 'pending', 'eskalasi', 'selesai', 'semua'] as const;
+export type TicketView = (typeof TICKET_VIEWS)[number];
+
+export const TICKET_VIEW_LABELS: Readonly<Record<TicketView, string>> = {
+  aktif: 'Aktif',
+  saya: 'Milik saya',
+  pending: 'Pending',
+  eskalasi: 'Eskalasi',
+  selesai: 'Selesai',
+  semua: 'Semua',
+};
+
+/**
+ * Tampilan antrean: jumlahnya selalu tampil di tab. Selesai dan Semua (riwayat) hanya dihitung
+ * saat dibuka, karena jumlahnya terus bertambah dan tidak perlu dipantau.
+ */
+export const TICKET_QUEUE_VIEWS = ['aktif', 'saya', 'pending', 'eskalasi'] as const satisfies readonly TicketView[];
+export type TicketQueueView = (typeof TICKET_QUEUE_VIEWS)[number];
+
+/** Status yang masih perlu ditangani. */
+export const ACTIVE_TICKET_STATUSES: readonly TicketStatus[] = ['terbuka', 'dikerjakan', 'pending', 'eskalasi'];
+
+export const TICKET_PAGE_SIZE = 50;
+/** Panjang potongan catatan tindakan terakhir di daftar. */
+export const TICKET_LIST_NOTE_EXCERPT = 140;
+
+/** Parameter daftar tiket (query string). */
+export interface TicketListQuery {
+  view?: TicketView;
+  /** Cari di no. NPR, no. tiket customer, Site ID, nama, kota, dan kanca remote. */
+  q?: string;
+  tenantId?: string;
+  categoryId?: string;
+  systemId?: string;
+  jarkomId?: string;
+  page?: number;
+}
+
+/** Satu baris daftar tiket: yang perlu terlihat di antrean tanpa membuka tiketnya. */
+export interface TicketListItem extends TicketSummary {
+  remote: Pick<TicketRemote, 'id' | 'siteId' | 'name' | 'city' | 'timeZone'>;
+  system: MasterRef | null;
+  customerTicketNumber: string | null;
+  pending: { party: PendingParty; reason: string } | null;
+  createdBy: { id: string; displayName: string };
+  /** Entri linimasa terbaru menurut waktu tindakan; catatan dipotong. */
+  lastAction: {
+    occurredAt: string;
+    createdBy: { id: string; displayName: string };
+    statusTo: TicketStatus | null;
+    note: string | null;
+  } | null;
+}
+
+export interface TicketListResponse {
+  items: TicketListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  /** Jumlah per tampilan antrean dengan saringan dan pencarian yang sama. */
+  counts: Record<TicketQueueView, number>;
+}

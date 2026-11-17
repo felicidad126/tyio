@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import type { OpenTicketsResponse, SessionUser, TicketResponse } from '@tyio/shared';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import type { OpenTicketsResponse, SessionUser, TicketListResponse, TicketResponse } from '@tyio/shared';
 import type { Actor } from '../../common/audit/actor.js';
 import type { TenantAccess } from '../../common/tenant/tenant-access.js';
 import { CurrentTenantAccess, TenantScoped } from '../../common/tenant/tenant-policy.js';
 import { CurrentActor, CurrentUser, RequireModule } from '../auth/auth.decorators.js';
 import { parseCreateTicket } from './ticket-input.js';
+import { parseTicketListQuery } from './ticket-list-query.js';
 import { TicketsService } from './tickets.service.js';
 
 /** Tiket NPR: dibuat dan dibaca oleh peran yang boleh membuka modul Tiket, per customer. */
@@ -22,6 +23,15 @@ export class TicketsController {
     @Body() body: unknown,
   ): Promise<TicketResponse> {
     return { ticket: await this.tickets.create(access, user.id, parseCreateTicket(body), actor) };
+  }
+
+  @Get('tickets')
+  async list(
+    @CurrentTenantAccess() access: TenantAccess,
+    @CurrentUser() user: SessionUser,
+    @Query() query: Record<string, unknown>,
+  ): Promise<TicketListResponse> {
+    return this.tickets.list(access, user.id, parseTicketListQuery(query));
   }
 
   @Get('tickets/:id')

@@ -1,17 +1,52 @@
 import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import type { MasterRef, OpenTicketsConflict, TenantRef, TicketDetail, TicketSummary } from '@tyio/shared';
+import {
+  ACTIVE_TICKET_STATUSES,
+  type MasterRef,
+  type OpenTicketsConflict,
+  type TenantRef,
+  TICKET_LIST_NOTE_EXCERPT,
+  TICKET_PAGE_SIZE,
+  TICKET_QUEUE_VIEWS,
+  type TicketDetail,
+  type TicketListItem,
+  type TicketListResponse,
+  type TicketQueueView,
+  type TicketStatus,
+  type TicketSummary,
+  type TicketView,
+} from '@tyio/shared';
 import { DataSource, type EntityManager, In, IsNull } from 'typeorm';
 import { type Actor, withActor } from '../../common/audit/actor.js';
 import type { TenantAccess } from '../../common/tenant/tenant-access.js';
 import { TenantScopedRepository } from '../../common/tenant/tenant-scoped.repository.js';
 import { JarkomEntity, SystemEntity, TicketCategoryEntity } from '../master/master.entities.js';
-import { RemoteEntity } from '../remotes/remote.entity.js';
+import { likePattern } from '../remotes/remote-query.js';
+import { REMOTE_SEARCH_EXPRESSION, RemoteEntity } from '../remotes/remote.entity.js';
 import { TenantEntity } from '../tenants/tenant.entity.js';
 import { UserEntity } from '../users/user.entity.js';
 import { invalid, type CreateTicketInput } from './ticket-input.js';
 import { formatTicketNumber, ticketPeriod } from './ticket-number.js';
 import { TicketActionEntity } from './ticket-action.entity.js';
-import { type Ticket, TicketEntity } from './ticket.entity.js';
+import type { ParsedTicketListQuery } from './ticket-list-query.js';
+import { type Ticket, TicketEntity, TICKET_SEARCH_EXPRESSION } from './ticket.entity.js';
+
+/**
+ * Syarat tiap tampilan daftar (T55). `:activeStatuses` dan `:me` diisi oleh list(). "Milik
+ * saya" = tiket aktif yang saya buat atau pernah saya beri tindakan.
+ */
+const VIEW_CONDITIONS: Readonly<Record<TicketView, string | null>> = {
+  aktif: 't.status IN (:...activeStatuses)',
+  saya:
+    't.status IN (:...activeStatuses) AND (t.created_by = :me OR EXISTS ' +
+    '(SELECT 1 FROM ticket_actions ta WHERE ta.ticket_id = t.id AND ta.created_by = :me))',
+  pending: "t.status = 'pending'",
+  eskalasi: "t.status = 'eskalasi'",
+  selesai: "t.status = 'selesai'",
+  semua: null,
+};
+
+const isQueueView = (view: TicketView): view is TicketQueueView =>
+  (TICKET_QUEUE_VIEWS as readonly string[]).includes(view);
 
 @Injectable()
 export class TicketsService {
@@ -91,6 +126,69 @@ export class TicketsService {
     return this.get(access, id);
   }
 
+  /**
+   * Satu halaman daftar tiket yang boleh dilihat, terbaru menurut waktu kejadian (T56), beserta
+   * jumlah per tampilan antrean dengan saringan dan pencarian yang sama. Jumlah antrean hanya
+   * membaca tiket aktif (indeks status); total Selesai/Semua dihitung hanya saat dibuka. Tabel
+   * remote hanya digabung untuk saringan jarkom (T58).
+   */
+  async list(
+    access: TenantAccess,
+    userId: string,
+    query: ParsedTicketListQuery,
+    pageSize = TICKET_PAGE_SIZE,
+  ): Promise<TicketListResponse> {
+    const params = { activeStatuses: [...ACTIVE_TICKET_STATUSES], me: userId };
+    const filtered = () => {
+      const qb = this.tickets.query(access, 't');
+      if (query.jarkomId) qb.innerJoin('Remote', 'r', 'r.id = t.remoteId');
+      if (query.q) {
+        // Dua pencarian terpisah agar masing-masing memakai indeks trigramnya (nomor tiket, teks
+        // remote), lalu digabung. Hasilnya tetap dibatasi filter tenant query luar (T58).
+        qb.andWhere(
+          `t.id IN (SELECT ts.id FROM tickets ts WHERE ${TICKET_SEARCH_EXPRESSION('ts')} ILIKE :q ` +
+            `UNION SELECT tr.id FROM tickets tr JOIN remotes rs ON rs.id = tr.remote_id ` +
+            `WHERE ${REMOTE_SEARCH_EXPRESSION('rs')} ILIKE :q)`,
+          { q: likePattern(query.q) },
+        );
+      }
+      if (query.tenantId) qb.andWhere('t.tenantId = :tenantId', { tenantId: query.tenantId });
+      if (query.categoryId) qb.andWhere('t.categoryId = :categoryId', { categoryId: query.categoryId });
+      if (query.systemId) qb.andWhere('t.systemId = :systemId', { systemId: query.systemId });
+      if (query.jarkomId) qb.andWhere('r.jarkomId = :jarkomId', { jarkomId: query.jarkomId });
+      return qb;
+    };
+
+    const countQuery = filtered().andWhere(VIEW_CONDITIONS.aktif!, params).select('COUNT(*)', 'aktif');
+    for (const view of TICKET_QUEUE_VIEWS.filter((v) => v !== 'aktif')) {
+      countQuery.addSelect(`COUNT(*) FILTER (WHERE ${VIEW_CONDITIONS[view]})`, view);
+    }
+    countQuery.setParameters(params);
+    const raw = (await countQuery.getRawOne<Record<TicketQueueView, string>>())!;
+    const counts = Object.fromEntries(TICKET_QUEUE_VIEWS.map((v) => [v, Number(raw[v])])) as Record<
+      TicketQueueView,
+      number
+    >;
+
+    const page = filtered();
+    const condition = VIEW_CONDITIONS[query.view];
+    if (condition) page.andWhere(condition, params);
+    const total = isQueueView(query.view) ? counts[query.view] : await page.clone().getCount();
+    const rows = await page
+      .orderBy('t.occurredAt', 'DESC')
+      .addOrderBy('t.id', 'DESC')
+      .offset((query.page - 1) * pageSize)
+      .limit(pageSize)
+      .getMany();
+    return {
+      items: await listItems(this.dataSource.manager, rows),
+      total,
+      page: query.page,
+      pageSize,
+      counts,
+    };
+  }
+
   /** 404 juga untuk tiket customer lain (T27). */
   async get(access: TenantAccess, id: string): Promise<TicketDetail> {
     const ticket = await this.tickets.query(access, 't').andWhere('t.id = :id', { id }).getOne();
@@ -156,6 +254,59 @@ async function nextSequence(m: EntityManager, tenantId: string, jarkomId: string
     [tenantId, jarkomId, period],
   );
   return rows[0]!.last_value;
+}
+
+/**
+ * Baris daftar untuk tiket yang sudah lolos filter tenant: remote, system, pembuat, dan
+ * tindakan terakhir, dengan satu query per jenis untuk semua tiket.
+ */
+async function listItems(m: EntityManager, tickets: Ticket[]): Promise<TicketListItem[]> {
+  if (tickets.length === 0) return [];
+  const ticketIds = tickets.map((t) => t.id);
+  const lastActions: Array<{
+    ticket_id: string;
+    occurred_at: Date;
+    created_by: string;
+    status_to: TicketStatus | null;
+    note: string | null;
+  }> = await m.query(
+    `SELECT DISTINCT ON (ticket_id) ticket_id, occurred_at, created_by, status_to, left(note, $2) AS note
+     FROM ticket_actions WHERE ticket_id = ANY($1)
+     ORDER BY ticket_id, date_trunc('minute', occurred_at) DESC, created_at DESC`,
+    [ticketIds, TICKET_LIST_NOTE_EXCERPT],
+  );
+  const systemIds = [...new Set(tickets.map((t) => t.systemId).filter((id): id is string => id !== null))];
+  const userIds = [...new Set([...tickets.map((t) => t.createdById), ...lastActions.map((a) => a.created_by)])];
+  const [summaryList, remotes, systems, users] = await Promise.all([
+    summaries(m, tickets),
+    m.getRepository(RemoteEntity).findBy({ id: In([...new Set(tickets.map((t) => t.remoteId))]) }),
+    systemIds.length > 0 ? m.getRepository(SystemEntity).findBy({ id: In(systemIds) }) : [],
+    m.getRepository(UserEntity).findBy({ id: In(userIds) }),
+  ]);
+  const remoteById = new Map(remotes.map((r) => [r.id, r]));
+  const systemById = new Map(systems.map((s) => [s.id, ref(s)]));
+  const userById = new Map(users.map((u) => [u.id, { id: u.id, displayName: u.displayName }]));
+  const lastByTicket = new Map(lastActions.map((a) => [a.ticket_id, a]));
+  return tickets.map((t, i) => {
+    const remote = remoteById.get(t.remoteId)!;
+    const last = lastByTicket.get(t.id);
+    return {
+      ...summaryList[i]!,
+      remote: { id: remote.id, siteId: remote.siteId, name: remote.name, city: remote.city, timeZone: remote.timeZone },
+      system: t.systemId ? (systemById.get(t.systemId) ?? null) : null,
+      customerTicketNumber: t.customerTicketNumber,
+      pending: t.pendingParty && t.pendingReason ? { party: t.pendingParty, reason: t.pendingReason } : null,
+      createdBy: userById.get(t.createdById)!,
+      lastAction: last
+        ? {
+            occurredAt: new Date(last.occurred_at).toISOString(),
+            createdBy: userById.get(last.created_by)!,
+            statusTo: last.status_to,
+            note: last.note,
+          }
+        : null,
+    };
+  });
 }
 
 /** Ringkasan tiket dengan customer dan kategorinya, dalam dua query untuk semua tiket. */

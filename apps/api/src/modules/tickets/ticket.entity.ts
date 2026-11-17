@@ -30,6 +30,10 @@ export interface Ticket {
   updatedAt: Date;
 }
 
+/** Teks yang dicari di tiket: nomor NPR dan nomor tiket customer (indeks trigram, T57). */
+export const TICKET_SEARCH_EXPRESSION = (alias: string) =>
+  `(${alias}.number || ' ' || coalesce(${alias}.customer_ticket_number, ''))`;
+
 export const TicketEntity = new EntitySchema<Ticket>({
   name: 'Ticket',
   tableName: 'tickets',
@@ -88,6 +92,14 @@ export const TicketEntity = new EntitySchema<Ticket>({
     { name: 'tickets_remote_open_idx', columns: ['remoteId'], where: 'closed_at IS NULL' },
     { name: 'tickets_category_id_idx', columns: ['categoryId'] },
     { name: 'tickets_system_id_idx', columns: ['systemId'] },
+    // Daftar tiket (1.5): urut waktu kejadian, per status, dan "Milik saya".
+    { name: 'tickets_occurred_idx', columns: ['occurredAt', 'id'] },
+    { name: 'tickets_status_occurred_idx', columns: ['status', 'occurredAt'] },
+    { name: 'tickets_created_by_idx', columns: ['createdById'] },
+    // Tiket per remote, juga yang sudah ditutup: pencarian lewat remote dan riwayat remote (1.6).
+    { name: 'tickets_remote_occurred_idx', columns: ['remoteId', 'occurredAt'] },
+    // Indeks ekspresi trigram untuk pencarian; dibuat migrasi, tidak bisa dinyatakan TypeORM.
+    { name: 'tickets_search_trgm', columns: ['number'], synchronize: false },
   ],
   checks: [
     {

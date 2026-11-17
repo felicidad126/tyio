@@ -65,7 +65,11 @@ export const TicketActionEntity = new EntitySchema<TicketAction>({
     },
   ],
   uniques: [{ name: 'ticket_actions_id_ticket_key', columns: ['id', 'ticketId'] }],
-  indices: [{ name: 'ticket_actions_ticket_idx', columns: ['ticketId', 'createdAt'] }],
+  indices: [
+    { name: 'ticket_actions_ticket_idx', columns: ['ticketId', 'createdAt'] },
+    // "Milik saya" di daftar tiket: tiket yang pernah diberi tindakan oleh pengguna ini.
+    { name: 'ticket_actions_created_by_idx', columns: ['createdById', 'ticketId'] },
+  ],
   checks: [
     { name: 'ticket_actions_has_content', expression: 'note IS NOT NULL OR status_to IS NOT NULL' },
     { name: 'ticket_actions_note_length', expression: 'char_length(note) BETWEEN 1 AND 4000' },

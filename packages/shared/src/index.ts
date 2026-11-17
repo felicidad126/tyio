@@ -68,6 +68,7 @@ export type {
 } from './remotes.js';
 export {
   ACTION_NOTE_MAX,
+  ACTIVE_TICKET_STATUSES,
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_FILES,
   ATTACHMENT_TYPES,
@@ -78,11 +79,16 @@ export {
   PENDING_REASON_MAX,
   PENDING_REASON_MIN,
   TICKET_FUTURE_TOLERANCE_MINUTES,
+  TICKET_LIST_NOTE_EXCERPT,
+  TICKET_PAGE_SIZE,
   TICKET_PROBLEM_MAX,
+  TICKET_QUEUE_VIEWS,
   TICKET_PROBLEM_MIN,
   TICKET_STATUS_LABELS,
   TICKET_STATUSES,
   TICKET_TRANSITIONS,
+  TICKET_VIEW_LABELS,
+  TICKET_VIEWS,
 } from './tickets.js';
 export type {
   AddTicketActionRequest,
@@ -98,11 +104,18 @@ export type {
   OpenTicketsConflict,
   OpenTicketsResponse,
   TicketDetail,
+  TicketListItem,
+  TicketListQuery,
+  TicketListResponse,
   TicketRemote,
   TicketResponse,
   TicketStatus,
+  TicketQueueView,
   TicketSummary,
+  TicketView,
 } from './tickets.js';
+export { SEARCH_LIMIT, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from './search.js';
+export type { SearchResponse } from './search.js';
 export {
   formatInZone,
   localInputToUtc,

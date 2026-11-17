@@ -74,8 +74,13 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   const allTenantRoutes = () => routes.filter((r) => r.policy?.kind === 'all');
   const fill = (path: string, id: string) => path.replace(/:[A-Za-z]+/g, id);
   const hasParams = (path: string) => /:[A-Za-z]+/.test(path);
+  // Rute GET yang wajib punya parameter pencarian: diuji dengan kata yang cocok dengan data
+  // kedua tenant ("Remote <nama tenant>"), sehingga kebocoran tenant B pasti terlihat.
+  const PROBE_QUERY: Readonly<Record<string, string>> = { '/api/search': 'q=Remote' };
   const get = (path: string, who: keyof typeof cookies) =>
-    request(app.getHttpServer()).get(path).set('Cookie', cookies[who]);
+    request(app.getHttpServer())
+      .get(PROBE_QUERY[path] ? `${path}?${PROBE_QUERY[path]}` : path)
+      .set('Cookie', cookies[who]);
   const call = (method: string, path: string, who?: keyof typeof cookies) => {
     const req = request(app.getHttpServer())[method.toLowerCase() as 'get'](path);
     return who ? req.set('Cookie', cookies[who]) : req;

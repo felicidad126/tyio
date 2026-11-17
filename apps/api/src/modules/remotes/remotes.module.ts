@@ -6,5 +6,6 @@ import { RemotesService } from './remotes.service.js';
 @Module({
   controllers: [RemotesController, RemotesAdminController],
   providers: [RemotesService],
+  exports: [RemotesService],
 })
 export class RemotesModule {}

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { testDataSource } from './db.js';
+import { resetData, testDataSource } from './db.js';
 
 describe('skema database', () => {
   const dataSource = testDataSource();
@@ -21,6 +21,9 @@ describe('skema database', () => {
   });
 
   it('setiap migrasi bisa dibatalkan lalu diterapkan lagi', async () => {
+    // Mulai dari data kosong: pembatalan migrasi linimasa sengaja gagal bila masih ada tiket
+    // berstatus selain "terbuka" (lihat migrasinya), dan berkas uji lain bisa meninggalkannya.
+    await resetData(dataSource);
     const total = dataSource.migrations.length;
     for (let i = 0; i < total; i++) {
       await dataSource.undoLastMigration({ transaction: 'each' });
