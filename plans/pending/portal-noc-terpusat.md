@@ -294,5 +294,6 @@ List Report Teknisi, Shared.
 | Rilis | Status |
 | --- | --- |
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
-| R0 Fondasi | Berjalan — 0.1–0.3 selesai (0.1–0.2 di `main` lewat PR #1); lihat Progres di langkah-teknis.md |
-| R1–R8 | Belum mulai |
+| R0 Fondasi | 0.1–0.5 selesai (0.1–0.2 di `main` lewat PR #1); pemasangan staging dan 0.6 menunggu keputusan hosting; lihat Progres di langkah-teknis.md |
+| R1 Remote + Tiket | Berjalan — 1.1 (master data) selesai |
+| R2–R8 | Belum mulai |
