@@ -240,11 +240,13 @@ Staging menjalankan image yang **sudah dibangun dan lolos uji asap di CI** (job 
 di `.github/workflows/ci.yml` menjalankan image itu dengan `deploy/compose.staging.yml`
 yang sama). Staging tidak membangun image sendiri.
 
-> **Belum lengkap:** tempat menyimpan image hasil CI (registry) dan server staging menunggu
-> keputusan hosting. Sampai itu diputuskan, image belum dikirim ke mana pun; CI hanya
-> membangun dan mengujinya.
+**Cara yang disarankan: [Server demo (staging) di server sendiri](server-demo.md).** CI
+menerbitkan image yang lolos semua uji ke `ghcr.io/felicidad126/tyio` (tag `sha-<commit>`,
+dan tag `demo` untuk versi terbaru yang hijau di branch `claude/r0-fondasi`).
+`deploy/scripts/server.sh` memasang, memperbarui, dan memeriksanya, dengan HTTPS lewat Caddy
+(`deploy/compose.https.yml`).
 
-Langkah memasang, setelah image tersedia di server:
+Langkah manual tanpa HTTPS, untuk pemeriksaan di server itu sendiri:
 
 ```bash
 cp deploy/staging.env.example deploy/staging.env    # isi TYIO_IMAGE dan TYIO_DB_PASSWORD
