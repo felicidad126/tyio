@@ -52,6 +52,24 @@ tanpa mencetak nilainya.
   `@NoTenantData('alasan')`. Aplikasi **menolak start** bila ada rute tanpa tanda, dan
   menyebut rutenya.
 
+### Menu per peran
+
+Siapa boleh membuka modul mana diatur di satu tempat: `MODULE_ROLES` di
+`packages/shared/src/modules.ts`. Menu web membaca aturan yang sama, dan rute API modul
+nanti menegakkannya juga. Sementara (sampai sesi hak akses): semua modul operasional untuk
+semua peran; **Admin** khusus peran admin. Membuka `/admin` tanpa hak menampilkan halaman
+"tidak tersedia untuk peran Anda".
+
+### Memasang aplikasi (PWA)
+
+- Desktop (Chrome/Edge): ikon "Pasang" di bilah alamat. Ponsel Android: menu browser →
+  "Tambahkan ke layar utama". iPhone (Safari): Bagikan → "Tambahkan ke Layar Utama".
+- Pemasangan butuh HTTPS, kecuali dibuka dari `localhost`.
+- Service worker hanya menyimpan cangkang aplikasi (HTML, JS, CSS, ikon). Jawaban `/api`
+  tidak pernah disimpan, jadi data operasional selalu terbaru.
+- Setelah rilis baru, aplikasi menampilkan "Versi baru portal tersedia" dengan tombol
+  **Muat ulang sekarang**; tidak memuat ulang sendiri agar isian form tidak hilang.
+
 ### Audit log
 
 Setiap perubahan pada tabel data (customer, pengguna, dan tabel R1 nanti) dicatat oleh

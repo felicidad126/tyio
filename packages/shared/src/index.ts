@@ -16,3 +16,5 @@ export type {
   UserRole,
 } from './auth.js';
 export type { HealthResponse, HealthState } from './health.js';
+export { APP_MODULES, canOpenModule, MODULE_ROLES } from './modules.js';
+export type { AppModule } from './modules.js';

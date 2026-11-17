@@ -1,5 +1,6 @@
-import { APP_NAME } from '@tyio/shared';
-import { createRouter, createWebHistory } from 'vue-router';
+import { type AppModule, APP_NAME, canOpenModule } from '@tyio/shared';
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import { NAV_ITEMS } from '../navigation';
 import { useAuthStore } from '../stores/auth';
 import { safeRedirectTarget } from './safe-redirect';
 
@@ -8,8 +9,21 @@ declare module 'vue-router' {
     /** Boleh dibuka tanpa masuk. */
     public?: boolean;
     title?: string;
+    /** Modul pemilik halaman; siapa yang boleh membuka diatur MODULE_ROLES di @tyio/shared. */
+    module?: AppModule;
   }
 }
+
+const OverviewPage = () => import('../pages/overview/OverviewPage.vue');
+const ModulePage = () => import('../pages/ModulePage.vue');
+
+// Satu rute per modul. Halaman modul yang belum dibangun memakai halaman penanda.
+const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.map((item) => ({
+  path: item.path === '/' ? '' : item.path.slice(1),
+  name: item.module,
+  component: item.module === 'overview' ? OverviewPage : ModulePage,
+  meta: { module: item.module, title: item.label },
+}));
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -22,21 +36,27 @@ export const router = createRouter({
     },
     {
       path: '/',
-      name: 'home',
-      component: () => import('../pages/home/HomePage.vue'),
-      meta: { title: 'Beranda' },
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('../pages/NotFoundPage.vue'),
-      meta: { title: 'Halaman tidak ditemukan' },
+      component: () => import('../layouts/AppLayout.vue'),
+      children: [
+        ...moduleRoutes,
+        {
+          path: 'tanpa-akses',
+          name: 'forbidden',
+          component: () => import('../pages/ForbiddenPage.vue'),
+          meta: { title: 'Tanpa akses' },
+        },
+        {
+          path: ':pathMatch(.*)*',
+          name: 'not-found',
+          component: () => import('../pages/NotFoundPage.vue'),
+          meta: { title: 'Halaman tidak ditemukan' },
+        },
+      ],
     },
   ],
 });
 
-// Halaman yang butuh login mengarah ke /login dengan tujuan asli di `next`.
-// Penegakan sebenarnya ada di API; penjaga ini hanya mengatur alur layar.
+// Alur layar saja: penegakan sebenarnya ada di API.
 router.beforeEach(async (to) => {
   const auth = useAuthStore();
   await auth.ensureLoaded();
@@ -45,6 +65,11 @@ router.beforeEach(async (to) => {
   }
   if (!to.meta.public && !auth.user) {
     return { name: 'login', query: { next: to.fullPath } };
+  }
+  const module = to.meta.module;
+  if (module && auth.user && !canOpenModule(auth.user.role, module)) {
+    // Arahkan ke halaman tanpa akses; alamat yang dituju disimpan di ?dari= untuk konteks.
+    return { name: 'forbidden', replace: true, query: { dari: to.fullPath } };
   }
   return true;
 });

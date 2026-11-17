@@ -1,15 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
-import { expectLoginPage, expectPath } from './helpers';
+import { expectLoginPage, expectPath, fillSignIn, SEED_PASSWORD } from './helpers';
 
-// Memakai pengguna contoh dari seed. Kata sandi: bawaan dev, atau E2E_PASSWORD di staging/CI.
-const USERNAME = 'l1.contoh';
-const PASSWORD = process.env.E2E_PASSWORD ?? 'contoh-dev-2026';
-
-async function signIn(page: Page, password = PASSWORD): Promise<void> {
-  await page.getByLabel('Nama pengguna').fill(USERNAME);
-  await page.getByLabel('Kata sandi', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Masuk' }).click();
-}
+// Memakai pengguna contoh dari seed (kata sandi: lihat helpers.ts).
+const signIn = (page: Page, password = SEED_PASSWORD) => fillSignIn(page, 'l1.contoh', password);
 
 // Berurutan: percobaan gagal lebih dulu, lalu login yang berhasil mengosongkan hitungannya.
 test.describe.configure({ mode: 'serial' });
@@ -46,12 +39,14 @@ test.describe('masuk dan keluar', () => {
     const heading = page.getByRole('heading', { level: 1 });
     await expectPath(page, '/');
     await expect(heading).toHaveText('Selamat datang, Operator L1 Contoh');
-    await expect(page.getByText('L1 Monitoring')).toBeVisible();
-    await expect(page.getByText('Semua customer')).toBeVisible();
+    const account = page.getByRole('main');
+    await expect(account.getByText('L1 Monitoring')).toBeVisible();
+    await expect(account.getByText('Semua customer')).toBeVisible();
 
     await page.reload();
     await expect(heading).toHaveText('Selamat datang, Operator L1 Contoh');
 
+    await page.getByRole('button', { name: 'Menu pengguna Operator L1 Contoh', exact: true }).click();
     await page.getByRole('button', { name: 'Keluar' }).click();
     await expectLoginPage(page);
     await page.goto('/');
