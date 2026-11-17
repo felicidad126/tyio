@@ -218,7 +218,7 @@ describe('buat tiket (NPR)', () => {
     it('remote yang dibongkar dan customer nonaktif tidak bisa dibuatkan tiket', async () => {
       const gone = await createRemote(ds, a, 'TNA-OLD', { status: 'dibongkar' });
       expect((await create({ remoteId: gone.id }).expect(400)).body.message).toBe(
-        'Remote TNA-OLD sudah dibongkar; tiket tidak bisa dibuat.',
+        'Remote TNA-OLD berstatus Dismantle; tiket tidak bisa dibuat.',
       );
 
       // Pengguna yang dibatasi ke customer itu tidak lagi melihatnya; pengguna semua customer

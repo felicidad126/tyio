@@ -8,7 +8,6 @@ export const APP_MODULES = [
   'gamas',
   'remote',
   'laporan',
-  'dokumen',
   'admin',
 ] as const;
 export type AppModule = (typeof APP_MODULES)[number];
@@ -30,7 +29,6 @@ export const MODULE_ROLES: Readonly<Record<AppModule, readonly UserRole[]>> = {
   gamas: EVERYONE,
   remote: EVERYONE,
   laporan: EVERYONE,
-  dokumen: EVERYONE,
   admin: ['admin'],
 };
 

@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import type { TicketListResponse, TicketStatus, TicketView } from '@tyio/shared';
+import type { TicketActionType, TicketListResponse, TicketStatus, TicketView } from '@tyio/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -43,11 +43,19 @@ describe('daftar tiket', () => {
     http().get('/api/tickets').query(query).set('Cookie', who);
   const numbers = (res: request.Response) => (res.body as TicketListResponse).items.map((i) => i.number);
 
-  async function action(ticket: Ticket, by: User, occurredAt: Date, note: string | null, statusTo?: TicketStatus) {
+  async function action(
+    ticket: Ticket,
+    by: User,
+    occurredAt: Date,
+    note: string | null,
+    statusTo?: TicketStatus,
+    type: TicketActionType = 'catatan',
+  ) {
     await asTester(ds, (m) =>
       m.getRepository(TicketActionEntity).save({
         tenantId: ticket.tenantId,
         ticketId: ticket.id,
+        type,
         occurredAt,
         note,
         statusTo: statusTo ?? null,
@@ -116,7 +124,7 @@ describe('daftar tiket', () => {
 
     // Saya memberi tindakan pada tiket rekan yang masih dikerjakan: masuk "Milik saya".
     await action(t.dikerjakan, other, at(2), null, 'dikerjakan');
-    await action(t.dikerjakan, me, new Date(Date.UTC(2026, 10, 2, 3, 0)), `Cek lokasi. ${'x'.repeat(200)}`);
+    await action(t.dikerjakan, me, new Date(Date.UTC(2026, 10, 2, 3, 0)), `Cek lokasi. ${'x'.repeat(200)}`, undefined, 'cek_lokasi');
     // Tindakan saya pada tiket yang sudah selesai tidak membuatnya masuk "Milik saya".
     await action(t.selesai, me, at(5), 'Sudah normal', 'selesai');
   });
@@ -155,10 +163,10 @@ describe('daftar tiket', () => {
     expect(pending.createdBy.displayName).toBe('Operator Rekan');
     expect(pending.lastAction).toBeNull();
 
-    expect(byNumber.get('NPR/UJI/TNA/2026/11/0004')!.system).toMatchObject({ code: 'SYS' });
     const worked = byNumber.get('NPR/UJI/TNA/2026/11/0002')!;
     expect(worked.customerTicketNumber).toBe('INC-778899');
     expect(worked.lastAction).toMatchObject({
+      type: 'cek_lokasi',
       occurredAt: '2026-11-02T03:00:00.000Z',
       createdBy: { displayName: 'Operator Saya' },
       statusTo: null,
@@ -186,7 +194,7 @@ describe('daftar tiket', () => {
     expect((res.body as TicketListResponse).counts).toEqual({ aktif: 5, saya: 2, pending: 1, eskalasi: 1 });
   });
 
-  it('saringan customer, kategori, system, dan jarkom; jumlah per tampilan ikut saringan', async () => {
+  it('saringan customer, kategori, dan jarkom; jumlah per tampilan ikut saringan', async () => {
     const byTenant = (await list({ view: 'semua', tenantId: b.id }).expect(200)).body as TicketListResponse;
     expect(byTenant.items.map((i) => i.number)).toEqual(['NPR/UJI/TNB/2026/11/0001']);
     expect(byTenant.total).toBe(1);
@@ -195,7 +203,6 @@ describe('daftar tiket', () => {
     expect(numbers(await list({ view: 'semua', categoryId: otherCategoryId }).expect(200))).toEqual([
       'NPR/UJI/TNA/2026/11/0003',
     ]);
-    expect(numbers(await list({ view: 'semua', systemId }).expect(200))).toEqual(['NPR/UJI/TNA/2026/11/0004']);
     expect(numbers(await list({ view: 'semua', jarkomId: otherJarkomId }).expect(200))).toEqual([
       'NPR/UJI/TNA/2026/11/0002',
     ]);
@@ -260,6 +267,8 @@ describe('daftar tiket', () => {
     [{ tenantId: 'bukan-uuid' }, /Customer tidak sah/],
     [{ categoryId: '123' }, /Kategori tidak sah/],
     [{ urut: 'lama' }, /Parameter tidak dikenal: urut/],
+    // Kolom System dihapus (K29).
+    [{ systemId: '0190c0de-0000-7000-8000-000000000000' }, /Parameter tidak dikenal: systemId/],
     [{ q: 'x'.repeat(101) }, /paling banyak 100/],
   ])('parameter salah %j dijawab 400', async (query, message) => {
     const res = await list(query as Record<string, string>).expect(400);

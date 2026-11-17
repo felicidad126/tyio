@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus } from '@nestjs/common';
 import { SEARCH_MAX_LENGTH, TICKET_VIEWS, type TicketListQuery, type TicketView } from '@tyio/shared';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ALLOWED = ['view', 'q', 'tenantId', 'categoryId', 'systemId', 'jarkomId', 'page'];
+const ALLOWED = ['view', 'q', 'tenantId', 'categoryId', 'jarkomId', 'page'];
 
 export type ParsedTicketListQuery = TicketListQuery & { view: TicketView; page: number };
 
@@ -38,7 +38,6 @@ export function parseTicketListQuery(raw: Record<string, unknown>): ParsedTicket
   for (const [key, label] of [
     ['tenantId', 'Customer'],
     ['categoryId', 'Kategori'],
-    ['systemId', 'System'],
     ['jarkomId', 'Jarkom'],
   ] as const) {
     const id = value(key);

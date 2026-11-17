@@ -6,19 +6,23 @@ import {
   PENDING_REASON_MAX,
   PENDING_REASON_MIN,
   type PendingParty,
+  TICKET_ACTION_TYPE_LABELS,
+  TICKET_ACTION_TYPES,
   TICKET_FUTURE_TOLERANCE_MINUTES,
   TICKET_STATUSES,
+  type TicketActionType,
   type TicketStatus,
 } from '@tyio/shared';
 import { invalid } from '../ticket-input.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ALLOWED = ['occurredAt', 'note', 'statusTo', 'expectedStatus', 'pendingParty', 'pendingReason', 'correctsId'];
+const ALLOWED = ['type', 'occurredAt', 'note', 'statusTo', 'expectedStatus', 'pendingParty', 'pendingReason', 'correctsId'];
 const EARLIEST = Date.UTC(2020, 0, 1);
 
 export type ActionInput =
   | {
       kind: 'action';
+      type: TicketActionType;
       occurredAt: Date;
       note: string | null;
       status: { to: TicketStatus; expected: TicketStatus; pending: { party: PendingParty; reason: string } | null } | null;
@@ -46,7 +50,12 @@ export function parseActionInput(body: unknown, files: UploadedFile[], now = new
     throw invalid(`Catatan paling banyak ${ACTION_NOTE_MAX.toLocaleString('id-ID')} karakter.`, 'note');
   }
 
+  if (input.type !== undefined && !TICKET_ACTION_TYPES.includes(input.type as TicketActionType)) {
+    throw invalid(`Jenis tindakan harus salah satu dari: ${TICKET_ACTION_TYPES.join(', ')}.`, 'type');
+  }
+  const type = (input.type as TicketActionType | undefined) ?? 'catatan';
   if (input.correctsId !== undefined) {
+    if (type !== 'catatan') throw invalid('Koreksi tidak punya jenis tindakan; tulis koreksinya saja.', 'type');
     if (typeof input.correctsId !== 'string' || !UUID.test(input.correctsId)) {
       throw invalid('Entri yang dikoreksi tidak sah.', 'correctsId');
     }
@@ -89,12 +98,15 @@ export function parseActionInput(body: unknown, files: UploadedFile[], now = new
     throw invalid('Pihak dan alasan pending hanya untuk status Pending.', 'pendingParty');
   }
 
+  if (type !== 'catatan' && !note) {
+    throw invalid(`Tulis catatan untuk tindakan ${TICKET_ACTION_TYPE_LABELS[type]}.`, 'note');
+  }
   if (!note && !status && files.length === 0) throw invalid('Tulis catatan, ubah status, atau lampirkan berkas.', 'note');
   if (!note && !status) throw invalid('Tulis catatan untuk lampiran ini.', 'note');
   if (files.length > ATTACHMENT_MAX_FILES) {
     throw invalid(`Paling banyak ${ATTACHMENT_MAX_FILES} lampiran per tindakan.`, 'lampiran');
   }
-  return { kind: 'action', occurredAt, note, status };
+  return { kind: 'action', type, occurredAt, note, status };
 }
 
 /** Nomor tiket customer: teks bebas satu baris, atau kosong untuk menghapus. */

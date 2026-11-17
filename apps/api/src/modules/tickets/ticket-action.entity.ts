@@ -1,4 +1,4 @@
-import type { AttachmentType, PendingParty, TicketStatus } from '@tyio/shared';
+import type { AttachmentType, PendingParty, TicketActionType, TicketStatus } from '@tyio/shared';
 import { EntitySchema } from 'typeorm';
 import { UserEntity } from '../users/user.entity.js';
 import { TicketEntity } from './ticket.entity.js';
@@ -13,6 +13,8 @@ export interface TicketAction {
   id: string;
   tenantId: string;
   ticketId: string;
+  /** Jenis tindakan (K32): catatan, cek lokasi, atau problem. */
+  type: TicketActionType;
   /** Waktu tindakan, diisi operator (R-F). */
   occurredAt: Date;
   note: string | null;
@@ -33,6 +35,7 @@ export const TicketActionEntity = new EntitySchema<TicketAction>({
     id: { type: 'uuid', primary: true, default: () => 'uuidv7()', primaryKeyConstraintName: 'ticket_actions_pkey' },
     tenantId: { name: 'tenant_id', type: 'uuid' },
     ticketId: { name: 'ticket_id', type: 'uuid' },
+    type: { name: 'action_type', type: 'varchar', length: 16, default: 'catatan' },
     occurredAt: { name: 'occurred_at', type: 'timestamptz' },
     note: { type: 'text', nullable: true },
     statusFrom: { name: 'status_from', type: 'varchar', length: 16, nullable: true },
@@ -72,6 +75,8 @@ export const TicketActionEntity = new EntitySchema<TicketAction>({
   ],
   checks: [
     { name: 'ticket_actions_has_content', expression: 'note IS NOT NULL OR status_to IS NOT NULL' },
+    { name: 'ticket_actions_type_valid', expression: `action_type IN ('catatan', 'cek_lokasi', 'problem')` },
+    { name: 'ticket_actions_type_note', expression: `action_type = 'catatan' OR note IS NOT NULL` },
     { name: 'ticket_actions_note_length', expression: 'char_length(note) BETWEEN 1 AND 4000' },
     { name: 'ticket_actions_status_valid', expression: `status_from IN ${STATUSES} AND status_to IN ${STATUSES}` },
     {

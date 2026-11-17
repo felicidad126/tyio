@@ -19,6 +19,7 @@ import { Remotes1794910075612 } from './migrations/1794910075612-remotes.js';
 import { Tickets1794915441096 } from './migrations/1794915441096-tickets.js';
 import { TicketTimeline1794916858783 } from './migrations/1794916858783-ticket-timeline.js';
 import { TicketList1794928941214 } from './migrations/1794928941214-ticket-list.js';
+import { ActionType1794931012450 } from './migrations/1794931012450-action-type.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -50,4 +51,5 @@ export const migrations = [
   Tickets1794915441096,
   TicketTimeline1794916858783,
   TicketList1794928941214,
+  ActionType1794931012450,
 ];

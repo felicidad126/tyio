@@ -9,6 +9,7 @@ import {
   TICKET_QUEUE_VIEWS,
   type TicketDetail,
   type TicketListItem,
+  type TicketActionType,
   type TicketListResponse,
   type TicketQueueView,
   type TicketStatus,
@@ -80,7 +81,7 @@ export class TicketsService {
         .getOne();
       if (!remote) throw notFound('Remote tidak ditemukan.');
       if (remote.status === 'dibongkar') {
-        throw invalid(`Remote ${remote.siteId} sudah dibongkar; tiket tidak bisa dibuat.`, 'remoteId');
+        throw invalid(`Remote ${remote.siteId} berstatus Dismantle; tiket tidak bisa dibuat.`, 'remoteId');
       }
       const tenant = await m.getRepository(TenantEntity).findOneByOrFail({ id: remote.tenantId });
       if (!tenant.active) throw invalid(`Customer ${tenant.name} nonaktif; tiket tidak bisa dibuat.`, 'remoteId');
@@ -154,7 +155,6 @@ export class TicketsService {
       }
       if (query.tenantId) qb.andWhere('t.tenantId = :tenantId', { tenantId: query.tenantId });
       if (query.categoryId) qb.andWhere('t.categoryId = :categoryId', { categoryId: query.categoryId });
-      if (query.systemId) qb.andWhere('t.systemId = :systemId', { systemId: query.systemId });
       if (query.jarkomId) qb.andWhere('r.jarkomId = :jarkomId', { jarkomId: query.jarkomId });
       return qb;
     };
@@ -265,26 +265,24 @@ async function listItems(m: EntityManager, tickets: Ticket[]): Promise<TicketLis
   const ticketIds = tickets.map((t) => t.id);
   const lastActions: Array<{
     ticket_id: string;
+    action_type: TicketActionType;
     occurred_at: Date;
     created_by: string;
     status_to: TicketStatus | null;
     note: string | null;
   }> = await m.query(
-    `SELECT DISTINCT ON (ticket_id) ticket_id, occurred_at, created_by, status_to, left(note, $2) AS note
+    `SELECT DISTINCT ON (ticket_id) ticket_id, action_type, occurred_at, created_by, status_to, left(note, $2) AS note
      FROM ticket_actions WHERE ticket_id = ANY($1)
      ORDER BY ticket_id, date_trunc('minute', occurred_at) DESC, created_at DESC`,
     [ticketIds, TICKET_LIST_NOTE_EXCERPT],
   );
-  const systemIds = [...new Set(tickets.map((t) => t.systemId).filter((id): id is string => id !== null))];
   const userIds = [...new Set([...tickets.map((t) => t.createdById), ...lastActions.map((a) => a.created_by)])];
-  const [summaryList, remotes, systems, users] = await Promise.all([
+  const [summaryList, remotes, users] = await Promise.all([
     summaries(m, tickets),
     m.getRepository(RemoteEntity).findBy({ id: In([...new Set(tickets.map((t) => t.remoteId))]) }),
-    systemIds.length > 0 ? m.getRepository(SystemEntity).findBy({ id: In(systemIds) }) : [],
     m.getRepository(UserEntity).findBy({ id: In(userIds) }),
   ]);
   const remoteById = new Map(remotes.map((r) => [r.id, r]));
-  const systemById = new Map(systems.map((s) => [s.id, ref(s)]));
   const userById = new Map(users.map((u) => [u.id, { id: u.id, displayName: u.displayName }]));
   const lastByTicket = new Map(lastActions.map((a) => [a.ticket_id, a]));
   return tickets.map((t, i) => {
@@ -293,12 +291,12 @@ async function listItems(m: EntityManager, tickets: Ticket[]): Promise<TicketLis
     return {
       ...summaryList[i]!,
       remote: { id: remote.id, siteId: remote.siteId, name: remote.name, city: remote.city, timeZone: remote.timeZone },
-      system: t.systemId ? (systemById.get(t.systemId) ?? null) : null,
       customerTicketNumber: t.customerTicketNumber,
       pending: t.pendingParty && t.pendingReason ? { party: t.pendingParty, reason: t.pendingReason } : null,
       createdBy: userById.get(t.createdById)!,
       lastAction: last
         ? {
+            type: last.action_type,
             occurredAt: new Date(last.occurred_at).toISOString(),
             createdBy: userById.get(last.created_by)!,
             statusTo: last.status_to,

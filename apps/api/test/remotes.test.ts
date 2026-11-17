@@ -310,7 +310,7 @@ describe('remote: daftar, detail, impor', () => {
       [{ jarkom: 'LAMA' }, 'Jarkom', 'Jarkom LAMA nonaktif.'],
       [{ city: '' }, 'Kota', 'Isi kota.'],
       [{ province: '' }, 'Provinsi', 'Isi provinsi.'],
-      [{ status: 'rusak' }, 'Status', 'Status harus Aktif, Nonaktif, atau Dibongkar.'],
+      [{ status: 'rusak' }, 'Status', 'Status harus Aktif, Nonaktif, atau Dismantle.'],
       [{ latitude: '-6.2' }, 'Longitude', 'Isi Latitude dan Longitude bersama-sama.'],
       [{ latitude: '95', longitude: '100' }, 'Latitude', 'Latitude harus angka antara -90 dan 90.'],
       [{ latitude: '1', longitude: 'timur' }, 'Longitude', 'Longitude harus angka antara -180 dan 180.'],
@@ -357,6 +357,8 @@ describe('remote: daftar, detail, impor', () => {
         rowsOf(
           { siteId: 'S-001', province: 'jatim', status: 'dibongkar', onlineDate: '2024-02-29' },
           { siteId: 'S-002', province: 'Provinsi Sulawesi Selatan', status: 'AKTIF', onlineDate: '01-03-2024' },
+          // Label baru (K38); "Dibongkar" dari file lama tetap diterima.
+          { siteId: 'S-003', province: 'Bali', status: 'Dismantle' },
         ),
       );
       const rows = await ds.getRepository(RemoteEntity).find({ order: { siteId: 'ASC' } });
@@ -364,6 +366,7 @@ describe('remote: daftar, detail, impor', () => {
       expect(rows.map((r) => [r.province, r.timeZone, r.status, r.onlineDate])).toEqual([
         ['Jawa Timur', 'Asia/Jakarta', 'dibongkar', '2024-02-29'],
         ['Sulawesi Selatan', 'Asia/Makassar', 'aktif', '2024-03-01'],
+        ['Bali', 'Asia/Makassar', 'dibongkar', null],
       ]);
     });
 

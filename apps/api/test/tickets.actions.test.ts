@@ -166,6 +166,45 @@ describe('linimasa tindakan tiket', () => {
     ).toMatchObject({ field: 'correctsId', message: 'Entri yang dikoreksi tidak ada di tiket ini.' });
   });
 
+  it('jenis tindakan: bawaan Catatan; Cek lokasi dan Problem tersimpan dan wajib berisi catatan', async () => {
+    expect((await addOk({ note: 'Catatan biasa' })).action.type).toBe('catatan');
+    const check = await addOk({ type: 'cek_lokasi', note: 'Hubungi PIC lokasi untuk cek modem' });
+    expect(check.action).toMatchObject({ type: 'cek_lokasi', note: 'Hubungi PIC lokasi untuk cek modem' });
+    // Jenis tindakan bisa bersama perubahan status.
+    const problem = await addOk({
+      type: 'problem',
+      note: 'PIC: listrik padam sejak pagi',
+      statusTo: 'dikerjakan',
+      expectedStatus: 'terbuka',
+    });
+    expect(problem.action).toMatchObject({ type: 'problem', statusTo: 'dikerjakan' });
+    expect((await timeline()).find((a) => a.id === check.action.id)?.type).toBe('cek_lokasi');
+
+    for (const type of ['cek_lokasi', 'problem']) {
+      expect((await add({ type }).expect(400)).body).toMatchObject({ field: 'note', message: expect.stringMatching(/Tulis catatan untuk tindakan/) });
+      // Perubahan status saja tidak cukup untuk Cek lokasi dan Problem.
+      expect((await add({ type, statusTo: 'pending', expectedStatus: 'dikerjakan', pendingParty: 'tm', pendingReason: 'Menunggu' }).expect(400)).body)
+        .toMatchObject({ field: 'note' });
+    }
+    expect((await add({ type: 'eskalasi_sd', note: 'x' }).expect(400)).body).toMatchObject({ field: 'type' });
+    expect((await add({ type: 'problem', note: 'x', correctsId: check.action.id }).expect(400)).body).toMatchObject({
+      field: 'type',
+    });
+  });
+
+  it('database menolak Cek lokasi atau Problem tanpa catatan, dan jenis yang tidak dikenal', async () => {
+    const insert = (type: string, note: string | null) =>
+      asTester(ds, (m) =>
+        m.query(
+          `INSERT INTO ticket_actions (tenant_id, ticket_id, occurred_at, note, status_to, action_type, created_by)
+           SELECT tenant_id, id, now(), $2, 'terbuka', $1, created_by FROM tickets WHERE id = $3`,
+          [type, note, ticketId],
+        ),
+      );
+    await expect(insert('problem', null)).rejects.toThrow(/ticket_actions_type_note/);
+    await expect(insert('lainnya', 'x')).rejects.toThrow(/ticket_actions_type_valid/);
+  });
+
   it('entri linimasa dan lampiran tidak bisa diubah atau dihapus, juga lewat SQL langsung', async () => {
     await http()
       .post(`/api/tickets/${ticketId}/actions`)

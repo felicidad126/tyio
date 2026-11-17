@@ -30,7 +30,11 @@ const HEADERS = Object.fromEntries(REMOTE_IMPORT_COLUMNS.map((c) => [c.field, c.
 >;
 const SITE_ID = /^[A-Z0-9][A-Z0-9._-]{0,39}$/;
 const PHONE = /^[0-9+()\-.\s]{5,40}$/;
-const STATUS_BY_TEXT = new Map(REMOTE_STATUSES.map((s) => [s, s] as const));
+// "Dismantle" (K38) dan "Dibongkar" (file lama) sama-sama berarti remote yang dibongkar.
+const STATUS_BY_TEXT = new Map<string, RemoteStatus>([
+  ...REMOTE_STATUSES.map((s) => [s, s] as const),
+  ['dismantle', 'dibongkar'],
+]);
 
 /**
  * Memeriksa dan menormalkan satu baris impor. Aturan "kolom tidak ada di file = tidak
@@ -82,9 +86,9 @@ export function parseImportRow(
   // Tidak wajib. Status kosong berarti tidak diubah (remote baru: aktif).
   const status = text('status').toLowerCase();
   if (status) {
-    const known = STATUS_BY_TEXT.get(status as RemoteStatus);
+    const known = STATUS_BY_TEXT.get(status);
     if (known) record.status = known;
-    else fail('status', 'Status harus Aktif, Nonaktif, atau Dibongkar.');
+    else fail('status', 'Status harus Aktif, Nonaktif, atau Dismantle.');
   }
 
   optionalText('address', 500, 'Alamat');

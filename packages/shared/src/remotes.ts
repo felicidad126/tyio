@@ -1,13 +1,16 @@
 import type { TenantRef } from './auth.js';
 
-/** Siklus hidup remote. Remote tidak pernah dihapus (tiket merujuknya); yang dibongkar ditandai. */
+/**
+ * Siklus hidup remote. Remote tidak pernah dihapus (tiket merujuknya); yang dibongkar ditandai.
+ * Nilai `dibongkar` tetap di database; labelnya "Dismantle" (K38).
+ */
 export const REMOTE_STATUSES = ['aktif', 'nonaktif', 'dibongkar'] as const;
 export type RemoteStatus = (typeof REMOTE_STATUSES)[number];
 
 export const REMOTE_STATUS_LABELS: Readonly<Record<RemoteStatus, string>> = {
   aktif: 'Aktif',
   nonaktif: 'Nonaktif',
-  dibongkar: 'Dibongkar',
+  dibongkar: 'Dismantle',
 };
 
 /** Zona waktu Indonesia dan nama IANA-nya (R-H: waktu tampil menurut lokasi remote). */
@@ -208,7 +211,7 @@ export const REMOTE_IMPORT_COLUMNS: readonly RemoteImportColumn[] = [
   { field: 'siteId', header: 'Site ID', required: true, hint: 'Unik per customer. Huruf, angka, titik, garis bawah, atau tanda hubung.' },
   { field: 'name', header: 'Nama Remote', required: true, hint: '2–160 karakter.' },
   { field: 'jarkom', header: 'Jarkom', required: true, hint: 'Kode jarkom yang aktif di Admin › Master data, mis. VSAT.' },
-  { field: 'status', header: 'Status', required: false, hint: 'Aktif, Nonaktif, atau Dibongkar. Kosong = Aktif untuk remote baru.' },
+  { field: 'status', header: 'Status', required: false, hint: 'Aktif, Nonaktif, atau Dismantle. Kosong = Aktif untuk remote baru.' },
   { field: 'address', header: 'Alamat', required: false, hint: 'Paling banyak 500 karakter.' },
   { field: 'city', header: 'Kota', required: true, hint: 'Kota atau kabupaten.' },
   { field: 'province', header: 'Provinsi', required: true, hint: 'Nama provinsi; zona waktu (WIB/WITA/WIT) mengikuti provinsi.' },

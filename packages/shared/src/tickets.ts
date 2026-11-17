@@ -41,6 +41,45 @@ export const PENDING_PARTY_LABELS: Readonly<Record<PendingParty, string>> = {
   tm: 'TM',
 };
 
+/** Kapan memilih pihak pending (K28): TM = penyedia jaringan, Customer = sisi bank/lokasi. */
+export const PENDING_PARTY_HINTS: Readonly<Record<PendingParty, string>> = {
+  customer: 'Listrik, obstacle, renovasi, atau part ATM belum siap',
+  tm: 'Problem jaringan (jarkom) di lokasi',
+};
+
+/**
+ * Jenis tindakan (Take Action sistem lama, K32). Eskalasi To SD menjadi TT (1.5b) dan Close
+ * menjadi penutupan (1.6), jadi tidak ada di sini.
+ */
+export const TICKET_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem'] as const;
+export type TicketActionType = (typeof TICKET_ACTION_TYPES)[number];
+
+// "Bebas" mengikuti nama di sistem lama; "Catatan" sudah dipakai untuk kolom isinya.
+export const TICKET_ACTION_TYPE_LABELS: Readonly<Record<TicketActionType, string>> = {
+  catatan: 'Bebas',
+  cek_lokasi: 'Cek lokasi',
+  problem: 'Problem',
+};
+
+export const TICKET_ACTION_TYPE_HINTS: Readonly<Record<TicketActionType, string>> = {
+  catatan: 'Catatan bebas, perubahan status, atau lampiran.',
+  cek_lokasi: 'Minta PIC di lokasi mengecek. Tulis siapa yang dihubungi dan apa yang diminta.',
+  problem: 'Hasil pengecekan PIC: tulis penyebab masalahnya.',
+};
+
+/** Tanda NPR yang perlu diperbarui (K36): masih aktif dan sudah down sekian hari. */
+export const TICKET_FLAG_DAYS = 7;
+
+export function ticketNeedsUpdate(
+  ticket: { status: TicketStatus; occurredAt: string },
+  now: Date = new Date(),
+): boolean {
+  return (
+    ticket.status !== 'selesai' &&
+    now.getTime() - new Date(ticket.occurredAt).getTime() >= TICKET_FLAG_DAYS * 24 * 60 * 60 * 1000
+  );
+}
+
 export const ACTION_NOTE_MAX = 4000;
 export const PENDING_REASON_MIN = 3;
 export const PENDING_REASON_MAX = 500;
@@ -108,6 +147,7 @@ export interface TicketAttachment {
  */
 export interface TicketAction {
   id: string;
+  type: TicketActionType;
   /** Waktu tindakan (UTC ISO), diisi operator. */
   occurredAt: string;
   /** Waktu pencatatan (UTC ISO), diisi sistem. */
@@ -129,6 +169,8 @@ export interface TicketActionsResponse {
 
 /** Isian "Tambah tindakan" (bagian `data` dari multipart; lampiran di bagian `lampiran`). */
 export interface AddTicketActionRequest {
+  /** Bawaan "catatan". Cek lokasi dan Problem wajib berisi catatan. Tidak untuk koreksi. */
+  type?: TicketActionType;
   /** UTC ISO; wajib kecuali untuk koreksi. */
   occurredAt?: string;
   note?: string;
@@ -213,7 +255,6 @@ export interface TicketListQuery {
   q?: string;
   tenantId?: string;
   categoryId?: string;
-  systemId?: string;
   jarkomId?: string;
   page?: number;
 }
@@ -221,12 +262,12 @@ export interface TicketListQuery {
 /** Satu baris daftar tiket: yang perlu terlihat di antrean tanpa membuka tiketnya. */
 export interface TicketListItem extends TicketSummary {
   remote: Pick<TicketRemote, 'id' | 'siteId' | 'name' | 'city' | 'timeZone'>;
-  system: MasterRef | null;
   customerTicketNumber: string | null;
   pending: { party: PendingParty; reason: string } | null;
   createdBy: { id: string; displayName: string };
   /** Entri linimasa terbaru menurut waktu tindakan; catatan dipotong. */
   lastAction: {
+    type: TicketActionType;
     occurredAt: string;
     createdBy: { id: string; displayName: string };
     statusTo: TicketStatus | null;

@@ -96,7 +96,7 @@ export class TicketActionsService {
           if (!target) throw invalid('Entri yang dikoreksi tidak ada di tiket ini.', 'correctsId');
           entry = { occurredAt: new Date(), note: input.note, correctsId: target.id };
         } else {
-          entry = { occurredAt: input.occurredAt, note: input.note };
+          entry = { type: input.type, occurredAt: input.occurredAt, note: input.note };
           if (input.status) {
             assertTransition(ticket.status, input.status.expected, input.status.to);
             entry = {
@@ -205,6 +205,7 @@ async function toViews(m: EntityManager, rows: TicketAction[]): Promise<TicketAc
   const userById = new Map(users.map((u) => [u.id, { id: u.id, displayName: u.displayName }]));
   return rows.map((r) => ({
     id: r.id,
+    type: r.type,
     occurredAt: r.occurredAt.toISOString(),
     createdAt: r.createdAt.toISOString(),
     createdBy: userById.get(r.createdById)!,
