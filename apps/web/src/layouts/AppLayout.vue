@@ -4,6 +4,7 @@ import { APP_NAME, canOpenModule } from '@tyio/shared';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
+import GlobalSearch from '../components/GlobalSearch.vue';
 import UserMenu from '../components/UserMenu.vue';
 import { NAV_ITEMS } from '../navigation';
 import { useAuthStore } from '../stores/auth';
@@ -76,7 +77,10 @@ function isActive(path: string): boolean {
           class="collapse navbar-collapse"
           :class="{ show: menuOpen }"
         >
-          <!-- Di ponsel, aksi global ada di atas menu; di layar lebar ada di header. -->
+          <!-- Di ponsel, pencarian dan aksi global ada di atas menu; di layar lebar ada di header. -->
+          <div class="w-100 mt-2 d-md-none">
+            <GlobalSearch />
+          </div>
           <RouterLink
             v-if="canCreateTicket"
             :to="{ name: 'ticket-create' }"
@@ -124,6 +128,7 @@ function isActive(path: string): boolean {
     <div class="page-wrapper">
       <header class="navbar navbar-expand-md d-none d-md-flex d-print-none">
         <div class="container-fluid">
+          <GlobalSearch />
           <div class="navbar-nav flex-row ms-auto align-items-center gap-3">
             <RouterLink
               v-if="canCreateTicket"

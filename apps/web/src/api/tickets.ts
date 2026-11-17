@@ -6,12 +6,23 @@ import type {
   TicketActionsResponse,
   OpenTicketsResponse,
   TicketDetail,
+  TicketListQuery,
+  TicketListResponse,
   TicketResponse,
   TicketSummary,
 } from '@tyio/shared';
 import { apiRequest } from './client';
 
 export const ticketsApi = {
+  list(query: TicketListQuery): Promise<TicketListResponse> {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== '') params.set(key, String(value));
+    }
+    const search = params.toString();
+    return apiRequest<TicketListResponse>('GET', `/tickets${search ? `?${search}` : ''}`);
+  },
+
   async create(request: CreateTicketRequest): Promise<TicketDetail> {
     return (await apiRequest<TicketResponse>('POST', '/tickets', request)).ticket;
   },

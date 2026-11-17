@@ -18,7 +18,7 @@ const OverviewPage = () => import('../pages/overview/OverviewPage.vue');
 const ModulePage = () => import('../pages/ModulePage.vue');
 
 // Satu rute per modul. Halaman modul yang belum dibangun memakai halaman penanda.
-const BUILT_MODULES: readonly AppModule[] = ['admin', 'remote'];
+const BUILT_MODULES: readonly AppModule[] = ['admin', 'remote', 'tiket'];
 const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.filter((item) => !BUILT_MODULES.includes(item.module)).map(
   (item) => ({
     path: item.path === '/' ? '' : item.path.slice(1),
@@ -50,9 +50,14 @@ const remoteRoutes: RouteRecordRaw[] = [
   },
 ];
 
-// Tiket (1.3): buat tiket dan ringkasannya. Antrean tiket menyusul (1.5); sampai itu, /tiket
-// tetap halaman penanda.
+// Tiket: daftar dengan tampilan dan saringan (1.5), buat tiket (1.3), detail dan linimasa (1.4).
 const ticketRoutes: RouteRecordRaw[] = [
+  {
+    path: 'tiket',
+    name: 'tiket',
+    component: () => import('../pages/tickets/list/TicketListPage.vue'),
+    meta: { module: 'tiket', title: 'Tiket' },
+  },
   {
     path: 'tiket/baru',
     name: 'ticket-create',
@@ -95,6 +100,13 @@ export const router = createRouter({
         ...remoteRoutes,
         ...ticketRoutes,
         ...adminRoutes,
+        {
+          // Pencarian global dari header (1.5): tiket dan remote; isinya mengikuti hak modul.
+          path: 'cari',
+          name: 'search',
+          component: () => import('../pages/search/SearchPage.vue'),
+          meta: { title: 'Hasil pencarian' },
+        },
         {
           path: 'tanpa-akses',
           name: 'forbidden',

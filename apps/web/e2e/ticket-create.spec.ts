@@ -7,7 +7,7 @@ import { expectNoPageOverflow, expectPath, signInAs } from './helpers';
 const NUMBER = /^NPR\/VSAT\/MRS\/\d{4}\/\d{2}\/\d{4}$/;
 
 async function pickRemote(page: Page, search: string, name: string): Promise<void> {
-  await page.getByRole('searchbox', { name: 'Remote' }).fill(search);
+  await page.getByRole('searchbox', { name: /^Remote/ }).fill(search);
   await page.getByRole('button', { name: new RegExp(name) }).click();
   await expect(page.getByRole('button', { name: 'Ganti remote' })).toBeVisible();
 }
@@ -82,9 +82,9 @@ test.describe('buat tiket', () => {
     await signInAs(page, 'l1.merapi');
     await page.goto('/tiket/baru');
 
-    await page.getByRole('searchbox', { name: 'Remote' }).fill('BCN-0');
+    await page.getByRole('searchbox', { name: /^Remote/ }).fill('BCN-0');
     await expect(page.getByText('Tidak ada remote yang cocok.')).toBeVisible();
-    await page.getByRole('searchbox', { name: 'Remote' }).fill('MRS-00');
+    await page.getByRole('searchbox', { name: /^Remote/ }).fill('MRS-00');
     await expect(page.getByRole('list', { name: 'Hasil pencarian remote' }).getByRole('button').first()).toBeVisible();
   });
 

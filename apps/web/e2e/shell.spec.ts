@@ -3,7 +3,7 @@ import { expectNoPageOverflow, expectPath, signInAs } from './helpers';
 
 const OPERATIONAL = ['Overview', 'Alert', 'Tiket', 'Gamas', 'Remote', 'Laporan', 'Dokumen'];
 /** Modul yang sudah punya halaman sungguhan, bukan halaman penanda. */
-const BUILT = ['Overview', 'Remote'];
+const BUILT = ['Overview', 'Remote', 'Tiket'];
 const PAGES: Record<string, string> = {
   Overview: '/',
   Alert: '/alert',

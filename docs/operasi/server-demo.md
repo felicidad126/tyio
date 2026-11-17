@@ -222,7 +222,7 @@ Kata sandi sama untuk semua akun, dicetak saat `pasang` dan `ulang-data`, dan te
 Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, WITA, dan WIT.
 Kategori dari dashboard lama; System dan Jarkom berisi nilai contoh.
 
-### Alur demo yang disarankan (sampai langkah 1.4)
+### Alur demo yang disarankan (sampai langkah 1.5)
 
 1. Masuk sebagai `l1.contoh`. Tunjukkan menu, lalu **Remote**: cari, saring, dan buka detail
    remote.
@@ -231,12 +231,15 @@ Kategori dari dashboard lama; System dan Jarkom berisi nilai contoh.
 3. Di halaman tiket, **Tambah tindakan**: ubah status, pending dengan pihak dan alasan, lalu
    tempel tangkapan layar (Ctrl+V) sebagai lampiran.
 4. **Koreksi** sebuah entri. Linimasa tidak bisa diubah atau dihapus.
-5. Masuk sebagai `l1.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
-   terlihat.
-6. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
+5. Buka menu **Tiket**: tab Aktif, Milik saya, dan Pending, dengan status dan pihak yang
+   ditunggu terlihat tanpa membuka tiketnya. Lalu cari potongan nomor tiket atau nama lokasi
+   di kotak cari header.
+6. Masuk sebagai `l1.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
+   terlihat, juga di pencarian.
+7. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
-Belum ada: daftar/antrean tiket (1.5), TT ke Service Delivery, penutupan tiket, Overview,
-Gamas, SLA, dan laporan. Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
+Belum ada: TT ke Service Delivery, penutupan tiket, Overview, Gamas, SLA, dan laporan.
+Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah
 

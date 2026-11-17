@@ -150,6 +150,29 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   di database. **Backup harus mencakup volume ini bersama database**, karena keduanya saling
   merujuk.
 
+### Daftar tiket dan pencarian
+
+- **Tiket** di menu: daftar tiket yang boleh dilihat pengguna (dibatasi customer), 50 per
+  halaman, waktu kejadian terbaru di atas. Tab:
+  - **Aktif** (bawaan): belum Selesai.
+  - **Milik saya**: tiket aktif yang Anda buat atau pernah Anda beri tindakan.
+  - **Pending**, **Eskalasi**, **Selesai**, **Semua**.
+
+  Angka di tab Aktif, Milik saya, Pending, dan Eskalasi ikut pencarian dan saringan yang
+  sedang dipakai.
+- Saringan: customer, kategori, system, jarkom. Kotak **Cari** menerima potongan no. NPR
+  (mis. `2026/11/0002`), no. tiket customer, Site ID, nama, kota, atau kanca remote.
+- Tab, pencarian, saringan, dan halaman tersimpan di alamat halaman. Alamatnya bisa
+  dibagikan atau ditandai di browser, dan tombol kembali dari tiket membuka tab yang sama.
+- Setiap baris menampilkan status (pending dengan pihak dan alasannya), waktu kejadian menurut
+  jam lokasi remote, dan tindakan terakhir (waktu, pencatat, potongan catatan).
+- **Pencarian global**: kotak di header (di ponsel ada di menu), untuk tiket dan remote
+  sekaligus. Minimal 2 karakter. Hasil di halaman `/cari`, paling banyak 10 per jenis,
+  dengan tautan ke daftar lengkap. Hanya jenis yang boleh dibuka peran Anda yang dicari.
+- Database: jumlah di tab hanya membaca tiket aktif, dan pencarian memakai indeks trigram
+  atas nomor tiket (migrasi `TicketList…`) serta indeks remote yang sudah ada. Diukur pada
+  100.000 tiket: setiap panggilan di bawah 0,1 detik.
+
 ### Memasang aplikasi (PWA)
 
 - Desktop (Chrome/Edge): ikon "Pasang" di bilah alamat. Ponsel Android: menu browser →

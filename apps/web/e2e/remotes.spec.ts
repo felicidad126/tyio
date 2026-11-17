@@ -24,12 +24,12 @@ test.describe('daftar dan detail remote', () => {
     await signInAs(page, 'l1.contoh');
     await openRemotes(page);
 
-    await page.getByLabel('Cari').fill('mrs-001');
+    await page.getByLabel('Cari', { exact: true }).fill('mrs-001');
     await expect(rows(page)).toHaveCount(1);
     await expect(rows(page).first()).toContainText('ATM Pasar Raya Yogyakarta');
     await expect(page).toHaveURL(/q=mrs-001/);
 
-    await page.getByLabel('Cari').fill('');
+    await page.getByLabel('Cari', { exact: true }).fill('');
     await page.getByLabel('Provinsi').selectOption('Papua');
     await expect(page.getByText('1–5 dari 5 remote', { exact: true })).toBeVisible();
     for (const row of await rows(page).all()) await expect(row).toContainText('Jayapura');
@@ -55,7 +55,7 @@ test.describe('daftar dan detail remote', () => {
     await openRemotes(page);
 
     await expect(page.getByLabel('Customer', { exact: true })).toHaveCount(0);
-    await page.getByLabel('Cari').fill('BCN');
+    await page.getByLabel('Cari', { exact: true }).fill('BCN');
     await expect(page.getByText('Tidak ada remote yang cocok')).toBeVisible();
 
     await page.goto(`/remote/${other}`);
@@ -124,7 +124,7 @@ test.describe('impor remote dari Excel (admin)', () => {
     await expect(page.getByText('Impor selesai untuk Bank Merapi Sejahtera')).toBeVisible();
 
     await page.getByRole('link', { name: 'Lihat remote Bank Merapi Sejahtera' }).click();
-    await page.getByLabel('Cari').fill(`KC Uji ${run}`);
+    await page.getByLabel('Cari', { exact: true }).fill(`KC Uji ${run}`);
     await expect(rows(page)).toHaveCount(2);
   });
 });
