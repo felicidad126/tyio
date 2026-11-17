@@ -48,17 +48,35 @@ tanpa mencetak nilainya.
   boleh dilihat pengguna. Data customer lain dijawab 404, agar keberadaannya tidak terungkap.
 - `GET /api/tenants` mengembalikan customer aktif yang boleh dilihat pengguna;
   `GET /api/tenants/:id` mengembalikan satu customer.
-- Setiap rute API wajib ditandai `@TenantScoped()` (menyentuh data customer) atau
-  `@NoTenantData('alasan')`. Aplikasi **menolak start** bila ada rute tanpa tanda, dan
-  menyebut rutenya.
+- Setiap rute API wajib ditandai `@TenantScoped()` (menyentuh data customer),
+  `@NoTenantData('alasan')`, atau `@AllTenants('alasan')` (data lintas semua customer, mis.
+  master data; pengguna yang dibatasi ke sebagian customer ditolak 403, juga admin).
+  Aplikasi **menolak start** bila ada rute tanpa tanda, dan menyebut rutenya.
 
 ### Menu per peran
 
 Siapa boleh membuka modul mana diatur di satu tempat: `MODULE_ROLES` di
 `packages/shared/src/modules.ts`. Menu web membaca aturan yang sama, dan rute API modul
-nanti menegakkannya juga. Sementara (sampai sesi hak akses): semua modul operasional untuk
-semua peran; **Admin** khusus peran admin. Membuka `/admin` tanpa hak menampilkan halaman
-"tidak tersedia untuk peran Anda".
+menegakkannya lewat `@RequireModule('<modul>')` (peran lain dijawab 403). Sementara (sampai
+sesi hak akses): semua modul operasional untuk semua peran; **Admin** khusus peran admin.
+Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda".
+
+### Master data (Admin › Master data)
+
+- Empat daftar: **Customer**, **Kategori**, **System**, **Jarkom**. Hanya untuk admin dengan
+  akses ke semua customer, karena daftar ini berlaku untuk semua customer.
+- **Kode**: huruf besar dan angka, 2–16 karakter, unik per daftar. Kode tidak bisa diubah
+  setelah disimpan (kode customer dan jarkom menjadi bagian nomor tiket). Salah ketik: hapus
+  selama belum dipakai, lalu buat ulang.
+- **Nama**: unik per daftar tanpa membedakan huruf besar/kecil; bisa diganti langsung di tabel.
+- **Hapus** hanya bila belum dipakai. Yang sudah dipakai ditolak dengan saran
+  **nonaktifkan**: nilai nonaktif tidak muncul di pilihan baru, data lama tetap utuh.
+- Data contoh dev: kategori dari dashboard lama (Remote Down, Corrective Maintenance,
+  Preventive Maintenance); System dan Jarkom berisi nilai contoh sampai isinya dibahas
+  bersama tim NOC.
+- Untuk pengembang: tabel baru yang merujuk tabel master wajib memakai foreign key
+  `ON DELETE RESTRICT`. Uji `pnpm test:api master` gagal bila ada yang memakai CASCADE,
+  karena menghapus master akan ikut menghapus data yang merujuknya.
 
 ### Memasang aplikasi (PWA)
 

@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 berjalan — 0.1–0.5 selesai** (pemasangan staging menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16; 0.1–0.2 masuk `main` lewat PR #1.
+Status: **R0 0.1–0.5 selesai** (pemasangan staging dan 0.6 menunggu keputusan hosting); **R1 berjalan — 1.1 selesai**. T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16; 0.1–0.2 masuk `main` lewat PR #1.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -73,6 +73,16 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T28 | Hak buka modul di satu tempat (`MODULE_ROLES` di `packages/shared`), dibaca menu web dan kelak penjaga API. **Sementara**: modul operasional untuk L1, L2, admin; Admin khusus admin | Tombol yang tampil selalu sama dengan yang diizinkan; matriks rinci menunggu sesi hak akses (8.1) |
 | T29 | Pembaruan PWA ditawarkan ("Muat ulang sekarang"), tidak dimuat paksa; service worker tidak menyimpan `/api` | Isian form operator tidak hilang; data operasional tidak tampil basi |
 | T30 | Sidebar terbuka mulai 768 px; di bawahnya menu lewat tombol. Isi halaman dibatasi 1280 px, shell melebar penuh | Mengikuti standar viewports (tiga titik ukuran, batas lebar hanya untuk konten); layar dinding mendapat mode sendiri di 2.4 |
+
+**Keputusan yang diambil saat 1.1** (mohon dicek; turunan R-E, R-F, T9, T23, T28, K11, K18):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T31 | Customer = baris `tenants`; kategori, system, dan jarkom = tiga tabel global (tanpa `tenant_id`) berbentuk sama dengan tenants: kode, nama, aktif. Satu halaman Admin › Master data dengan satu tab per daftar | Satu pola untuk empat daftar; customer tidak punya salinan kedua yang bisa menyimpang |
+| T32 | Kode: huruf besar dan angka 2–16, unik per daftar, **tidak bisa diubah** setelah dibuat. Nama: unik per daftar tanpa membedakan huruf besar/kecil, bisa diubah | Kode customer dan jarkom menjadi bagian nomor tiket (1.3); dua nama yang hanya beda huruf membingungkan operator |
+| T33 | "Sudah dipakai" ditentukan database: setiap foreign key ke tabel master wajib `ON DELETE RESTRICT` (dijaga uji). Hapus yang ditolak dijawab 409 dengan tawaran menonaktifkan; nonaktif = tidak ditawarkan untuk data baru, data lama tetap | Tidak ada daftar "pemakai" yang harus diperbarui tiap tabel baru; CASCADE yang diam-diam menghapus remote/tiket tertangkap uji |
+| T34 | Hak modul ditegakkan di API: `@RequireModule` membaca `MODULE_ROLES` yang sama dengan menu. Kebijakan tenant ketiga `@AllTenants`: rute data lintas customer hanya untuk pengguna dengan akses semua customer (403 untuk yang dibatasi, termasuk admin) | T28 kini juga ditegakkan server; master berlaku untuk semua bank, jadi admin yang dibatasi ke satu bank tidak boleh mengubahnya |
+| T35 | Dialog memakai elemen `<dialog>` bawaan browser, bukan JS modal Bootstrap atau pustaka modal. Tambah = panel dari kanan; ganti nama = langsung di sel tanpa menggeser baris; hapus = konfirmasi yang menyebut namanya, fokus awal di Batal | Fokus, Escape, dan lapisan teratas diurus browser tanpa dependensi baru; pola permukaan sesuai standar UX yang dipakai |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.

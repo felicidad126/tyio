@@ -103,8 +103,9 @@ jobs:
       - name: Pasang Chromium untuk Playwright
         run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
 
-      - name: Uji layar (asap, login, kerangka)
-        run: pnpm e2e smoke auth shell
+      # Semua berkas di apps/web/e2e, jadi uji layar baru otomatis ikut.
+      - name: Uji layar (semua)
+        run: pnpm e2e
         env:
           E2E_BASE_URL: http://localhost:8080
 

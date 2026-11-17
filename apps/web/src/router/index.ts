@@ -1,4 +1,4 @@
-import { type AppModule, APP_NAME, canOpenModule } from '@tyio/shared';
+import { type AppModule, APP_NAME, canOpenModule, MASTER_LISTS } from '@tyio/shared';
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { NAV_ITEMS } from '../navigation';
 import { useAuthStore } from '../stores/auth';
@@ -18,12 +18,25 @@ const OverviewPage = () => import('../pages/overview/OverviewPage.vue');
 const ModulePage = () => import('../pages/ModulePage.vue');
 
 // Satu rute per modul. Halaman modul yang belum dibangun memakai halaman penanda.
-const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.map((item) => ({
-  path: item.path === '/' ? '' : item.path.slice(1),
-  name: item.module,
-  component: item.module === 'overview' ? OverviewPage : ModulePage,
-  meta: { module: item.module, title: item.label },
-}));
+const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.filter((item) => item.module !== 'admin').map(
+  (item) => ({
+    path: item.path === '/' ? '' : item.path.slice(1),
+    name: item.module,
+    component: item.module === 'overview' ? OverviewPage : ModulePage,
+    meta: { module: item.module, title: item.label },
+  }),
+);
+
+// Admin: untuk sekarang hanya master data (1.1); daftar yang dibuka tersimpan di alamat.
+const adminRoutes: RouteRecordRaw[] = [
+  { path: 'admin', name: 'admin', redirect: { name: 'admin-master', params: { list: 'customer' } } },
+  {
+    path: `admin/master/:list(${MASTER_LISTS.join('|')})`,
+    name: 'admin-master',
+    component: () => import('../pages/admin/master/MasterDataPage.vue'),
+    meta: { module: 'admin', title: 'Master data' },
+  },
+];
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -39,6 +52,7 @@ export const router = createRouter({
       component: () => import('../layouts/AppLayout.vue'),
       children: [
         ...moduleRoutes,
+        ...adminRoutes,
         {
           path: 'tanpa-akses',
           name: 'forbidden',

@@ -10,7 +10,6 @@ const PAGES: Record<string, string> = {
   Remote: '/remote',
   Laporan: '/laporan',
   Dokumen: '/dokumen',
-  Admin: '/admin',
 };
 
 const mainMenu = (page: Page) => page.getByRole('navigation', { name: 'Menu utama' });
@@ -40,8 +39,9 @@ test.describe('navigasi per peran', () => {
     expect(await menuLabels(page)).toEqual([...OPERATIONAL, 'Admin']);
     await mainMenu(page).getByRole('link', { name: 'Admin' }).click();
 
-    await expectPath(page, '/admin');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Admin');
+    await expectPath(page, '/admin/master/customer');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Master data');
+    await expect(mainMenu(page).getByRole('link', { name: 'Admin' })).toHaveAttribute('aria-current', 'page');
   });
 
   test('L1 yang membuka /admin langsung mendapat halaman tanpa akses', async ({ page }) => {
