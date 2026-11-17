@@ -5,6 +5,7 @@ describe('loadConfig', () => {
   const valid = {
     TYIO_ENV: 'staging',
     DATABASE_URL: 'postgres://pengguna:sandi-rahasia@db:5432/tyio',
+    ATTACHMENTS_DIR: '/app/data/lampiran',
   };
 
   it('membaca nilai yang sah dan memakai nilai bawaan yang aman', () => {
@@ -15,6 +16,7 @@ describe('loadConfig', () => {
       webDistDir: '/app/public',
       sessionCookieSecure: true,
       trustProxyHops: 0,
+      attachmentsDir: '/app/data/lampiran',
     });
   });
 
@@ -31,6 +33,14 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...valid, TRUST_PROXY_HOPS: '1' }).trustProxyHops).toBe(1);
     expect(() => loadConfig({ ...valid, TRUST_PROXY_HOPS: 'true' })).toThrow(/TRUST_PROXY_HOPS/);
     expect(() => loadConfig({ ...valid, TRUST_PROXY_HOPS: '9' })).toThrow(/TRUST_PROXY_HOPS/);
+  });
+
+  it('folder lampiran wajib di staging/produksi; dev dan uji memakai folder bawaan', () => {
+    const withoutDir: Record<string, string> = { ...valid };
+    delete withoutDir.ATTACHMENTS_DIR;
+    expect(() => loadConfig(withoutDir)).toThrow(/ATTACHMENTS_DIR/);
+    expect(() => loadConfig({ ...withoutDir, TYIO_ENV: 'production' })).toThrow(/ATTACHMENTS_DIR/);
+    expect(loadConfig({ ...withoutDir, TYIO_ENV: 'development' }).attachmentsDir).toBe('data/lampiran');
   });
 
   it('mewajibkan TYIO_ENV, tanpa nilai bawaan', () => {

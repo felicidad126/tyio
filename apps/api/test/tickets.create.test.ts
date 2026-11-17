@@ -97,6 +97,8 @@ describe('buat tiket (NPR)', () => {
       problem: 'Remote down sejak pagi',
       createdBy: { id: expect.any(String), displayName: 'Operator Anggrek' },
       createdAt: expect.any(String),
+      customerTicketNumber: null,
+      pending: null,
     });
     const detail = await http().get(`/api/tickets/${ticket.id}`).set('Cookie', cookie).expect(200);
     expect((detail.body as TicketResponse).ticket).toEqual(ticket);

@@ -1,11 +1,20 @@
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { UserRole } from '@tyio/shared';
 import type { DataSource } from 'typeorm';
 import { type Actor, withActor } from '../src/common/audit/actor.js';
 import type { MasterRow } from '../src/db/master-entity.js';
 import { hashPassword } from '../src/modules/auth/password.js';
+import { TEST_ATTACHMENTS_DIR } from './test-config.js';
 import { JarkomEntity, TicketCategoryEntity } from '../src/modules/master/master.entities.js';
 import { RemoteEntity, type Remote } from '../src/modules/remotes/remote.entity.js';
 import { TicketEntity, type Ticket } from '../src/modules/tickets/ticket.entity.js';
+import {
+  type TicketAction,
+  TicketActionEntity,
+  type TicketAttachmentRow,
+  TicketAttachmentEntity,
+} from '../src/modules/tickets/ticket-action.entity.js';
 import { TenantEntity, type Tenant } from '../src/modules/tenants/tenant.entity.js';
 import { UserTenantEntity } from '../src/modules/users/user-tenant.entity.js';
 import { UserEntity, type User } from '../src/modules/users/user.entity.js';
@@ -115,4 +124,41 @@ export async function createTicket(
       ...overrides,
     }),
   );
+}
+
+/** PNG 1×1 terkecil yang sah, untuk uji lampiran. */
+export const TINY_PNG = Buffer.from(
+  '89504e470d0a1a0a0000000d4948445200000001000000010806000000' +
+    '1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082',
+  'hex',
+);
+
+/** Entri linimasa berlampiran langsung di database dan disk (tanpa API), untuk uji lintas-tenant. */
+export async function createActionWithAttachment(
+  ds: DataSource,
+  ticket: Ticket,
+  note: string,
+): Promise<{ action: TicketAction; attachment: TicketAttachmentRow }> {
+  const storedName = `${ticket.id}-uji.png`;
+  writeFileSync(join(TEST_ATTACHMENTS_DIR, storedName), TINY_PNG);
+  return withActor(ds, TEST_ACTOR, async (m) => {
+    const action = await m.getRepository(TicketActionEntity).save({
+      tenantId: ticket.tenantId,
+      ticketId: ticket.id,
+      occurredAt: new Date('2026-11-01T02:00:00Z'),
+      note,
+      createdById: ticket.createdById,
+    });
+    const attachment = await m.getRepository(TicketAttachmentEntity).save({
+      tenantId: ticket.tenantId,
+      ticketId: ticket.id,
+      actionId: action.id,
+      fileName: 'uji.png',
+      storedName,
+      contentType: 'image/png',
+      sizeBytes: TINY_PNG.length,
+      sha256: '0'.repeat(64),
+    });
+    return { action, attachment };
+  });
 }

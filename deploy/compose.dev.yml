@@ -52,6 +52,9 @@ services:
     image: tyio-app:dev
     pull_policy: never
     environment: *app-env
+    volumes:
+      # Lampiran tiket (T8): ikut backup bersama database.
+      - attachments:/app/data/lampiran
     ports:
       - 127.0.0.1:${TYIO_APP_PORT:-8080}:3000
     depends_on:
@@ -60,6 +63,7 @@ services:
 
 volumes:
   db-data:
+  attachments:
 
 secrets:
   # Sertifikat CA tambahan untuk jaringan yang memeriksa TLS (proxy kantor).

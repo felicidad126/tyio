@@ -11,6 +11,7 @@ import { createTestApp } from './create-test-app.js';
 import { resetData } from './db.js';
 import { createTenant, createUser, ensureCategory, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
 import { TicketEntity } from '../src/modules/tickets/ticket.entity.js';
+import { TicketActionEntity } from '../src/modules/tickets/ticket-action.entity.js';
 import {
   seedTenantOwnedData,
   TENANT_COLUMN_NOT_OWNED,
@@ -89,7 +90,9 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   });
 
   // Setiap rute tenant yang mengubah data wajib punya uji lintas-tenant sendiri di bawah ini.
-  const MUTATION_TESTED = ['POST /api/tickets'];
+  const MUTATION_TESTED = ['POST /api/tickets', 'POST /api/tickets/:id/actions', 'PATCH /api/tickets/:id'];
+  // Rute yang menjawab berkas, bukan JSON: kontrol positifnya cukup 200 untuk id milik A.
+  const BINARY_ROUTES = ['GET /api/attachments/:id'];
 
   it('setiap rute tenant yang mengubah data punya uji mutasi lintas-tenant', () => {
     const mutating = scopedRoutes().filter((r) => r.method !== 'GET');
@@ -97,6 +100,30 @@ describe('isolasi tenant di semua rute terdaftar', () => {
     expect(mutating.map((r) => `${r.method} ${r.path}`).sort(), 'tambahkan uji mutasi lintas-tenant').toEqual(
       [...MUTATION_TESTED].sort(),
     );
+  });
+
+  it('pengguna tenant A tidak bisa menambah tindakan atau mengubah tiket tenant B (404, tidak berubah)', async () => {
+    const ticketB = bIds[2]!;
+    const before = await ds.getRepository(TicketActionEntity).count();
+    const statusBefore = (await ds.getRepository(TicketEntity).findOneByOrFail({ id: ticketB })).status;
+
+    const add = await call('POST', `/api/tickets/${ticketB}/actions`, 'a').send({
+      occurredAt: new Date().toISOString(),
+      note: 'Coba menulis di tiket customer lain',
+      statusTo: 'dikerjakan',
+      expectedStatus: statusBefore,
+    });
+    const patch = await call('PATCH', `/api/tickets/${ticketB}`, 'a').send({ customerTicketNumber: 'X-1' });
+
+    for (const res of [add, patch]) {
+      expect(res.status).toBe(404);
+      for (const marker of bMarkers()) expect(JSON.stringify(res.body)).not.toContain(marker);
+    }
+    expect(await ds.getRepository(TicketActionEntity).count()).toBe(before);
+    expect(await ds.getRepository(TicketEntity).findOneByOrFail({ id: ticketB })).toMatchObject({
+      status: statusBefore,
+      customerTicketNumber: null,
+    });
   });
 
   it('pengguna tenant A tidak bisa membuat tiket pada remote tenant B (404, tidak ada yang dibuat)', async () => {
@@ -151,9 +178,15 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   // di atas tidak lulus hanya karena rutenya kosong atau rusak.
   it('rute yang sama mengembalikan data tenant A kepada pengguna tenant A', async () => {
     for (const route of scopedReads()) {
-      const paths = hasParams(route.path) ? aIds.map((id) => fill(route.path, id)) : [route.path];
-      const answers = await Promise.all(paths.map((path) => get(path, 'a')));
-      const found = answers.some((res) => res.status === 200 && JSON.stringify(res.body).includes(a.id));
+      const ids = hasParams(route.path) ? aIds : [''];
+      const answers = await Promise.all(ids.map(async (id) => ({ id, res: await get(fill(route.path, id), 'a') })));
+      const binary = BINARY_ROUTES.includes(`${route.method} ${route.path}`);
+      // Jawaban memuat id tenant A, atau id data A lain selain yang dipakai di alamat.
+      const found = answers.some(
+        ({ id, res }) =>
+          res.status === 200 &&
+          (binary || [a.id, ...aIds.filter((other) => other !== id)].some((x) => JSON.stringify(res.body).includes(x))),
+      );
 
       expect(found, `${route.method} ${route.path} tidak mengembalikan data tenant A`).toBe(true);
     }

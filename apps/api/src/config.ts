@@ -14,6 +14,8 @@ export interface AppConfig {
    * 0 = tidak ada proxy; header X-Forwarded-For diabaikan.
    */
   trustProxyHops: number;
+  /** Folder lampiran tiket (T8: volume yang ikut backup). Nama berkas di dalamnya diacak. */
+  attachmentsDir: string;
 }
 
 /**
@@ -49,7 +51,21 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     problems.push('TRUST_PROXY_HOPS harus bilangan bulat 0–5');
   }
 
-  if (problems.length > 0 || !isTyioEnv(env) || !databaseUrl || sessionCookieSecure === undefined) {
+  // Dev dan uji boleh memakai folder bawaan; staging dan produksi wajib menyebutnya (image
+  // sudah mengisinya dengan /app/data/lampiran, yang dipasang sebagai volume).
+  const attachmentsDir =
+    source.ATTACHMENTS_DIR || (env === 'development' || env === 'test' ? 'data/lampiran' : undefined);
+  if (!attachmentsDir) {
+    problems.push('ATTACHMENTS_DIR wajib diisi dengan folder lampiran tiket');
+  }
+
+  if (
+    problems.length > 0 ||
+    !isTyioEnv(env) ||
+    !databaseUrl ||
+    sessionCookieSecure === undefined ||
+    !attachmentsDir
+  ) {
     throw new Error(`Konfigurasi tidak valid:\n- ${problems.join('\n- ')}`);
   }
 
@@ -60,6 +76,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     webDistDir: source.WEB_DIST_DIR || undefined,
     sessionCookieSecure,
     trustProxyHops,
+    attachmentsDir,
   };
 }
 

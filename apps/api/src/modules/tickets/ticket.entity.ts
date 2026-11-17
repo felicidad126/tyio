@@ -1,4 +1,4 @@
-import type { TicketStatus } from '@tyio/shared';
+import type { PendingParty, TicketStatus } from '@tyio/shared';
 import { EntitySchema } from 'typeorm';
 import { SystemEntity, TicketCategoryEntity } from '../master/master.entities.js';
 import { RemoteEntity } from '../remotes/remote.entity.js';
@@ -19,6 +19,11 @@ export interface Ticket {
   occurredAt: Date;
   problem: string;
   createdById: string;
+  /** Nomor tiket di sistem customer (diisi operator). */
+  customerTicketNumber: string | null;
+  /** Terisi hanya saat status pending; riwayatnya ada di linimasa. */
+  pendingParty: PendingParty | null;
+  pendingReason: string | null;
   /** Kosong = tiket masih terbuka. Diisi saat ditutup (langkah 1.6). */
   closedAt: Date | null;
   createdAt: Date;
@@ -56,6 +61,9 @@ export const TicketEntity = new EntitySchema<Ticket>({
       type: 'uuid',
       foreignKey: { target: UserEntity, name: 'tickets_created_by_fkey', onDelete: 'RESTRICT' },
     },
+    customerTicketNumber: { name: 'customer_ticket_number', type: 'varchar', length: 64, nullable: true },
+    pendingParty: { name: 'pending_party', type: 'varchar', length: 16, nullable: true },
+    pendingReason: { name: 'pending_reason', type: 'varchar', length: 500, nullable: true },
     closedAt: { name: 'closed_at', type: 'timestamptz', nullable: true },
     createdAt: { name: 'created_at', type: 'timestamptz', createDate: true },
     updatedAt: { name: 'updated_at', type: 'timestamptz', updateDate: true },
@@ -70,7 +78,11 @@ export const TicketEntity = new EntitySchema<Ticket>({
       onDelete: 'RESTRICT',
     },
   ],
-  uniques: [{ name: 'tickets_number_key', columns: ['number'] }],
+  uniques: [
+    { name: 'tickets_number_key', columns: ['number'] },
+    // Sasaran foreign key gabungan dari linimasa dan lampiran (tiket dan customer-nya bersama).
+    { name: 'tickets_id_tenant_key', columns: ['id', 'tenantId'] },
+  ],
   indices: [
     // Pemeriksaan "remote masih punya tiket terbuka" saat membuat tiket.
     { name: 'tickets_remote_open_idx', columns: ['remoteId'], where: 'closed_at IS NULL' },
@@ -78,7 +90,15 @@ export const TicketEntity = new EntitySchema<Ticket>({
     { name: 'tickets_system_id_idx', columns: ['systemId'] },
   ],
   checks: [
-    { name: 'tickets_status_valid', expression: `status IN ('terbuka')` },
+    {
+      name: 'tickets_status_valid',
+      expression: `status IN ('terbuka', 'dikerjakan', 'pending', 'eskalasi', 'selesai')`,
+    },
+    {
+      name: 'tickets_pending',
+      expression: `(status = 'pending') = (pending_party IS NOT NULL AND pending_reason IS NOT NULL)`,
+    },
+    { name: 'tickets_pending_party_valid', expression: `pending_party IN ('customer', 'tm')` },
     { name: 'tickets_problem_length', expression: 'char_length(problem) BETWEEN 3 AND 4000' },
   ],
 });

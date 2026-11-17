@@ -35,10 +35,13 @@ RUN --mount=type=secret,id=extra_ca \
 FROM ${NODE_IMAGE} AS runtime
 ENV NODE_ENV=production \
     PORT=3000 \
-    WEB_DIST_DIR=/app/public
+    WEB_DIST_DIR=/app/public \
+    ATTACHMENTS_DIR=/app/data/lampiran
 WORKDIR /app
 # Berkas milik root dan hanya-baca bagi proses; aplikasi berjalan sebagai pengguna `node`.
 COPY --from=build /out ./
+# Satu-satunya folder yang boleh ditulis aplikasi: lampiran tiket, dipasang sebagai volume.
+RUN mkdir -p /app/data/lampiran && chown node:node /app/data/lampiran
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \

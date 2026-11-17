@@ -10,6 +10,7 @@ import { TenantEntity } from '../tenants/tenant.entity.js';
 import { UserEntity } from '../users/user.entity.js';
 import { invalid, type CreateTicketInput } from './ticket-input.js';
 import { formatTicketNumber, ticketPeriod } from './ticket-number.js';
+import { TicketActionEntity } from './ticket-action.entity.js';
 import { type Ticket, TicketEntity } from './ticket.entity.js';
 
 @Injectable()
@@ -77,6 +78,14 @@ export class TicketsService {
         problem: input.problem,
         createdById: userId,
       });
+      // Entri pertama linimasa: tiket dibuat dengan status Terbuka.
+      await m.getRepository(TicketActionEntity).save({
+        tenantId: tenant.id,
+        ticketId: saved.id,
+        occurredAt: new Date(),
+        statusTo: 'terbuka',
+        createdById: userId,
+      });
       return saved.id;
     });
     return this.get(access, id);
@@ -109,6 +118,11 @@ export class TicketsService {
       system: system ? ref(system) : null,
       problem: ticket.problem,
       createdBy: { id: creator.id, displayName: creator.displayName },
+      customerTicketNumber: ticket.customerTicketNumber,
+      pending:
+        ticket.pendingParty && ticket.pendingReason
+          ? { party: ticket.pendingParty, reason: ticket.pendingReason }
+          : null,
     };
   }
 

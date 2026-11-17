@@ -40,6 +40,9 @@ services:
   app:
     <<: *app
     restart: unless-stopped
+    volumes:
+      # Lampiran tiket (T8): ikut backup bersama database.
+      - attachments:/app/data/lampiran
     ports:
       # Bawaan hanya 127.0.0.1. TLS dan akses dari jaringan lain menunggu keputusan hosting.
       - ${TYIO_APP_BIND:-127.0.0.1}:${TYIO_APP_PORT:-8080}:3000
@@ -49,3 +52,4 @@ services:
 
 volumes:
   db-data:
+  attachments:
