@@ -63,7 +63,7 @@ function isActive(path: string): boolean {
             width="28"
             height="28"
           >
-          <span>{{ APP_NAME }}</span>
+          <span class="brand-name">{{ APP_NAME }}</span>
         </RouterLink>
         <div class="navbar-nav flex-row d-md-none">
           <UserMenu />
@@ -143,6 +143,18 @@ function isActive(path: string): boolean {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+  /* Header ponsel selalu satu baris: tombol menu, nama portal, menu pengguna. Dengan font
+     yang lebih lebar atau teks diperbesar, nama portal yang mengalah (dipotong "…"), bukan
+     menu pengguna yang turun ke baris kedua. */
+  .brand {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .brand-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 .brand {

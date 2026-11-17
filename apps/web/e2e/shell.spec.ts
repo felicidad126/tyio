@@ -95,11 +95,27 @@ test.describe('tata letak dari ponsel sampai layar dinding', () => {
 });
 
 test.describe('menu pengguna', () => {
-  for (const width of [375, 1280]) {
-    test(`panel menu pengguna utuh di dalam layar (${width} px)`, async ({ page }) => {
+  // Teks diperbesar meniru pengaturan ukuran huruf browser dan font yang lebih lebar
+  // (mis. di Linux): header ponsel harus tetap satu baris, bukan turun ke baris kedua.
+  const CASES = [
+    { label: '375 px', width: 375, textScale: 1 },
+    { label: '375 px, teks diperbesar 125%', width: 375, textScale: 1.25 },
+    { label: '1280 px', width: 1280, textScale: 1 },
+  ];
+  for (const { label, width, textScale } of CASES) {
+    test(`panel menu pengguna utuh di dalam layar (${label})`, async ({ page }) => {
       await page.setViewportSize({ width, height: 760 });
       await signInAs(page, 'l1.merapi');
-      await page.getByRole('button', { name: 'Menu pengguna Operator L1 Merapi', exact: true }).click();
+      if (textScale !== 1) await page.addStyleTag({ content: `html { font-size: ${textScale * 100}% }` });
+      const trigger = page.getByRole('button', { name: 'Menu pengguna Operator L1 Merapi', exact: true });
+
+      if (width < 768) {
+        const toggle = await page.getByRole('button', { name: 'Buka menu' }).boundingBox();
+        const own = await trigger.boundingBox();
+        expect(Math.abs(own!.y + own!.height / 2 - (toggle!.y + toggle!.height / 2)), 'satu baris dengan tombol menu').toBeLessThan(4);
+        expect(own!.x + own!.width, 'di tepi kanan header').toBeGreaterThan(width - 40);
+      }
+      await trigger.click();
 
       const panel = page.getByText('Customer: Bank Merapi Sejahtera');
       await expect(panel).toBeInViewport({ ratio: 1 });
