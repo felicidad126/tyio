@@ -34,12 +34,33 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K17 | SD = Service Delivery. | User (operator NOC) |
 | K18 | SLA dan master List Remote adalah ranah admin, bukan operator. | User (operator NOC) |
 | K19 | Data awal: remote dummy + nama bank sebagai customer. | User (operator NOC) |
-| K20 | **Tingkatan tim:** L1 = tim monitoring (pengguna utama dashboard, paling sering memantau); L2 = NOC; SD = Service Delivery (kunjungan teknisi). "Eskalasi To NOC" = eskalasi dari L1 ke L2. Isi L3 belum diketahui. | User |
-| K21 | **Penutupan:** L1 boleh menutup NPR yang tidak punya TT (mis. listrik padam lalu pulih). NPR yang punya TT, dan TT itu sendiri, hanya ditutup L2 ke atas. | User |
+| K20 | **Diganti K30.** **Tingkatan tim:** L1 = tim monitoring (pengguna utama dashboard, paling sering memantau); L2 = NOC; SD = Service Delivery (kunjungan teknisi). "Eskalasi To NOC" = eskalasi dari L1 ke L2. Isi L3 belum diketahui. | User |
+| K21 | **Pembagian peran diganti K30; penutupan diperjelas K32.** **Penutupan:** L1 boleh menutup NPR yang tidak punya TT (mis. listrik padam lalu pulih). NPR yang punya TT, dan TT itu sendiri, hanya ditutup L2 ke atas. | User |
 | K22 | Data dummy memakai nama bank samaran dulu. | User |
-| K23 | Tim SD tidak login ke portal; SD menerima TT lewat notifikasi. Hasil kunjungan dicatat L1/L2 di linimasa TT. | User |
-| K24 | Peran L3 dibahas nanti; R0 hanya memasang L1, L2, admin. | User |
+| K23 | **Diperjelas K31.** Tim SD tidak login ke portal; SD menerima TT lewat notifikasi. Hasil kunjungan dicatat L1/L2 di linimasa TT. | User |
+| K24 | **Diganti K30.** Peran L3 dibahas nanti; R0 hanya memasang L1, L2, admin. | User |
 | K25 | Sampai R5, TT diteruskan ke SD secara manual lewat tombol "salin ringkasan TT"; notifikasi otomatis ke SD menyusul di R5. | User |
+
+**Jawaban konfirmasi user (dokumen "Konfirmasi istilah dan alur portal NOC", 2026-11-17):**
+
+| # | Keputusan | Sumber |
+| --- | --- | --- |
+| K26 | NPR = **Network Problem Report**. | User |
+| K27 | **Satu NPR paling banyak satu TT.** TT dibuka sekali lewat "Eskalasi To SD" bila problem ada di jarkom (pihak TM); teknisi jaringan dijadwalkan di luar portal. Bila kunjungan tidak menyelesaikan masalah (mis. part ATM), teknisi memberi catatan penyebabnya dan SLA menjadi pending customer. Menggantikan "lebih dari satu TT" di langkah 1.5b. | User |
+| K28 | **TM** = perusahaan penyedia jaringan, tempat tim helpdesk bekerja. **Pending TM** = problem jarkom di lokasi; **Pending Customer** = listrik, obstacle, renovasi, atau part ATM belum siap. Kategori pending cukup dua ini. | User |
+| K29 | Kolom **System dihapus**. | User |
+| K30 | **Satu peran operasional: Helpdesk** (di kantor pusat). Tingkatan L1/L2/L3 tidak dipakai di portal; admin dibahas terpisah ("fokus di NPR dulu"). PIC di lokasi melapor ke helpdesk dan bukan pengguna portal. | User |
+| K31 | Penjadwalan teknisi dan laporan teknisi **di luar portal**; helpdesk mencatat hasilnya di NPR. Menu **Shared** dan **List Report Teknisi tidak dibuat**. | User |
+| K32 | **Take Action**: Cek Lokasi = eskalasi ke PIC lokasi untuk pengecekan; Problem = hasil pengecekan PIC (penyebab); Bebas = catatan; Eskalasi To SD = buka TT (K27); **Close** = tutup NPR saat jarkom terpantau online lagi, dengan atau tanpa kunjungan teknisi (tanpa kunjungan biasanya problem listrik). Bila ada kunjungan, lampirkan laporan dan part yang diganti (modem, adaptor, perangkat indoor, BUC, LNB). | User |
+| K33 | **Device Failure** dan **Prob. Cause tidak dipakai**; penyebab cukup di catatan tindakan dan laporan teknisi. | User |
+| K34 | "Remote Status" di form NPR lama bernilai Remote down, Relokasi, Reposisi, Preventive maintenance. Hubungannya dengan Kategori belum jelas (pertanyaan di bagian 9). | User |
+| K35 | **Pengelola** = PIC yang standby di lokasi dekat ATM; kontak untuk Cek Lokasi. | User |
+| K36 | **Bendera** = tanda NPR yang jarkomnya sudah down sekitar seminggu dan perlu diperbarui. | User |
+| K37 | User IP / User ID: IP remote yang bisa di-ping; data dummy dulu. | User |
+| K38 | Status remote "Dibongkar" dinamai **Dismantle**. | User |
+| K39 | Problem pada ATM yang membuat jarkom down **tetap dibuat NPR** sebagai catatan (melengkapi K13). | User |
+| K40 | Jarkom sempat up lalu down lagi: dicatat di **NPR yang sama** ("jarkom termonitor down kembali"), bukan NPR baru. | User |
+| K41 | Disetujui: format nomor TT seperti NPR, bulan nomor menurut WIB saat dibuat, linimasa urut waktu tindakan, linimasa tidak bisa diubah (koreksi), lampiran ≤ 5 MB dan ≤ 5 berkas, pending menghentikan SLA. Kerja harian di desktop. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
@@ -225,6 +246,15 @@ dan tiket manual harus sudah stabil sebelum dibanjiri alert.
 **Yang bisa berjalan paralel:** R3 dan R4 setelah R1; riset alat monitoring (untuk R6) sejak R0.
 
 ## 9. Pertanyaan yang masih terbuka
+
+**Setelah jawaban konfirmasi 2026-11-17 masih terbuka:**
+- **NDR**: belum dijawab.
+- **"Remote Status" lama vs Kategori** (K34): menggantikan Kategori, atau kolom terpisah?
+- **TT dan kunjungan** (K27): jawaban menyebut "TT belum tentu kunjungan teknisi", tetapi
+  Eskalasi To SD "pasti dijadwalkan teknisi jaringan". Apakah setiap TT berarti kunjungan?
+- **Admin** (K30): siapa yang mengelola master data, remote, dan akun helpdesk?
+- Topik sesi (bagian 4 dokumen konfirmasi) belum dijawab: aturan SLA, Gamas, laporan wajib,
+  alat monitoring, screenshot.
 
 Gerbang sekarang (jawab "ya" = setuju rekomendasi):
 1. Setuju R-A s.d. R-G di bagian 5?
