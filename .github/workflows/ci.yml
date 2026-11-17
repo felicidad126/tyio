@@ -60,7 +60,7 @@ jobs:
         run: pnpm test
 
   image:
-    name: Image + uji asap dan login lewat compose staging
+    name: Image + uji layar lewat compose staging
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Image dibangun sekali, lalu dijalankan dengan berkas compose staging yang sama
@@ -103,8 +103,8 @@ jobs:
       - name: Pasang Chromium untuk Playwright
         run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
 
-      - name: Uji asap dan login
-        run: pnpm e2e smoke auth
+      - name: Uji layar (asap, login, kerangka)
+        run: pnpm e2e smoke auth shell
         env:
           E2E_BASE_URL: http://localhost:8080
 
