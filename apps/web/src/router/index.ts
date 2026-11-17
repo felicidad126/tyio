@@ -50,6 +50,23 @@ const remoteRoutes: RouteRecordRaw[] = [
   },
 ];
 
+// Tiket (1.3): buat tiket dan ringkasannya. Antrean tiket menyusul (1.5); sampai itu, /tiket
+// tetap halaman penanda.
+const ticketRoutes: RouteRecordRaw[] = [
+  {
+    path: 'tiket/baru',
+    name: 'ticket-create',
+    component: () => import('../pages/tickets/new/TicketCreatePage.vue'),
+    meta: { module: 'tiket', title: 'Buat tiket' },
+  },
+  {
+    path: 'tiket/:id',
+    name: 'ticket-detail',
+    component: () => import('../pages/tickets/detail/TicketDetailPage.vue'),
+    meta: { module: 'tiket', title: 'Tiket' },
+  },
+];
+
 // Admin: untuk sekarang hanya master data (1.1); daftar yang dibuka tersimpan di alamat.
 const adminRoutes: RouteRecordRaw[] = [
   { path: 'admin', name: 'admin', redirect: { name: 'admin-master', params: { list: 'customer' } } },
@@ -76,6 +93,7 @@ export const router = createRouter({
       children: [
         ...moduleRoutes,
         ...remoteRoutes,
+        ...ticketRoutes,
         ...adminRoutes,
         {
           path: 'tanpa-akses',

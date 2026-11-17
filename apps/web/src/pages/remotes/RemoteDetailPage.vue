@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { IconArrowLeft, IconPhone } from '@tabler/icons-vue';
-import { REMOTE_STATUS_LABELS, type RemoteDetail } from '@tyio/shared';
+import { canOpenModule, REMOTE_STATUS_LABELS, type RemoteDetail } from '@tyio/shared';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '../../api/client';
 import { remotesApi } from '../../api/remotes';
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '../../stores/auth';
 import { formatDate, STATUS_BADGE, zoneLabel } from './remote-display';
 
 // Pola halaman: detail ("rekam medis" site). Riwayat tiket menyusul bersama modul tiket.
 const route = useRoute();
+const { user } = storeToRefs(useAuthStore());
+const canCreateTicket = computed(() => (user.value ? canOpenModule(user.value.role, 'tiket') : false));
 const remote = ref<RemoteDetail | null>(null);
 const state = ref<'loading' | 'ready' | 'missing' | 'error'>('loading');
 const loadError = ref('');
@@ -103,6 +107,13 @@ const coordinates = computed(() =>
         <span class="font-monospace">{{ remote.siteId }}</span>
         <span :class="STATUS_BADGE[remote.status]">{{ REMOTE_STATUS_LABELS[remote.status] }}</span>
       </p>
+      <RouterLink
+        v-if="canCreateTicket && remote.status !== 'dibongkar'"
+        :to="{ name: 'ticket-create', query: { remote: remote.id } }"
+        class="btn btn-primary mt-3 back-link"
+      >
+        Buat tiket untuk remote ini
+      </RouterLink>
     </div>
 
     <div class="row row-cards">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconMenu2, IconX } from '@tabler/icons-vue';
+import { IconMenu2, IconPlus, IconX } from '@tabler/icons-vue';
 import { APP_NAME, canOpenModule } from '@tyio/shared';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
@@ -11,6 +11,9 @@ import { useAuthStore } from '../stores/auth';
 const { user } = storeToRefs(useAuthStore());
 const route = useRoute();
 const menuOpen = ref(false);
+
+// Aksi global "Buat tiket" (prinsip pengemasan: aksi global selalu terjangkau).
+const canCreateTicket = computed(() => (user.value ? canOpenModule(user.value.role, 'tiket') : false));
 
 // Menu hanya menampilkan modul yang boleh dibuka peran pengguna (aturan di @tyio/shared).
 const items = computed(() =>
@@ -73,6 +76,19 @@ function isActive(path: string): boolean {
           class="collapse navbar-collapse"
           :class="{ show: menuOpen }"
         >
+          <!-- Di ponsel, aksi global ada di atas menu; di layar lebar ada di header. -->
+          <RouterLink
+            v-if="canCreateTicket"
+            :to="{ name: 'ticket-create' }"
+            class="btn btn-primary w-100 mt-2 d-md-none nav-target"
+          >
+            <IconPlus
+              class="icon"
+              :size="18"
+              aria-hidden="true"
+            />
+            Buat tiket
+          </RouterLink>
           <nav
             class="w-100"
             aria-label="Menu utama"
@@ -108,7 +124,19 @@ function isActive(path: string): boolean {
     <div class="page-wrapper">
       <header class="navbar navbar-expand-md d-none d-md-flex d-print-none">
         <div class="container-fluid">
-          <div class="navbar-nav flex-row ms-auto">
+          <div class="navbar-nav flex-row ms-auto align-items-center gap-3">
+            <RouterLink
+              v-if="canCreateTicket"
+              :to="{ name: 'ticket-create' }"
+              class="btn btn-primary nav-target"
+            >
+              <IconPlus
+                class="icon"
+                :size="18"
+                aria-hidden="true"
+              />
+              Buat tiket
+            </RouterLink>
             <UserMenu />
           </div>
         </div>

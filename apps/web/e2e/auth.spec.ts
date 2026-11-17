@@ -54,14 +54,13 @@ test.describe('masuk dan keluar', () => {
   });
 
   test('tautan langsung kembali ke tujuannya setelah masuk', async ({ page }) => {
-    await page.goto('/tiket/NPR-CONTOH');
-    await expectLoginPage(page, '/tiket/NPR-CONTOH');
+    await page.goto('/tiket/baru');
+    await expectLoginPage(page, '/tiket/baru');
 
     await signIn(page);
 
-    await expectPath(page, '/tiket/NPR-CONTOH');
-    // Rute tiket baru dibuat di R1; sampai saat itu yang tampil halaman tidak ditemukan.
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Halaman tidak ditemukan');
+    await expectPath(page, '/tiket/baru');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Buat tiket');
   });
 
   test('tujuan di luar aplikasi diabaikan (tanpa open redirect)', async ({ page, baseURL }) => {

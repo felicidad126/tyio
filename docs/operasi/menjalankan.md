@@ -105,6 +105,25 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   "trusted", jadi cukup hak CREATE di database). Saat peran database produksi dipisah,
   pastikan migrasi tetap boleh membuat ekstensi ini, atau pasang lebih dulu oleh DBA.
 
+### Membuat tiket (NPR)
+
+- **Buat tiket** ada di header (layar lebar), di menu (ponsel), dan di halaman remote ("Buat
+  tiket untuk remote ini"). Semua peran yang bisa membuka modul Tiket bisa membuat tiket untuk
+  remote customer yang boleh dilihatnya.
+- Pilih remote; lokasi, jarkom, jaringan, dan kontaknya tampil dari data remote dan **tidak
+  diketik ulang**. Isi kategori, system (boleh kosong), waktu kejadian, dan keterangan.
+- **Waktu kejadian** diisi menurut jam di lokasi remote (WIB/WITA/WIT tertulis di label),
+  disimpan dalam UTC. Waktu pencatatan diisi sistem. Waktu di masa depan ditolak.
+- **Nomor** dibuat sistem saat disimpan: `NPR/<jarkom>/<customer>/<tahun>/<bulan>/<urut>`.
+  Urut per customer, jarkom, dan bulan; bulan menurut WIB saat tiket dibuat. Dua operator yang
+  menyimpan bersamaan tidak pernah mendapat nomor yang sama, dan tiket yang gagal dibuat tidak
+  memakan nomor.
+- Bila remote masih punya **tiket terbuka**, form menampilkannya dan tiket baru hanya dibuat
+  setelah operator mencentang konfirmasi. Pemeriksaan ini juga dilakukan server, termasuk saat
+  dua operator menyimpan untuk remote yang sama pada saat yang sama.
+- Remote yang dibongkar dan customer yang nonaktif tidak bisa dibuatkan tiket.
+- Tiket tidak bisa dihapus. Linimasa tindakan dan perubahan status menyusul (langkah 1.4).
+
 ### Memasang aplikasi (PWA)
 
 - Desktop (Chrome/Edge): ikon "Pasang" di bilah alamat. Ponsel Android: menu browser →
