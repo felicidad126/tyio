@@ -74,7 +74,11 @@ export const RemoteEntity = new EntitySchema<Remote>({
     createdAt: { name: 'created_at', type: 'timestamptz', createDate: true },
     updatedAt: { name: 'updated_at', type: 'timestamptz', updateDate: true },
   },
-  uniques: [{ name: 'remotes_tenant_site_key', columns: ['tenantId', 'siteId'] }],
+  uniques: [
+    { name: 'remotes_tenant_site_key', columns: ['tenantId', 'siteId'] },
+    // Sasaran foreign key gabungan dari tickets (remote dan customer-nya bersama).
+    { name: 'remotes_id_tenant_key', columns: ['id', 'tenantId'] },
+  ],
   indices: [
     { name: 'remotes_jarkom_id_idx', columns: ['jarkomId'] },
     { name: 'remotes_site_id_idx', columns: ['siteId'] },

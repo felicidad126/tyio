@@ -9,4 +9,6 @@ export const AUDIT_EXCLUDED_TABLES: Readonly<Record<string, string>> = {
     'Diperbarui pada hampir setiap permintaan; login dan logout dicatat sebagai peristiwa auth.',
   login_failures:
     'Catatan teknis pembatasan percobaan; login yang ditolak dicatat sebagai peristiwa auth.',
+  ticket_sequences:
+    'Penghitung nomor tiket; setiap tiket yang dibuat sudah dicatat lengkap dengan nomornya.',
 };

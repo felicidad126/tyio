@@ -9,7 +9,8 @@ import { listRoutes, type RouteInfo } from '../src/common/tenant/tenant-policy.j
 import type { Tenant } from '../src/modules/tenants/tenant.entity.js';
 import { createTestApp } from './create-test-app.js';
 import { resetData } from './db.js';
-import { createTenant, createUser, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
+import { createTenant, createUser, ensureCategory, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
+import { TicketEntity } from '../src/modules/tickets/ticket.entity.js';
 import {
   seedTenantOwnedData,
   TENANT_COLUMN_NOT_OWNED,
@@ -68,6 +69,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   });
 
   const scopedRoutes = () => routes.filter((r) => r.policy?.kind === 'scoped');
+  const scopedReads = () => scopedRoutes().filter((r) => r.method === 'GET');
   const allTenantRoutes = () => routes.filter((r) => r.policy?.kind === 'all');
   const fill = (path: string, id: string) => path.replace(/:[A-Za-z]+/g, id);
   const hasParams = (path: string) => /:[A-Za-z]+/.test(path);
@@ -86,12 +88,33 @@ describe('isolasi tenant di semua rute terdaftar', () => {
     expect(scopedRoutes().length).toBeGreaterThan(0);
   });
 
-  it('rute tenant yang mengubah data belum ada; bila ditambah, uji mutasinya wajib ditambah di sini', () => {
+  // Setiap rute tenant yang mengubah data wajib punya uji lintas-tenant sendiri di bawah ini.
+  const MUTATION_TESTED = ['POST /api/tickets'];
+
+  it('setiap rute tenant yang mengubah data punya uji mutasi lintas-tenant', () => {
     const mutating = scopedRoutes().filter((r) => r.method !== 'GET');
 
-    expect(mutating.map((r) => `${r.method} ${r.path}`), 'tambahkan uji mutasi lintas-tenant').toEqual(
-      [],
+    expect(mutating.map((r) => `${r.method} ${r.path}`).sort(), 'tambahkan uji mutasi lintas-tenant').toEqual(
+      [...MUTATION_TESTED].sort(),
     );
+  });
+
+  it('pengguna tenant A tidak bisa membuat tiket pada remote tenant B (404, tidak ada yang dibuat)', async () => {
+    const remoteB = bIds[1]!;
+    const category = await ensureCategory(ds);
+    const before = await ds.getRepository(TicketEntity).count();
+
+    const res = await call('POST', '/api/tickets', 'a').send({
+      remoteId: remoteB,
+      categoryId: category.id,
+      occurredAt: new Date().toISOString(),
+      problem: 'Coba buat tiket lintas customer',
+      confirmOpenTickets: true,
+    });
+
+    expect(res.status).toBe(404);
+    for (const marker of bMarkers()) expect(JSON.stringify(res.body)).not.toContain(marker);
+    expect(await ds.getRepository(TicketEntity).count()).toBe(before);
   });
 
   it('setiap tabel ber-tenant_id punya data uji lintas-tenant', async () => {
@@ -127,7 +150,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   // Kontrol positif: rute yang sama memang mengembalikan data tenant A, jadi uji
   // di atas tidak lulus hanya karena rutenya kosong atau rusak.
   it('rute yang sama mengembalikan data tenant A kepada pengguna tenant A', async () => {
-    for (const route of scopedRoutes()) {
+    for (const route of scopedReads()) {
       const paths = hasParams(route.path) ? aIds.map((id) => fill(route.path, id)) : [route.path];
       const answers = await Promise.all(paths.map((path) => get(path, 'a')));
       const found = answers.some((res) => res.status === 200 && JSON.stringify(res.body).includes(a.id));
@@ -137,7 +160,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   });
 
   it('pengguna semua tenant melihat A dan B; pengguna tanpa tenant tidak melihat keduanya', async () => {
-    for (const route of scopedRoutes().filter((r) => !hasParams(r.path))) {
+    for (const route of scopedReads().filter((r) => !hasParams(r.path))) {
       const all = JSON.stringify((await get(route.path, 'semua').expect(200)).body);
       const none = JSON.stringify((await get(route.path, 'kosong').expect(200)).body);
 

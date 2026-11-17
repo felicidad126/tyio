@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MasterModule } from './modules/master/master.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
+import { TicketsModule } from './modules/tickets/tickets.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 
 @Module({})
@@ -26,6 +27,7 @@ export class AppModule {
         TenantsModule,
         MasterModule,
         RemotesModule,
+        TicketsModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],

@@ -66,5 +66,30 @@ export type {
   TimeZoneLabel,
   TimeZoneName,
 } from './remotes.js';
+export {
+  TICKET_FUTURE_TOLERANCE_MINUTES,
+  TICKET_PROBLEM_MAX,
+  TICKET_PROBLEM_MIN,
+  TICKET_STATUS_LABELS,
+  TICKET_STATUSES,
+} from './tickets.js';
+export type {
+  CreateTicketRequest,
+  MasterRef,
+  OpenTicketsConflict,
+  OpenTicketsResponse,
+  TicketDetail,
+  TicketRemote,
+  TicketResponse,
+  TicketStatus,
+  TicketSummary,
+} from './tickets.js';
+export {
+  formatInZone,
+  localInputToUtc,
+  TIME_ZONE_OFFSET_MINUTES,
+  timeZoneLabel,
+  utcToLocalInput,
+} from './time.js';
 export { APP_MODULES, canOpenModule, MODULE_ROLES } from './modules.js';
 export type { AppModule } from './modules.js';

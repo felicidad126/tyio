@@ -1,6 +1,6 @@
 import type { DataSource } from 'typeorm';
 import type { Tenant } from '../src/modules/tenants/tenant.entity.js';
-import { createRemote } from './fixtures.js';
+import { createRemote, createTicket } from './fixtures.js';
 
 /**
  * Data milik satu tenant untuk uji lintas-tenant. Setiap entity baru yang punya kolom
@@ -11,14 +11,16 @@ import { createRemote } from './fixtures.js';
  */
 export async function seedTenantOwnedData(ds: DataSource, tenant: Tenant): Promise<string[]> {
   const remote = await createRemote(ds, tenant, `${tenant.code}-R1`, { name: `Remote ${tenant.name}` });
-  return [remote.id];
+  const ticket = await createTicket(ds, remote, `NPR/UJI/${tenant.code}/2026/11/0001`);
+  return [remote.id, ticket.id];
 }
 
 /** Tabel ber-`tenant_id` yang sudah diisi oleh seedTenantOwnedData di atas. */
-export const TENANT_OWNED_TABLES_COVERED: readonly string[] = ['remotes'];
+export const TENANT_OWNED_TABLES_COVERED: readonly string[] = ['remotes', 'tickets'];
 
 /** Tabel ber-`tenant_id` yang bukan data milik tenant, beserta alasannya. */
 export const TENANT_COLUMN_NOT_OWNED: Readonly<Record<string, string>> = {
   user_tenants: 'Cakupan akses pengguna, bukan data customer; tidak dilayani rute tenant.',
   audit_log: 'Catatan audit; belum ada rute yang melayaninya.',
+  ticket_sequences: 'Penghitung nomor tiket; tidak dilayani rute mana pun.',
 };

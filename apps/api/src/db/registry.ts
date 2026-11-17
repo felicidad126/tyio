@@ -8,12 +8,14 @@ import {
 } from '../modules/master/master.entities.js';
 import { RemoteEntity } from '../modules/remotes/remote.entity.js';
 import { TenantEntity } from '../modules/tenants/tenant.entity.js';
+import { TicketEntity, TicketSequenceEntity } from '../modules/tickets/ticket.entity.js';
 import { UserTenantEntity } from '../modules/users/user-tenant.entity.js';
 import { UserEntity } from '../modules/users/user.entity.js';
 import { AuthAwal1794826197546 } from './migrations/1794826197546-auth-awal.js';
 import { AuditLog1794888560196 } from './migrations/1794888560196-audit-log.js';
 import { MasterData1794908015332 } from './migrations/1794908015332-master-data.js';
 import { Remotes1794910075612 } from './migrations/1794910075612-remotes.js';
+import { Tickets1794915441096 } from './migrations/1794915441096-tickets.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -30,6 +32,8 @@ export const entities = [
   SystemEntity,
   JarkomEntity,
   RemoteEntity,
+  TicketSequenceEntity,
+  TicketEntity,
 ];
 
 /** Urutan harus dipertahankan: migrasi baru selalu ditambahkan di akhir. */
@@ -38,4 +42,5 @@ export const migrations = [
   AuditLog1794888560196,
   MasterData1794908015332,
   Remotes1794910075612,
+  Tickets1794915441096,
 ];
