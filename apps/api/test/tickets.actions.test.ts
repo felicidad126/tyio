@@ -89,7 +89,19 @@ describe('linimasa tindakan tiket', () => {
     expect(action).toMatchObject({ note: 'Cek ping ke remote: timeout', statusFrom: null, statusTo: null, occurredAt: at });
     expect(Date.parse(action.createdAt)).toBeGreaterThan(Date.parse(at));
     expect(after.status).toBe('terbuka');
-    expect((await timeline()).map((x) => x.note)).toEqual(['Cek ping ke remote: timeout', null]);
+    // Urut waktu tindakan: entri "dibuat" (sekarang) di atas tindakan pukul 02.30 tadi.
+    expect((await timeline()).map((x) => x.note)).toEqual([null, 'Cek ping ke remote: timeout']);
+    expect(await addOk({ occurredAt: new Date().toISOString(), note: 'Terbaru' })).toBeTruthy();
+    expect((await timeline())[0]?.note).toBe('Terbaru');
+  });
+
+  it('waktu tindakan diisi sampai menit: entri di menit yang sama diurutkan menurut waktu catat', async () => {
+    const sameMinute = new Date();
+    sameMinute.setSeconds(0, 0); // bisa lebih awal beberapa detik dari entri "dibuat"
+
+    await addOk({ occurredAt: sameMinute.toISOString(), note: 'Menit yang sama' });
+
+    expect((await timeline())[0]?.note).toBe('Menit yang sama');
   });
 
   it('pending wajib pihak dan alasan; tersimpan di tiket, lalu hilang saat keluar dari pending', async () => {

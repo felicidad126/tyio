@@ -123,7 +123,7 @@ export interface TicketAction {
 }
 
 export interface TicketActionsResponse {
-  /** Terbaru di atas. */
+  /** Menurut waktu tindakan, terbaru di atas. */
   actions: TicketAction[];
 }
 

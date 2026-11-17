@@ -53,7 +53,7 @@ export class TicketsService {
       if (!input.confirmOpenTickets) {
         const open = await m.getRepository(TicketEntity).find({
           where: { remoteId: remote.id, closedAt: IsNull() },
-          order: { createdAt: 'ASC' },
+          order: { createdAt: 'DESC' },
         });
         if (open.length > 0) {
           const body: OpenTicketsConflict = {
@@ -126,7 +126,7 @@ export class TicketsService {
     };
   }
 
-  /** Tiket yang belum ditutup pada satu remote, untuk peringatan di form "Buat tiket". */
+  /** Tiket yang belum ditutup pada satu remote (terbaru dulu), untuk peringatan di form "Buat tiket". */
   async openForRemote(access: TenantAccess, remoteId: string): Promise<TicketSummary[]> {
     const remote = await new TenantScopedRepository(this.dataSource.getRepository(RemoteEntity), 'tenantId')
       .query(access, 'r')
@@ -135,7 +135,7 @@ export class TicketsService {
     if (!remote) throw notFound('Remote tidak ditemukan.');
     const open = await this.dataSource.getRepository(TicketEntity).find({
       where: { remoteId: remote.id, closedAt: IsNull() },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
     });
     return summaries(this.dataSource.manager, open);
   }

@@ -1,21 +1,43 @@
 <script setup lang="ts">
-import { formatInZone, TICKET_STATUS_LABELS, type TicketDetail } from '@tyio/shared';
-import { ref, watch } from 'vue';
+import {
+  type AddTicketActionResponse,
+  formatInZone,
+  PENDING_PARTY_LABELS,
+  TICKET_STATUS_LABELS,
+  type TicketAction,
+  type TicketDetail,
+} from '@tyio/shared';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '../../../api/client';
 import { ticketsApi } from '../../../api/tickets';
+import CustomerTicketNumber from './CustomerTicketNumber.vue';
+import { TICKET_STATUS_BADGE } from './ticket-display';
+import TicketActionForm from './TicketActionForm.vue';
+import TimelineEntry from './TimelineEntry.vue';
 
-// Pola halaman: detail. 1.3 menampilkan ringkasan tiket; linimasa tindakan dan perubahan
-// status menyusul di langkah 1.4.
+// Pola halaman: detail. Kiri: tambah tindakan dan linimasa (terbaru di atas); kanan:
+// ringkasan gangguan dan remote. Linimasa hanya bisa ditambah; kesalahan dikoreksi.
 const route = useRoute();
 const ticket = ref<TicketDetail | null>(null);
+const actions = ref<TicketAction[]>([]);
 const state = ref<'loading' | 'ready' | 'missing' | 'error'>('loading');
 const loadError = ref('');
+const notice = ref('');
+/** Peringatan yang harus tetap terlihat, mis. status sudah diubah rekan. */
+const warning = ref('');
+
+function onStale(message: string): void {
+  warning.value = message;
+  if (ticket.value) void load(ticket.value.id);
+}
 
 async function load(id: string): Promise<void> {
-  state.value = 'loading';
+  state.value = ticket.value?.id === id ? 'ready' : 'loading';
   try {
-    ticket.value = await ticketsApi.get(id);
+    const [detail, timeline] = await Promise.all([ticketsApi.get(id), ticketsApi.actions(id)]);
+    ticket.value = detail;
+    actions.value = timeline;
     state.value = 'ready';
   } catch (error) {
     if (error instanceof ApiError && (error.status === 404 || error.status === 400)) state.value = 'missing';
@@ -26,6 +48,18 @@ async function load(id: string): Promise<void> {
   }
 }
 watch(() => route.params.id as string, load, { immediate: true });
+
+const byId = computed(() => new Map(actions.value.map((a) => [a.id, a])));
+
+function onSaved(result: AddTicketActionResponse): void {
+  ticket.value = result.ticket;
+  warning.value = '';
+  notice.value = result.action.statusTo
+    ? `Status menjadi ${TICKET_STATUS_LABELS[result.action.statusTo]}.`
+    : 'Tindakan disimpan.';
+  // Muat ulang linimasa agar tanda "Dikoreksi" pada entri lama ikut terbaru.
+  void ticketsApi.actions(result.ticket.id).then((list) => (actions.value = list));
+}
 </script>
 
 <template>
@@ -74,15 +108,77 @@ watch(() => route.params.id as string, load, { immediate: true });
       <h1 class="page-title font-monospace ticket-number">
         {{ ticket.number }}
       </h1>
-      <p class="mb-0 mt-1">
-        <span class="badge bg-primary-subtle text-primary-emphasis">{{ TICKET_STATUS_LABELS[ticket.status] }}</span>
+      <p class="mb-0 mt-1 d-flex flex-wrap align-items-center gap-2">
+        <span
+          :class="TICKET_STATUS_BADGE[ticket.status]"
+          data-testid="status-tiket"
+        >{{ TICKET_STATUS_LABELS[ticket.status] }}</span>
+        <span
+          v-if="ticket.pending"
+          class="text-secondary"
+        >Menunggu {{ PENDING_PARTY_LABELS[ticket.pending.party] }}: {{ ticket.pending.reason }}</span>
       </p>
+      <div class="mt-2">
+        <CustomerTicketNumber
+          :ticket="ticket"
+          @updated="(t) => { ticket = t; void load(t.id); }"
+        />
+      </div>
+    </div>
+
+    <div
+      class="visually-hidden"
+      role="status"
+    >
+      {{ notice }}
     </div>
 
     <div class="row row-cards">
-      <div class="col-12 col-lg-7">
+      <div class="col-12 col-lg-7 d-flex flex-column gap-3">
+        <div
+          v-if="warning"
+          class="alert alert-warning mb-0"
+          role="alert"
+        >
+          {{ warning }}
+        </div>
+        <TicketActionForm
+          :key="ticket.status"
+          :ticket="ticket"
+          @saved="onSaved"
+          @stale="onStale"
+        />
         <section
-          class="card h-100"
+          class="card"
+          aria-labelledby="linimasa"
+        >
+          <div class="card-header">
+            <h2
+              id="linimasa"
+              class="card-title"
+            >
+              Linimasa
+            </h2>
+          </div>
+          <ol
+            class="list-group list-group-flush timeline-list"
+            aria-labelledby="linimasa"
+          >
+            <TimelineEntry
+              v-for="action in actions"
+              :key="action.id"
+              :ticket-id="ticket.id"
+              :action="action"
+              :zone="ticket.remote.timeZone"
+              :by-id="byId"
+              @corrected="onSaved"
+            />
+          </ol>
+        </section>
+      </div>
+      <div class="col-12 col-lg-5 d-flex flex-column gap-3">
+        <section
+          class="card"
           aria-labelledby="gangguan"
         >
           <div class="card-header">
@@ -136,10 +232,8 @@ watch(() => route.params.id as string, load, { immediate: true });
             </p>
           </div>
         </section>
-      </div>
-      <div class="col-12 col-lg-5">
         <section
-          class="card h-100"
+          class="card"
           aria-labelledby="remote"
         >
           <div class="card-header">

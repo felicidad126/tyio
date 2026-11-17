@@ -36,13 +36,21 @@ export class TicketActionsService {
     this.attachments = new TenantScopedRepository(dataSource.getRepository(TicketAttachmentEntity), 'tenantId');
   }
 
-  /** Linimasa satu tiket, terbaru di atas. 404 untuk tiket customer lain. */
+  /**
+   * Linimasa satu tiket menurut waktu tindakan (yang diisi operator, R-F), terbaru di atas.
+   * Operator mengisi sampai menit, jadi entri di menit yang sama diurutkan menurut waktu
+   * pencatatan. 404 untuk tiket customer lain.
+   */
   async list(access: TenantAccess, ticketId: string): Promise<TicketActionView[]> {
     const ticket = await this.findTicket(this.dataSource.manager, access, ticketId, false);
-    const rows = await this.dataSource.getRepository(TicketActionEntity).find({
-      where: { ticketId: ticket.id },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
+    const rows = await this.dataSource
+      .getRepository(TicketActionEntity)
+      .createQueryBuilder('a')
+      .where('a.ticketId = :ticketId', { ticketId: ticket.id })
+      .orderBy("date_trunc('minute', a.occurred_at)", 'DESC')
+      .addOrderBy('a.createdAt', 'DESC')
+      .addOrderBy('a.id', 'DESC')
+      .getMany();
     return toViews(this.dataSource.manager, rows);
   }
 

@@ -28,6 +28,7 @@ database tidak bisa dihubungi.
 | `WEB_DIST_DIR` | tidak | Folder hasil build web; di image sudah diisi `/app/public` |
 | `SESSION_COOKIE_SECURE` | tidak | `true`/`false`. Bawaan `true` di staging dan produksi: cookie sesi hanya lewat HTTPS dan bernama `__Host-tyio_sid`. Browser memperlakukan `http://localhost` sebagai aman, jadi uji lokal tetap jalan |
 | `TRUST_PROXY_HOPS` | tidak | Jumlah reverse proxy di depan aplikasi (0–5, bawaan 0). Isi dengan tepat: alamat IP klien dipakai untuk membatasi percobaan login |
+| `ATTACHMENTS_DIR` | staging/produksi | Folder lampiran tiket. Di image sudah diisi `/app/data/lampiran`, dipasang sebagai volume `attachments` di compose. Dev dan uji memakai `data/lampiran` |
 | `TYIO_SEED_PASSWORD` | untuk seed di staging | Kata sandi pengguna contoh, minimal 12 karakter. Dev memakai bawaan di bawah |
 
 Aplikasi menolak start bila konfigurasi tidak sah dan menyebut variabel yang bermasalah,
@@ -122,7 +123,32 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   setelah operator mencentang konfirmasi. Pemeriksaan ini juga dilakukan server, termasuk saat
   dua operator menyimpan untuk remote yang sama pada saat yang sama.
 - Remote yang dibongkar dan customer yang nonaktif tidak bisa dibuatkan tiket.
-- Tiket tidak bisa dihapus. Linimasa tindakan dan perubahan status menyusul (langkah 1.4).
+- Tiket tidak bisa dihapus.
+
+### Linimasa dan status tiket
+
+- Halaman tiket berisi **Tambah tindakan** dan **Linimasa** (urut waktu tindakan, terbaru di
+  atas). Setiap entri mencatat waktu tindakan (diisi operator, jam lokasi remote) dan waktu
+  pencatatan beserta nama pencatat (diisi sistem).
+- **Alur status** (disetujui): Terbuka → Dikerjakan / Pending / Eskalasi / Selesai;
+  Dikerjakan → Pending / Eskalasi / Selesai; Pending → Dikerjakan; Eskalasi → Dikerjakan;
+  Selesai → Dikerjakan. Form hanya menawarkan jalur ini, dan server menolak jalur lain.
+  Ditutup menyusul bersama aturan penutupan (langkah 1.6).
+- **Pending** wajib memilih pihak yang ditunggu (Customer atau TM) dan alasannya; keduanya
+  tampil di kepala tiket selama pending.
+- Bila rekan mengubah status saat form Anda terbuka, penyimpanan ditolak dengan pesan, dan
+  tiket dimuat ulang dengan status terbaru.
+- **Linimasa tidak bisa diubah atau dihapus**, juga lewat SQL langsung (ditolak database).
+  Kesalahan diperbaiki dengan **Koreksi** pada entri itu: entri baru yang merujuk entri lama;
+  entri lama diberi tanda "Dikoreksi".
+- **Lampiran**: gambar (PNG, JPEG, WebP) atau PDF, paling besar 5 MB, paling banyak 5 per
+  tindakan. Pilih lewat "Lampirkan berkas", atau tempel tangkapan layar (Ctrl+V) di kolom
+  Catatan. Jenis berkas diperiksa dari isinya; PDF selalu diunduh, tidak dibuka di halaman.
+- **No. tiket customer** diisi atau diubah langsung di kepala tiket; setiap perubahan tercatat
+  di linimasa.
+- Operasi: lampiran disimpan di volume `attachments` dengan nama berkas acak; nama aslinya ada
+  di database. **Backup harus mencakup volume ini bersama database**, karena keduanya saling
+  merujuk.
 
 ### Memasang aplikasi (PWA)
 

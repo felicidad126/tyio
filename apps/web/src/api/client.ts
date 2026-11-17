@@ -25,13 +25,15 @@ export async function apiRequest<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
+  // FormData (unggah berkas) dikirim apa adanya; browser mengisi batas multipart sendiri.
+  const isForm = body instanceof FormData;
   let res: Response;
   try {
     res = await fetch(`/${API_PREFIX}${path}`, {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: body === undefined || isForm ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, NETWORK_MESSAGE);
