@@ -9,7 +9,9 @@ export type {
   LoginRequest,
   SessionResponse,
   SessionUser,
+  TenantListResponse,
   TenantRef,
+  TenantResponse,
   TenantScope,
   UserRole,
 } from './auth.js';

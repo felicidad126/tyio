@@ -1,14 +1,16 @@
 import type { UserRole } from '@tyio/shared';
 import type { DataSource } from 'typeorm';
+import { type Actor, withActor } from '../src/common/audit/actor.js';
 import { hashPassword } from '../src/modules/auth/password.js';
 import { TenantEntity, type Tenant } from '../src/modules/tenants/tenant.entity.js';
 import { UserTenantEntity } from '../src/modules/users/user-tenant.entity.js';
 import { UserEntity, type User } from '../src/modules/users/user.entity.js';
 
 export const TEST_PASSWORD = 'sandi-uji-yang-panjang';
+export const TEST_ACTOR: Actor = { name: 'uji' };
 
 export async function createTenant(ds: DataSource, code: string, name = `Bank ${code}`): Promise<Tenant> {
-  return ds.getRepository(TenantEntity).save({ code, name });
+  return withActor(ds, TEST_ACTOR, (m) => m.getRepository(TenantEntity).save({ code, name }));
 }
 
 export async function createUser(
@@ -22,18 +24,26 @@ export async function createUser(
     active?: boolean;
   },
 ): Promise<User> {
-  const user = await ds.getRepository(UserEntity).save({
-    username: options.username,
-    displayName: `Pengguna ${options.username}`,
-    passwordHash: await hashPassword(options.password ?? TEST_PASSWORD),
-    role: options.role ?? 'L1',
-    allTenants: options.allTenants ?? true,
-    active: options.active ?? true,
+  const passwordHash = await hashPassword(options.password ?? TEST_PASSWORD);
+  return withActor(ds, TEST_ACTOR, async (m) => {
+    const user = await m.getRepository(UserEntity).save({
+      username: options.username,
+      displayName: `Pengguna ${options.username}`,
+      passwordHash,
+      role: options.role ?? 'L1',
+      allTenants: options.allTenants ?? true,
+      active: options.active ?? true,
+    });
+    for (const tenant of options.tenants ?? []) {
+      await m.getRepository(UserTenantEntity).save({ userId: user.id, tenantId: tenant.id });
+    }
+    return user;
   });
-  for (const tenant of options.tenants ?? []) {
-    await ds.getRepository(UserTenantEntity).save({ userId: user.id, tenantId: tenant.id });
-  }
-  return user;
+}
+
+/** Mengubah data di luar aplikasi (mis. menonaktifkan pengguna) dengan pelaku uji. */
+export function asTester<T>(ds: DataSource, work: Parameters<typeof withActor<T>>[2]): Promise<T> {
+  return withActor(ds, TEST_ACTOR, work);
 }
 
 /** Mengambil nilai cookie sesi dari header Set-Cookie jawaban login. */

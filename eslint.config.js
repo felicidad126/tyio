@@ -13,6 +13,12 @@ export default defineConfig(
   tseslint.configs.recommended,
   vue.configs['flat/recommended'],
   {
+    rules: {
+      // Parameter berawalan _ sengaja tidak dipakai (mis. kerangka yang diisi langkah berikutnya).
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     files: ['**/*.vue'],
     languageOptions: {
       parserOptions: { parser: tseslint.parser },

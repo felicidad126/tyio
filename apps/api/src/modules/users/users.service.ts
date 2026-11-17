@@ -18,6 +18,10 @@ export class UsersService {
     return this.repo.findOneBy({ username });
   }
 
+  findById(id: string): Promise<User | null> {
+    return this.repo.findOneBy({ id });
+  }
+
   findActiveById(id: string): Promise<User | null> {
     return this.repo.findOneBy({ id, active: true });
   }

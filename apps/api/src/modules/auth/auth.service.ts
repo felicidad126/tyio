@@ -1,6 +1,8 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { LoginRequest, SessionUser } from '@tyio/shared';
 import { randomBytes } from 'node:crypto';
+import type { Actor } from '../../common/audit/actor.js';
+import { AuditService } from '../../common/audit/audit.service.js';
 import { UsersService } from '../users/users.service.js';
 import { LoginThrottleService, usernameKey } from './login-throttle.service.js';
 import { hashPassword, verifyPassword } from './password.js';
@@ -38,6 +40,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly sessions: SessionService,
     private readonly throttle: LoginThrottleService,
+    private readonly audit: AuditService,
   ) {}
 
   async login(
@@ -47,18 +50,40 @@ export class AuthService {
     const username = input.username.trim().toLowerCase();
     const key = usernameKey(username);
 
+    // Peristiwa login tanpa nama pengguna yang diketik: isinya bisa saja kata sandi.
+    const anonymous: Actor = { name: 'anonim', ...meta };
+
     const wait = await this.throttle.retryAfterSeconds(key, meta.ip);
-    if (wait > 0) throw new TooManyLoginAttemptsException(wait);
+    if (wait > 0) {
+      await this.audit.record('auth.login_ditahan', anonymous, { retryAfterSeconds: wait });
+      throw new TooManyLoginAttemptsException(wait);
+    }
 
     const user = await this.users.findByUsername(username);
     const passwordOk = await verifyPassword(input.password, user?.passwordHash ?? (await getDummyHash()));
     if (!user || !passwordOk || !user.active) {
       await this.throttle.recordFailure(key, meta.ip);
+      await this.audit.record('auth.login_ditolak', anonymous);
       throw new UnauthorizedException(REJECTED);
     }
 
     await this.throttle.clear(key);
     const token = await this.sessions.create(user.id, meta);
+    await this.audit.record('auth.login', actorOf(user, meta));
     return { token, user: await this.users.toSessionUser(user) };
   }
+
+  /** Mengakhiri sesi (bila ada) dan mencatat siapa yang keluar. */
+  async logout(token: string, meta: { ip?: string; userAgent?: string }): Promise<void> {
+    const userId = await this.sessions.revoke(token);
+    const user = userId ? await this.users.findById(userId) : null;
+    if (user) await this.audit.record('auth.logout', actorOf(user, meta));
+  }
+}
+
+function actorOf(
+  user: { id: string; username: string },
+  meta: { ip?: string; userAgent?: string },
+): Actor {
+  return { name: `pengguna:${user.username}`, userId: user.id, ...meta };
 }

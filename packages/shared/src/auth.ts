@@ -36,3 +36,11 @@ export interface ApiErrorBody {
   /** Hanya pada 429: berapa detik lagi boleh mencoba. */
   retryAfterSeconds?: number;
 }
+
+export interface TenantListResponse {
+  tenants: TenantRef[];
+}
+
+export interface TenantResponse {
+  tenant: TenantRef;
+}

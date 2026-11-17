@@ -42,6 +42,41 @@ tanpa mencetak nilainya.
 - Peran di R0: `L1` (L1 Monitoring), `L2` (L2 NOC), `admin`. Pengguna melihat semua
   customer, atau hanya customer tertentu bila dibatasi.
 
+### Batas data per customer (tenant)
+
+- Data milik customer hanya dibaca lewat repositori yang sudah dibatasi ke customer yang
+  boleh dilihat pengguna. Data customer lain dijawab 404, agar keberadaannya tidak terungkap.
+- `GET /api/tenants` mengembalikan customer aktif yang boleh dilihat pengguna;
+  `GET /api/tenants/:id` mengembalikan satu customer.
+- Setiap rute API wajib ditandai `@TenantScoped()` (menyentuh data customer) atau
+  `@NoTenantData('alasan')`. Aplikasi **menolak start** bila ada rute tanpa tanda, dan
+  menyebut rutenya.
+
+### Audit log
+
+Setiap perubahan pada tabel data (customer, pengguna, dan tabel R1 nanti) dicatat oleh
+database ke tabel `audit_log`: siapa, kapan, apa (kolom yang berubah, nilai lama dan baru),
+dan dari mana (IP dan peramban). Login, logout, login ditolak, dan login ditahan juga
+dicatat. Hash kata sandi tidak pernah ikut tersimpan.
+
+- **Perubahan tanpa pelaku ditolak database.** Aplikasi mengisi pelaku otomatis. Bila operator
+  harus mengubah data langsung di database, isi pelakunya di dalam transaksi yang sama:
+
+  ```sql
+  BEGIN;
+  SET LOCAL tyio.actor = 'dba:<nama-operator>';
+  UPDATE ...;
+  COMMIT;
+  ```
+
+- `audit_log` hanya bisa ditambah: UPDATE, DELETE, dan TRUNCATE ditolak.
+- Tabel yang sengaja tidak diaudit beserta alasannya:
+  `apps/api/src/common/audit/audit-exclusions.ts` (sesi, catatan login gagal, dan audit_log
+  itu sendiri).
+- **Belum:** pengguna database untuk aplikasi saat ini juga pemilik tabel, sehingga secara
+  teknis masih bisa mencabut trigger. Pemisahan peran database (aplikasi tanpa hak mengubah
+  audit) disiapkan bersama server produksi.
+
 ## Lingkungan lokal (pengembang)
 
 Kebutuhan: Docker dengan Compose v2, Node.js 26, pnpm (lihat README).

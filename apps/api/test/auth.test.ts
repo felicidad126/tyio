@@ -8,7 +8,7 @@ import { SessionEntity } from '../src/modules/auth/session.entity.js';
 import { UserEntity } from '../src/modules/users/user.entity.js';
 import { createTestApp } from './create-test-app.js';
 import { resetData } from './db.js';
-import { createTenant, createUser, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
+import { asTester, createTenant, createUser, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
 import { testConfig } from './test-config.js';
 
 const WRONG = { statusCode: 401, message: 'Nama pengguna atau kata sandi tidak cocok.' };
@@ -173,7 +173,7 @@ describe('login, sesi, dan logout', () => {
   it('pengguna yang dinonaktifkan kehilangan sesinya', async () => {
     const user = await createUser(ds, { username: 'l1.uji' });
     const cookie = sessionCookieFrom((await login('l1.uji')).headers['set-cookie']);
-    await ds.getRepository(UserEntity).update(user.id, { active: false });
+    await asTester(ds, (m) => m.getRepository(UserEntity).update(user.id, { active: false }));
 
     await http().get('/api/auth/me').set('Cookie', cookie).expect(401);
   });

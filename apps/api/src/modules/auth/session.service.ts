@@ -63,9 +63,17 @@ export class SessionService {
     return session?.userId ?? null;
   }
 
-  async revoke(token: string): Promise<void> {
-    if (!TOKEN_FORMAT.test(token)) return;
-    await this.repo.delete({ tokenHash: hashToken(token) });
+  /** Menghapus sesi; mengembalikan userId pemiliknya, atau null bila sesi tidak ada. */
+  async revoke(token: string): Promise<string | null> {
+    if (!TOKEN_FORMAT.test(token)) return null;
+    const result = await this.repo
+      .createQueryBuilder()
+      .delete()
+      .where('token_hash = :tokenHash', { tokenHash: hashToken(token) })
+      .returning('user_id')
+      .execute();
+    const rows = result.raw as Array<{ user_id: string }>;
+    return rows[0]?.user_id ?? null;
   }
 }
 

@@ -1,9 +1,12 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditModule } from './common/audit/audit.module.js';
+import { TenantModule } from './common/tenant/tenant.module.js';
 import { APP_CONFIG, type AppConfig } from './config.js';
 import { dataSourceOptions } from './db/options.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { TenantsModule } from './modules/tenants/tenants.module.js';
 
 @Module({})
 export class AppModule {
@@ -14,8 +17,11 @@ export class AppModule {
       global: true,
       imports: [
         TypeOrmModule.forRoot(dataSourceOptions(config.databaseUrl)),
+        AuditModule,
+        TenantModule,
         AuthModule,
         HealthModule,
+        TenantsModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],

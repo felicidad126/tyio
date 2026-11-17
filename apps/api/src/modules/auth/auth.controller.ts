@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import type { LoginRequest, SessionResponse, SessionUser } from '@tyio/shared';
 import type { Request, Response } from 'express';
+import { NoTenantData } from '../../common/tenant/tenant-policy.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { CurrentUser, Public } from './auth.decorators.js';
 import { AuthService, TooManyLoginAttemptsException } from './auth.service.js';
@@ -21,13 +22,12 @@ import {
   sessionCookieName,
   setSessionCookie,
 } from './session-cookie.js';
-import { SessionService } from './session.service.js';
 
+@NoTenantData('Sesi pengguna itu sendiri; cakupan tenant yang dikirim adalah milik pengguna tersebut.')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
-    private readonly sessions: SessionService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -61,7 +61,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
     const token = readCookie(req.headers.cookie, sessionCookieName(this.config));
-    if (token) await this.sessions.revoke(token);
+    if (token) await this.auth.logout(token, { ip: req.ip, userAgent: req.get('user-agent') });
     clearSessionCookie(res, this.config);
   }
 

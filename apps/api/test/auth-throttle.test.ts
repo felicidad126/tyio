@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { AuditEntryEntity } from '../src/common/audit/audit-entry.entity.js';
 import { LoginFailureEntity } from '../src/modules/auth/login-failure.entity.js';
 import { createTestApp } from './create-test-app.js';
 import { resetData } from './db.js';
@@ -43,6 +44,10 @@ describe('pembatasan percobaan login', () => {
     expect(retryAfter).toBeLessThanOrEqual(15 * 60);
     expect(res.body.retryAfterSeconds).toBe(retryAfter);
     expect(res.body.message).toMatch(/Terlalu banyak percobaan masuk\. Coba lagi dalam 15 menit\./);
+    const held = await ds
+      .getRepository(AuditEntryEntity)
+      .findOne({ where: { action: 'auth.login_ditahan' }, order: { occurredAt: 'DESC' } });
+    expect(held).toMatchObject({ actor: 'anonim', data: { retryAfterSeconds: retryAfter } });
   });
 
   it('login yang berhasil mengosongkan hitungan gagal nama pengguna itu', async () => {
