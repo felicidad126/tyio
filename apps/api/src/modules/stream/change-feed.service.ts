@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
-import { STREAM_CHANGE_KINDS, type StreamChangeKind } from '@tyio/shared';
+import { STREAM_CHANGE_KINDS, STREAM_CHANGE_OPS, type StreamChangeKind, type StreamChangeOp } from '@tyio/shared';
 import pg from 'pg';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
 
 export const CHANGE_CHANNEL = 'tyio_changes';
 
 export type FeedEvent =
-  | { type: 'change'; tenantId: string; ticketId: string; kind: StreamChangeKind }
+  | { type: 'change'; tenantId: string; ticketId: string; kind: StreamChangeKind; op: StreamChangeOp }
   /** Koneksi ke database sempat putus: kabar di antaranya mungkin hilang. */
   | { type: 'resync' };
 
@@ -109,13 +109,20 @@ export class ChangeFeed implements OnModuleInit, OnModuleDestroy {
 /** Isi NOTIFY dari trigger; yang tidak dikenal diabaikan. */
 export function parseChange(payload: string): FeedEvent | null {
   try {
-    const value = JSON.parse(payload) as { tenantId?: unknown; ticketId?: unknown; kind?: unknown };
+    const value = JSON.parse(payload) as { tenantId?: unknown; ticketId?: unknown; kind?: unknown; op?: unknown };
     if (
       typeof value.tenantId === 'string' &&
       typeof value.ticketId === 'string' &&
-      STREAM_CHANGE_KINDS.includes(value.kind as StreamChangeKind)
+      STREAM_CHANGE_KINDS.includes(value.kind as StreamChangeKind) &&
+      STREAM_CHANGE_OPS.includes(value.op as StreamChangeOp)
     ) {
-      return { type: 'change', tenantId: value.tenantId, ticketId: value.ticketId, kind: value.kind as StreamChangeKind };
+      return {
+        type: 'change',
+        tenantId: value.tenantId,
+        ticketId: value.ticketId,
+        kind: value.kind as StreamChangeKind,
+        op: value.op as StreamChangeOp,
+      };
     }
   } catch {
     // Diabaikan: bukan JSON.

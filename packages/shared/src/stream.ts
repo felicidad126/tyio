@@ -9,6 +9,9 @@
  */
 export const STREAM_CHANGE_KINDS = ['tickets', 'ticket_actions', 'trouble_tickets'] as const;
 export type StreamChangeKind = (typeof STREAM_CHANGE_KINDS)[number];
+/** `insert` pada `tickets` = NPR baru (layar dinding berbunyi, 2.4). */
+export const STREAM_CHANGE_OPS = ['insert', 'update'] as const;
+export type StreamChangeOp = (typeof STREAM_CHANGE_OPS)[number];
 
 export interface StreamReady {
   /** Waktu server (UTC ISO). */
@@ -20,6 +23,7 @@ export interface StreamReady {
 export interface StreamChange {
   ticketId: string;
   kind: StreamChangeKind;
+  op: StreamChangeOp;
 }
 
 export interface StreamPing {

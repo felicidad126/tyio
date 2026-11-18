@@ -153,8 +153,15 @@ describe('pembaruan langsung (/api/stream)', () => {
 
     await until(() => changes(all).some((c) => c.ticketId === ticketB.id && c.kind === 'tickets'));
     await until(() => changes(onlyA).some((c) => c.kind === 'trouble_tickets'));
-    for (const kind of ['tickets', 'ticket_actions', 'trouble_tickets']) {
-      expect(changes(onlyA)).toContainEqual({ ticketId: ticketA.id, kind });
+    // NPR baru = insert pada tickets (layar dinding berbunyi); tindakan dan TT juga insert;
+    // TT dibuka mengubah status tiket = update.
+    for (const [kind, op] of [
+      ['tickets', 'insert'],
+      ['ticket_actions', 'insert'],
+      ['trouble_tickets', 'insert'],
+      ['tickets', 'update'],
+    ]) {
+      expect(changes(onlyA)).toContainEqual({ ticketId: ticketA.id, kind, op });
     }
     expect(changes(onlyA).every((c) => c.ticketId === ticketA.id)).toBe(true);
     expect(JSON.stringify(onlyA.events)).not.toContain(ticketB.id);
@@ -204,12 +211,14 @@ describe('pembaruan langsung (/api/stream)', () => {
 
   it('isi NOTIFY yang tidak dikenal diabaikan', () => {
     expect(parseChange('bukan json')).toBeNull();
-    expect(parseChange(JSON.stringify({ tenantId: 'a', ticketId: 'b', kind: 'users' }))).toBeNull();
-    expect(parseChange(JSON.stringify({ tenantId: 'a', ticketId: 'b', kind: 'tickets' }))).toEqual({
+    expect(parseChange(JSON.stringify({ tenantId: 'a', ticketId: 'b', kind: 'users', op: 'insert' }))).toBeNull();
+    expect(parseChange(JSON.stringify({ tenantId: 'a', ticketId: 'b', kind: 'tickets', op: 'delete' }))).toBeNull();
+    expect(parseChange(JSON.stringify({ tenantId: 'a', ticketId: 'b', kind: 'tickets', op: 'insert' }))).toEqual({
       type: 'change',
       tenantId: 'a',
       ticketId: 'b',
       kind: 'tickets',
+      op: 'insert',
     });
   });
 });

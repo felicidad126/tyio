@@ -45,7 +45,7 @@ export class StreamController {
     const unsubscribe = this.feed.subscribe((event) => {
       if (event.type === 'resync') send('resync', {});
       else if (visible(event.tenantId)) {
-        send('change', { ticketId: event.ticketId, kind: event.kind } satisfies StreamChange);
+        send('change', { ticketId: event.ticketId, kind: event.kind, op: event.op } satisfies StreamChange);
       }
     });
     const heartbeat = setInterval(
