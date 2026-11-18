@@ -1,8 +1,30 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
-import { SEARCH_MAX_LENGTH, TICKET_VIEWS, type TicketListQuery, type TicketView } from '@tyio/shared';
+import {
+  isDateString,
+  SEARCH_MAX_LENGTH,
+  TICKET_STATUSES,
+  TICKET_VIEWS,
+  type TicketListQuery,
+  type TicketStatus,
+  type TicketView,
+} from '@tyio/shared';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ALLOWED = ['view', 'q', 'tenantId', 'categoryId', 'jarkomId', 'remoteId', 'page'];
+const ALLOWED = [
+  'view',
+  'q',
+  'tenantId',
+  'categoryId',
+  'jarkomId',
+  'remoteId',
+  'status',
+  'occurredFrom',
+  'occurredTo',
+  'closedFrom',
+  'closedTo',
+  'flagged',
+  'page',
+];
 
 export type ParsedTicketListQuery = TicketListQuery & { view: TicketView; page: number };
 
@@ -45,6 +67,33 @@ export function parseTicketListQuery(raw: Record<string, unknown>): ParsedTicket
     if (id === undefined) continue;
     if (!UUID.test(id)) throw invalid(`${label} tidak sah.`);
     query[key] = id;
+  }
+  const status = value('status');
+  if (status !== undefined) {
+    if (!TICKET_STATUSES.includes(status as TicketStatus)) {
+      throw invalid(`Status harus salah satu dari: ${TICKET_STATUSES.join(', ')}.`);
+    }
+    query.status = status as TicketStatus;
+  }
+  // Rentang tanggal WIB (YYYY-MM-DD), kedua ujungnya termasuk.
+  for (const [from, to, label] of [
+    ['occurredFrom', 'occurredTo', 'kejadian'],
+    ['closedFrom', 'closedTo', 'online kembali'],
+  ] as const) {
+    for (const key of [from, to]) {
+      const date = value(key);
+      if (date === undefined) continue;
+      if (!isDateString(date)) throw invalid(`Tanggal ${label} harus berbentuk TTTT-BB-HH.`);
+      query[key] = date;
+    }
+    if (query[from] && query[to] && query[from] > query[to]) {
+      throw invalid(`Tanggal ${label} "dari" tidak boleh setelah "sampai".`);
+    }
+  }
+  const flagged = value('flagged');
+  if (flagged !== undefined) {
+    if (flagged !== 'true') throw invalid('Parameter flagged hanya boleh "true".');
+    query.flagged = true;
   }
   return query;
 }

@@ -101,6 +101,8 @@ export const TicketEntity = new EntitySchema<Ticket>({
     { name: 'tickets_created_by_idx', columns: ['createdById'] },
     // Tiket per remote, juga yang sudah ditutup: pencarian lewat remote dan riwayat remote (1.6).
     { name: 'tickets_remote_occurred_idx', columns: ['remoteId', 'occurredAt'] },
+    // Overview (2.1): NPR Selesai per hari dan saringan tanggal online kembali.
+    { name: 'tickets_closed_at_idx', columns: ['closedAt'], where: 'closed_at IS NOT NULL' },
     // Indeks ekspresi trigram untuk pencarian; dibuat migrasi, tidak bisa dinyatakan TypeORM.
     { name: 'tickets_search_trgm', columns: ['number'], synchronize: false },
   ],

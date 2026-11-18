@@ -338,8 +338,18 @@ export interface TicketListQuery {
   tenantId?: string;
   categoryId?: string;
   jarkomId?: string;
-  /** Riwayat tiket satu remote (halaman remote). */
+  /** Riwayat tiket satu remote (halaman remote), atau remote dari Overview. */
   remoteId?: string;
+  /** Satu status (dari angka Overview). */
+  status?: TicketStatus;
+  /** Tanggal kejadian WIB, YYYY-MM-DD, termasuk kedua ujungnya. */
+  occurredFrom?: string;
+  occurredTo?: string;
+  /** Tanggal online kembali (Close) WIB, YYYY-MM-DD, termasuk kedua ujungnya. */
+  closedFrom?: string;
+  closedTo?: string;
+  /** Hanya NPR aktif yang kejadiannya `TICKET_FLAG_DAYS` hari atau lebih ("Down ≥ 7 hari"). */
+  flagged?: boolean;
   page?: number;
 }
 

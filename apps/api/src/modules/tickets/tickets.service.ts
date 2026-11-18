@@ -1,9 +1,11 @@
 import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ACTIVE_TICKET_STATUSES,
+  addDays,
   type MasterRef,
   type OpenTicketsConflict,
   type TenantRef,
+  TICKET_FLAG_DAYS,
   TICKET_LIST_NOTE_EXCERPT,
   TICKET_PAGE_SIZE,
   TICKET_QUEUE_VIEWS,
@@ -15,6 +17,7 @@ import {
   type TicketStatus,
   type TicketSummary,
   type TicketView,
+  wibDayStart,
 } from '@tyio/shared';
 import { DataSource, type EntityManager, In, IsNull } from 'typeorm';
 import { type Actor, withActor } from '../../common/audit/actor.js';
@@ -36,7 +39,7 @@ import { type Ticket, TicketEntity, TICKET_SEARCH_EXPRESSION } from './ticket.en
  * Syarat tiap tampilan daftar (T55). `:activeStatuses` dan `:me` diisi oleh list(). "Milik
  * saya" = tiket aktif yang saya buat atau pernah saya beri tindakan.
  */
-const VIEW_CONDITIONS: Readonly<Record<TicketView, string | null>> = {
+export const VIEW_CONDITIONS: Readonly<Record<TicketView, string | null>> = {
   aktif: 't.status IN (:...activeStatuses)',
   saya:
     't.status IN (:...activeStatuses) AND (t.created_by = :me OR EXISTS ' +
@@ -51,6 +54,14 @@ const VIEW_CONDITIONS: Readonly<Record<TicketView, string | null>> = {
 
 const isQueueView = (view: TicketView): view is TicketQueueView =>
   (TICKET_QUEUE_VIEWS as readonly string[]).includes(view);
+
+/** Parameter untuk VIEW_CONDITIONS. */
+export const viewParams = (userId: string) => ({ activeStatuses: [...ACTIVE_TICKET_STATUSES], me: userId });
+
+/** Batas "Down ≥ 7 hari": kejadian pada atau sebelum waktu ini (sama dengan ticketNeedsUpdate). */
+export function flagBefore(now: Date): Date {
+  return new Date(now.getTime() - TICKET_FLAG_DAYS * 24 * 60 * 60 * 1000);
+}
 
 @Injectable()
 export class TicketsService {
@@ -131,6 +142,44 @@ export class TicketsService {
   }
 
   /**
+   * Tiket yang boleh dilihat dan lolos pencarian serta saringan daftar (tanpa syarat tampilan).
+   * Dipakai daftar dan Overview, agar angka Overview sama persis dengan daftarnya (2.1).
+   */
+  filteredQuery(access: TenantAccess, query: Omit<ParsedTicketListQuery, 'view' | 'page'>) {
+    const qb = this.tickets.query(access, 't');
+    if (query.jarkomId) qb.innerJoin('Remote', 'r', 'r.id = t.remoteId');
+    if (query.q) {
+      // Dua pencarian terpisah agar masing-masing memakai indeks trigramnya (nomor tiket, teks
+      // remote), lalu digabung. Hasilnya tetap dibatasi filter tenant query luar (T58).
+      qb.andWhere(
+        `t.id IN (SELECT ts.id FROM tickets ts WHERE ${TICKET_SEARCH_EXPRESSION('ts')} ILIKE :q ` +
+          `UNION SELECT tr.id FROM tickets tr JOIN remotes rs ON rs.id = tr.remote_id ` +
+          `WHERE ${REMOTE_SEARCH_EXPRESSION('rs')} ILIKE :q ` +
+          `UNION SELECT tt.ticket_id FROM trouble_tickets tt WHERE tt.number ILIKE :q)`,
+        { q: likePattern(query.q) },
+      );
+    }
+    if (query.tenantId) qb.andWhere('t.tenantId = :tenantId', { tenantId: query.tenantId });
+    if (query.categoryId) qb.andWhere('t.categoryId = :categoryId', { categoryId: query.categoryId });
+    if (query.remoteId) qb.andWhere('t.remoteId = :remoteId', { remoteId: query.remoteId });
+    // Saringan dari angka Overview (2.1); hari menurut WIB.
+    if (query.status) qb.andWhere('t.status = :status', { status: query.status });
+    if (query.occurredFrom) qb.andWhere('t.occurredAt >= :occurredFrom', { occurredFrom: wibDayStart(query.occurredFrom) });
+    if (query.occurredTo) {
+      qb.andWhere('t.occurredAt < :occurredBefore', { occurredBefore: wibDayStart(addDays(query.occurredTo, 1)) });
+    }
+    if (query.closedFrom) qb.andWhere('t.closedAt >= :closedFrom', { closedFrom: wibDayStart(query.closedFrom) });
+    if (query.closedTo) {
+      qb.andWhere('t.closedAt < :closedBefore', { closedBefore: wibDayStart(addDays(query.closedTo, 1)) });
+    }
+    if (query.flagged) {
+      qb.andWhere(`t.status <> 'selesai' AND t.occurredAt <= :flagBefore`, { flagBefore: flagBefore(new Date()) });
+    }
+    if (query.jarkomId) qb.andWhere('r.jarkomId = :jarkomId', { jarkomId: query.jarkomId });
+    return qb;
+  }
+
+  /**
    * Satu halaman daftar tiket yang boleh dilihat, terbaru menurut waktu kejadian (T56), beserta
    * jumlah per tampilan antrean dengan saringan dan pencarian yang sama. Jumlah antrean hanya
    * membaca tiket aktif (indeks status); total Selesai/Semua dihitung hanya saat dibuka. Tabel
@@ -142,27 +191,8 @@ export class TicketsService {
     query: ParsedTicketListQuery,
     pageSize = TICKET_PAGE_SIZE,
   ): Promise<TicketListResponse> {
-    const params = { activeStatuses: [...ACTIVE_TICKET_STATUSES], me: userId };
-    const filtered = () => {
-      const qb = this.tickets.query(access, 't');
-      if (query.jarkomId) qb.innerJoin('Remote', 'r', 'r.id = t.remoteId');
-      if (query.q) {
-        // Dua pencarian terpisah agar masing-masing memakai indeks trigramnya (nomor tiket, teks
-        // remote), lalu digabung. Hasilnya tetap dibatasi filter tenant query luar (T58).
-        qb.andWhere(
-          `t.id IN (SELECT ts.id FROM tickets ts WHERE ${TICKET_SEARCH_EXPRESSION('ts')} ILIKE :q ` +
-            `UNION SELECT tr.id FROM tickets tr JOIN remotes rs ON rs.id = tr.remote_id ` +
-            `WHERE ${REMOTE_SEARCH_EXPRESSION('rs')} ILIKE :q ` +
-            `UNION SELECT tt.ticket_id FROM trouble_tickets tt WHERE tt.number ILIKE :q)`,
-          { q: likePattern(query.q) },
-        );
-      }
-      if (query.tenantId) qb.andWhere('t.tenantId = :tenantId', { tenantId: query.tenantId });
-      if (query.categoryId) qb.andWhere('t.categoryId = :categoryId', { categoryId: query.categoryId });
-      if (query.remoteId) qb.andWhere('t.remoteId = :remoteId', { remoteId: query.remoteId });
-      if (query.jarkomId) qb.andWhere('r.jarkomId = :jarkomId', { jarkomId: query.jarkomId });
-      return qb;
-    };
+    const params = viewParams(userId);
+    const filtered = () => this.filteredQuery(access, query);
 
     const countQuery = filtered().andWhere(VIEW_CONDITIONS.aktif!, params).select('COUNT(*)', 'aktif');
     for (const view of TICKET_QUEUE_VIEWS.filter((v) => v !== 'aktif')) {
