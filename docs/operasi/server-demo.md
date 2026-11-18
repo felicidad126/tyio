@@ -196,6 +196,28 @@ deploy/scripts/server.sh perbarui
   0 2 * * * cd /opt/tyio && deploy/scripts/server.sh perbarui >> /var/log/tyio-perbarui.log 2>&1
   ```
 
+## Notifikasi Telegram (opsional)
+
+1. Di Telegram, buka **@BotFather** → `/newbot` → beri nama, mis. "Portal NOC Demo", dan username
+   yang diakhiri `bot`. Salin **token** yang diberikan (jangan dibagikan; bisa dicabut lewat
+   `/revoke`).
+2. Di server:
+
+   ```bash
+   cd /opt/tyio && deploy/scripts/server.sh telegram
+   ```
+
+   Tempel token saat ditanya (tidak tampil di layar). Skrip memeriksa token ke Telegram, menyimpannya
+   di `deploy/staging.env`, menjalankan ulang aplikasi, lalu menyebut nama bot. Untuk melepas:
+   `deploy/scripts/server.sh telegram hapus`.
+3. Tambahkan bot ke grup Telegram NOC (dan grup Service Delivery bila ada). Kirim satu pesan di grup
+   agar grup terlihat bot.
+4. Di portal, masuk sebagai `admin.contoh` → **Admin › Notifikasi** → **Tambah grup** → **Cari grup**,
+   pilih grupnya, pilih kejadian dan customer → **Tambah grup** → **Kirim uji**.
+
+Tautan "Buka di portal" di pesan memakai alamat portal ini (`TYIO_PUBLIC_URL`, diisi otomatis dari
+domain saat `perbarui`).
+
 ## Sebelum demo
 
 ```bash
@@ -226,7 +248,7 @@ Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, W
 Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
 dashboard lama). Jarkom berisi nilai contoh.
 
-### Alur demo yang disarankan (sampai langkah 2.4, peta 2.3, dan laporan rekap NPR)
+### Alur demo yang disarankan (sampai langkah 2.4, peta 2.3, laporan rekap NPR, dan notifikasi Telegram)
 
 1. Masuk sebagai `helpdesk.contoh`. Halaman pertama adalah **Overview**: tiket aktif per status,
    per kategori dan customer, tren 14 hari, dan remote paling sering bermasalah. Klik sebuah
@@ -269,8 +291,12 @@ dashboard lama). Jarkom berisi nilai contoh.
 11. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote, tiket, dan laporan customer
    lain tidak terlihat, juga di pencarian.
 12. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
+13. **Notifikasi Telegram** (bila bot sudah dipasang, lihat bagian di atas): buat NPR di portal → pesan
+   "NPR baru" muncul di grup Telegram dalam satu detik; **Eskalasi To SD** → grup SD menerima
+   ringkasan TT; **Close** → pesan "NPR Selesai" dengan lama gangguan. Di **Admin › Notifikasi**,
+   tunjukkan log pengirimannya.
 
-Belum ada: SLA dan laporan SLA. (Gamas tidak dibuat.)
+Belum ada: SLA dan laporan SLA, notifikasi email. (Gamas tidak dibuat.)
 Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah

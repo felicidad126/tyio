@@ -8,6 +8,7 @@ import {
 } from '@tyio/shared';
 import { DataSource, type EntityManager, In } from 'typeorm';
 import { type Actor, withActor } from '../../../common/audit/actor.js';
+import { recordNotification } from '../../notifications/notification-record.js';
 import type { TenantAccess } from '../../../common/tenant/tenant-access.js';
 import { TenantScopedRepository } from '../../../common/tenant/tenant-scoped.repository.js';
 import { TroubleTicketEntity } from '../../trouble-tickets/trouble-ticket.entity.js';
@@ -127,6 +128,11 @@ export class TicketActionsService {
           }
         }
         const action = await actions.save({ ...entry, tenantId: ticket.tenantId, ticketId: ticket.id, createdById: userId });
+        if (entry.statusTo === 'selesai') {
+          await recordNotification(m, { type: 'npr_selesai', ticketId: ticket.id, actionId: action.id });
+        } else if (entry.statusFrom === 'selesai') {
+          await recordNotification(m, { type: 'npr_dibuka_lagi', ticketId: ticket.id, actionId: action.id });
+        }
         if (saved.length > 0) {
           await m.getRepository(TicketAttachmentEntity).insert(
             saved.map((s) => ({

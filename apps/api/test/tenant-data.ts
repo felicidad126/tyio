@@ -36,4 +36,7 @@ export const TENANT_COLUMN_NOT_OWNED: Readonly<Record<string, string>> = {
   user_tenants: 'Cakupan akses pengguna, bukan data customer; tidak dilayani rute tenant.',
   audit_log: 'Catatan audit; belum ada rute yang melayaninya.',
   ticket_sequences: 'Penghitung nomor tiket; tidak dilayani rute mana pun.',
+  notification_events:
+    'Antrean notifikasi; hanya dibaca pekerja notifikasi dan log di Admin › Notifikasi (khusus admin semua customer).',
+  notification_channel_tenants: 'Pengaturan penerima notifikasi; hanya diatur admin semua customer.',
 };

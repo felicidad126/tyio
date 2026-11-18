@@ -27,6 +27,7 @@ import { TicketClose1794985460094 } from './migrations/1794985460094-ticket-clos
 import { Overview1794987675303 } from './migrations/1794987675303-overview.js';
 import { LiveChanges1794989311752 } from './migrations/1794989311752-live-changes.js';
 import { LiveChangesOp1794990466195 } from './migrations/1794990466195-live-changes-op.js';
+import { Notifications1794994417300 } from './migrations/1794994417300-notifications.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -66,4 +67,5 @@ export const migrations = [
   Overview1794987675303,
   LiveChanges1794989311752,
   LiveChangesOp1794990466195,
+  Notifications1794994417300,
 ];

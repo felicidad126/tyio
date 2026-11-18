@@ -10,6 +10,7 @@ import { MapModule } from './modules/map/map.module.js';
 import { MasterModule } from './modules/master/master.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OverviewModule } from './modules/overview/overview.module.js';
 import { SearchModule } from './modules/search/search.module.js';
 import { StreamModule } from './modules/stream/stream.module.js';
@@ -40,6 +41,7 @@ export class AppModule {
         StreamModule,
         MapModule,
         ReportsModule,
+        NotificationsModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],

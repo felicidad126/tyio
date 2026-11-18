@@ -6,6 +6,7 @@ import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '../../../api/client';
 import { masterApi } from '../../../api/master';
+import AdminNav from '../AdminNav.vue';
 import MasterCreateDrawer from './MasterCreateDrawer.vue';
 import MasterDeleteDialog from './MasterDeleteDialog.vue';
 import MasterRow from './MasterRow.vue';
@@ -63,6 +64,7 @@ function onRemoved(item: MasterItem): void {
 </script>
 
 <template>
+  <AdminNav />
   <div class="page-header mb-3">
     <div class="page-pretitle">
       Admin

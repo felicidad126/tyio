@@ -50,3 +50,14 @@ export function formatInZone(iso: string | Date, zone: TimeZoneName): string {
   }).format(new Date(iso));
   return `${text} ${timeZoneLabel(zone)}`;
 }
+
+/** Lama dalam menit sebagai teks: "2 jam 15 menit", "3 hari 4 jam", "kurang dari 1 menit". */
+export function formatMinutes(minutes: number): string {
+  if (minutes < 1) return 'kurang dari 1 menit';
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const rest = minutes % 60;
+  if (days > 0) return hours > 0 ? `${days} hari ${hours} jam` : `${days} hari`;
+  if (hours > 0) return rest > 0 ? `${hours} jam ${rest} menit` : `${hours} jam`;
+  return `${rest} menit`;
+}

@@ -9,6 +9,7 @@
 #   deploy/scripts/server.sh ulang-data    hapus semua data, isi ulang data contoh
 #   deploy/scripts/server.sh sertifikat    CA sertifikat internal (mode IP/jaringan tertutup)
 #   deploy/scripts/server.sh log [layanan] log berjalan (app, db, migrate, caddy)
+#   deploy/scripts/server.sh telegram [hapus]  pasang (atau lepas) token bot Telegram untuk notifikasi
 #
 # Variabel lingkungan (opsional): TYIO_KANAL (bawaan "demo") memilih tag image yang diikuti.
 #
@@ -115,6 +116,8 @@ running_image_id() {
 }
 
 start_stack() {
+  # Alamat portal untuk tautan di pesan notifikasi; isian lama tanpa nilai ini dilengkapi.
+  [ -n "$(env_get TYIO_PUBLIC_URL)" ] || env_set TYIO_PUBLIC_URL "https://$(env_get TYIO_DOMAIN)$(port_suffix)"
   say "Menjalankan migrasi dan aplikasi ..."
   if ! compose up -d --wait --remove-orphans; then
     compose ps -a >&2 || true
@@ -294,6 +297,40 @@ cmd_perbarui_lanjut() {
   say "Versi berjalan: $(describe_revision "$revision")"
 }
 
+# Token bot ditanyakan tanpa tampil, diperiksa dengan satu panggilan getMe ke Telegram dari server
+# ini (bukti token berlaku dan Telegram terjangkau), baru disimpan. Token tidak pernah muncul di
+# baris perintah, daftar proses, atau keluaran.
+cmd_telegram() {
+  local token me username
+  need docker curl
+  [ -e "$ENV_FILE" ] || fail "server belum dipasang."
+  if [ "${1:-}" = hapus ]; then
+    env_set TYIO_TELEGRAM_BOT_TOKEN ''
+    compose up -d --wait app > /dev/null
+    say "Token bot dilepas: notifikasi dicatat tetapi tidak dikirim."
+    return
+  fi
+  [ -z "${1:-}" ] || fail "pilihan '$1' tidak dikenal. Pakai: telegram, atau telegram hapus"
+  printf 'Token bot dari @BotFather (tidak ditampilkan): ' >&2
+  IFS= read -rs token
+  printf '\n' >&2
+  [[ "$token" =~ ^[0-9]{5,12}:[A-Za-z0-9_-]{30,64}$ ]] || fail "bentuk token tidak sah. Salin utuh dari @BotFather (angka:kode)."
+  if ! me="$(printf 'url = "https://api.telegram.org/bot%s/getMe"\n' "$token" | curl -sS --max-time 15 -K -)"; then
+    fail "Telegram tidak bisa dihubungi dari server ini (periksa akses internet keluar ke api.telegram.org)."
+  fi
+  case "$me" in
+    *'"ok":true'*) ;;
+    *'"error_code":401'* | *'"error_code":404'*) fail "Telegram menolak token ini. Salin ulang dari @BotFather (/mybots → API Token)." ;;
+    *) fail "jawaban Telegram tidak terduga; token tidak disimpan." ;;
+  esac
+  username="$(printf '%s' "$me" | sed -n 's/.*"username":"\([^"]*\)".*/\1/p')"
+  env_set TYIO_TELEGRAM_BOT_TOKEN "$token"
+  say "Menjalankan ulang aplikasi dengan token baru ..."
+  compose up -d --wait app > /dev/null || fail "aplikasi tidak sehat setelah token dipasang. Lihat: deploy/scripts/server.sh log app"
+  say "Bot @$username terpasang."
+  say "Berikutnya: tambahkan @$username ke grup Telegram, lalu di portal buka Admin › Notifikasi → Tambah grup → Cari grup."
+}
+
 cmd_status() {
   local revision
   [ -e "$ENV_FILE" ] || fail "server belum dipasang."
@@ -345,8 +382,9 @@ main() {
     status) cmd_status ;;
     ulang-data) cmd_ulang_data "$@" ;;
     sertifikat) cmd_sertifikat ;;
+    telegram) cmd_telegram "$@" ;;
     log) [ -e "$ENV_FILE" ] || fail "server belum dipasang."; compose logs --tail 200 -f "$@" ;;
-    *) sed -n '2,13p' deploy/scripts/server.sh | sed 's/^# \{0,1\}//'; [ -z "$command" ] || exit 2 ;;
+    *) sed -n '2,14p' deploy/scripts/server.sh | sed 's/^# \{0,1\}//'; [ -z "$command" ] || exit 2 ;;
   esac
 }
 

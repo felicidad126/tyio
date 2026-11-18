@@ -33,6 +33,10 @@ database tidak bisa dihubungi.
 | `STREAM_MAX_MS` | tidak | Umur koneksi pembaruan langsung sebelum server menutupnya dengan rapi agar sesi diperiksa ulang, 200–3600000 ms (bawaan 300000 = 5 menit) |
 | `MAP_TILE_URL` | tidak | Sumber gambar peta remote, URL https dengan `{z}`, `{x}`, `{y}`. Bawaan OpenStreetMap. Di compose staging diisi lewat `TYIO_MAP_TILE_URL` |
 | `MAP_TILE_ATTRIBUTION` | tidak | Atribusi yang wajib tampil di peta. Bawaan `© OpenStreetMap contributors` |
+| `TELEGRAM_BOT_TOKEN` | tidak | Token bot Telegram dari @BotFather untuk notifikasi (rahasia). Kosong = notifikasi dicatat tetapi tidak dikirim. Di server demo diisi lewat `deploy/scripts/server.sh telegram` |
+| `PUBLIC_URL` | tidak | Alamat portal untuk tautan "Buka di portal" di pesan notifikasi, mis. `https://noc.contoh.co.id` (https di staging/produksi). Di server demo diisi otomatis dari domain |
+| `TELEGRAM_API_URL` | tidak | Alamat Bot API, bawaan `https://api.telegram.org`. Diganti hanya untuk uji (Telegram tiruan) |
+| `NOTIFICATION_POLL_MS` | tidak | Jeda pemeriksaan antrean notifikasi sebagai pengaman, 100–600000 ms (bawaan 15000). Kiriman baru dikirim segera tanpa menunggu jeda ini |
 | `TYIO_SEED_PASSWORD` | untuk seed di staging | Kata sandi pengguna contoh, minimal 12 karakter. Dev memakai bawaan di bawah |
 
 Aplikasi menolak start bila konfigurasi tidak sah dan menyebut variabel yang bermasalah,
@@ -232,6 +236,42 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   dan aturan "Selesai ⇔ waktu tutup terisi". Tiket yang sudah Selesai sebelum pembaruan diberi
   waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
   `sistem:migrasi`).
+
+### Notifikasi Telegram (R5)
+
+- Kejadian yang dikirim: **NPR baru**, **TT dibuka** (ringkasan TT untuk Service Delivery, sama
+  dengan "Salin ringkasan TT", termasuk kontak PIC), **NPR Selesai** (waktu online lagi, lama
+  gangguan, catatan, part diganti), dan **NPR dibuka lagi**. Waktu di pesan mengikuti zona remote;
+  setiap pesan memuat tautan "Buka di portal" bila `PUBLIC_URL` diisi.
+- **Admin › Notifikasi** (khusus admin dengan akses semua customer): daftar **grup penerima**.
+  Setiap grup memilih kejadian dan customer-nya (semua customer, atau customer tertentu), boleh
+  berupa topik di grup forum, dan bisa dinonaktifkan sementara. **Cari grup** menampilkan grup yang
+  baru terlihat bot (bot baru ditambahkan atau ada pesan dalam 24 jam), jadi ID chat tidak perlu
+  dicari sendiri. **Kirim uji** mengirim satu pesan sekarang juga dan menampilkan galat Telegram
+  dalam bahasa yang bisa ditindaklanjuti (grup tidak ditemukan, bot dikeluarkan, tanpa izin).
+- Cara kerja: kejadian dan satu kiriman per grup yang cocok dicatat **di transaksi yang sama**
+  dengan perubahan tiketnya (tidak ada yang hilang bila aplikasi mati tepat sesudahnya). Pekerja
+  notifikasi di aplikasi mengirimnya dalam satu detik, mengikuti kabar perubahan tiket.
+  - Satu kejadian dikirim **sekali per grup**; dua proses aplikasi tidak pernah mengirim kiriman
+    yang sama (diambil dengan kunci baris).
+  - Gangguan sementara dicoba ulang (30 detik, 1, 2, 4, … menit, paling jarang 30 menit; jeda
+    dari Telegram dipatuhi) sampai **24 jam**, lalu dianggap gagal. Penolakan permanen (grup tidak
+    ada, bot dikeluarkan) langsung gagal dan tampil di grupnya. Kiriman gagal bisa **Kirim ulang**
+    dari log.
+  - Telegram membatasi ±20 pesan per menit per grup: pesan ke satu grup diberi jeda 3 detik, dan
+    saat banyak NPR sekaligus (gangguan massal), kejadian yang menunggu **digabung** sampai 10 per
+    pesan. Diuji: 13 NPR serentak sampai sebagai 3 pesan (1 + 10 + 2) dalam ±6 detik.
+  - Grup yang ditingkatkan Telegram menjadi supergroup (ID chat berubah) diperbarui sendiri
+    (tercatat di audit sebagai `sistem:notifikasi`).
+  - Bila koneksi putus tepat setelah Telegram menerima pesan tetapi sebelum jawabannya sampai,
+    pesan dicoba lagi dan bisa muncul dua kali: Bot API tidak punya kunci anti-dobel.
+- **Log pengiriman** di halaman yang sama: kejadian, NPR, customer, grup, status (Menunggu, Sedang
+  dikirim, Terkirim, Gagal) dan galatnya. Data notifikasi disimpan 90 hari.
+- Tanpa `TELEGRAM_BOT_TOKEN`, notifikasi tetap dicatat (status Menunggu) tetapi tidak dikirim;
+  setelah token dipasang, yang belum lewat 24 jam terkirim.
+- Jaringan: server perlu akses HTTPS keluar ke `api.telegram.org`. Bila server keluar lewat proxy,
+  isi `HTTPS_PROXY` dan `NODE_USE_ENV_PROXY=1` untuk aplikasi.
+- Token tidak pernah tampil di halaman, jawaban API, atau log.
 
 ### Laporan rekap NPR (4.2, bagian tanpa SLA)
 

@@ -9,6 +9,14 @@ export function testDataSource(): DataSource {
   return new DataSource(dataSourceOptions(testConfig().databaseUrl));
 }
 
+/** Tabel tanpa entity TypeORM (diakses dengan SQL langsung) yang juga dikosongkan. */
+const NON_ENTITY_TABLES = [
+  'notification_deliveries',
+  'notification_events',
+  'notification_channel_tenants',
+  'notification_channels',
+];
+
 /**
  * Mengosongkan semua tabel entity kecuali audit_log (hanya-tambah; uji audit mencari
  * catatannya lewat id yang unik). Uji API berjalan berurutan, jadi aman dipakai per uji.
@@ -18,6 +26,7 @@ export async function resetData(dataSource: DataSource): Promise<void> {
     .map((m) => m.tableName)
     .filter((t) => t !== 'audit_log')
     .map((t) => `"${t}"`)
+    .concat(NON_ENTITY_TABLES)
     .join(', ');
   await withActor(dataSource, { name: 'uji:reset' }, (m) =>
     m.query(`TRUNCATE ${tables} RESTART IDENTITY CASCADE`),

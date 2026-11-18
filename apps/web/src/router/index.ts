@@ -82,7 +82,7 @@ const reportRoutes: RouteRecordRaw[] = [
   },
 ];
 
-// Admin: untuk sekarang hanya master data (1.1); daftar yang dibuka tersimpan di alamat.
+// Admin: master data (1.1; daftar yang dibuka tersimpan di alamat) dan notifikasi (R5).
 const adminRoutes: RouteRecordRaw[] = [
   { path: 'admin', name: 'admin', redirect: { name: 'admin-master', params: { list: 'customer' } } },
   {
@@ -90,6 +90,13 @@ const adminRoutes: RouteRecordRaw[] = [
     name: 'admin-master',
     component: () => import('../pages/admin/master/MasterDataPage.vue'),
     meta: { module: 'admin', title: 'Master data' },
+  },
+  {
+    // Notifikasi Telegram (R5): grup penerima dan log pengiriman.
+    path: 'admin/notifikasi',
+    name: 'admin-notifications',
+    component: () => import('../pages/admin/notifications/NotificationsPage.vue'),
+    meta: { module: 'admin', title: 'Notifikasi' },
   },
 ];
 

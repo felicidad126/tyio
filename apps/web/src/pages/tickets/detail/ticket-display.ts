@@ -1,4 +1,4 @@
-import type { TicketStatus } from '@tyio/shared';
+import { formatMinutes, type TicketStatus } from '@tyio/shared';
 
 /** Kelas lencana status, ditulis utuh agar tidak terbuang saat build. */
 export const TICKET_STATUS_BADGE: Readonly<Record<TicketStatus, string>> = {
@@ -23,13 +23,5 @@ export function formatDuration(fromIso: string, toIso: string): string {
   return formatMinutes(Math.max(0, minute(toIso) - minute(fromIso)));
 }
 
-/** Lama dalam menit sebagai teks: "2 jam 15 menit", "3 hari 4 jam". */
-export function formatMinutes(minutes: number): string {
-  if (minutes < 1) return 'kurang dari 1 menit';
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const rest = minutes % 60;
-  if (days > 0) return hours > 0 ? `${days} hari ${hours} jam` : `${days} hari`;
-  if (hours > 0) return rest > 0 ? `${hours} jam ${rest} menit` : `${hours} jam`;
-  return `${rest} menit`;
-}
+/** Lama dalam menit sebagai teks (sama dengan pesan notifikasi). */
+export { formatMinutes };

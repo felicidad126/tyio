@@ -14,6 +14,9 @@ x-app: &app
     # Sumber gambar peta (2.3); kosong = OpenStreetMap.
     MAP_TILE_URL: ${TYIO_MAP_TILE_URL:-}
     MAP_TILE_ATTRIBUTION: ${TYIO_MAP_TILE_ATTRIBUTION:-}
+    # Notifikasi Telegram (R5): token bot (kosong = tidak dikirim) dan alamat portal untuk tautan.
+    TELEGRAM_BOT_TOKEN: ${TYIO_TELEGRAM_BOT_TOKEN:-}
+    PUBLIC_URL: ${TYIO_PUBLIC_URL:-}
 
 services:
   db:

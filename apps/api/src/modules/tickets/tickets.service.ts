@@ -30,6 +30,7 @@ import { TenantEntity } from '../tenants/tenant.entity.js';
 import { UserEntity } from '../users/user.entity.js';
 import { invalid, type CreateTicketInput } from './ticket-input.js';
 import { formatTicketNumber, ticketPeriod } from './ticket-number.js';
+import { recordNotification } from '../notifications/notification-record.js';
 import { TroubleTicketEntity } from '../trouble-tickets/trouble-ticket.entity.js';
 import { TicketActionEntity } from './ticket-action.entity.js';
 import type { ParsedTicketListQuery } from './ticket-list-query.js';
@@ -136,6 +137,7 @@ export class TicketsService {
         statusTo: 'terbuka',
         createdById: userId,
       });
+      await recordNotification(m, { type: 'npr_baru', ticketId: saved.id });
       return saved.id;
     });
     return this.get(access, id);

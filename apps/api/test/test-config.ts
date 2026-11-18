@@ -24,6 +24,11 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     streamMaxMs: 600,
     mapTileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     mapTileAttribution: '© OpenStreetMap contributors',
+    // Tanpa token: notifikasi dicatat tetapi tidak dikirim, kecuali uji notifikasi.
+    telegramBotToken: undefined,
+    telegramApiUrl: 'http://127.0.0.1:9',
+    notificationPollMs: 60_000,
+    publicUrl: undefined,
     ...overrides,
   };
 }

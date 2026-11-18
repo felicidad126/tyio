@@ -138,6 +138,7 @@ export { SEARCH_LIMIT, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from './search.js'
 export type { SearchResponse } from './search.js';
 export {
   formatInZone,
+  formatMinutes,
   localInputToUtc,
   TIME_ZONE_OFFSET_MINUTES,
   timeZoneLabel,
@@ -174,3 +175,29 @@ export type {
   NprReportRow,
   ReportStatusFilter,
 } from './reports.js';
+export {
+  CHANNEL_NAME_MAX,
+  channelNameError,
+  DEFAULT_NOTIFICATION_EVENTS,
+  DELIVERY_EXPIRY_HOURS,
+  DELIVERY_STATUS_LABELS,
+  DELIVERY_STATUSES,
+  NOTIFICATION_DELIVERIES_PAGE_SIZE,
+  NOTIFICATION_EVENT_HINTS,
+  NOTIFICATION_EVENT_LABELS,
+  NOTIFICATION_EVENTS,
+  telegramChatIdError,
+} from './notifications.js';
+export type {
+  DeliveryStatus,
+  NotificationDeliveriesResponse,
+  NotificationDeliveryRow,
+  NotificationEvent,
+  NotificationSettingsResponse,
+  NotificationTestResponse,
+  TelegramChannel,
+  TelegramChannelInput,
+  TelegramChannelResponse,
+  TelegramChatCandidate,
+  TelegramChatsResponse,
+} from './notifications.js';

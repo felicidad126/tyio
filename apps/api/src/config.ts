@@ -29,10 +29,21 @@ export interface AppConfig {
    */
   mapTileUrl: string;
   mapTileAttribution: string;
+  /**
+   * Notifikasi Telegram (R5): token bot dari BotFather (rahasia; kosong = notifikasi dicatat
+   * tetapi tidak dikirim), alamat API Telegram (diganti hanya untuk uji), dan jeda pemeriksaan
+   * antrean untuk kiriman yang dicoba ulang.
+   */
+  telegramBotToken: string | undefined;
+  telegramApiUrl: string;
+  notificationPollMs: number;
+  /** Alamat portal untuk tautan di pesan notifikasi, mis. https://noc.contoh.co.id. */
+  publicUrl: string | undefined;
 }
 
 export const DEFAULT_MAP_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 export const DEFAULT_MAP_TILE_ATTRIBUTION = '© OpenStreetMap contributors';
+export const DEFAULT_TELEGRAM_API_URL = 'https://api.telegram.org';
 
 /**
  * Membaca dan memvalidasi konfigurasi dari variabel lingkungan.
@@ -90,6 +101,25 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   const mapTileAttribution = source.MAP_TILE_ATTRIBUTION || DEFAULT_MAP_TILE_ATTRIBUTION;
 
+  // Isi token tidak pernah dicetak, juga saat salah.
+  const telegramBotToken = source.TELEGRAM_BOT_TOKEN?.trim() || undefined;
+  if (telegramBotToken && !/^\d{5,12}:[A-Za-z0-9_-]{30,64}$/.test(telegramBotToken)) {
+    problems.push('TELEGRAM_BOT_TOKEN tidak berbentuk token bot dari BotFather (angka:kode)');
+  }
+  const deployed = env === 'staging' || env === 'production';
+  const telegramApiUrl = (source.TELEGRAM_API_URL || DEFAULT_TELEGRAM_API_URL).replace(/\/+$/, '');
+  if (!isWebUrl(telegramApiUrl, deployed)) {
+    problems.push(`TELEGRAM_API_URL harus URL ${deployed ? 'https' : 'http(s)'} tanpa jalur tambahan`);
+  }
+  const notificationPollMs = Number(source.NOTIFICATION_POLL_MS ?? 15_000);
+  if (!Number.isInteger(notificationPollMs) || notificationPollMs < 100 || notificationPollMs > 600_000) {
+    problems.push('NOTIFICATION_POLL_MS harus bilangan bulat 100–600000');
+  }
+  const publicUrl = source.PUBLIC_URL?.trim().replace(/\/+$/, '') || undefined;
+  if (publicUrl && !isWebUrl(publicUrl, deployed)) {
+    problems.push(`PUBLIC_URL harus alamat ${deployed ? 'https' : 'http(s)'} portal tanpa jalur, mis. https://noc.contoh.co.id`);
+  }
+
   if (
     problems.length > 0 ||
     !isTyioEnv(env) ||
@@ -112,6 +142,10 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     streamMaxMs,
     mapTileUrl,
     mapTileAttribution,
+    telegramBotToken,
+    telegramApiUrl,
+    notificationPollMs,
+    publicUrl,
   };
 }
 
@@ -132,6 +166,17 @@ function isTileUrl(value: string): boolean {
   try {
     const url = new URL(value.replace(/\{[a-z]\}/g, '0'));
     return url.protocol === 'https:' && ['{z}', '{x}', '{y}'].every((part) => value.includes(part));
+  } catch {
+    return false;
+  }
+}
+
+/** Alamat asal (origin) http(s) tanpa jalur, kueri, atau kredensial; https wajib bila `secure`. */
+function isWebUrl(value: string, secure: boolean): boolean {
+  try {
+    const url = new URL(value);
+    const protocolOk = url.protocol === 'https:' || (!secure && url.protocol === 'http:');
+    return protocolOk && url.pathname === '/' && !url.search && !url.hash && !url.username && !url.password;
   } catch {
     return false;
   }

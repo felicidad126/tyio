@@ -11,6 +11,7 @@ import { type Actor, withActor } from '../../common/audit/actor.js';
 import type { TenantAccess } from '../../common/tenant/tenant-access.js';
 import { TenantScopedRepository } from '../../common/tenant/tenant-scoped.repository.js';
 import { JarkomEntity } from '../master/master.entities.js';
+import { recordNotification } from '../notifications/notification-record.js';
 import { RemoteEntity } from '../remotes/remote.entity.js';
 import { TenantEntity } from '../tenants/tenant.entity.js';
 import { TicketActionEntity } from '../tickets/ticket-action.entity.js';
@@ -85,6 +86,8 @@ export class TroubleTicketsService {
           statusTo: changes ? 'eskalasi' : null,
           createdById: userId,
         });
+        // TT dikirim otomatis ke grup Service Delivery (K23, K25).
+        await recordNotification(m, { type: 'tt_dibuka', ticketId: ticket.id });
       });
     } catch (error) {
       if (isUniqueViolation(error, 'trouble_tickets_ticket_key')) throw alreadyHasTt();

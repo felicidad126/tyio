@@ -334,4 +334,5 @@ List Report Teknisi, Shared.
 | R1 Remote + Tiket | Berjalan — 1.1–1.6 selesai (master data, remote, buat tiket, linimasa dan alur status, antrean dan pencarian, TT lewat Eskalasi To SD, Close dan riwayat remote) dan terpasang di server demo; tersisa 1.7 (produksi pertama, menunggu server) |
 | R2 Overview + monitor 24/7 | Selesai — 2.1 (Overview), 2.2 (pembaruan langsung), 2.3 (peta remote), 2.4 (layar dinding); uji rendam 24 jam layar dinding di server user menyusul |
 | R4 SLA + Laporan | Berjalan — laporan rekap NPR (bagian 4.2 tanpa SLA: periode, saringan, angka yang cocok dengan daftar Tiket, ekspor Excel, cetak/PDF) selesai; aturan SLA (4.1) dan laporan SLA menunggu sesi aturan SLA dan contoh laporan wajib |
-| R3, R5–R8 | Belum mulai (R3 dibatalkan) |
+| R5 Notifikasi | Berjalan — notifikasi Telegram (NPR baru, TT ke Service Delivery, NPR Selesai, NPR dibuka lagi) ke grup per kejadian dan customer, dengan coba ulang dan log, selesai; email, pusat notifikasi di aplikasi, dan SLA hampir lewat menyusul |
+| R3, R6–R8 | Belum mulai (R3 dibatalkan) |
