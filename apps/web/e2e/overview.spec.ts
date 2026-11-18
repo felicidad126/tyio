@@ -96,7 +96,12 @@ test.describe('Overview', () => {
     await region.getByText('Lihat sebagai tabel').click();
     const row = region.getByRole('row').nth(1); // hari ini, paling atas
     await expect(row.getByRole('rowheader')).toHaveText(label.split(':')[0]!);
-    await expect(row.getByRole('cell').first()).toHaveText(label.split(':')[1]!.trim().split(' ')[0]!);
+    // Uji lain bisa membuat tiket bersamaan dan Overview memuat ulang sendiri (2.2): batang dan
+    // tabel dibandingkan pada saat yang sama, diulang sampai stabil.
+    await expect(async () => {
+      const current = (await bar.getAttribute('aria-label'))!;
+      expect(await row.getByRole('cell').first().innerText()).toBe(current.split(':')[1]!.trim().split(' ')[0]!);
+    }).toPass({ timeout: 10_000 });
   });
 
   test('pengguna yang dibatasi ke satu customer hanya melihat customernya', async ({ page }) => {
