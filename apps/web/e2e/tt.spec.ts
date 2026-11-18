@@ -29,7 +29,7 @@ test.describe('Trouble Ticket: Eskalasi To SD', () => {
     await signInAs(page, 'helpdesk.contoh');
     const npr = await openNewTicket(page);
     // Eskalasi tidak ditawarkan di form status; hanya lewat Eskalasi To SD.
-    await expect(page.getByLabel('Ubah status').locator('option')).toHaveText(['Tetap Terbuka', 'Dikerjakan', 'Pending', 'Selesai']);
+    await expect(page.getByLabel('Ubah status').locator('option')).toHaveText(['Tetap Terbuka', 'Dikerjakan', 'Pending']);
 
     await ttCard(page).getByRole('button', { name: 'Eskalasi To SD' }).click();
     const drawer = page.getByRole('dialog', { name: 'Eskalasi To SD' });
@@ -52,8 +52,8 @@ test.describe('Trouble Ticket: Eskalasi To SD', () => {
     await expect(timeline(page).first()).toContainText(number);
     await expect(ttCard(page).getByRole('button', { name: 'Eskalasi To SD' })).toHaveCount(0);
 
-    // Setelah kunjungan: Dikerjakan, Pending, atau Selesai.
-    await expect(page.getByLabel('Ubah status').locator('option')).toHaveText(['Tetap Eskalasi', 'Dikerjakan', 'Pending', 'Selesai']);
+    // Setelah kunjungan: Dikerjakan atau Pending; Selesai lewat jenis tindakan Close.
+    await expect(page.getByLabel('Ubah status').locator('option')).toHaveText(['Tetap Eskalasi', 'Dikerjakan', 'Pending']);
     expect((await page.request.post(`/api/tickets/${npr.id}/tt`, { data: { problem: 'Lagi', expectedStatus: 'eskalasi' } })).status()).toBe(409);
   });
 

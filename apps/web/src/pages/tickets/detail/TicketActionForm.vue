@@ -6,19 +6,23 @@ import {
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_FILES,
   ATTACHMENT_TYPES,
+  canCloseTicket,
   localInputToUtc,
+  manualStatusTargets,
   PENDING_PARTIES,
   PENDING_PARTY_HINTS,
   PENDING_PARTY_LABELS,
   PENDING_REASON_MAX,
   PENDING_REASON_MIN,
   type PendingParty,
+  REPLACED_PART_LABELS,
+  REPLACED_PARTS,
+  type ReplacedPart,
   TICKET_ACTION_TYPE_HINTS,
   TICKET_ACTION_TYPE_LABELS,
   MANUAL_ACTION_TYPES,
   TICKET_FUTURE_TOLERANCE_MINUTES,
   TICKET_STATUS_LABELS,
-  TICKET_TRANSITIONS,
   type ManualActionType,
   type TicketDetail,
   type TicketStatus,
@@ -28,17 +32,32 @@ import {
 import { computed, reactive, ref, useId, useTemplateRef } from 'vue';
 import { ApiError } from '../../../api/client';
 import { ticketsApi } from '../../../api/tickets';
-import { formatBytes } from './ticket-display';
+import { formatBytes, TICKET_STATUS_BADGE } from './ticket-display';
 
 // Pola permukaan: form di halaman detail (bukan dialog), karena isinya beberapa kolom dan
 // operator sering menempel tangkapan layar sambil membaca linimasa.
 const props = defineProps<{ ticket: TicketDetail }>();
 const emit = defineEmits<{ saved: [result: AddTicketActionResponse]; stale: [message: string] }>();
 
-const ids = { type: useId(), time: useId(), status: useId(), reason: useId(), note: useId(), files: useId() };
+const ids = {
+  type: useId(),
+  time: useId(),
+  status: useId(),
+  reason: useId(),
+  note: useId(),
+  files: useId(),
+  parts: useId(),
+};
 const fileInput = useTemplateRef<HTMLInputElement>('file-input');
 const zone = computed(() => props.ticket.remote.timeZone);
-const nextStatuses = computed(() => TICKET_TRANSITIONS[props.ticket.status]);
+// Selesai tidak dipilih di sini: NPR ditutup lewat jenis tindakan Close (T74).
+const nextStatuses = computed(() => manualStatusTargets(props.ticket.status));
+const canClose = computed(() => canCloseTicket(props.ticket.status));
+const closeUnavailable = computed(() =>
+  props.ticket.status === 'selesai'
+    ? 'NPR sudah Selesai.'
+    : `Close dari ${TICKET_STATUS_LABELS[props.ticket.status]}: ubah ke Dikerjakan dulu.`,
+);
 
 const form = reactive({
   type: 'catatan' as ManualActionType,
@@ -47,8 +66,19 @@ const form = reactive({
   pendingParty: '' as PendingParty | '',
   pendingReason: '',
   note: '',
+  parts: [] as ReplacedPart[],
+  noParts: false,
 });
 const files = ref<File[]>([]);
+const closing = computed(() => form.type === 'close');
+/** Close NPR yang punya TT: ada kunjungan teknisi, jadi laporan dan part wajib (K32, T75). */
+const visit = computed(() => closing.value && props.ticket.tt !== null);
+const typeHint = computed(() =>
+  visit.value
+    ? `${TICKET_ACTION_TYPE_HINTS.close} Ada TT: lampirkan laporan teknisi dan pilih part yang diganti.`
+    : TICKET_ACTION_TYPE_HINTS[form.type],
+);
+const occurredLocal = computed(() => utcToLocalInput(new Date(props.ticket.occurredAt), zone.value));
 const submitted = ref(false);
 const saving = ref(false);
 const serverErrors = reactive<Record<string, string>>({});
@@ -59,16 +89,19 @@ const latestAllowed = () =>
 
 const errors = computed(() => {
   const show = submitted.value;
-  const pending = form.statusTo === 'pending';
+  const pending = !closing.value && form.statusTo === 'pending';
   const reason = form.pendingReason.trim();
+  const timeName = closing.value ? 'Waktu online kembali' : 'Waktu tindakan';
   return {
     occurredAt:
       serverErrors.occurredAt ||
       (show && !localInputToUtc(form.occurredAt, zone.value)
-        ? 'Isi waktu tindakan.'
+        ? `Isi ${timeName.toLowerCase()}.`
         : show && form.occurredAt > latestAllowed()
-          ? 'Waktu tindakan tidak boleh di masa depan.'
-          : ''),
+          ? `${timeName} tidak boleh di masa depan.`
+          : show && closing.value && form.occurredAt < occurredLocal.value
+            ? 'Waktu online kembali tidak boleh sebelum waktu kejadian NPR.'
+            : ''),
     pendingParty:
       serverErrors.pendingParty || (show && pending && !form.pendingParty ? 'Pilih pihak yang ditunggu.' : ''),
     pendingReason:
@@ -78,19 +111,37 @@ const errors = computed(() => {
         : ''),
     note:
       serverErrors.note ||
-      (show && !form.note.trim() && form.type !== 'catatan'
-        ? `Tulis catatan untuk tindakan ${TICKET_ACTION_TYPE_LABELS[form.type]}.`
-        : show && !form.note.trim() && !form.statusTo
-          ? 'Tulis catatan atau ubah status.'
-          : ''),
+      (show && !form.note.trim() && closing.value
+        ? 'Tulis catatan penyelesaian: apa yang membuat jarkom online kembali.'
+        : show && !form.note.trim() && form.type !== 'catatan'
+          ? `Tulis catatan untuk tindakan ${TICKET_ACTION_TYPE_LABELS[form.type]}.`
+          : show && !form.note.trim() && !form.statusTo
+            ? 'Tulis catatan atau ubah status.'
+            : ''),
     type: serverErrors.type || '',
     statusTo: serverErrors.statusTo || '',
-    lampiran: serverErrors.lampiran || '',
+    replacedParts:
+      serverErrors.replacedParts ||
+      (show && visit.value && form.parts.length === 0 && !form.noParts
+        ? 'Pilih part yang diganti, atau "Tidak ada part yang diganti".'
+        : ''),
+    lampiran:
+      serverErrors.lampiran || (show && visit.value && files.value.length === 0 ? 'Lampirkan laporan teknisi.' : ''),
   };
 });
 
 function clearServer(field: string): void {
   serverErrors[field] = '';
+}
+
+/** Part dan "Tidak ada part yang diganti" saling meniadakan. */
+function onPart(): void {
+  form.noParts = false;
+  clearServer('replacedParts');
+}
+function onNoParts(): void {
+  if (form.noParts) form.parts = [];
+  clearServer('replacedParts');
 }
 
 /** Menambah berkas dari pilihan atau tempelan, dengan batas jenis, ukuran, dan jumlah. */
@@ -133,6 +184,7 @@ async function submit(): Promise<void> {
   formError.value = '';
   if (Object.values(errors.value).some(Boolean)) return;
   saving.value = true;
+  const statusTo = closing.value ? 'selesai' : form.statusTo;
   try {
     const result = await ticketsApi.addAction(
       props.ticket.id,
@@ -140,15 +192,16 @@ async function submit(): Promise<void> {
         type: form.type,
         occurredAt: localInputToUtc(form.occurredAt, zone.value)!,
         note: form.note.trim() || undefined,
-        ...(form.statusTo
+        ...(statusTo
           ? {
-              statusTo: form.statusTo,
+              statusTo,
               expectedStatus: props.ticket.status,
-              ...(form.statusTo === 'pending'
+              ...(statusTo === 'pending'
                 ? { pendingParty: form.pendingParty as PendingParty, pendingReason: form.pendingReason.trim() }
                 : {}),
             }
           : {}),
+        ...(visit.value ? { replacedParts: form.noParts ? [] : form.parts } : {}),
       },
       files.value,
     );
@@ -160,6 +213,8 @@ async function submit(): Promise<void> {
       pendingParty: '',
       pendingReason: '',
       note: '',
+      parts: [],
+      noParts: false,
     });
     files.value = [];
     submitted.value = false;
@@ -222,7 +277,9 @@ async function submit(): Promise<void> {
                 name="jenis-tindakan"
                 :value="type"
                 class="form-selectgroup-input"
-                @change="clearServer('type'); clearServer('note')"
+                :disabled="type === 'close' && !canClose"
+                :aria-describedby="type === 'close' && !canClose ? `${ids.type}-close` : undefined"
+                @change="clearServer('type'); clearServer('note'); clearServer('statusTo')"
               >
               <span class="form-selectgroup-label target-type">{{ TICKET_ACTION_TYPE_LABELS[type] }}</span>
             </label>
@@ -231,7 +288,14 @@ async function submit(): Promise<void> {
             :id="`${ids.type}-hint`"
             class="form-hint mt-1"
           >
-            {{ TICKET_ACTION_TYPE_HINTS[form.type] }}
+            {{ typeHint }}
+          </div>
+          <div
+            v-if="!canClose"
+            :id="`${ids.type}-close`"
+            class="form-hint"
+          >
+            {{ closeUnavailable }}
           </div>
           <div
             v-if="errors.type"
@@ -244,7 +308,7 @@ async function submit(): Promise<void> {
           <label
             class="form-label required"
             :for="ids.time"
-          >Waktu tindakan ({{ timeZoneLabel(zone) }})</label>
+          >{{ closing ? 'Waktu online kembali' : 'Waktu tindakan' }} ({{ timeZoneLabel(zone) }})</label>
           <input
             :id="ids.time"
             v-model="form.occurredAt"
@@ -261,7 +325,37 @@ async function submit(): Promise<void> {
             {{ errors.occurredAt }}
           </div>
         </div>
-        <div class="col-12 col-md-6">
+        <div
+          v-if="closing"
+          class="col-12 col-md-6"
+        >
+          <span class="form-label">Status</span>
+          <p
+            class="mb-0 d-flex flex-wrap align-items-center gap-1 close-status"
+            data-testid="status-close"
+          >
+            <span :class="TICKET_STATUS_BADGE[ticket.status]">{{ TICKET_STATUS_LABELS[ticket.status] }}</span>
+            <span aria-hidden="true">→</span>
+            <span class="visually-hidden">menjadi</span>
+            <span :class="TICKET_STATUS_BADGE.selesai">{{ TICKET_STATUS_LABELS.selesai }}</span>
+          </p>
+          <div
+            v-if="ticket.tt"
+            class="form-hint"
+          >
+            {{ ticket.tt.number }} ikut ditutup.
+          </div>
+          <div
+            v-if="errors.statusTo"
+            class="invalid-feedback d-block"
+          >
+            {{ errors.statusTo }}
+          </div>
+        </div>
+        <div
+          v-else
+          class="col-12 col-md-6"
+        >
           <label
             class="form-label"
             :for="ids.status"
@@ -292,7 +386,49 @@ async function submit(): Promise<void> {
           </div>
         </div>
 
-        <template v-if="form.statusTo === 'pending'">
+        <fieldset
+          v-if="visit"
+          class="col-12"
+          :aria-describedby="errors.replacedParts ? `${ids.parts}-error` : undefined"
+        >
+          <legend class="form-label required">
+            Part yang diganti teknisi
+          </legend>
+          <div class="d-flex flex-wrap column-gap-4">
+            <label
+              v-for="part in REPLACED_PARTS"
+              :key="part"
+              class="form-check target-check mb-0"
+            >
+              <input
+                v-model="form.parts"
+                class="form-check-input"
+                type="checkbox"
+                :value="part"
+                @change="onPart"
+              >
+              <span class="form-check-label">{{ REPLACED_PART_LABELS[part] }}</span>
+            </label>
+            <label class="form-check target-check mb-0">
+              <input
+                v-model="form.noParts"
+                class="form-check-input"
+                type="checkbox"
+                @change="onNoParts"
+              >
+              <span class="form-check-label">Tidak ada part yang diganti</span>
+            </label>
+          </div>
+          <div
+            v-if="errors.replacedParts"
+            :id="`${ids.parts}-error`"
+            class="invalid-feedback d-block"
+          >
+            {{ errors.replacedParts }}
+          </div>
+        </fieldset>
+
+        <template v-if="!closing && form.statusTo === 'pending'">
           <fieldset class="col-12 col-md-6">
             <legend class="form-label required">
               Menunggu pihak
@@ -358,8 +494,9 @@ async function submit(): Promise<void> {
         <div class="col-12">
           <label
             class="form-label"
+            :class="{ required: closing }"
             :for="ids.note"
-          >Catatan</label>
+          >{{ closing ? 'Catatan penyelesaian' : 'Catatan' }}</label>
           <textarea
             :id="ids.note"
             v-model="form.note"
@@ -367,7 +504,11 @@ async function submit(): Promise<void> {
             :class="{ 'is-invalid': errors.note }"
             rows="3"
             :maxlength="ACTION_NOTE_MAX"
-            placeholder="Apa yang dilakukan atau ditemukan. Tangkapan layar bisa langsung ditempel di sini."
+            :placeholder="
+              closing
+                ? 'mis. Listrik PLN pulih, modem menyala, jarkom terpantau online.'
+                : 'Apa yang dilakukan atau ditemukan. Tangkapan layar bisa langsung ditempel di sini.'
+            "
             :aria-describedby="`${ids.note}-hint`"
             @input="clearServer('note')"
             @paste="onPaste"
@@ -406,9 +547,12 @@ async function submit(): Promise<void> {
               :size="18"
               aria-hidden="true"
             />
-            Lampirkan berkas
+            {{ visit ? 'Lampirkan laporan teknisi' : 'Lampirkan berkas' }}
           </button>
-          <span class="text-secondary small ms-2">Gambar atau PDF, maks. 5 MB, {{ ATTACHMENT_MAX_FILES }} berkas.</span>
+          <span class="text-secondary small ms-2">
+            <template v-if="visit">Wajib untuk NPR dengan TT. </template>Gambar atau PDF, maks. 5 MB,
+            {{ ATTACHMENT_MAX_FILES }} berkas.
+          </span>
           <div
             v-if="errors.lampiran"
             class="invalid-feedback d-block"
@@ -456,7 +600,7 @@ async function submit(): Promise<void> {
           class="spinner-border spinner-border-sm me-2"
           aria-hidden="true"
         />
-        Simpan tindakan
+        {{ closing ? 'Close NPR' : 'Simpan tindakan' }}
       </button>
     </div>
   </form>
@@ -477,6 +621,15 @@ async function submit(): Promise<void> {
 .target {
   min-height: 44px;
   min-width: 44px;
+}
+/* Close yang belum bisa dipilih (Pending, Selesai) tampak redup; alasannya tertulis di bawah. */
+.form-selectgroup-input:disabled + .form-selectgroup-label {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Sejajar dengan kolom waktu di sebelahnya. */
+.close-status {
+  min-height: 44px;
 }
 .target-check {
   display: flex;

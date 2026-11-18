@@ -110,6 +110,9 @@ async function copy(): Promise<void> {
         </p>
         <p class="small text-secondary mb-2">
           Dibuka {{ formatInZone(ticket.tt.createdAt, ticket.remote.timeZone) }} oleh {{ ticket.tt.createdBy.displayName }}
+          <template v-if="ticket.tt.closedAt">
+            · ditutup bersama NPR {{ formatInZone(ticket.tt.closedAt, ticket.remote.timeZone) }}
+          </template>
         </p>
         <p class="mb-3 tt-problem">
           {{ ticket.tt.problem }}

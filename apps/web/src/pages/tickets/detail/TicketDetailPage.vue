@@ -14,7 +14,7 @@ import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '../../../api/client';
 import { ticketsApi } from '../../../api/tickets';
 import CustomerTicketNumber from './CustomerTicketNumber.vue';
-import { TICKET_STATUS_BADGE } from './ticket-display';
+import { formatDuration, TICKET_STATUS_BADGE } from './ticket-display';
 import TicketActionForm from './TicketActionForm.vue';
 import TimelineEntry from './TimelineEntry.vue';
 import TroubleTicketCard from './TroubleTicketCard.vue';
@@ -69,9 +69,12 @@ function onTtCopied(): void {
 function onSaved(result: AddTicketActionResponse): void {
   ticket.value = result.ticket;
   warning.value = '';
-  notice.value = result.action.statusTo
-    ? `Status menjadi ${TICKET_STATUS_LABELS[result.action.statusTo]}.`
-    : 'Tindakan disimpan.';
+  notice.value =
+    result.action.type === 'close'
+      ? `NPR ditutup${result.ticket.tt ? ` bersama ${result.ticket.tt.number}` : ''}. Status menjadi Selesai.`
+      : result.action.statusTo
+        ? `Status menjadi ${TICKET_STATUS_LABELS[result.action.statusTo]}.`
+        : 'Tindakan disimpan.';
   // Muat ulang linimasa agar tanda "Dikoreksi" pada entri lama ikut terbaru.
   void ticketsApi.actions(result.ticket.id).then((list) => (actions.value = list));
 }
@@ -229,6 +232,27 @@ function onSaved(result: AddTicketActionResponse): void {
                   {{ formatInZone(ticket.occurredAt, ticket.remote.timeZone) }}
                 </dd>
               </div>
+              <template v-if="ticket.closedAt">
+                <div class="datagrid-item">
+                  <dt class="datagrid-title">
+                    Online kembali
+                  </dt>
+                  <dd
+                    class="datagrid-content"
+                    data-testid="online-kembali"
+                  >
+                    {{ formatInZone(ticket.closedAt, ticket.remote.timeZone) }}
+                  </dd>
+                </div>
+                <div class="datagrid-item">
+                  <dt class="datagrid-title">
+                    Lama gangguan
+                  </dt>
+                  <dd class="datagrid-content">
+                    {{ formatDuration(ticket.occurredAt, ticket.closedAt) }}
+                  </dd>
+                </div>
+              </template>
               <div class="datagrid-item">
                 <dt class="datagrid-title">
                   Kategori
@@ -272,10 +296,16 @@ function onSaved(result: AddTicketActionResponse): void {
                 {{ ticket.remote.name }}
               </RouterLink>
             </p>
-            <p class="text-secondary mb-0">
+            <p class="text-secondary mb-2">
               <span class="font-monospace">{{ ticket.remote.siteId }}</span> · {{ ticket.jarkom.name }} ·
               {{ ticket.remote.city }}, {{ ticket.remote.province }}
             </p>
+            <RouterLink
+              :to="{ name: 'remote-detail', params: { id: ticket.remote.id }, hash: '#riwayat-tiket' }"
+              class="d-inline-block py-2"
+            >
+              Riwayat tiket remote ini
+            </RouterLink>
           </div>
         </section>
       </div>

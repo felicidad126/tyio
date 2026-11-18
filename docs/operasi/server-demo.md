@@ -226,7 +226,7 @@ Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, W
 Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
 dashboard lama). Jarkom berisi nilai contoh.
 
-### Alur demo yang disarankan (sampai langkah 1.5b)
+### Alur demo yang disarankan (sampai langkah 1.6)
 
 1. Masuk sebagai `helpdesk.contoh`. Tunjukkan menu, lalu **Remote**: cari, saring, dan buka detail
    remote.
@@ -241,16 +241,20 @@ dashboard lama). Jarkom berisi nilai contoh.
    linimasa mencatatnya. Tekan **Salin ringkasan TT** lalu tempel di chat (mis. Notepad):
    teks siap kirim ke Service Delivery, dan penyalinannya tercatat. Tombol Eskalasi To SD
    hilang setelah TT dibuka: satu NPR paling banyak satu TT.
-6. Buka menu **Tiket**: tab Aktif, Milik saya, Pending, Eskalasi, dan **TT aktif**, dengan
+6. Tutup NPR itu: **Tambah tindakan** → jenis **Close** → waktu online kembali dan catatan
+   penyelesaian. Karena ada TT, pilih part yang diganti (mis. Modem) dan lampirkan laporan
+   teknisi (PDF atau foto) → **Close NPR**. Status menjadi Selesai, TT ikut ditutup, dan kartu
+   Gangguan menampilkan lama gangguan. Lalu **Riwayat tiket remote ini** membuka halaman remote
+   dengan semua NPR-nya.
+7. Buka menu **Tiket**: tab Aktif, Milik saya, Pending, Eskalasi, dan **TT aktif**, dengan
    status, pihak yang ditunggu, no. TT, dan tanda merah "≥ 7 hari" untuk NPR yang sudah lama
    down terlihat tanpa membuka tiketnya. Lalu cari potongan nomor NPR atau TT, atau nama
    lokasi, di kotak cari header.
-7. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
+8. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
    terlihat, juga di pencarian.
-8. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
+9. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
-Belum ada: penutupan tiket (Close, termasuk laporan teknisi dan part yang diganti), Overview,
-SLA, dan laporan. (Gamas tidak dibuat.)
+Belum ada: Overview, monitor 24/7, SLA, dan laporan. (Gamas tidak dibuat.)
 Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah

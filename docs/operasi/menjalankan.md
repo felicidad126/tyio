@@ -87,7 +87,9 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   halaman. Cari Site ID, nama, kota, atau kanca; saring customer, provinsi, jarkom, status.
   Pencarian dan saringan tersimpan di alamat halaman, jadi bisa dibagikan.
 - Detail remote: lokasi, zona waktu (WIB/WITA/WIT, mengikuti provinsi), jaringan, kanwil/kanca,
-  tanggal online, dan kontak.
+  tanggal online, kontak, dan **Riwayat tiket** (1.6): semua NPR remote itu, terbaru menurut
+  waktu kejadian, 50 per halaman, dengan status, kategori, waktu online kembali, lama gangguan,
+  dan no. TT. Dari halaman tiket, buka lewat tautan **Riwayat tiket remote ini**.
 - Remote **tidak pernah dihapus** (tiket akan merujuknya); ubah statusnya menjadi Nonaktif atau
   Dibongkar.
 - **Mengisi dan mengubah remote: Remote › Impor dari Excel**, khusus admin dengan akses semua
@@ -132,12 +134,14 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
 - Halaman tiket berisi **Tambah tindakan** dan **Linimasa** (urut waktu tindakan, terbaru di
   atas). Setiap entri mencatat waktu tindakan (diisi operator, jam lokasi remote) dan waktu
   pencatatan beserta nama pencatat (diisi sistem).
-- **Alur status** (disetujui, Eskalasi disesuaikan di 1.5b): Terbuka → Dikerjakan / Pending /
-  Selesai; Dikerjakan → Pending / Selesai; Pending → Dikerjakan; Eskalasi → Dikerjakan /
-  Pending / Selesai; Selesai → Dikerjakan. **Eskalasi** tidak dipilih di form: status ini
-  dipasang otomatis saat TT dibuka lewat **Eskalasi To SD** (lihat Trouble Ticket di bawah).
-  Form hanya menawarkan jalur ini, dan server menolak jalur lain. Ditutup menyusul bersama
-  aturan penutupan (langkah 1.6).
+- **Alur status** (disetujui, Eskalasi disesuaikan di 1.5b, Selesai di 1.6): Terbuka →
+  Dikerjakan / Pending / Selesai; Dikerjakan → Pending / Selesai; Pending → Dikerjakan;
+  Eskalasi → Dikerjakan / Pending / Selesai; Selesai → Dikerjakan (NPR dibuka lagi). Form hanya
+  menawarkan jalur ini, dan server menolak jalur lain.
+  - **Eskalasi** tidak dipilih di "Ubah status": dipasang otomatis saat TT dibuka lewat
+    **Eskalasi To SD** (lihat Trouble Ticket di bawah).
+  - **Selesai** juga tidak dipilih di "Ubah status": NPR ditutup lewat jenis tindakan **Close**
+    (lihat Penutupan NPR di bawah).
 - **Pending** wajib memilih pihak yang ditunggu (Customer atau TM) dan alasannya; keduanya
   tampil di kepala tiket selama pending.
 - Bila rekan mengubah status saat form Anda terbuka, penyimpanan ditolak dengan pesan, dan
@@ -162,7 +166,7 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   - **Problem**: hasil pengecekan PIC, yaitu penyebab masalahnya. Wajib catatan.
 
   Jenisnya tampil sebagai lencana di linimasa dan di kolom Tindakan terakhir daftar tiket.
-  Jenis **Eskalasi To SD** dicatat sistem saat TT dibuka (1.5b); Close menyusul di 1.6.
+  Jenis **Eskalasi To SD** dicatat sistem saat TT dibuka (1.5b). **Close** menutup NPR (1.6).
 - **Pihak pending**: **TM** untuk problem jaringan (jarkom) di lokasi; **Customer** untuk
   listrik, obstacle, renovasi, atau part ATM yang belum siap.
 - **Tanda "Down ≥ 7 hari"**: tiket yang belum Selesai dan waktu kejadiannya sudah 7 hari atau
@@ -190,11 +194,40 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   kontak lokasi, serta waktu dan pembuka TT. Setiap penyalinan tercatat di linimasa. Bila
   browser menolak salin otomatis, teksnya ditampilkan untuk disalin manual.
 - Hasil kunjungan dicatat di NPR seperti biasa (tindakan, lampiran laporan), lalu status
-  diubah ke Dikerjakan, Pending, atau Selesai. Penutupan bersama TT menyusul di 1.6.
+  diubah ke Dikerjakan atau Pending, atau NPR ditutup lewat **Close** (TT ikut ditutup).
 - No. TT tampil di kepala tiket, di baris daftar, dan di hasil pencarian.
 - Database: tabel `trouble_tickets` (migrasi `TroubleTickets…`), satu TT per NPR dijaga
   constraint unik, TT selalu milik customer yang sama dengan NPR-nya, perubahan tercatat di
   audit log.
+
+### Penutupan NPR: Close (1.6)
+
+- NPR ditutup saat jarkom **terpantau online kembali**, dengan atau tanpa kunjungan teknisi.
+  Di **Tambah tindakan** pilih jenis **Close**:
+  - **Waktu online kembali** (jam lokasi remote): tidak boleh sebelum waktu kejadian NPR atau
+    di masa depan. Waktu ini disimpan sebagai waktu tutup NPR.
+  - **Catatan penyelesaian** (wajib): apa yang membuat jarkom online kembali.
+  - Status otomatis menjadi **Selesai**; kolom "Ubah status" diganti keterangan
+    "Status → Selesai".
+- **NPR yang punya TT** (ada kunjungan teknisi) juga wajib:
+  - **Part yang diganti teknisi**: Modem, Adaptor, Perangkat indoor, BUC, LNB (boleh lebih
+    dari satu), atau **Tidak ada part yang diganti**;
+  - **Laporan teknisi** sebagai lampiran (PDF atau foto, paling sedikit satu).
+
+  TT ikut ditutup pada waktu yang sama dan keluar dari tab TT aktif.
+- Close bisa dari Terbuka, Dikerjakan, atau Eskalasi. Dari **Pending**, ubah ke Dikerjakan
+  dulu (alur yang disetujui); pilihan Close tampak redup dengan alasannya.
+- Setelah Selesai, kartu Gangguan menampilkan **Online kembali** dan **Lama gangguan**
+  (dihitung dari menit yang tampil). Entri Close di linimasa menampilkan part yang diganti dan
+  lampirannya.
+- **Membuka lagi**: Ubah status Selesai → Dikerjakan (mis. jarkom down lagi, K40). Waktu
+  tutup NPR dan TT dikosongkan, TT aktif lagi; entri Close lama tetap di linimasa.
+- NPR yang sudah Selesai tidak lagi muncul sebagai "tiket terbuka" saat membuat tiket baru
+  untuk remote yang sama.
+- Database: migrasi `TicketClose…` menambah jenis `close`, kolom `replaced_parts` di linimasa,
+  dan aturan "Selesai ⇔ waktu tutup terisi". Tiket yang sudah Selesai sebelum pembaruan diberi
+  waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
+  `sistem:migrasi`).
 
 ### Daftar tiket dan pencarian
 

@@ -4,6 +4,7 @@ import {
   ACTION_NOTE_MAX,
   formatInZone,
   PENDING_PARTY_LABELS,
+  REPLACED_PART_LABELS,
   TICKET_ACTION_TYPE_LABELS,
   TICKET_STATUS_LABELS,
   type AddTicketActionResponse,
@@ -27,6 +28,7 @@ const saving = ref(false);
 
 const corrects = computed(() => (props.action.correctsId ? props.byId.get(props.action.correctsId) : undefined));
 const isCreation = computed(() => props.action.statusTo === 'terbuka' && props.action.statusFrom === null);
+const parts = computed(() => props.action.replacedParts?.map((p) => REPLACED_PART_LABELS[p]).join(', '));
 
 async function startCorrection(): Promise<void> {
   correcting.value = true;
@@ -95,6 +97,12 @@ async function saveCorrection(): Promise<void> {
       class="mb-1 text-secondary"
     >
       Menunggu {{ PENDING_PARTY_LABELS[action.pending.party] }}: {{ action.pending.reason }}
+    </p>
+    <p
+      v-if="action.replacedParts"
+      class="mb-1"
+    >
+      {{ parts ? `Part diganti: ${parts}` : 'Tidak ada part yang diganti' }}
     </p>
     <p
       v-if="corrects"
