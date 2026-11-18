@@ -20,8 +20,8 @@ const xlsx = (name: string, data: string[][]) => ({
 });
 
 test.describe('daftar dan detail remote', () => {
-  test('L1 mencari, menyaring, membuka detail, lalu kembali ke daftar yang sama', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+  test('Helpdesk mencari, menyaring, membuka detail, lalu kembali ke daftar yang sama', async ({ page }) => {
+    await signInAs(page, 'helpdesk.contoh');
     await openRemotes(page);
 
     await page.getByLabel('Cari', { exact: true }).fill('mrs-001');
@@ -51,7 +51,7 @@ test.describe('daftar dan detail remote', () => {
     await request.post('/api/auth/login', { data: { username: 'admin.contoh', password: SEED_PASSWORD } });
     const other = (await (await request.get('/api/remotes?q=BCN-001')).json()).items[0].id as string;
 
-    await signInAs(page, 'l1.merapi');
+    await signInAs(page, 'helpdesk.merapi');
     await openRemotes(page);
 
     await expect(page.getByLabel('Customer', { exact: true })).toHaveCount(0);
@@ -62,8 +62,8 @@ test.describe('daftar dan detail remote', () => {
     await expect(page.getByText('Remote tidak ditemukan')).toBeVisible();
   });
 
-  test('L1 tidak melihat tombol impor dan tidak bisa membuka halaman impor', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+  test('Helpdesk tidak melihat tombol impor dan tidak bisa membuka halaman impor', async ({ page }) => {
+    await signInAs(page, 'helpdesk.contoh');
     await openRemotes(page);
     await expect(page.getByRole('link', { name: 'Impor dari Excel' })).toHaveCount(0);
 
@@ -72,7 +72,7 @@ test.describe('daftar dan detail remote', () => {
   });
 
   test('status remote yang dibongkar bernama Dismantle', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await page.goto('/remote');
     await expect(page.getByLabel('Status').locator('option')).toHaveText(['Semua', 'Aktif', 'Nonaktif', 'Dismantle']);
     await page.getByLabel('Status').selectOption({ label: 'Dismantle' });
@@ -81,7 +81,7 @@ test.describe('daftar dan detail remote', () => {
 
   test('ponsel 375 px: daftar dan detail tanpa gulir samping', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await page.goto('/remote');
     await expect(rows(page).first()).toBeVisible();
     await expectNoPageOverflow(page);

@@ -33,7 +33,7 @@ const statusOptions = async (page: Page) =>
 
 test.describe('detail tiket dan linimasa', () => {
   test('tindakan dengan perubahan status; hanya jalur yang sah ditawarkan; pending wajib pihak dan alasan', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await openNewTicket(page);
     await expect(timeline(page).first()).toContainText('Tiket dibuat');
     expect(await statusOptions(page)).toEqual(['Tetap Terbuka', 'Dikerjakan', 'Pending', 'Eskalasi', 'Selesai']);
@@ -60,7 +60,7 @@ test.describe('detail tiket dan linimasa', () => {
   });
 
   test('lampiran lewat pilih berkas dan tempel, lalu entri dikoreksi tanpa menghapusnya', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await openNewTicket(page);
 
     await page.locator('input[type=file]').setInputFiles({ name: 'layar.png', mimeType: 'image/png', buffer: TINY_PNG });
@@ -91,7 +91,7 @@ test.describe('detail tiket dan linimasa', () => {
   });
 
   test('nomor tiket customer diubah di tempat tanpa menggeser isi halaman, dan tercatat di linimasa', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await openNewTicket(page);
     const formTitle = page.getByRole('heading', { name: 'Tambah tindakan' });
     const before = await formTitle.boundingBox();
@@ -106,7 +106,7 @@ test.describe('detail tiket dan linimasa', () => {
   });
 
   test('status diubah rekan saat form terbuka: peringatan, lalu tiket dimuat ulang', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const ticket = await openNewTicket(page);
     // Rekan mengubah status lebih dulu.
     const res = await page.request.post(`/api/tickets/${ticket.id}/actions`, {
@@ -124,7 +124,7 @@ test.describe('detail tiket dan linimasa', () => {
   });
 
   test('jenis tindakan Cek lokasi dan Problem wajib catatan, tampil di linimasa dan di daftar', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const ticket = await openNewTicket(page);
     const types = page.getByRole('group', { name: 'Jenis tindakan' });
     await expect(types.getByRole('radio', { name: 'Bebas' })).toBeChecked();
@@ -151,7 +151,7 @@ test.describe('detail tiket dan linimasa', () => {
   });
 
   test('pilihan pihak pending menjelaskan kapan memilih TM atau Customer', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await openNewTicket(page);
     await page.getByLabel('Ubah status').selectOption({ label: 'Pending' });
     const parties = page.getByRole('group', { name: 'Menunggu pihak' });
@@ -165,7 +165,7 @@ test.describe('detail tiket dan linimasa', () => {
   });
 
   test('tiket aktif yang sudah down 7 hari ditandai di detail dan di daftar; tiket baru tidak', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const remote = (await (await page.request.get('/api/remotes?q=MRS-006')).json()).items[0];
     const categories = (await (await page.request.get('/api/master/kategori')).json()).items as Array<{ id: string; code: string }>;
     const create = async (daysAgo: number) => {
@@ -197,7 +197,7 @@ test.describe('detail tiket dan linimasa', () => {
 
   test('ponsel 375 px: detail tiket tanpa gulir samping', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await openNewTicket(page);
     await expect(page.getByRole('button', { name: 'Simpan tindakan' })).toBeVisible();
     await expectNoPageOverflow(page);

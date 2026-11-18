@@ -18,8 +18,8 @@ const menuLabels = async (page: Page) =>
   (await mainMenu(page).getByRole('link').allInnerTexts()).map((t) => t.trim());
 
 test.describe('navigasi per peran', () => {
-  test('L1 melihat semua modul operasional tanpa Admin, dan setiap menu membuka halamannya', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+  test('Helpdesk melihat semua modul operasional tanpa Admin, dan setiap menu membuka halamannya', async ({ page }) => {
+    await signInAs(page, 'helpdesk.contoh');
 
     expect(await menuLabels(page)).toEqual(OPERATIONAL);
 
@@ -47,8 +47,8 @@ test.describe('navigasi per peran', () => {
     await expect(mainMenu(page).getByRole('link', { name: 'Admin' })).toHaveAttribute('aria-current', 'page');
   });
 
-  test('L1 yang membuka /admin langsung mendapat halaman tanpa akses', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+  test('Helpdesk yang membuka /admin langsung mendapat halaman tanpa akses', async ({ page }) => {
+    await signInAs(page, 'helpdesk.contoh');
 
     await page.goto('/admin');
 
@@ -64,7 +64,7 @@ test.describe('navigasi per peran', () => {
 test.describe('tata letak dari ponsel sampai layar dinding', () => {
   test('ponsel 375 px: menu lewat tombol, tanpa gulir samping, target sentuh minimal 44 px', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await expectNoPageOverflow(page);
     await expect(mainMenu(page)).toBeHidden();
 
@@ -88,7 +88,7 @@ test.describe('tata letak dari ponsel sampai layar dinding', () => {
   for (const width of [1280, 2560]) {
     test(`lebar ${width} px: sidebar selalu tampil, tanpa gulir samping`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      await signInAs(page, 'l1.contoh');
+      await signInAs(page, 'helpdesk.contoh');
 
       await expect(mainMenu(page)).toBeVisible();
       await expect(page.getByRole('button', { name: 'Buka menu' })).toBeHidden();
@@ -108,9 +108,9 @@ test.describe('menu pengguna', () => {
   for (const { label, width, textScale } of CASES) {
     test(`panel menu pengguna utuh di dalam layar (${label})`, async ({ page }) => {
       await page.setViewportSize({ width, height: 760 });
-      await signInAs(page, 'l1.merapi');
+      await signInAs(page, 'helpdesk.merapi');
       if (textScale !== 1) await page.addStyleTag({ content: `html { font-size: ${textScale * 100}% }` });
-      const trigger = page.getByRole('button', { name: 'Menu pengguna Operator L1 Merapi', exact: true });
+      const trigger = page.getByRole('button', { name: 'Menu pengguna Helpdesk Merapi', exact: true });
 
       if (width < 768) {
         const toggle = await page.getByRole('button', { name: 'Buka menu' }).boundingBox();
@@ -128,8 +128,8 @@ test.describe('menu pengguna', () => {
   }
 
   test('menampilkan akun, mengganti tema, dan bisa dipakai dengan keyboard', async ({ page }) => {
-    await signInAs(page, 'l1.merapi');
-    const trigger = page.getByRole('button', { name: 'Menu pengguna Operator L1 Merapi', exact: true });
+    await signInAs(page, 'helpdesk.merapi');
+    const trigger = page.getByRole('button', { name: 'Menu pengguna Helpdesk Merapi', exact: true });
 
     await trigger.focus();
     await page.keyboard.press('Enter');

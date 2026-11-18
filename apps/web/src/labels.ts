@@ -1,9 +1,8 @@
 import type { TenantScope, UserRole } from '@tyio/shared';
 
-/** Nama peran seperti dipakai tim (K20). */
+/** Nama peran seperti dipakai tim (K30, K46). */
 export const ROLE_LABELS: Record<UserRole, string> = {
-  L1: 'L1 Monitoring',
-  L2: 'L2 NOC',
+  helpdesk: 'Helpdesk',
   admin: 'Admin',
 };
 

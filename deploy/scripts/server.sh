@@ -197,10 +197,9 @@ print_accounts() {
   say ""
   say "Portal: https://$domain$(port_suffix)"
   say "Akun contoh (kata sandi sama untuk semua): $(env_get TYIO_SEED_PASSWORD)"
-  say "  admin.contoh  Admin, semua customer"
-  say "  l2.contoh     L2 NOC, semua customer"
-  say "  l1.contoh     L1 Monitoring, semua customer"
-  say "  l1.merapi     L1 Monitoring, hanya Bank Merapi Sejahtera"
+  say "  helpdesk.contoh  Helpdesk, semua customer"
+  say "  helpdesk.merapi  Helpdesk, hanya Bank Merapi Sejahtera"
+  say "  admin.contoh     Admin (pengelola aplikasi), semua customer"
   say "Kata sandi tersimpan di $ENV_FILE (hanya bisa dibaca root/pemilik)."
 }
 

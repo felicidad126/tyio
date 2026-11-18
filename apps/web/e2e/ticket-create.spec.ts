@@ -32,8 +32,8 @@ async function submitAndReadNumber(page: Page): Promise<string> {
 }
 
 test.describe('buat tiket', () => {
-  test('L1 memilih remote, data lokasi terisi hanya-baca, lalu tiket bernomor dibuat', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+  test('Helpdesk memilih remote, data lokasi terisi hanya-baca, lalu tiket bernomor dibuat', async ({ page }) => {
+    await signInAs(page, 'helpdesk.contoh');
     // Kolom System dihapus (K29).
     await page.goto('/tiket/baru');
     await expect(page.getByLabel('Kategori')).toBeVisible();
@@ -71,7 +71,7 @@ test.describe('buat tiket', () => {
   });
 
   test('isian kosong ditandai per kolom tanpa mengirim apa pun', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     await page.goto('/tiket/baru');
 
     await page.getByRole('button', { name: 'Buat tiket', exact: true }).last().click();
@@ -83,7 +83,7 @@ test.describe('buat tiket', () => {
   });
 
   test('pengguna yang dibatasi hanya menemukan remote customernya', async ({ page }) => {
-    await signInAs(page, 'l1.merapi');
+    await signInAs(page, 'helpdesk.merapi');
     await page.goto('/tiket/baru');
 
     await page.getByRole('searchbox', { name: /^Remote/ }).fill('BCN-0');
@@ -94,7 +94,7 @@ test.describe('buat tiket', () => {
 
   test('ponsel 375 px: tombol Buat tiket ada di menu dan form tanpa gulir samping', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
 
     await page.getByRole('button', { name: 'Buka menu' }).click();
     await page.getByRole('link', { name: 'Buat tiket' }).click();

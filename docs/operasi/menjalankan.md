@@ -40,8 +40,10 @@ tanpa mencetak nilainya.
 - Sesi berakhir setelah 12 jam tidak dipakai, dan paling lama 7 hari sejak login.
 - Setelah 5 kali gagal untuk satu nama pengguna, atau 20 kali gagal dari satu alamat IP,
   dalam 15 menit, percobaan ditahan sampai jendela itu lewat (HTTP 429 dengan `Retry-After`).
-- Peran di R0: `L1` (L1 Monitoring), `L2` (L2 NOC), `admin`. Pengguna melihat semua
-  customer, atau hanya customer tertentu bila dibatasi.
+- Peran (K30, K46): **`helpdesk`** mengerjakan NPR (dan TT); **`admin`** mengelola aplikasi
+  (master data, impor remote, akun) dan juga bisa membuka semua modul operasional. Tingkatan
+  L1/L2/L3 tidak dipakai; pengguna L1/L2 lama otomatis menjadi helpdesk (migrasi
+  `HelpdeskRole…`). Pengguna melihat semua customer, atau hanya customer tertentu bila dibatasi.
 
 ### Batas data per customer (tenant)
 
@@ -240,10 +242,9 @@ pnpm e2e smoke       # uji asap terhadap http://localhost:8080
 
   | Nama pengguna | Peran | Customer yang terlihat |
   | --- | --- | --- |
-  | `admin.contoh` | admin | Semua |
-  | `l2.contoh` | L2 NOC | Semua |
-  | `l1.contoh` | L1 Monitoring | Semua |
-  | `l1.merapi` | L1 Monitoring | Hanya Bank Merapi Sejahtera |
+  | `helpdesk.contoh` | Helpdesk | Semua |
+  | `helpdesk.merapi` | Helpdesk | Hanya Bank Merapi Sejahtera |
+  | `admin.contoh` | Admin | Semua |
 
   Seed dev juga mengisi 25 remote rekaan per customer contoh, tersebar di ketiga zona waktu.
 - Uji API (`pnpm test:api`) memakai database `tyio_test` di Postgres yang sama, jadi

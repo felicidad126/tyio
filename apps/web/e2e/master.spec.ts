@@ -107,7 +107,7 @@ test.describe('master data (admin)', () => {
     await signInAs(page, 'admin.contoh');
     await page.goto('/admin/master/customer');
 
-    // MRS dipakai: pengguna l1.merapi dibatasi ke customer ini.
+    // MRS dipakai: pengguna helpdesk.merapi dibatasi ke customer ini.
     await row(page, 'Bank Merapi Sejahtera').getByRole('button', { name: 'Hapus Bank Merapi Sejahtera' }).click();
     const confirm = page.getByRole('dialog', { name: 'Hapus customer "Bank Merapi Sejahtera"?' });
     await confirm.getByRole('button', { name: 'Hapus customer' }).click();

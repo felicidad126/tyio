@@ -47,7 +47,7 @@ const viewTab = (page: Page, name: RegExp) =>
 
 test.describe('antrean tiket dan pencarian global', () => {
   test('tiket yang dibuat muncul di Aktif dan Milik saya, dicari di daftar, lalu dibuka', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const ticket = await createTicket(page, 'MRS-003');
 
     await page.getByRole('navigation', { name: 'Menu utama' }).getByRole('link', { name: 'Tiket' }).click();
@@ -77,7 +77,7 @@ test.describe('antrean tiket dan pencarian global', () => {
   });
 
   test('tab Pending menampilkan pihak dan alasan; tiket pending tidak ada di tab Eskalasi', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const ticket = await createTicket(page, 'MRS-004');
     const reason = `Menunggu teknisi TM ${Date.now()}`;
     await setPending(page, ticket, reason);
@@ -95,7 +95,7 @@ test.describe('antrean tiket dan pencarian global', () => {
   });
 
   test('pencarian global di header: no. tiket customer dan Site ID', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const ticket = await createTicket(page, 'MRS-005');
     const customerNumber = `INC-${Date.now()}`;
     expect((await page.request.patch(`/api/tickets/${ticket.id}`, { data: { customerTicketNumber: customerNumber } })).status()).toBe(200);
@@ -121,13 +121,13 @@ test.describe('antrean tiket dan pencarian global', () => {
   });
 
   test('pengguna yang dibatasi ke satu customer tidak menemukan tiket customer lain', async ({ page }) => {
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const other = await createTicket(page, 'BCN-001');
 
     await page.goto('/login');
     await page.context().clearCookies();
     await page.goto('/login');
-    await fillSignIn(page, 'l1.merapi');
+    await fillSignIn(page, 'helpdesk.merapi');
     await expect(page.getByRole('heading', { level: 1, name: /Selamat datang/ })).toBeVisible();
 
     await page.goto(`/tiket?tampilan=semua&q=${encodeURIComponent(other.number)}`);
@@ -138,7 +138,7 @@ test.describe('antrean tiket dan pencarian global', () => {
 
   test('lebar 1280 px: tabel tidak melebihi kartunya, juga dengan catatan tindakan panjang', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     const ticket = await createTicket(page, 'MRS-003');
     const res = await page.request.post(`/api/tickets/${ticket.id}/actions`, {
       multipart: {
@@ -162,7 +162,7 @@ test.describe('antrean tiket dan pencarian global', () => {
 
   test('ponsel 375 px: tab bergulir sendiri tanpa gulir samping halaman; cari lewat menu', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
-    await signInAs(page, 'l1.contoh');
+    await signInAs(page, 'helpdesk.contoh');
     // Tiket dengan nomor dan nama remote panjang, agar lebar baris benar-benar diuji.
     await createTicket(page, 'MRS-003');
     await page.goto('/tiket?tampilan=semua');

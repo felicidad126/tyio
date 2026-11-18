@@ -214,10 +214,13 @@ Kata sandi sama untuk semua akun, dicetak saat `pasang` dan `ulang-data`, dan te
 
 | Akun | Peran | Melihat |
 | --- | --- | --- |
-| `admin.contoh` | Admin | Semua customer; Admin › Master data, impor remote dari Excel |
-| `l2.contoh` | L2 NOC | Semua customer |
-| `l1.contoh` | L1 Monitoring | Semua customer |
-| `l1.merapi` | L1 Monitoring | Hanya Bank Merapi Sejahtera |
+| `helpdesk.contoh` | Helpdesk | Semua customer |
+| `helpdesk.merapi` | Helpdesk | Hanya Bank Merapi Sejahtera |
+| `admin.contoh` | Admin (pengelola aplikasi) | Semua customer; Admin › Master data, impor remote dari Excel |
+
+Server yang dipasang sebelum 2026-11-18 masih punya akun lama `l1.contoh`, `l2.contoh`, dan
+`l1.merapi`: semuanya sudah otomatis berperan Helpdesk setelah `perbarui`, dengan kata sandi yang
+sama. Nama akun baru di atas muncul setelah `ulang-data`.
 
 Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, WITA, dan WIT.
 Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
@@ -225,7 +228,7 @@ dashboard lama). Jarkom berisi nilai contoh.
 
 ### Alur demo yang disarankan (sampai langkah 1.5)
 
-1. Masuk sebagai `l1.contoh`. Tunjukkan menu, lalu **Remote**: cari, saring, dan buka detail
+1. Masuk sebagai `helpdesk.contoh`. Tunjukkan menu, lalu **Remote**: cari, saring, dan buka detail
    remote.
 2. **Buat tiket untuk remote ini**: data lokasi dan jaringan terisi sendiri, dan nomor NPR
    dibuat sistem.
@@ -237,7 +240,7 @@ dashboard lama). Jarkom berisi nilai contoh.
    ditunggu, dan tanda merah "≥ 7 hari" untuk NPR yang sudah lama down terlihat tanpa membuka
    tiketnya. Lalu cari potongan nomor tiket atau nama lokasi
    di kotak cari header.
-6. Masuk sebagai `l1.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
+6. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
    terlihat, juga di pencarian.
 7. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
