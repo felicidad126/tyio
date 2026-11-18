@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Overview · Portal NOC</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f8fb}
+a{color:#066fd1;text-decoration:none}
+a:hover{color:#0558a8}
+.skip-link{position:absolute;left:12px;top:-80px;z-index:30;padding:10px 16px;border-radius:6px;background:#ffffff;color:#066fd1;font-weight:600;box-shadow:0 4px 12px rgba(24,36,51,0.25)}
+.skip-link:focus{top:12px}
+@media (max-width: 900px){
+.shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
+.side-sub,.side-title{display:none !important}
+.side-foot{margin-top:0 !important;flex:0 0 auto;white-space:nowrap}
+.side-nav,.side-group,.side-items{flex-direction:row !important;flex-wrap:nowrap !important;gap:2px !important}
+.side-item{flex:0 0 auto !important;white-space:nowrap}
+}
+@media (max-width: 640px){
+.top-clock,.top-user-text{display:none !important}
+.xl-alt{visibility:hidden}
+}
+</style>
+</helmet>
+<div style="position: relative; display: flex; flex-wrap: wrap; min-height: 1240px; background: #f6f8fb; color: #182433; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+<a class="skip-link" href="#konten">Lewati ke konten</a>
+
+<aside class="shell-side" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #182433; color: #c3cdd9; padding: 20px 12px; display: flex; flex-direction: column; gap: 24px">
+<div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 10px">
+<div style="width: 34px; height: 34px; border-radius: 8px; background: #066fd1; color: #ffffff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0 M9 21l3 -9l3 9 M10 19h4"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 15px; font-weight: 700; color: #ffffff; white-space: nowrap">Tyio NOC</span>
+<span class="side-sub" style="font-size: 12px; color: #8d9aab">Portal NOC Terpusat</span>
+</div>
+</div>
+<nav class="side-nav" aria-label="Menu utama" style="display: flex; flex-direction: column; gap: 20px">
+<sc-for list="{{navGroups}}" as="g" hint-placeholder-count="3">
+<div class="side-group" style="display: flex; flex-direction: column; gap: 4px">
+<span class="side-title" style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8d9aab; padding: 0 10px 4px">{{g.title}}</span>
+<div class="side-items" style="display: flex; flex-wrap: wrap; gap: 2px">
+<sc-for list="{{g.items}}" as="item" hint-placeholder-count="3">
+<a class="side-item" href="{{item.href}}" aria-current="{{item.current}}" style="flex: 1 1 180px; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span style="flex: 1 1 auto">{{item.label}}</span>
+<sc-if value="{{item.hasCount}}" hint-placeholder-val="{{ false }}">
+<span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #2c3a4d; color: #e6ebf1; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{item.count}}</span>
+</sc-if>
+</a>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</nav>
+<a class="side-foot" href="Wall.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border: 1px solid #2c3a4d; border-radius: 6px; color: #c3cdd9; font-weight: 500">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z M7 20h10 M9 16v4 M15 16v4"></path></svg>
+Mode monitor 24/7
+</a>
+</aside>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="background: #ffffff; border-bottom: 1px solid #dce1e7; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 280px; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; position: relative">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
+<label for="cari-global" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Cari di seluruh portal</label>
+<input id="cari-global" type="search" placeholder="Cari NPR, TT, tiket customer, remote" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
+<kbd style="font-family: inherit; font-size: 12px; color: #536173; border: 1px solid #dce1e7; border-radius: 4px; padding: 0 6px; background: #ffffff">/</kbd>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<label for="scope" style="font-size: 13px; color: #536173; font-weight: 500">Customer</label>
+<select id="scope" style="height: 40px; border: 1px solid #dce1e7; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
+<option>Semua customer</option>
+<option>Bank Nusa</option>
+<option>Bank Andalas</option>
+<option>Bank Selaras</option>
+<option>BPD Timur</option>
+</select>
+</div>
+<div class="top-clock" style="display: flex; gap: 12px; font-size: 13px; color: #536173; margin-left: auto">
+<span><b style="color: #182433; font-weight: 600">16:58</b> WIB</span>
+<span><b style="color: #182433; font-weight: 600">17:58</b> WITA</span>
+<span><b style="color: #182433; font-weight: 600">18:58</b> WIT</span>
+</div>
+<button type="button" aria-label="Notifikasi, 4 belum dibaca" style="position: relative; width: 40px; height: 40px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
+<span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
+</button>
+<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
+Buat tiket
+</button>
+<button type="button" aria-label="Akun: Dewi A., L1, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">DA</span>
+<span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
+<span style="font-size: 13px; font-weight: 600">Dewi A.</span>
+<span style="font-size: 12px; color: #536173">L1 · Shift Siang</span>
+</span>
+</button>
+</header>
+
+<main id="konten" style="width: 100%; max-width: 1240px; margin: 0 auto; padding: 24px 24px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700">Overview</h1>
+<p style="margin: 0; color: #536173; font-size: 15px">Kondisi remote semua customer saat ini. Klik angka mana pun untuk membuka daftarnya.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #dcf2e1; color: #1b6430; font-size: 13px; font-weight: 600">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1f8a3f"></span>
+Live · SNMP NOC 8 dtk lalu
+</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #fcefd2; color: #7a4a00; font-size: 13px; font-weight: 600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3"></path></svg>
+NMS VSAT 4 mnt lalu · terlambat
+</span>
+</div>
+</div>
+
+<sc-if value="{{showBanner}}" hint-placeholder-val="{{ true }}">
+<div role="status" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; background: #fbe3e3; color: #a12424; border: 1px solid #f1bcbc">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01"></path></svg>
+<div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px">
+<strong style="font-size: 15px">Diduga gangguan massal di Sulawesi</strong>
+<span style="color: #6e1d1d">14 remote di hub Palu-1 turun bersamaan sejak 16:41 WITA (17 menit). Portal menyarankan membuka Gamas.</span>
+</div>
+<a href="GamasDetail.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 6px; background: #a12424; color: #ffffff; font-weight: 600">Tinjau saran Gamas</a>
+</div>
+</sc-if>
+
+<section aria-label="Angka utama" style="display: flex; flex-wrap: wrap; gap: 12px">
+<a href="Tiket.dc.html" style="flex: 1 1 180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; color: #182433">
+<span style="font-size: 13px; font-weight: 500; color: #536173">Remote down</span>
+<span style="font-size: 32px; font-weight: 700; line-height: 1.1">37</span>
+<span style="font-size: 13px; color: #536173">dari 4.812 remote</span>
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: #c42b2b">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19v-14 M18 11l-6 -6 M6 11l6 -6"></path></svg>
+naik 14 dalam 1 jam
+</span>
+</a>
+<a href="Tiket.dc.html" style="flex: 1 1 180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; color: #182433">
+<span style="font-size: 13px; font-weight: 500; color: #536173">Tiket terbuka</span>
+<span style="font-size: 32px; font-weight: 700; line-height: 1.1">48</span>
+<span style="font-size: 13px; color: #536173">12 pending · 5 eskalasi</span>
+<span style="font-size: 13px; color: #536173">3 menunggu ditutup L2/L3</span>
+</a>
+<a href="Tiket.dc.html" style="flex: 1 1 180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; color: #182433">
+<span style="font-size: 13px; font-weight: 500; color: #536173">SLA kurang dari 1 jam</span>
+<span style="font-size: 32px; font-weight: 700; line-height: 1.1">5</span>
+<span style="font-size: 13px; color: #536173">dari 48 tiket terbuka</span>
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 999px; background: #fbe3e3; color: #a12424; font-size: 12px; font-weight: 600">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01"></path></svg>
+2 sudah lewat
+</span>
+</a>
+<a href="Alert.dc.html" style="flex: 1 1 180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; color: #182433">
+<span style="font-size: 13px; font-weight: 500; color: #536173">Alert menunggu verifikasi</span>
+<span style="font-size: 32px; font-weight: 700; line-height: 1.1">9</span>
+<span style="font-size: 13px; color: #536173">kandidat tiket dari SNMP + VSAT</span>
+<span style="font-size: 13px; color: #7a4a00; font-weight: 600">terlama 7 menit</span>
+</a>
+<a href="Gamas.dc.html" style="flex: 1 1 180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; color: #182433">
+<span style="font-size: 13px; font-weight: 500; color: #536173">Gamas aktif</span>
+<span style="font-size: 32px; font-weight: 700; line-height: 1.1">1</span>
+<span style="font-size: 13px; color: #536173">Listrik padam Balikpapan · 3 remote</span>
+<span style="font-size: 13px; color: #a12424; font-weight: 600">+1 saran baru (Sulawesi)</span>
+</a>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+
+<section style="flex: 2 1 560px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start">
+<div>
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Tiket baru per hari</h2>
+<p style="margin: 2px 0 0; color: #536173; font-size: 13px">3–16 November · semua customer · hari ini sampai 16:58 WIB</p>
+</div>
+<button type="button" onClick="{{toggleTable}}" style="height: 32px; padding: 0 12px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">{{toggleLabel}}</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: #2a78d6"></span>Remote Down</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: #eb6834"></span>Corrective Maintenance</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: #1baf7a"></span>Preventive Maintenance</span>
+</div>
+
+<sc-if value="{{showChart}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; padding-top: 8px">
+<div aria-hidden="true" style="position: relative; width: 22px; height: 240px; flex: 0 0 auto; font-size: 12px; color: #66727f">
+<sc-for list="{{ticks}}" as="t" hint-placeholder-count="5">
+<span style="position: absolute; right: 0; bottom: {{t.labelBottom}}px; line-height: 14px">{{t.label}}</span>
+</sc-for>
+</div>
+<div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div role="img" aria-label="Grafik batang bertumpuk tiket baru per hari, 3 sampai 16 November. Gunakan tombol Lihat sebagai tabel untuk angka lengkap." style="position: relative; height: 240px">
+<sc-for list="{{ticks}}" as="t" hint-placeholder-count="5">
+<div style="position: absolute; left: 0; right: 0; bottom: {{t.bottom}}px; border-top: 1px solid {{t.color}}"></div>
+</sc-for>
+<div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: flex-end; gap: 6px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="14">
+<div onMouseEnter="{{d.enter}}" onMouseLeave="{{d.leave}}" style="position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; cursor: default">
+<sc-if value="{{d.isToday}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 600; color: #182433; margin-bottom: 4px">{{d.total}}</span>
+</sc-if>
+<div style="width: 100%; max-width: 30px; display: flex; flex-direction: column-reverse; gap: 2px; opacity: {{d.opacity}}">
+<sc-for list="{{d.segs}}" as="s" hint-placeholder-count="3">
+<div style="height: {{s.h}}px; background: {{s.color}}; border-radius: {{s.radius}}"></div>
+</sc-for>
+</div>
+<sc-if value="{{d.active}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; z-index: 2; bottom: {{d.tipBottom}}px; left: {{d.tipLeft}}; transform: {{d.tipTransform}}; width: 176px; padding: 10px 12px; box-sizing: border-box; border-radius: 6px; background: #182433; color: #ffffff; font-size: 12px; box-shadow: 0 4px 12px rgba(24,36,51,0.18); display: flex; flex-direction: column; gap: 4px; pointer-events: none">
+<span style="font-weight: 600; font-size: 13px">{{d.longLabel}}</span>
+<span style="display: flex; justify-content: space-between"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #3987e5"></span>Remote Down</span><b>{{d.rd}}</b></span>
+<span style="display: flex; justify-content: space-between"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #eb6834"></span>Corrective</span><b>{{d.cm}}</b></span>
+<span style="display: flex; justify-content: space-between"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #1baf7a"></span>Preventive</span><b>{{d.pm}}</b></span>
+<span style="display: flex; justify-content: space-between; border-top: 1px solid #3a4a5e; padding-top: 4px"><span>Total</span><b>{{d.total}}</b></span>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+<div aria-hidden="true" style="display: flex; gap: 6px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="14">
+<div class="{{d.labelClass}}" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 1.3; white-space: nowrap; color: {{d.labelColor}}; font-weight: {{d.labelWeight}}">
+<span>{{d.dateLabel}}</span>
+<span>{{d.dowLabel}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{showTable}}" hint-placeholder-val="{{ false }}">
+<div style="max-height: 260px; overflow: auto; border: 1px solid #dce1e7; border-radius: 6px">
+<table style="width: 100%; border-collapse: collapse; font-size: 13px">
+<thead>
+<tr style="background: #f6f8fb; text-align: left">
+<th scope="col" style="padding: 8px 12px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Tanggal</th>
+<th scope="col" style="padding: 8px 12px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; text-align: right">Remote Down</th>
+<th scope="col" style="padding: 8px 12px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; text-align: right">Corrective</th>
+<th scope="col" style="padding: 8px 12px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; text-align: right">Preventive</th>
+<th scope="col" style="padding: 8px 12px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; text-align: right">Total</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{tableRows}}" as="r" hint-placeholder-count="14">
+<tr>
+<td style="padding: 6px 12px; border-bottom: 1px solid #eaedf1">{{r.longLabel}}</td>
+<td style="padding: 6px 12px; border-bottom: 1px solid #eaedf1; text-align: right">{{r.rd}}</td>
+<td style="padding: 6px 12px; border-bottom: 1px solid #eaedf1; text-align: right">{{r.cm}}</td>
+<td style="padding: 6px 12px; border-bottom: 1px solid #eaedf1; text-align: right">{{r.pm}}</td>
+<td style="padding: 6px 12px; border-bottom: 1px solid #eaedf1; text-align: right; font-weight: 600">{{r.total}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+</section>
+
+<section style="flex: 1 1 320px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 20px 20px 14px; box-sizing: border-box; display: flex; flex-direction: column">
+<div style="padding-bottom: 8px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Remote down per wilayah</h2>
+<p style="margin: 2px 0 0; color: #536173; font-size: 13px">Saat ini · urut dari terbanyak · down / total remote</p>
+</div>
+<sc-for list="{{regions}}" as="r" hint-placeholder-count="7">
+<a href="Tiket.dc.html" style="display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-top: 1px solid #eaedf1; color: #182433">
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="flex: 1 1 auto; min-width: 0; font-weight: 600">{{r.name}}</span>
+<sc-if value="{{r.flag}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; background: #fbe3e3; color: #a12424; font-size: 12px; font-weight: 600; white-space: nowrap">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01"></path></svg>
+Diduga Gamas
+</span>
+</sc-if>
+<sc-if value="{{r.gamas}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #fde4d5; color: #9a3d0d; font-size: 12px; font-weight: 600; white-space: nowrap">Gamas aktif</span>
+</sc-if>
+<span style="white-space: nowrap"><b style="font-size: 15px">{{r.down}}</b><span style="color: #536173; font-size: 13px"> / {{r.total}}</span></span>
+</span>
+<span aria-hidden="true" style="display: block; height: 4px; background: #eaedf1; border-radius: 2px; overflow: hidden"><span style="display: block; height: 100%; background: #2a78d6; border-radius: 2px; width: {{r.pct}}%"></span></span>
+</a>
+</sc-for>
+<a href="Segera.dc.html" style="font-size: 13px; font-weight: 500; margin-top: auto; padding-top: 10px">Lihat peta lengkap di halaman Remote</a>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+<section style="flex: 3 1 520px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 20px 20px 8px; box-sizing: border-box; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-bottom: 8px">
+<div>
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Perlu tindakan sekarang</h2>
+<p style="margin: 2px 0 0; color: #536173; font-size: 13px">5 tiket dengan sisa SLA paling sedikit</p>
+</div>
+<a href="Tiket.dc.html" style="font-size: 13px; font-weight: 600">Buka antrean (48)</a>
+</div>
+<sc-for list="{{urgent}}" as="u" hint-placeholder-count="5">
+<a href="DetailTiket.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #eaedf1; color: #182433">
+<span style="flex: 0 0 104px; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; box-sizing: border-box; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{u.slaBg}}; color: {{u.slaFg}}">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{u.slaIcon}}"></path></svg>
+{{u.sla}}
+</span>
+<span style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column">
+<span style="font-weight: 600; color: #066fd1">{{u.npr}}</span>
+<span style="color: #536173; font-size: 13px">{{u.remote}} · {{u.city}}</span>
+</span>
+<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{u.stBg}}; color: {{u.stFg}}">{{u.status}}</span>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6l-6 6"></path></svg>
+</a>
+</sc-for>
+</section>
+
+<section style="flex: 2 1 340px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 20px 20px 8px; box-sizing: border-box; display: flex; flex-direction: column">
+<div style="padding-bottom: 8px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Remote paling sering bermasalah</h2>
+<p style="margin: 2px 0 0; color: #536173; font-size: 13px">Jumlah tiket per remote · 30 hari terakhir</p>
+</div>
+<sc-for list="{{frequent}}" as="f" hint-placeholder-count="5">
+<a href="Segera.dc.html" style="display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid #eaedf1; color: #182433">
+<span style="display: flex; justify-content: space-between; gap: 12px">
+<span style="min-width: 0; display: flex; flex-direction: column">
+<span style="font-weight: 600">{{f.remote}}</span>
+<span style="color: #536173; font-size: 13px">{{f.customer}} · {{f.city}}</span>
+</span>
+<b style="font-size: 15px; white-space: nowrap">{{f.count}}</b>
+</span>
+<span aria-hidden="true" style="display: block; height: 4px; background: #eaedf1; border-radius: 2px; overflow: hidden"><span style="display: block; height: 100%; background: #2a78d6; border-radius: 2px; width: {{f.pct}}%"></span></span>
+</a>
+</sc-for>
+</section>
+</div>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tampilkanBannerGamas":{"editor":"boolean","default":true,"section":"Keadaan"},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var hover = typeof st.hover === 'number' ? st.hover : -1;
+    var showTable = !!st.table;
+    var self = this;
+
+    var IC = {
+      dash: 'M4 4h6v8h-6z M14 4h6v4h-6z M14 12h6v8h-6z M4 16h6v4h-6z',
+      bell: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      ticket: 'M15 5v2 M15 11v2 M15 17v2 M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2',
+      layers: 'M12 4l-8 4l8 4l8 -4l-8 -4 M4 12l8 4l8 -4 M4 16l8 4l8 -4',
+      pin: 'M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z',
+      chart: 'M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z',
+      folder: 'M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2',
+      sliders: 'M4 6h8 M16 6h4 M14 4v4 M4 12h2 M10 12h10 M8 10v4 M4 18h11 M19 18h1 M17 16v4',
+      alert: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      clock: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3',
+      pause: 'M6 5h4v14h-4z M14 5h4v14h-4z'
+    };
+
+    function navItem(label, icon, href, count, active) {
+      return {
+        label: label, icon: icon, href: href, count: count || '', hasCount: !!count,
+        current: active ? 'page' : 'false',
+        bg: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+        fg: active ? '#ffffff' : '#c3cdd9',
+        weight: active ? 600 : 500
+      };
+    }
+    var navGroups = [
+      { title: 'Kerja', items: [
+        navItem('Overview', IC.dash, 'Main.dc.html', '', true),
+        navItem('Alert', IC.bell, 'Alert.dc.html', '9', false),
+        navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', false),
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '1', false)
+      ] },
+      { title: 'Data', items: [
+        navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
+        navItem('Laporan', IC.chart, 'Segera.dc.html', '', false),
+        navItem('Dokumen', IC.folder, 'Segera.dc.html', '', false)
+      ] },
+      { title: 'Sistem', items: [ navItem('Admin', IC.sliders, 'Segera.dc.html', '', false) ] }
+    ];
+
+    var RD = [18, 22, 19, 25, 17, 14, 16, 21, 24, 20, 26, 19, 23, 27];
+    var CM = [4, 6, 3, 5, 7, 2, 3, 5, 4, 6, 5, 3, 4, 3];
+    var PM = [3, 2, 4, 2, 0, 0, 5, 4, 3, 2, 3, 0, 0, 1];
+    var DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    var DOWL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    var COLORS = ['#2a78d6', '#eb6834', '#1baf7a'];
+    var PX = 6;
+
+    var days = RD.map(function (rd, i) {
+      var date = 3 + i;
+      var dow = (2 + i) % 7;
+      var vals = [rd, CM[i], PM[i]];
+      var total = rd + CM[i] + PM[i];
+      var top = -1;
+      vals.forEach(function (v, k) { if (v > 0) top = k; });
+      var first = true;
+      var segs = [];
+      vals.forEach(function (v, k) {
+        if (v <= 0) return;
+        segs.push({ h: Math.max(1, v * PX - (first ? 0 : 2)), color: COLORS[k], radius: k === top ? '4px 4px 0 0' : '0' });
+        first = false;
+      });
+      var isToday = i === 13;
+      var tipLeft = '50%', tipTransform = 'translateX(-50%)';
+      if (i <= 1) { tipLeft = '0'; tipTransform = 'none'; }
+      if (i >= 11) { tipLeft = '100%'; tipTransform = 'translateX(-100%)'; }
+      return {
+        rd: rd, cm: CM[i], pm: PM[i], total: total, segs: segs, isToday: isToday,
+        dateLabel: String(date),
+        dowLabel: DOW[dow],
+        labelClass: (13 - i) % 2 === 1 ? 'xl-alt' : 'xl',
+        longLabel: DOWL[dow] + ', ' + date + ' Nov' + (isToday ? ' (sampai 16:58)' : ''),
+        labelColor: isToday ? '#182433' : '#66727f',
+        labelWeight: isToday ? 700 : 400,
+        active: hover === i,
+        opacity: hover === -1 || hover === i ? 1 : 0.45,
+        tipBottom: Math.min(total * PX + 12, 100),
+        tipLeft: tipLeft, tipTransform: tipTransform,
+        enter: function () { self.setState({ hover: i }); },
+        leave: function () { self.setState({ hover: -1 }); }
+      };
+    });
+
+    var ticks = [0, 10, 20, 30, 40].map(function (v) {
+      return { label: String(v), bottom: v * PX, labelBottom: v * PX - 7, color: v === 0 ? '#c9d0d9' : '#eaedf1' };
+    });
+
+    var regionsRaw = [
+      ['Sulawesi', 17, '612', true, false],
+      ['Sumatera', 6, '1.104', false, false],
+      ['Jawa', 5, '1.876', false, false],
+      ['Kalimantan', 3, '548', false, true],
+      ['Papua', 3, '207', false, false],
+      ['Bali & Nusa Tenggara', 2, '301', false, false],
+      ['Maluku', 1, '164', false, false]
+    ];
+    var regions = regionsRaw.map(function (r) {
+      return { name: r[0], down: r[1], total: r[2], flag: r[3], gamas: r[4], pct: Math.max(4, Math.round(r[1] / 17 * 100)) };
+    });
+
+    var SLA = {
+      late: { bg: '#fbe3e3', fg: '#a12424', icon: IC.alert },
+      warn: { bg: '#fcefd2', fg: '#7a4a00', icon: IC.clock },
+      ok: { bg: '#eaedf1', fg: '#454f5c', icon: IC.clock },
+      paused: { bg: '#eaedf1', fg: '#454f5c', icon: IC.pause }
+    };
+    var ST = {
+      'Terbuka': ['#dfeafb', '#0b4f99'],
+      'Dikerjakan': ['#d5f0ec', '#0d5c55'],
+      'Pending': ['#fcefd2', '#7a4a00'],
+      'Eskalasi': ['#fde4d5', '#9a3d0d'],
+      'Selesai': ['#dcf2e1', '#1b6430'],
+      'Ditutup': ['#eaedf1', '#454f5c']
+    };
+    function tk(sla, slaKind, npr, remote, city, status) {
+      var s = SLA[slaKind];
+      return { sla: sla, slaBg: s.bg, slaFg: s.fg, slaIcon: s.icon, npr: npr, remote: remote, city: city, status: status, stBg: ST[status][0], stFg: ST[status][1] };
+    }
+    var urgent = [
+      tk('Lewat 25 m', 'late', 'NPR/VSAT/BNA/2026/11/0409', 'ATM SPBU Daya', 'Makassar · WITA', 'Eskalasi'),
+      tk('Lewat 6 m', 'late', 'NPR/VSAT/BPT/2026/11/0122', 'ATM Kantor Camat Waena', 'Jayapura · WIT', 'Dikerjakan'),
+      tk('18 m', 'warn', 'NPR/VSAT/BNA/2026/11/0418', 'ATM KCP Pasar Sentral', 'Makassar · WITA', 'Dikerjakan'),
+      tk('41 m', 'warn', 'NPR/VPN/BAD/2026/11/0277', 'ATM RS Bhayangkara', 'Palu · WITA', 'Terbuka'),
+      tk('52 m', 'warn', 'NPR/VSAT/BSL/2026/11/0061', 'ATM Bandara Sentani', 'Jayapura · WIT', 'Eskalasi')
+    ];
+
+    var freqRaw = [
+      ['ATM Pelabuhan Tual', 'Bank Nusa', 'Maluku Tenggara', 9],
+      ['ATM Kantor Camat Waena', 'BPD Timur', 'Jayapura', 7],
+      ['ATM Pasar Inpres', 'Bank Andalas', 'Kupang', 6],
+      ['ATM SPBU Daya', 'Bank Nusa', 'Makassar', 5],
+      ['ATM Bandara Sentani', 'Bank Selaras', 'Jayapura', 5]
+    ];
+    var frequent = freqRaw.map(function (f) {
+      return { remote: f[0], customer: f[1], city: f[2], count: f[3] + ' tiket', pct: Math.round(f[3] / 9 * 100) };
+    });
+
+    return {
+      navGroups: navGroups,
+      showBanner: this.props.tampilkanBannerGamas ?? true,
+      days: days, ticks: ticks, tableRows: days,
+      showChart: !showTable, showTable: showTable,
+      toggleLabel: showTable ? 'Lihat sebagai grafik' : 'Lihat sebagai tabel',
+      toggleTable: function () { self.setState({ table: !showTable, hover: -1 }); },
+      regions: regions, urgent: urgent, frequent: frequent
+    };
+  }
+}
+</script>
+</body>
+</html>

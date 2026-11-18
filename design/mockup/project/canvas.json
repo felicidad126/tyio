@@ -1,0 +1,28 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-16T09:58:20Z" },
+  "title": "Mockup Portal NOC Tyio",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1400, "title": "1 · Overview (pola Dashboard)", "expand": "fill", "is_interactive": true },
+    "Tiket.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1320, "title": "2 · Antrean Tiket (pola List)", "expand": "fill", "is_interactive": true },
+    "DetailTiket.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 1320, "title": "3 · Detail Tiket (pola Detail + linimasa)", "expand": "fill", "is_interactive": true },
+    "Alert.dc.html": { "x": 4560, "y": 0, "w": 1440, "h": 1380, "title": "4 · Alert (pola Split Pane)", "expand": "fill", "is_interactive": true },
+    "Gamas.dc.html": { "x": 6080, "y": 0, "w": 1440, "h": 900, "title": "5 · Gamas (pola List)", "expand": "fill", "is_interactive": true },
+    "GamasDetail.dc.html": { "x": 7600, "y": 0, "w": 1440, "h": 1300, "title": "6 · Detail Gamas (pola Detail)", "expand": "fill", "is_interactive": true },
+    "Wall.dc.html": { "x": 0, "y": 1900, "w": 1920, "h": 1080, "title": "7 · Layar Dinding 24/7" },
+    "Ponsel.dc.html": { "x": 2000, "y": 1900, "w": 390, "h": 844, "title": "8 · Ponsel PWA · Notifikasi (pola Inbox)", "is_interactive": true },
+    "Fondasi.dc.html": { "x": 2470, "y": 1900, "w": 1280, "h": 1040, "title": "9 · Fondasi Visual (token & status)" },
+    "Segera.dc.html": { "x": 3830, "y": 1900, "w": 1440, "h": 900, "title": "10 · Layar belum dibuat (tujuan tautan)", "expand": "fill", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Tiket.dc.html", "DetailTiket.dc.html", "Alert.dc.html", "Gamas.dc.html", "GamasDetail.dc.html", "Wall.dc.html", "Ponsel.dc.html", "Fondasi.dc.html", "Segera.dc.html"],
+  "notes": {
+    "judulKerja": { "x": 0, "y": -300, "text": "Mode kerja — layar operator NOC (desktop)", "kind": "title1", "maxW": 9040 },
+    "judulMonitor": { "x": 0, "y": 1600, "text": "Mode monitor, ponsel, dan fondasi visual", "kind": "title1", "maxW": 5270 },
+    "catatanKerja": { "x": 9120, "y": 0, "w": 440, "fill": "blue", "size": "s", "text": "Catatan serah terima — mode kerja\n\n• Overview = pola Dashboard: maksimal 5 angka. Setiap angka membuka daftar dengan filter yang sama, dan jumlahnya harus sama persis (langkah 2.1).\n• Antrean = pola List: urutan bawaan = sisa SLA paling sedikit. Satu tombol Filter; filter aktif tampil sebagai chip.\n• Detail Tiket = pola Detail: linimasa hanya-tambah. Koreksi = entri baru yang merujuk entri lama (R-F).\n• Alert = pola Split Pane: daftar kiri, rincian kanan, panah atas/bawah pindah pilihan. Di ponsel daftar dan rincian bergantian. Alert yang masuk saran Gamas digabung, tidak diverifikasi satu per satu (R-D).\n• Gamas: daftar = pola List, detail = pola Detail. Menutup Gamas menutup tiket anak yang remotenya sudah pulih; sisanya dilepas dan tetap terbuka.\n• Tutup tiket dan tutup Gamas ditolak oleh API untuk L1 (K4), bukan hanya tombol yang dimatikan.\n• Waktu disimpan UTC, ditampilkan per zona remote (WIB/WITA/WIT). Alert menyimpan waktu kejadian dan waktu diterima (R-H)." },
+    "catatanBelumFinal": { "x": 9120, "y": 720, "w": 440, "fill": "orange", "size": "s", "text": "Belum final — menunggu sesi dengan user\n\n• Angka dan target SLA di mockup hanya contoh; aturan SLA belum ditetapkan.\n• Kolom \"System\" dari dashboard lama belum dipakai sampai artinya jelas.\n• Pilihan Take Action dan alasan \"Bukan gangguan\" belum dipetakan ke alur status.\n• Siapa yang boleh membuka dan menutup Gamas belum diputuskan (sesi Gamas).\n• Detail Gamas: status Aktif dan Selesai adalah cuplikan sekitar 18:35 dan 18:40 WITA. Semua baris di daftar Gamas membuka contoh yang sama (hub Palu-1).\n• Semua nama customer, remote, orang, IP, dan nomor tiket adalah data dummy." },
+    "catatanMonitor": { "x": 5350, "y": 1900, "w": 400, "fill": "green", "size": "s", "text": "Layar dinding\n• Tanpa interaksi, berputar antarpanel, berbunyi saat ada kejadian kritis.\n• Banner merah hanya untuk kejadian kritis (dugaan Gamas, SLA lewat).\n• Setiap sumber data menampilkan umurnya; sumber yang terlambat ditandai, tidak disembunyikan.\n\nPonsel\n• Fokus ke notifikasi dan aksi cepat (Ambil, Buka tiket). Kerja padat tetap di desktop (asumsi 4 di rencana)." }
+  },
+  "designSystems": []
+}
