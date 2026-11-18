@@ -18,7 +18,7 @@ const OverviewPage = () => import('../pages/overview/OverviewPage.vue');
 const ModulePage = () => import('../pages/ModulePage.vue');
 
 // Satu rute per modul. Halaman modul yang belum dibangun memakai halaman penanda.
-const BUILT_MODULES: readonly AppModule[] = ['admin', 'remote', 'tiket'];
+const BUILT_MODULES: readonly AppModule[] = ['admin', 'remote', 'tiket', 'laporan'];
 const moduleRoutes: RouteRecordRaw[] = NAV_ITEMS.filter((item) => !BUILT_MODULES.includes(item.module)).map(
   (item) => ({
     path: item.path === '/' ? '' : item.path.slice(1),
@@ -72,6 +72,16 @@ const ticketRoutes: RouteRecordRaw[] = [
   },
 ];
 
+// Laporan (4.2): rekap NPR per periode; periode dan saringan tersimpan di alamat.
+const reportRoutes: RouteRecordRaw[] = [
+  {
+    path: 'laporan',
+    name: 'laporan',
+    component: () => import('../pages/reports/ReportsPage.vue'),
+    meta: { module: 'laporan', title: 'Laporan' },
+  },
+];
+
 // Admin: untuk sekarang hanya master data (1.1); daftar yang dibuka tersimpan di alamat.
 const adminRoutes: RouteRecordRaw[] = [
   { path: 'admin', name: 'admin', redirect: { name: 'admin-master', params: { list: 'customer' } } },
@@ -106,6 +116,7 @@ export const router = createRouter({
         ...moduleRoutes,
         ...remoteRoutes,
         ...ticketRoutes,
+        ...reportRoutes,
         ...adminRoutes,
         {
           // Pencarian global dari header (1.5): tiket dan remote; isinya mengikuti hak modul.

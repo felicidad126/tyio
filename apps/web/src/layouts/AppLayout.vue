@@ -51,7 +51,7 @@ function isActive(path: string): boolean {
       href="#konten"
     >Langsung ke konten</a>
 
-    <aside class="navbar navbar-vertical navbar-expand-md">
+    <aside class="navbar navbar-vertical navbar-expand-md d-print-none">
       <div class="container-fluid">
         <button
           type="button"
@@ -164,7 +164,7 @@ function isActive(path: string): boolean {
         tabindex="-1"
       >
         <div class="container-fluid app-content">
-          <LiveBanner />
+          <LiveBanner class="d-print-none" />
           <RouterView />
         </div>
       </main>
@@ -176,6 +176,19 @@ function isActive(path: string): boolean {
 /* Batas lebar hanya untuk isi halaman, bukan untuk shell (sidebar dan header melebar penuh). */
 .app-content {
   max-width: 1280px;
+}
+/* Cetak (mis. laporan ke PDF): tanpa menu samping dan header, isi selebar kertas. */
+@media print {
+  .page-wrapper {
+    margin: 0 !important;
+  }
+  .page-body {
+    margin: 0;
+  }
+  .app-content {
+    max-width: none;
+    padding: 0;
+  }
 }
 /* Target sentuh minimal 44×44 px. */
 .menu-toggle,

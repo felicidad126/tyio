@@ -60,7 +60,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     path: '/laporan',
     icon: IconReportAnalytics,
     release: 'R4',
-    summary: 'Template laporan NPR dan SLA dengan ekspor Excel dan PDF.',
+    summary: 'Rekap NPR per periode dengan ekspor Excel dan cetak PDF; laporan SLA menyusul.',
   },
   {
     module: 'admin',

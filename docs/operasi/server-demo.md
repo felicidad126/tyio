@@ -226,7 +226,7 @@ Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, W
 Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
 dashboard lama). Jarkom berisi nilai contoh.
 
-### Alur demo yang disarankan (sampai langkah 2.4, termasuk peta 2.3)
+### Alur demo yang disarankan (sampai langkah 2.4, peta 2.3, dan laporan rekap NPR)
 
 1. Masuk sebagai `helpdesk.contoh`. Halaman pertama adalah **Overview**: tiket aktif per status,
    per kategori dan customer, tren 14 hari, dan remote paling sering bermasalah. Klik sebuah
@@ -262,11 +262,15 @@ dashboard lama). Jarkom berisi nilai contoh.
 9. **Layar dinding**: di Overview tekan **Layar dinding** (atau buka `/dinding` di TV/monitor
    kedua), klik sekali untuk layar penuh dan bunyi. Panel berganti sendiri; buat tiket dari
    laptop lain: peringatan kuning besar muncul dan berbunyi.
-10. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
-   terlihat, juga di pencarian.
-11. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
+10. **Laporan**: rekap NPR bulan ini (jumlah, Selesai, rata-rata dan median lama gangguan, per
+   customer dan kategori, part diganti, remote terbanyak). Pilih **Bulan lalu** atau saring satu
+   customer; klik angka Selesai: daftar Tiket terbuka dengan jumlah yang sama. **Unduh Excel**
+   lalu buka berkasnya; **Cetak / PDF** untuk versi kertas.
+11. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote, tiket, dan laporan customer
+   lain tidak terlihat, juga di pencarian.
+12. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
-Belum ada: SLA dan laporan. (Gamas tidak dibuat.)
+Belum ada: SLA dan laporan SLA. (Gamas tidak dibuat.)
 Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah

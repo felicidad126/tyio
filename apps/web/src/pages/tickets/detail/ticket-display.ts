@@ -20,7 +20,11 @@ export function formatBytes(bytes: number): string {
  */
 export function formatDuration(fromIso: string, toIso: string): string {
   const minute = (iso: string) => Math.floor(new Date(iso).getTime() / 60_000);
-  const minutes = Math.max(0, minute(toIso) - minute(fromIso));
+  return formatMinutes(Math.max(0, minute(toIso) - minute(fromIso)));
+}
+
+/** Lama dalam menit sebagai teks: "2 jam 15 menit", "3 hari 4 jam". */
+export function formatMinutes(minutes: number): string {
   if (minutes < 1) return 'kurang dari 1 menit';
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);

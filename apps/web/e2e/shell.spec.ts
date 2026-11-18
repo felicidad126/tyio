@@ -4,7 +4,7 @@ import { expectNoPageOverflow, expectPath, signInAs } from './helpers';
 // Menu Dokumen (Shared) tidak dibuat (K31); Gamas dihapus (K45).
 const OPERATIONAL = ['Overview', 'Alert', 'Tiket', 'Remote', 'Laporan'];
 /** Modul yang sudah punya halaman sungguhan, bukan halaman penanda. */
-const BUILT = ['Overview', 'Remote', 'Tiket'];
+const BUILT = ['Overview', 'Remote', 'Tiket', 'Laporan'];
 const PAGES: Record<string, string> = {
   Overview: '/',
   Alert: '/alert',

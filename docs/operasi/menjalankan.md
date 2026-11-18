@@ -233,6 +233,33 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
   `sistem:migrasi`).
 
+### Laporan rekap NPR (4.2, bagian tanpa SLA)
+
+- Menu **Laporan**: NPR menurut **tanggal kejadian (WIB)** dalam satu periode. Bawaan tanggal 1
+  bulan ini sampai hari ini; tombol cepat Bulan ini, Bulan lalu, Tahun ini; periode paling
+  panjang 366 hari. Saringan customer, kategori, jarkom, dan status (Semua, Masih aktif,
+  Selesai). Periode dan saringan tersimpan di alamat halaman, jadi bisa dibagikan.
+- Isi: jumlah NPR, Selesai, Masih aktif, Dengan TT, **rata-rata dan median lama gangguan**
+  (kejadian sampai link online lagi, hanya NPR Selesai, detik diabaikan), tabel per customer
+  dan per kategori, part yang diganti, 10 remote dengan NPR terbanyak, dan daftar NPR 50 per
+  halaman. Part dihitung per tindakan Close (NPR yang dibuka lagi tetap menghitung part yang
+  sudah diganti).
+- Setiap angka bertaut ke daftar **Tiket** dengan saringan yang sama dan menghasilkan jumlah
+  yang sama (diuji). Halaman laporan tidak berubah sendiri selagi dibaca; tekan Muat ulang untuk
+  angka terbaru.
+- **Unduh Excel** (`GET /api/reports/npr/excel`): lembar Rekap, Per customer, Per kategori, Part
+  diganti, Remote terbanyak, dan **Daftar NPR** berisi semua NPR periode itu (waktu dalam WIB
+  sebagai tanggal-waktu Excel, judul kolom beku, saringan otomatis). Teks tidak pernah menjadi
+  rumus. Rekap dan daftar dibaca dari satu potret data, jadi jumlahnya selalu cocok walau ada
+  NPR baru selama unduhan. Batas 100.000 NPR per berkas; paling banyak 2 unduhan berjalan
+  bersamaan (yang ketiga diminta mencoba lagi). Diukur: 100.000 NPR (setahun) 3,5 detik, berkas
+  7,8 MB; satu bulan (±5.000) 0,25 detik. Selama unduhan, permintaan lain tidak melambat.
+- **Cetak / PDF**: dialog cetak browser (pilih "Simpan sebagai PDF"). Menu, header, dan saringan
+  disembunyikan; periode dan saringan tertulis di judul. Daftar NPR di cetakan hanya halaman yang
+  tampil; daftar lengkap ada di berkas Excel.
+- API JSON: `GET /api/reports/npr?from=TTTT-BB-HH&to=TTTT-BB-HH&tenantId=&categoryId=&jarkomId=&status=semua|aktif|selesai&page=`.
+  Dibatasi customer seperti rute tiket lain. Laporan SLA menunggu aturan SLA (4.1).
+
 ### Peta remote (2.3)
 
 - Di **Overview** (kartu Peta remote) dan sebagai panel di **layar dinding**. Satu titik per

@@ -333,4 +333,5 @@ List Report Teknisi, Shared.
 | R0 Fondasi | 0.1–0.5 selesai (0.1–0.2 di `main` lewat PR #1); pemasangan staging dan 0.6 menunggu keputusan hosting; lihat Progres di langkah-teknis.md |
 | R1 Remote + Tiket | Berjalan — 1.1–1.6 selesai (master data, remote, buat tiket, linimasa dan alur status, antrean dan pencarian, TT lewat Eskalasi To SD, Close dan riwayat remote) dan terpasang di server demo; tersisa 1.7 (produksi pertama, menunggu server) |
 | R2 Overview + monitor 24/7 | Selesai — 2.1 (Overview), 2.2 (pembaruan langsung), 2.3 (peta remote), 2.4 (layar dinding); uji rendam 24 jam layar dinding di server user menyusul |
-| R3–R8 | Belum mulai (R3 dibatalkan) |
+| R4 SLA + Laporan | Berjalan — laporan rekap NPR (bagian 4.2 tanpa SLA: periode, saringan, angka yang cocok dengan daftar Tiket, ekspor Excel, cetak/PDF) selesai; aturan SLA (4.1) dan laporan SLA menunggu sesi aturan SLA dan contoh laporan wajib |
+| R3, R5–R8 | Belum mulai (R3 dibatalkan) |

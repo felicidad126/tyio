@@ -19,6 +19,7 @@ import {
   TENANT_OWNED_TABLES_COVERED,
 } from './tenant-data.js';
 import { testConfig } from './test-config.js';
+import { binaryParser, readXlsx } from './xlsx-read.js';
 
 describe('isolasi tenant di semua rute terdaftar', () => {
   let app: INestApplication;
@@ -77,11 +78,32 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   const hasParams = (path: string) => /:[A-Za-z]+/.test(path);
   // Rute GET yang wajib punya parameter pencarian: diuji dengan kata yang cocok dengan data
   // kedua tenant ("Remote <nama tenant>"), sehingga kebocoran tenant B pasti terlihat.
-  const PROBE_QUERY: Readonly<Record<string, string>> = { '/api/search': 'q=Remote' };
-  const get = (path: string, who: keyof typeof cookies) =>
-    request(app.getHttpServer())
+  // Laporan: periode tetap yang memuat NPR uji kedua tenant (dibuat 1 Nov 2026), tidak bergantung
+  // pada tanggal uji dijalankan.
+  const REPORT_PERIOD = 'from=2026-11-01&to=2026-11-30';
+  const PROBE_QUERY: Readonly<Record<string, string>> = {
+    '/api/search': 'q=Remote',
+    '/api/reports/npr': REPORT_PERIOD,
+    '/api/reports/npr/excel': REPORT_PERIOD,
+  };
+  // Rute yang menjawab berkas Excel: isinya dibongkar dan diperiksa seperti JSON. Berkas tidak
+  // memuat id, jadi penanda customer di dalamnya adalah namanya.
+  const XLSX_ROUTES = ['GET /api/reports/npr/excel'];
+  const isXlsx = (route: RouteInfo) => XLSX_ROUTES.includes(`${route.method} ${route.path}`);
+  const get = (path: string, who: keyof typeof cookies) => {
+    const req = request(app.getHttpServer())
       .get(PROBE_QUERY[path] ? `${path}?${PROBE_QUERY[path]}` : path)
       .set('Cookie', cookies[who]);
+    return XLSX_ROUTES.includes(`GET ${path}`) ? req.buffer(true).parse(binaryParser) : req;
+  };
+  /** Teks jawaban untuk dicari penandanya: JSON, atau isi lembar bila berkas Excel. */
+  const textOf = (res: request.Response): string => {
+    if (String(res.headers['content-type']).startsWith('application/vnd.openxmlformats')) {
+      return readXlsx(res.body as Buffer).sheets.join('');
+    }
+    return Buffer.isBuffer(res.body) ? res.body.toString('utf8') : JSON.stringify(res.body);
+  };
+  const tenantMarker = (route: RouteInfo, tenant: Tenant) => (isXlsx(route) ? tenant.name : tenant.id);
   const call = (method: string, path: string, who?: keyof typeof cookies) => {
     const req = request(app.getHttpServer())[method.toLowerCase() as 'get'](path);
     return who ? req.set('Cookie', cookies[who]) : req;
@@ -209,7 +231,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
       const probes = hasParams(route.path) ? bIds.map((id) => fill(route.path, id)) : [route.path];
       for (const path of probes) {
         const res = await get(path, 'a');
-        const body = JSON.stringify(res.body);
+        const body = textOf(res);
         for (const marker of bMarkers()) {
           expect(body, `${route.method} ${path} membocorkan "${marker}"`).not.toContain(marker);
         }
@@ -227,11 +249,12 @@ describe('isolasi tenant di semua rute terdaftar', () => {
       const ids = hasParams(route.path) ? aIds : [''];
       const answers = await Promise.all(ids.map(async (id) => ({ id, res: await get(fill(route.path, id), 'a') })));
       const binary = BINARY_ROUTES.includes(`${route.method} ${route.path}`);
-      // Jawaban memuat id tenant A, atau id data A lain selain yang dipakai di alamat.
+      // Jawaban memuat penanda tenant A, atau id data A lain selain yang dipakai di alamat.
       const found = answers.some(
         ({ id, res }) =>
           res.status === 200 &&
-          (binary || [a.id, ...aIds.filter((other) => other !== id)].some((x) => JSON.stringify(res.body).includes(x))),
+          (binary ||
+            [tenantMarker(route, a), ...aIds.filter((other) => other !== id)].some((x) => textOf(res).includes(x))),
       );
 
       expect(found, `${route.method} ${route.path} tidak mengembalikan data tenant A`).toBe(true);
@@ -240,13 +263,13 @@ describe('isolasi tenant di semua rute terdaftar', () => {
 
   it('pengguna semua tenant melihat A dan B; pengguna tanpa tenant tidak melihat keduanya', async () => {
     for (const route of dataReads().filter((r) => !hasParams(r.path))) {
-      const all = JSON.stringify((await get(route.path, 'semua').expect(200)).body);
-      const none = JSON.stringify((await get(route.path, 'kosong').expect(200)).body);
+      const all = textOf(await get(route.path, 'semua').expect(200));
+      const none = textOf(await get(route.path, 'kosong').expect(200));
 
-      expect(all).toContain(a.id);
-      expect(all).toContain(b.id);
-      expect(none).not.toContain(a.id);
-      expect(none).not.toContain(b.id);
+      expect(all, `${route.method} ${route.path}`).toContain(tenantMarker(route, a));
+      expect(all, `${route.method} ${route.path}`).toContain(tenantMarker(route, b));
+      expect(none, `${route.method} ${route.path}`).not.toContain(tenantMarker(route, a));
+      expect(none, `${route.method} ${route.path}`).not.toContain(tenantMarker(route, b));
     }
   });
 
