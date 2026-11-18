@@ -18,6 +18,7 @@ a:hover{color:#0558a8}
 .cell-check:hover{background:#f3f7fd}
 .btn-open:disabled{background:#dce1e7 !important;color:#454f5c !important;cursor:not-allowed !important}
 @media (max-width: 900px){
+.shell-root{align-content:flex-start}
 .shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
 .side-sub,.side-title{display:none !important}
 .side-foot{margin-top:0 !important;flex:0 0 auto;white-space:nowrap}
@@ -30,7 +31,7 @@ a:hover{color:#0558a8}
 }
 </style>
 </helmet>
-<div style="position: relative; display: flex; flex-wrap: wrap; min-height: 1300px; background: #f6f8fb; color: #182433; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+<div class="shell-root" style="position: relative; display: flex; flex-wrap: wrap; min-height: 1300px; background: #f6f8fb; color: #182433; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
 <a class="skip-link" href="#konten">Lewati ke konten</a>
 
 <aside class="shell-side" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #182433; color: #c3cdd9; padding: 20px 12px; display: flex; flex-direction: column; gap: 24px">
@@ -46,7 +47,7 @@ a:hover{color:#0558a8}
 <nav class="side-nav" aria-label="Menu utama" style="display: flex; flex-direction: column; gap: 20px">
 <sc-for list="{{navGroups}}" as="g" hint-placeholder-count="3">
 <div class="side-group" style="display: flex; flex-direction: column; gap: 4px">
-<span class="side-title" style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8d9aab; padding: 0 10px 4px">{{g.title}}</span>
+<span class="side-title" style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8d9aab; padding: 0 10px 4px">{{g.title}}</span>
 <div class="side-items" style="display: flex; flex-wrap: wrap; gap: 2px">
 <sc-for list="{{g.items}}" as="item" hint-placeholder-count="3">
 <a class="side-item" href="{{item.href}}" aria-current="{{item.current}}" style="flex: 1 1 180px; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}">
@@ -82,7 +83,7 @@ Mode monitor 24/7
 </div>
 <button type="button" aria-label="Notifikasi, 4 belum dibaca" style="position: relative; width: 40px; height: 40px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
-<span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
+<span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
 </button>
 <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
@@ -114,7 +115,7 @@ Buat NPR
 <span aria-hidden="true">·</span>
 <span>4 customer</span>
 <span aria-hidden="true">·</span>
-<span>Mulai 16:41 WITA</span>
+<span>Mulai 17:41 WITA</span>
 </div>
 </div>
 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
@@ -132,7 +133,7 @@ Tutup Gamas
 <sc-if value="{{cannotClose}}" hint-placeholder-val="{{ false }}">
 <button type="button" disabled aria-describedby="alasan-tutup-gamas" style="height: 40px; padding: 0 14px; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; color: #66727f; font: inherit; font-weight: 600">Tutup Gamas</button>
 </sc-if>
-<button type="button" onClick="{{goNote}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Tambah catatan</button>
+<button type="button" onClick="{{goNote}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Tambah catatan</button>
 </sc-if>
 <sc-if value="{{isDitolak}}" hint-placeholder-val="{{ false }}">
 <a href="Alert.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 6px; background: #066fd1; color: #ffffff; font-weight: 600">Buka halaman Alert</a>
@@ -416,20 +417,20 @@ class Component extends DCLogic {
 
     // 14 remote di hub Palu-1
     var R = [
-      ['ATM Pasar Masomba', 'Bank Nusa', 'BNA', '16:41'],
-      ['ATM Pasar Inpres Manonda', 'Bank Nusa', 'BNA', '16:41'],
-      ['ATM RSUD Undata', 'Bank Andalas', 'BAD', '16:41'],
-      ['ATM Kampus Untad', 'Bank Selaras', 'BSL', '16:42'],
-      ['ATM SPBU Talise', 'Bank Nusa', 'BNA', '16:42'],
-      ['ATM Bandara Mutiara', 'Bank Selaras', 'BSL', '16:42'],
-      ['ATM Palu Grand Mall', 'Bank Andalas', 'BAD', '16:42'],
-      ['ATM Kantor Gubernur', 'BPD Timur', 'BPT', '16:43'],
-      ['ATM Pantai Talise', 'Bank Nusa', 'BNA', '16:43'],
-      ['ATM Pasar Tua Biromaru', 'Bank Selaras', 'BSL', '16:43'],
-      ['ATM KCP Donggala', 'Bank Andalas', 'BAD', '16:43'],
-      ['ATM RS Anutapura', 'Bank Nusa', 'BNA', '16:44'],
-      ['ATM SPBU Tondo', 'BPD Timur', 'BPT', '16:44'],
-      ['ATM Kampus IAIN Palu', 'Bank Selaras', 'BSL', '16:44']
+      ['ATM Pasar Masomba', 'Bank Nusa', 'BNA', '17:41'],
+      ['ATM Pasar Inpres Manonda', 'Bank Nusa', 'BNA', '17:41'],
+      ['ATM RSUD Undata', 'Bank Andalas', 'BAD', '17:41'],
+      ['ATM Kampus Untad', 'Bank Selaras', 'BSL', '17:42'],
+      ['ATM SPBU Talise', 'Bank Nusa', 'BNA', '17:42'],
+      ['ATM Bandara Mutiara', 'Bank Selaras', 'BSL', '17:42'],
+      ['ATM Palu Grand Mall', 'Bank Andalas', 'BAD', '17:42'],
+      ['ATM Kantor Gubernur', 'BPD Timur', 'BPT', '17:43'],
+      ['ATM Pantai Talise', 'Bank Nusa', 'BNA', '17:43'],
+      ['ATM Pasar Tua Biromaru', 'Bank Selaras', 'BSL', '17:43'],
+      ['ATM KCP Donggala', 'Bank Andalas', 'BAD', '17:43'],
+      ['ATM RS Anutapura', 'Bank Nusa', 'BNA', '17:44'],
+      ['ATM SPBU Tondo', 'BPD Timur', 'BPT', '17:44'],
+      ['ATM Kampus IAIN Palu', 'Bank Selaras', 'BSL', '17:44']
     ];
     var STILL_DOWN = { 10: true, 13: true };
     var includedCount = R.filter(function (r, i) { return !excluded[i]; }).length;
@@ -467,7 +468,7 @@ class Component extends DCLogic {
     var LOG_AKTIF = [
       ['Arif S.', 'L2', '18:31 WITA', '12 remote kembali up setelah carrier pulih. KCP Donggala dan Kampus IAIN Palu masih down; dugaan modem hang, PIC cabang diminta menyalakan ulang modem.'],
       ['Arif S.', 'L2', '18:20 WITA', 'Vendor satelit mengonfirmasi perangkat RF di stasiun bumi Palu-1 rusak dan sudah diganti. Carrier kembali 18:18.'],
-      ['Arif S.', 'L2', '18:05 WITA', 'Lapor ke vendor satelit, tiket vendor VS-4412. Carrier hub Palu-1 hilang dari spektrum sejak 16:41.'],
+      ['Arif S.', 'L2', '18:05 WITA', 'Lapor ke vendor satelit, tiket vendor VS-4412. Carrier hub Palu-1 hilang dari spektrum sejak 17:41.'],
       ['Sistem', 'Otomatis', '17:58 WITA', 'Gamas dibuka oleh Arif S. dari saran. 13 NPR anak dibuat, 1 NPR yang sudah ada ditautkan. Pemberitahuan dikirim ke 4 customer.']
     ];
     var LOG_SELESAI = [['Arif S.', 'L2', '18:40 WITA', 'Gamas ditutup. 12 NPR anak ditutup bersama Gamas; NPR KCP Donggala dan Kampus IAIN Palu dilepas dan tetap terbuka. Pemberitahuan penutupan dikirim ke 4 customer.']].concat(LOG_AKTIF);
@@ -495,10 +496,10 @@ class Component extends DCLogic {
 
     function S(label, value, sub) { return { label: label, value: value, sub: sub }; }
     var summary = {
-      saran: [S('Mulai', '16:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 m', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('NPR', '1 NPR', '+ 13 alert belum jadi NPR'), S('Customer', '4 customer', 'semua bank di hub ini')],
-      ditolak: [S('Mulai', '16:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 m', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('NPR', '1 NPR', '13 alert kembali ke Alert'), S('Customer', '4 customer', 'semua bank di hub ini')],
-      aktif: [S('Mulai', '16:41 WITA', 'Gamas dibuka 17:58'), S('Lama', '1 j 54 m', 'masih berjalan'), S('Remote terdampak', '12 pulih · 2 down', 'carrier kembali 18:18'), S('NPR anak', '14 NPR', '13 baru · 1 ditautkan'), S('Penanggung', 'Arif S. · L2', 'sejak 17:58')],
-      selesai: [S('Lama gangguan', '1 j 37 m', '16:41 – 18:18 WITA'), S('Lama penanganan', '1 j 59 m', '16:41 – 18:40 WITA'), S('Remote terdampak', '12 pulih · 2 dilepas', 'modem 2 remote masih hang'), S('NPR anak', '12 ditutup', '2 tetap terbuka'), S('Penanggung', 'Arif S. · L2', 'menutup 18:40')]
+      saran: [S('Mulai', '17:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 m', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('NPR', '1 NPR', '+ 13 alert belum jadi NPR'), S('Customer', '4 customer', 'semua bank di hub ini')],
+      ditolak: [S('Mulai', '17:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 m', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('NPR', '1 NPR', '13 alert kembali ke Alert'), S('Customer', '4 customer', 'semua bank di hub ini')],
+      aktif: [S('Mulai', '17:41 WITA', 'Gamas dibuka 17:58'), S('Lama', '54 m', 'masih berjalan'), S('Remote terdampak', '12 pulih · 2 down', 'carrier kembali 18:18'), S('NPR anak', '14 NPR', '13 baru · 1 ditautkan'), S('Penanggung', 'Arif S. · L2', 'sejak 17:58')],
+      selesai: [S('Lama gangguan', '37 m', '17:41 – 18:18 WITA'), S('Lama penanganan', '59 m', '17:41 – 18:40 WITA'), S('Remote terdampak', '12 pulih · 2 dilepas', 'modem 2 remote masih hang'), S('NPR anak', '12 ditutup', '2 tetap terbuka'), S('Penanggung', 'Arif S. · L2', 'menutup 18:40')]
     }[status];
 
     var acts = [];
@@ -519,10 +520,10 @@ class Component extends DCLogic {
       items: ['Vendor satelit mengganti perangkat RF; carrier kembali 18:18 WITA (tiket vendor VS-4412).', '12 remote pulih otomatis dalam 6 mnt setelah carrier kembali.', 'KCP Donggala dan Kampus IAIN Palu masih down karena modem hang; NPR-nya ditangani terpisah.']
     } : (status === 'aktif' ? {
       label: 'Penyebab (dikonfirmasi vendor 18:20)', title: 'Perangkat RF stasiun bumi Palu-1',
-      items: ['14 remote dari 4 customer turun dalam 3 mnt (16:41–16:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tiket vendor satelit: VS-4412.']
+      items: ['14 remote dari 4 customer turun dalam 3 mnt (17:41–17:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tiket vendor satelit: VS-4412.']
     } : {
       label: 'Dugaan penyebab', title: 'Hub atau link satelit Palu-1',
-      items: ['14 remote dari 4 customer turun dalam 3 mnt (16:41–16:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tidak ada info pemadaman PLN di Palu.', 'Cuaca cerah menurut BMKG, jadi bukan rain fade.']
+      items: ['14 remote dari 4 customer turun dalam 3 mnt (17:41–17:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tidak ada info pemadaman PLN di Palu.', 'Cuaca cerah menurut BMKG, jadi bukan rain fade.']
     });
 
     var impact = [['Bank Nusa', 5], ['Bank Selaras', 4], ['Bank Andalas', 3], ['BPD Timur', 2]].map(function (m) {

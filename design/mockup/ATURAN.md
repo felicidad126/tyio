@@ -100,5 +100,5 @@ banner kritis, dan angka "SLA sudah lewat". Tren dan informasi ("naik 14 dalam 1
   SLA kurang dari 1 jam: 5, dua di antaranya sudah lewat.
 - **TT aktif 4:** TT …/0019 (NPR …/0061 Bandara Sentani), TT …/0087 (NPR …/0396 Pelabuhan Tual),
   dan dua TT dari NPR Corrective di Samarinda Seberang dan Pasar Tomohon. Nomor persisnya mengikuti data di `Tiket.dc.html`.
-- **Alert menunggu verifikasi 9** (terlama 7 mnt). Saran Gamas hub Palu-1: 14 remote = 13 alert + 1 NPR (…/0421), mulai 16:41 WITA.
+- **Alert menunggu verifikasi 9** (terlama 7 mnt). Saran Gamas hub Palu-1: 14 remote = 13 alert + 1 NPR (…/0421), mulai 17:41 WITA (17 m sebelum "sekarang").
 - **Gamas aktif 1:** GMS/2026/11/0007, listrik padam PLN Balikpapan Utara, 3 remote.
