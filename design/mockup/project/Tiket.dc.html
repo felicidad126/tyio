@@ -255,37 +255,37 @@ Status: semua kecuali Ditutup
 <table style="width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 13px">
 <thead>
 <tr style="background: #f6f8fb; text-align: left">
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">No. TT</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Remote</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Problem jarkom</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Status TT</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Dikirim ke SD</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Penanggung</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Aksi</span></th>
+<th scope="col" style="padding: 10px 8px 10px 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">No. TT</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Remote</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Problem jarkom</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Status TT</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Dikirim ke SD</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Penanggung</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Aksi</span></th>
 </tr>
 </thead>
 <tbody>
 <sc-for list="{{ttRows}}" as="t" hint-placeholder-count="4">
 <tr class="row-click">
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<td style="padding: 9px 8px 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
 <a class="row-link" href="DetailTiket.dc.html" style="font-weight: 600">{{t.id}}</a>
 <div style="font-size: 12px; color: #536173">{{t.npr}}</div>
 </td>
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
 <div style="font-weight: 500">{{t.remote}}</div>
 <div style="font-size: 12px; color: #536173">{{t.city}}</div>
 </td>
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; min-width: 220px">{{t.problem}}</td>
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; min-width: 180px">{{t.problem}}</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
 <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{t.stBg}}; color: {{t.stFg}}">{{t.status}}</span>
 </td>
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
 <div>{{t.sent}}</div>
 <div style="font-size: 12px; color: {{t.copyFg}}; font-weight: {{t.copyWeight}}">{{t.copyNote}}</div>
 </td>
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">{{t.owner}} <span style="color: #536173">· L2</span></td>
-<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap; text-align: right">
-<button type="button" class="row-over" aria-label="{{t.copyAria}}" onClick="{{t.copy}}" style="min-width: 168px; height: 32px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">{{t.owner}} <span style="color: #536173">· L2</span></td>
+<td style="padding: 9px 10px 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap; text-align: right">
+<button type="button" class="row-over" aria-label="{{t.copyAria}}" onClick="{{t.copy}}" style="min-width: 158px; height: 32px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.copyIcon}}"></path></svg>
 {{t.copyLabel}}
 </button>
@@ -304,7 +304,7 @@ Status: semua kecuali Ditutup
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1360}}'>
 class Component extends DCLogic {
   renderVals() {
     var st = this.state || {};
