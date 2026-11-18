@@ -15,6 +15,10 @@ a{color:#066fd1;text-decoration:none}
 a:hover{color:#0558a8}
 .skip-link{position:absolute;left:12px;top:-80px;z-index:30;padding:10px 16px;border-radius:6px;background:#ffffff;color:#066fd1;font-weight:600;box-shadow:0 4px 12px rgba(24,36,51,0.25)}
 .skip-link:focus{top:12px}
+tr.row-click{position:relative}
+tr.row-click:hover > td{background:#f3f7fd}
+.row-link::after{content:"";position:absolute;left:0;top:0;right:0;bottom:0}
+.row-over{position:relative;z-index:1}
 @media (max-width: 900px){
 .shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
 .side-sub,.side-title{display:none !important}
@@ -81,15 +85,15 @@ Mode monitor 24/7
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
 <span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
 </button>
-<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
-Buat tiket
+Buat NPR
 </button>
-<button type="button" aria-label="Akun: Arif S., L2, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<button type="button" aria-label="Akun: Arif S., L2 NOC, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
 <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">AS</span>
 <span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
 <span style="font-size: 13px; font-weight: 600">Arif S.</span>
-<span style="font-size: 12px; color: #536173">L2 · Shift Siang</span>
+<span style="font-size: 12px; color: #536173">L2 NOC · Shift Siang</span>
 </span>
 </button>
 </header>
@@ -99,7 +103,7 @@ Buat tiket
 <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
 <div style="display: flex; flex-direction: column; gap: 4px">
 <h1 style="margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700">Gamas</h1>
-<p style="margin: 0; color: #536173; font-size: 15px">Gangguan massal: banyak remote turun karena satu penyebab. Satu Gamas menampung tiket semua remote yang terdampak.</p>
+<p style="margin: 0; color: #536173; font-size: 15px">Gangguan massal: banyak remote turun karena satu penyebab. Satu Gamas menampung NPR semua remote yang terdampak.</p>
 </div>
 <button type="button" style="height: 40px; padding: 0 16px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
@@ -156,12 +160,12 @@ Filter
 </thead>
 <tbody>
 <sc-for list="{{rows}}" as="r" hint-placeholder-count="2">
-<tr>
+<tr class="row-click">
 <td style="padding: 12px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{r.stBg}}; color: {{r.stFg}}">{{r.status}}</span>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{r.stBg}}; color: {{r.stFg}}">{{r.status}}</span>
 </td>
 <td style="padding: 12px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; min-width: 260px">
-<a href="GamasDetail.dc.html" style="font-weight: 600">{{r.title}}</a>
+<a class="row-link" href="GamasDetail.dc.html" style="font-weight: 600">{{r.title}}</a>
 <div style="font-size: 12px; color: #536173; white-space: nowrap">{{r.no}}</div>
 </td>
 <td style="padding: 12px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
@@ -183,7 +187,7 @@ Filter
 <span>{{r.owner}} <span style="color: #536173">· {{r.level}}</span></span>
 </sc-if>
 <sc-if value="{{r.needsReview}}" hint-placeholder-val="{{ false }}">
-<a href="GamasDetail.dc.html" style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid #a12424; border-radius: 6px; background: #ffffff; color: #a12424; font-weight: 600">Tinjau saran</a>
+<a class="row-over" href="GamasDetail.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #a12424; border-radius: 6px; background: #ffffff; color: #a12424; font-weight: 600">Tinjau saran</a>
 </sc-if>
 </td>
 </tr>
@@ -236,7 +240,7 @@ class Component extends DCLogic {
         navItem('Overview', IC.dash, 'Main.dc.html', '', false),
         navItem('Alert', IC.bell, 'Alert.dc.html', '9', false),
         navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', false),
-        navItem('Gamas', IC.layers, 'Gamas.dc.html', '1', true)
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', true)
       ] },
       { title: 'Data', items: [
         navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
@@ -259,14 +263,14 @@ class Component extends DCLogic {
       };
     }
     var all = [
-      G('berjalan', 'Saran', 'Diduga gangguan hub Palu-1', 'Belum bernomor · dari 13 alert', 'Sulawesi Tengah', 'VSAT · hub Palu-1', '16 Nov · 16:41 WITA', '17 m', 'berjalan', '14 down', '1 tiket · 13 alert', 'Dugaan: hub atau link satelit', '', ''),
-      G('berjalan', 'Aktif', 'Listrik padam PLN Balikpapan Utara', 'GMS/2026/11/0007', 'Kalimantan Timur', 'VSAT · hub Balikpapan-1', '16 Nov · 15:20 WITA', '2 j 38 m', 'berjalan', '3 down', '3 tiket anak', 'Listrik', 'Sari P.', 'L2'),
-      G('selesai', 'Selesai', 'Gangguan transponder hub Jayapura-2', 'GMS/2026/11/0006', 'Papua', 'VSAT · hub Jayapura-2', '12 Nov · 02:10 WIT', '1 j 25 m', 'ditutup 03:41', '22 pulih', '22 tiket ditutup', 'Link satelit: transponder', 'Arif S.', 'L2'),
-      G('selesai', 'Selesai', 'Banjir Medan Timur', 'GMS/2026/11/0005', 'Sumatera Utara', 'VPN-IP · PE Medan', '9 Nov · 11:05 WIB', '6 j 10 m', 'ditutup 17:30', '7 pulih', '7 tiket ditutup', 'Cuaca dan listrik', 'Sari P.', 'L2'),
-      G('selesai', 'Selesai', 'Hujan lebat (rain fade) Ambon', 'GMS/2026/11/0004', 'Maluku', 'VSAT · hub Ambon-1', '7 Nov · 14:30 WIT', '48 m', 'ditutup 15:22', '9 pulih', '9 tiket ditutup', 'Cuaca', 'Rudi H.', 'L1'),
-      G('selesai', 'Selesai', 'Pemeliharaan hub Makassar-2 melewati jadwal', 'GMS/2026/11/0003', 'Sulawesi Selatan', 'VSAT · hub Makassar-2', '5 Nov · 01:00 WITA', '2 j 05 m', 'ditutup 03:12', '31 pulih', '31 tiket ditutup', 'Link: pemeliharaan vendor', 'Arif S.', 'L2'),
-      G('selesai', 'Selesai', 'Kabel serat optik putus Kupang–Atambua', 'GMS/2026/11/0002', 'Nusa Tenggara Timur', 'VPN-IP · PE Kupang', '3 Nov · 08:40 WITA', '9 j 40 m', 'ditutup 18:25', '12 pulih', '12 tiket ditutup', 'Link terestrial: FO putus', 'Sari P.', 'L2'),
-      G('selesai', 'Selesai', 'Listrik padam Ternate', 'GMS/2026/11/0001', 'Maluku Utara', 'VSAT · hub Ambon-1', '1 Nov · 19:15 WIT', '3 j 15 m', 'ditutup 22:35', '5 pulih', '5 tiket ditutup', 'Listrik', 'Rudi H.', 'L1')
+      G('berjalan', 'Saran', 'Diduga gangguan hub Palu-1', 'Belum bernomor · dari 13 alert', 'Sulawesi Tengah', 'VSAT · hub Palu-1', '16 Nov · 16:41 WITA', '17 m', 'berjalan', '14 down', '1 NPR · 13 alert', 'Dugaan: hub atau link satelit', '', ''),
+      G('berjalan', 'Aktif', 'Listrik padam PLN Balikpapan Utara', 'GMS/2026/11/0007', 'Kalimantan Timur', 'VSAT · hub Balikpapan-1', '16 Nov · 15:20 WITA', '2 j 38 m', 'berjalan', '3 down', '3 NPR anak', 'Listrik', 'Sari P.', 'L2'),
+      G('selesai', 'Selesai', 'Gangguan transponder hub Jayapura-2', 'GMS/2026/11/0006', 'Papua', 'VSAT · hub Jayapura-2', '12 Nov · 02:10 WIT', '1 j 25 m', 'ditutup 03:41 WIT', '22 pulih', '22 NPR ditutup', 'Link satelit: transponder', 'Arif S.', 'L2'),
+      G('selesai', 'Selesai', 'Banjir Medan Timur', 'GMS/2026/11/0005', 'Sumatera Utara', 'VPN-IP · PE Medan', '9 Nov · 11:05 WIB', '6 j 10 m', 'ditutup 17:30 WIB', '7 pulih', '7 NPR ditutup', 'Cuaca dan listrik', 'Sari P.', 'L2'),
+      G('selesai', 'Selesai', 'Hujan lebat (rain fade) Ambon', 'GMS/2026/11/0004', 'Maluku', 'VSAT · hub Ambon-1', '7 Nov · 14:30 WIT', '48 m', 'ditutup 15:22 WIT', '9 pulih', '9 NPR ditutup', 'Cuaca', 'Rudi H.', 'L1'),
+      G('selesai', 'Selesai', 'Pemeliharaan hub Makassar-2 melewati jadwal', 'GMS/2026/11/0003', 'Sulawesi Selatan', 'VSAT · hub Makassar-2', '5 Nov · 01:00 WITA', '2 j 05 m', 'ditutup 03:12 WITA', '31 pulih', '31 NPR ditutup', 'Link: pemeliharaan vendor', 'Arif S.', 'L2'),
+      G('selesai', 'Selesai', 'Kabel serat optik putus Kupang–Atambua', 'GMS/2026/11/0002', 'Nusa Tenggara Timur', 'VPN-IP · PE Kupang', '3 Nov · 08:40 WITA', '9 j 40 m', 'ditutup 18:25 WITA', '12 pulih', '12 NPR ditutup', 'Link terestrial: FO putus', 'Sari P.', 'L2'),
+      G('selesai', 'Selesai', 'Listrik padam Ternate', 'GMS/2026/11/0001', 'Maluku Utara', 'VSAT · hub Ambon-1', '1 Nov · 19:15 WIT', '3 j 15 m', 'ditutup 22:35 WIT', '5 pulih', '5 NPR ditutup', 'Listrik', 'Rudi H.', 'L1')
     ];
     var counts = { berjalan: 0, selesai: 0 };
     all.forEach(function (r) { counts[r.group] += 1; });

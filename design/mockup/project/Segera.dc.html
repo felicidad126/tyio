@@ -22,20 +22,20 @@ a:hover{color:#0558a8}
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3"></path></svg>
 </span>
 <h1 style="margin: 0; font-size: 24px; line-height: 1.25; font-weight: 700">Layar ini belum ada di mockup</h1>
-<p style="margin: 0; color: #536173; font-size: 15px">Mockup ini baru berisi Overview, Alert, Antrean Tiket, Detail Tiket, Gamas, Layar Dinding, dan notifikasi di ponsel. Layar lain menyusul mengikuti urutan rilis di rencana.</p>
+<p style="margin: 0; color: #536173; font-size: 15px">Mockup ini baru berisi Overview, Alert, Antrean NPR dan TT, Detail NPR, Gamas, Layar Dinding, dan notifikasi di ponsel. Layar lain menyusul mengikuti urutan rilis di rencana.</p>
 </div>
 <div style="border: 1px solid #dce1e7; border-radius: 6px">
 <sc-for list="{{screens}}" as="s" hint-placeholder-count="6">
 <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid #eaedf1">
 <span style="flex: 0 0 140px; font-weight: 600">{{s.name}}</span>
 <span style="flex: 1 1 240px; min-width: 0; color: #3c4858">{{s.what}}</span>
-<span style="flex: 0 0 auto; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600">{{s.release}}</span>
+<span style="flex: 0 0 auto; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">{{s.release}}</span>
 </div>
 </sc-for>
 </div>
 <div style="display: flex; flex-wrap: wrap; gap: 8px">
 <a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border: 1px solid #066fd1; border-radius: 6px; background: #066fd1; color: #ffffff; font-weight: 600">Kembali ke Overview</a>
-<a href="Tiket.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 6px; border: 1px solid #c9d0d9; background: #ffffff; color: #182433; font-weight: 600">Buka Antrean Tiket</a>
+<a href="Tiket.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 6px; border: 1px solid #c9d0d9; background: #ffffff; color: #182433; font-weight: 600">Buka Antrean NPR dan TT</a>
 </div>
 </main>
 </div>
@@ -47,7 +47,7 @@ class Component extends DCLogic {
       ['Remote', 'Data site, peta, dan riwayat gangguan per remote', 'R1–R2'],
       ['Admin', 'Tenant, pengguna, peran, dan master data', 'R0–R1'],
       ['Akun', 'Profil, kanal notifikasi, keluar', 'R0'],
-      ['Lampiran', 'Pratinjau dan unduh berkas tiket', 'R1'],
+      ['Lampiran', 'Pratinjau dan unduh berkas NPR dan TT', 'R1'],
       ['Laporan', 'Template laporan dan ekspor Excel/PDF', 'R4'],
       ['Dokumen', 'Berkas bersama dan runbook', 'R8']
     ].map(function (s) { return { name: s[0], what: s[1], release: s[2] }; });
