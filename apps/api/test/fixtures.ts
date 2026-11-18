@@ -44,7 +44,7 @@ export async function createUser(
       username: options.username,
       displayName: options.displayName ?? `Pengguna ${options.username}`,
       passwordHash,
-      role: options.role ?? 'L1',
+      role: options.role ?? 'helpdesk',
       allTenants: options.allTenants ?? true,
       active: options.active ?? true,
     });

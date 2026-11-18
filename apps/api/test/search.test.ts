@@ -29,7 +29,7 @@ describe('pencarian global', () => {
     await resetData(ds);
     a = await createTenant(ds, 'TNA', 'Bank Uji Anggrek');
     b = await createTenant(ds, 'TNB', 'Bank Uji Bakung');
-    await createUser(ds, { username: 'l2.semua', role: 'L2' });
+    await createUser(ds, { username: 'l2.semua', role: 'helpdesk' });
     await createUser(ds, { username: 'l1.hanya-a', allTenants: false, tenants: [a] });
     const login = async (username: string) =>
       sessionCookieFrom(

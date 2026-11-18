@@ -267,8 +267,8 @@ describe('master data: customer, kategori, system, jarkom', () => {
     });
 
     it('L1 dan L2 ditolak (403) di setiap rute admin, dan tidak ada yang berubah', async () => {
-      await createUser(ds, { username: 'l1.uji', role: 'L1' });
-      await createUser(ds, { username: 'l2.uji', role: 'L2' });
+      await createUser(ds, { username: 'l1.uji', role: 'helpdesk' });
+      await createUser(ds, { username: 'l2.uji', role: 'helpdesk' });
       const existing = await createOk('kategori', 'RD', 'Remote Down');
 
       for (const cookie of [await loginAs('l1.uji'), await loginAs('l2.uji')]) {

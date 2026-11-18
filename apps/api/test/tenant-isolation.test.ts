@@ -46,7 +46,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
     aIds = [a.id, ...(await seedTenantOwnedData(ds, a))];
     bIds = [b.id, ...(await seedTenantOwnedData(ds, b))];
     await createUser(ds, { username: 'l1.hanya-a', allTenants: false, tenants: [a] });
-    await createUser(ds, { username: 'l2.semua', role: 'L2', allTenants: true });
+    await createUser(ds, { username: 'l2.semua', role: 'helpdesk', allTenants: true });
     await createUser(ds, { username: 'l1.kosong', allTenants: false, tenants: [] });
     await createUser(ds, { username: 'admin.hanya-a', role: 'admin', allTenants: false, tenants: [a] });
     await createUser(ds, { username: 'admin.semua', role: 'admin', allTenants: true });

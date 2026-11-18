@@ -4,7 +4,7 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 /** Siapa yang mengubah data dan dari mana. Wajib ada untuk setiap perubahan (dicek trigger DB). */
 export interface Actor {
-  /** Contoh: `pengguna:l1.contoh`, `sistem:seed`, `anonim`. */
+  /** Contoh: `pengguna:helpdesk.contoh`, `sistem:seed`, `anonim`. */
   name: string;
   userId?: string;
   ip?: string;

@@ -1,5 +1,8 @@
-/** Peran yang dipasang di R0 (K24). L3 menyusul; SD tidak login (K23). */
-export const USER_ROLES = ['L1', 'L2', 'admin'] as const;
+/**
+ * Peran (K30, K46): Helpdesk mengerjakan NPR dan TT; Admin mengelola aplikasi (master data,
+ * remote, akun). Tingkatan L1/L2/L3 tidak dipakai; PIC lokasi dan teknisi tidak login.
+ */
+export const USER_ROLES = ['helpdesk', 'admin'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 /** Customer (bank). Setiap remote, tiket, dan laporan milik satu tenant (R-E). */

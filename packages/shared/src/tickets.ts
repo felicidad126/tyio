@@ -19,7 +19,8 @@ export const TICKET_STATUS_LABELS: Readonly<Record<TicketStatus, string>> = {
 
 /**
  * Jalur status yang sah: satu-satunya sumber untuk API (menolak jalur lain) dan web
- * (hanya menawarkan jalur ini). Eskalasi = ke L2 (NOC); eskalasi ke SD lewat TT (1.5b).
+ * (hanya menawarkan jalur ini). Eskalasi semula berarti ke L2 (NOC); karena hanya ada satu peran
+ * Helpdesk (K30), artinya ditetapkan ulang bersama TT/Eskalasi To SD (1.5b).
  */
 export const TICKET_TRANSITIONS: Readonly<Record<TicketStatus, readonly TicketStatus[]>> = {
   terbuka: ['dikerjakan', 'pending', 'eskalasi', 'selesai'],

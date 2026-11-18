@@ -35,14 +35,14 @@ describe('login, sesi, dan logout', () => {
     http().post('/api/auth/login').send({ username, password });
 
   it('masuk dengan benar: mengembalikan pengguna dan memasang cookie sesi httpOnly', async () => {
-    await createUser(ds, { username: 'l1.uji', role: 'L1' });
+    await createUser(ds, { username: 'l1.uji', role: 'helpdesk' });
 
     const res = await login('l1.uji').expect(200);
 
     expect((res.body as SessionResponse).user).toMatchObject({
       username: 'l1.uji',
       displayName: 'Pengguna l1.uji',
-      role: 'L1',
+      role: 'helpdesk',
       tenantScope: { all: true },
     });
     const cookie = [res.headers['set-cookie']].flat().join(';');
@@ -54,7 +54,7 @@ describe('login, sesi, dan logout', () => {
   });
 
   it('nama pengguna tidak membedakan huruf besar dan mengabaikan spasi di tepi', async () => {
-    await createUser(ds, { username: 'l2.uji', role: 'L2' });
+    await createUser(ds, { username: 'l2.uji', role: 'helpdesk' });
 
     await login('  L2.Uji ').expect(200);
   });
@@ -73,9 +73,9 @@ describe('login, sesi, dan logout', () => {
   it('cakupan tenant: pengguna terbatas hanya membawa tenant miliknya', async () => {
     const merapi = await createTenant(ds, 'MRS', 'Bank Merapi Sejahtera');
     await createTenant(ds, 'BCN');
-    await createUser(ds, { username: 'l1.merapi', allTenants: false, tenants: [merapi] });
+    await createUser(ds, { username: 'helpdesk.merapi', allTenants: false, tenants: [merapi] });
 
-    const res = await login('l1.merapi').expect(200);
+    const res = await login('helpdesk.merapi').expect(200);
 
     expect((res.body as SessionResponse).user.tenantScope).toEqual({
       all: false,

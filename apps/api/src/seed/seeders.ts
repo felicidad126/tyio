@@ -104,9 +104,8 @@ export const DEMO_USERS: ReadonlyArray<{
   tenantCodes?: string[];
 }> = [
   { username: 'admin.contoh', displayName: 'Admin Contoh', role: 'admin' },
-  { username: 'l2.contoh', displayName: 'Operator L2 Contoh', role: 'L2' },
-  { username: 'l1.contoh', displayName: 'Operator L1 Contoh', role: 'L1' },
-  { username: 'l1.merapi', displayName: 'Operator L1 Merapi', role: 'L1', tenantCodes: ['MRS'] },
+  { username: 'helpdesk.contoh', displayName: 'Helpdesk Contoh', role: 'helpdesk' },
+  { username: 'helpdesk.merapi', displayName: 'Helpdesk Merapi', role: 'helpdesk', tenantCodes: ['MRS'] },
 ];
 
 /** Urutan penting: tenant lebih dulu, karena pengguna merujuk ke tenant. */

@@ -110,7 +110,7 @@ describe('buat tiket (NPR)', () => {
     const otherJarkom = await createRemote(ds, a, 'TNA-003', { jarkomId: lain.id });
     const remoteB = await createRemote(ds, b, 'TNB-001', { jarkomId: remote.jarkomId });
     const l2 = await (async () => {
-      await createUser(ds, { username: 'l2.uji', role: 'L2' });
+      await createUser(ds, { username: 'l2.uji', role: 'helpdesk' });
       return loginAs('l2.uji');
     })();
 
@@ -225,7 +225,7 @@ describe('buat tiket (NPR)', () => {
       // masih melihat remote-nya, tetapi tidak bisa membuat tiket baru.
       await asTester(ds, (m) => m.getRepository('Tenant').update(a.id, { active: false }));
       await create().expect(404);
-      await createUser(ds, { username: 'l2.uji', role: 'L2' });
+      await createUser(ds, { username: 'l2.uji', role: 'helpdesk' });
       expect((await create({}, await loginAs('l2.uji')).expect(400)).body.message).toBe(
         'Customer Bank Uji Anggrek nonaktif; tiket tidak bisa dibuat.',
       );

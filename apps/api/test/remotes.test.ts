@@ -52,7 +52,7 @@ describe('remote: daftar, detail, impor', () => {
     await asTester(ds, (m) => m.getRepository('Jarkom').update(inactive.id, { active: false }));
     await createUser(ds, { username: 'admin.uji', role: 'admin' });
     await createUser(ds, { username: 'l1.anggrek', allTenants: false, tenants: [a] });
-    await createUser(ds, { username: 'l2.uji', role: 'L2' });
+    await createUser(ds, { username: 'l2.uji', role: 'helpdesk' });
     cookie.admin = await loginAs('admin.uji');
     cookie.l1a = await loginAs('l1.anggrek');
     cookie.l2 = await loginAs('l2.uji');

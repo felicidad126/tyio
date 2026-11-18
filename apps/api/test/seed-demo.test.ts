@@ -26,13 +26,13 @@ describe('data contoh (tenant dan pengguna)', () => {
     await resetData(ds);
   });
 
-  it('mengisi tenant samaran dan satu pengguna per peran R0', async () => {
+  it('mengisi tenant samaran dan pengguna contoh untuk setiap peran', async () => {
     await seed(ds, 'development', createSeeders({ password: 'sandi-contoh-panjang' }));
 
     const tenants = await ds.getRepository(TenantEntity).find({ order: { code: 'ASC' } });
     expect(tenants.map((t) => t.code)).toEqual(['BCN', 'BLH', 'MRS']);
     const users = await ds.getRepository(UserEntity).find();
-    expect(new Set(users.map((u) => u.role))).toEqual(new Set(['admin', 'L1', 'L2']));
+    expect(new Set(users.map((u) => u.role))).toEqual(new Set(['admin', 'helpdesk']));
     for (const user of users) {
       expect(await verifyPassword('sandi-contoh-panjang', user.passwordHash)).toBe(true);
     }
@@ -60,10 +60,10 @@ describe('data contoh (tenant dan pengguna)', () => {
     expect(new Set(remotes.map((r) => r.timeZone)).size).toBe(3);
   });
 
-  it('pengguna l1.merapi hanya terikat ke tenant MRS', async () => {
+  it('pengguna helpdesk.merapi hanya terikat ke tenant MRS', async () => {
     await seed(ds, 'development', createSeeders({ password: 'sandi-contoh-panjang' }));
 
-    const merapi = await ds.getRepository(UserEntity).findOneByOrFail({ username: 'l1.merapi' });
+    const merapi = await ds.getRepository(UserEntity).findOneByOrFail({ username: 'helpdesk.merapi' });
     const links = await ds.getRepository(UserTenantEntity).findBy({ userId: merapi.id });
     const mrs = await ds.getRepository(TenantEntity).findOneByOrFail({ code: 'MRS' });
     expect(merapi.allTenants).toBe(false);

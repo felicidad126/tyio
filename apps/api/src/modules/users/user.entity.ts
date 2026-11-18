@@ -38,6 +38,6 @@ export const UserEntity = new EntitySchema<User>({
   uniques: [{ name: 'users_username_key', columns: ['username'] }],
   checks: [
     { name: 'users_username_format', expression: `username ~ '^[a-z0-9._-]{3,64}$'` },
-    { name: 'users_role_valid', expression: `role IN ('L1', 'L2', 'admin')` },
+    { name: 'users_role_valid', expression: `role IN ('helpdesk', 'admin')` },
   ],
 });

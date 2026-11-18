@@ -84,7 +84,7 @@ describe('audit log perubahan data', () => {
         username: 'audit.uji',
         displayName: 'Audit Uji',
         passwordHash: hash,
-        role: 'L1',
+        role: 'helpdesk',
       }),
     );
     const newHash = await hashPassword('sandi-kedua-uji');
