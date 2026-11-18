@@ -24,7 +24,12 @@ interface Sse {
 function openStream(port: number, cookie?: string): Promise<Sse> {
   return new Promise((resolve, reject) => {
     const req = httpRequest(
-      { port, path: '/api/stream', headers: { Accept: 'text/event-stream', ...(cookie ? { Cookie: cookie } : {}) } },
+      {
+        port,
+        path: '/api/stream',
+        // Browser selalu menawarkan gzip; koneksi ini tetap tidak boleh dikompresi.
+        headers: { Accept: 'text/event-stream', 'Accept-Encoding': 'gzip', ...(cookie ? { Cookie: cookie } : {}) },
+      },
       (res) => {
         const sse: Sse = {
           status: res.statusCode ?? 0,
@@ -127,6 +132,7 @@ describe('pembaruan langsung (/api/stream)', () => {
     expect(sse.status).toBe(200);
     expect(sse.headers['content-type']).toMatch(/^text\/event-stream/);
     expect(sse.headers['x-accel-buffering']).toBe('no');
+    expect(sse.headers['content-encoding']).toBeUndefined();
     expect(sse.headers['cache-control']).toMatch(/no-cache/);
     await until(() => sse.events.length > 0);
     expect(sse.events[0]).toMatchObject({ event: 'ready', data: { heartbeatMs: 150 } });

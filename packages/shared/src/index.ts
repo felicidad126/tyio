@@ -157,3 +157,5 @@ export {
 export type { ActiveTicketStatus, OverviewResponse } from './overview.js';
 export { STREAM_CHANGE_KINDS, STREAM_CHANGE_OPS } from './stream.js';
 export type { StreamChange, StreamChangeKind, StreamChangeOp, StreamPing, StreamReady } from './stream.js';
+export { MAP_STATE_LABELS, MAP_STATES, mapState } from './map.js';
+export type { MapRemote, MapResponse, MapState, MapStatesResponse } from './map.js';

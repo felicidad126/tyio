@@ -23,7 +23,16 @@ export interface AppConfig {
    */
   streamHeartbeatMs: number;
   streamMaxMs: number;
+  /**
+   * Peta remote (2.3): sumber gambar peta (URL dengan {z}, {x}, {y}) dan atribusinya. Bawaan
+   * OpenStreetMap; ganti dengan penyedia berlangganan bila pemakaian membesar.
+   */
+  mapTileUrl: string;
+  mapTileAttribution: string;
 }
+
+export const DEFAULT_MAP_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const DEFAULT_MAP_TILE_ATTRIBUTION = '© OpenStreetMap contributors';
 
 /**
  * Membaca dan memvalidasi konfigurasi dari variabel lingkungan.
@@ -75,6 +84,12 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     problems.push('STREAM_MAX_MS harus bilangan bulat 200–3600000');
   }
 
+  const mapTileUrl = source.MAP_TILE_URL || DEFAULT_MAP_TILE_URL;
+  if (!isTileUrl(mapTileUrl)) {
+    problems.push('MAP_TILE_URL harus URL https yang memuat {z}, {x}, dan {y}');
+  }
+  const mapTileAttribution = source.MAP_TILE_ATTRIBUTION || DEFAULT_MAP_TILE_ATTRIBUTION;
+
   if (
     problems.length > 0 ||
     !isTyioEnv(env) ||
@@ -95,6 +110,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     attachmentsDir,
     streamHeartbeatMs,
     streamMaxMs,
+    mapTileUrl,
+    mapTileAttribution,
   };
 }
 
@@ -106,6 +123,15 @@ function isPostgresUrl(value: string): boolean {
   try {
     const url = new URL(value);
     return url.protocol === 'postgres:' || url.protocol === 'postgresql:';
+  } catch {
+    return false;
+  }
+}
+
+function isTileUrl(value: string): boolean {
+  try {
+    const url = new URL(value.replace(/\{[a-z]\}/g, '0'));
+    return url.protocol === 'https:' && ['{z}', '{x}', '{y}'].every((part) => value.includes(part));
   } catch {
     return false;
   }

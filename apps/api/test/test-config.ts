@@ -22,6 +22,8 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     // Pendek agar uji koneksi langsung (dan pemeriksaan semua rute GET) tidak menunggu lama.
     streamHeartbeatMs: 100,
     streamMaxMs: 600,
+    mapTileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    mapTileAttribution: '© OpenStreetMap contributors',
     ...overrides,
   };
 }

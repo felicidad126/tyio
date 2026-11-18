@@ -6,6 +6,7 @@ import { APP_CONFIG, type AppConfig } from './config.js';
 import { dataSourceOptions } from './db/options.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { MapModule } from './modules/map/map.module.js';
 import { MasterModule } from './modules/master/master.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
 import { OverviewModule } from './modules/overview/overview.module.js';
@@ -36,6 +37,7 @@ export class AppModule {
         TroubleTicketsModule,
         OverviewModule,
         StreamModule,
+        MapModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],

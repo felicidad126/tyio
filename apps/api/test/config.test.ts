@@ -19,7 +19,17 @@ describe('loadConfig', () => {
       attachmentsDir: '/app/data/lampiran',
       streamHeartbeatMs: 25_000,
       streamMaxMs: 300_000,
+      mapTileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      mapTileAttribution: '© OpenStreetMap contributors',
     });
+  });
+
+  it('sumber gambar peta: URL https dengan {z}/{x}/{y}; bisa diganti', () => {
+    expect(
+      loadConfig({ ...valid, MAP_TILE_URL: 'https://peta.contoh.id/{z}/{x}/{y}.png', MAP_TILE_ATTRIBUTION: '© Contoh' }),
+    ).toMatchObject({ mapTileUrl: 'https://peta.contoh.id/{z}/{x}/{y}.png', mapTileAttribution: '© Contoh' });
+    expect(() => loadConfig({ ...valid, MAP_TILE_URL: 'http://peta.contoh.id/{z}/{x}/{y}.png' })).toThrow(/MAP_TILE_URL/);
+    expect(() => loadConfig({ ...valid, MAP_TILE_URL: 'https://peta.contoh.id/peta.png' })).toThrow(/MAP_TILE_URL/);
   });
 
   it('detak dan umur koneksi langsung: di bawah batas diam proxy, bisa diatur', () => {

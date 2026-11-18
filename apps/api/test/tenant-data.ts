@@ -10,7 +10,12 @@ import { createActionWithAttachment, createRemote, createTicket, createTroubleTi
  * Mengembalikan id baris yang dibuat, untuk dicari di jawaban dan dipakai sebagai parameter.
  */
 export async function seedTenantOwnedData(ds: DataSource, tenant: Tenant): Promise<string[]> {
-  const remote = await createRemote(ds, tenant, `${tenant.code}-R1`, { name: `Remote ${tenant.name}` });
+  // Berkoordinat agar ikut tampil di peta (2.3).
+  const remote = await createRemote(ds, tenant, `${tenant.code}-R1`, {
+    name: `Remote ${tenant.name}`,
+    latitude: '-6.200000',
+    longitude: '106.816000',
+  });
   const ticket = await createTicket(ds, remote, `NPR/UJI/${tenant.code}/2026/11/0001`);
   const { action, attachment } = await createActionWithAttachment(ds, ticket, `Catatan ${tenant.name}`);
   const tt = await createTroubleTicket(ds, ticket, `TT/UJI/${tenant.code}/2026/11/0001`);
