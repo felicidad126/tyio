@@ -66,7 +66,7 @@ Mode monitor 24/7
 
 <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
 <header style="background: #ffffff; border-bottom: 1px solid #dce1e7; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
-<div style="flex: 1 1 280px; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; position: relative">
+<div style="flex: 1 1 280px; min-width: 0; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; position: relative">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
 <label for="cari-global" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Cari di seluruh portal</label>
 <input id="cari-global" type="search" placeholder="Cari NPR, TT, tiket customer, remote" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
@@ -81,11 +81,11 @@ Mode monitor 24/7
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
 <span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
 </button>
-<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
-Buat tiket
+Buat NPR
 </button>
-<button type="button" aria-label="Akun: {{userName}}, {{userRole}}" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<button type="button" aria-label="{{userAria}}" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
 <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{userInitials}}</span>
 <span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
 <span style="font-size: 13px; font-weight: 600">{{userName}}</span>
@@ -102,42 +102,43 @@ Buat tiket
 <span>NPR/VSAT/BNA/2026/11/0418</span>
 </nav>
 
-<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px">
-<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
-<h1 style="margin: 0; font-size: clamp(20px, 5.4vw, 26px); line-height: 1.2; font-weight: 700">NPR/<wbr>VSAT/<wbr>BNA/<wbr>2026/<wbr>11/<wbr>0418</h1>
-<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #536173">
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; background: #d5f0ec; color: #0d5c55; font-size: 12px; font-weight: 600">Dikerjakan</span>
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600">Remote Down</span>
-<span>ATM KCP Pasar Sentral · Makassar</span>
-<span aria-hidden="true">·</span>
-<span>Bank Nusa</span>
-<span aria-hidden="true">·</span>
-<span>Dibuka 14:16 WITA dari alert SNMP</span>
-</div>
-</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px">
+<h1 style="flex: 1 1 360px; min-width: 0; margin: 0; padding-top: 4px; font-size: clamp(20px, 5.4vw, 26px); line-height: 1.2; font-weight: 700">NPR/<wbr>VSAT/<wbr>BNA/<wbr>2026/<wbr>11/<wbr>0418</h1>
 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
 <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end">
-<sc-if value="{{canClose}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{canClose}}" hint-placeholder-val="{{ true }}">
 <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #1b6430; border-radius: 6px; background: #ffffff; color: #1b6430; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"></path></svg>
-Tutup tiket
+Tutup NPR
 </button>
 </sc-if>
-<sc-if value="{{cannotClose}}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{cannotClose}}" hint-placeholder-val="{{ false }}">
 <button type="button" disabled aria-describedby="alasan-tutup" style="height: 40px; padding: 0 14px; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; color: #66727f; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z M8 11v-4a4 4 0 1 1 8 0v4"></path></svg>
-Tutup tiket
+Tutup NPR
 </button>
 </sc-if>
-<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Eskalasi</button>
+<button type="button" onClick="{{openL2}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Eskalasi ke L2</button>
+<button type="button" onClick="{{openTt}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Buat TT ke SD</button>
 <button type="button" onClick="{{openDrawer}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
 Tambah tindakan
 </button>
 </div>
-<sc-if value="{{cannotClose}}" hint-placeholder-val="{{ true }}">
-<span id="alasan-tutup" style="font-size: 12px; color: #536173">Hanya L2/L3 yang bisa menutup tiket.</span>
+<sc-if value="{{cannotClose}}" hint-placeholder-val="{{ false }}">
+<span id="alasan-tutup" style="font-size: 12px; color: #536173">NPR dengan TT hanya ditutup L2.</span>
 </sc-if>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #536173">
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{statusBg}}; color: {{statusFg}}">{{statusNow}}</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">Remote Down</span>
+<span>ATM KCP Pasar Sentral · Makassar</span>
+<span aria-hidden="true">·</span>
+<span>Bank Nusa</span>
+<span aria-hidden="true">·</span>
+<span>Dibuka 14:16 WITA dari alert SNMP</span>
 </div>
 </div>
 
@@ -146,8 +147,8 @@ Tambah tindakan
 <span style="font-size: 12px; font-weight: 500; color: #536173">Sisa SLA</span>
 <span style="display: flex; align-items: center; gap: 8px; color: #7a4a00">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3"></path></svg>
-<b style="font-size: 22px; line-height: 1.1">18 mnt</b>
-<span style="font-size: 12px; font-weight: 600; background: #fcefd2; border-radius: 999px; padding: 2px 8px">Hampir lewat</span>
+<b style="font-size: 22px; line-height: 1.1">18 m</b>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #fcefd2; font-size: 12px; font-weight: 600; white-space: nowrap">Hampir lewat</span>
 </span>
 <span aria-hidden="true" style="display: block; height: 6px; background: #eaedf1; border-radius: 3px; overflow: hidden"><span style="display: block; width: 92%; height: 100%; background: #c98500; border-radius: 3px"></span></span>
 <span style="font-size: 12px; color: #536173">Target contoh 4 jam · jatuh tempo 18:16 WITA</span>
@@ -177,6 +178,29 @@ Tambah tindakan
 <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
 
 <section style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{hasTT}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="judul-tt" style="background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<h2 id="judul-tt" style="margin: 0; font-size: 16px; font-weight: 600">TT ke SD</h2>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #fde4d5; color: #9a3d0d; font-size: 12px; font-weight: 600; white-space: nowrap">Menunggu SD</span>
+<span style="margin-left: auto; font-size: 13px; color: #536173">dibuat 17:55 WITA · Dewi A.</span>
+</div>
+<span style="font-weight: 600; overflow-wrap: anywhere">TT/VSAT/BNA/2026/11/0093</span>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 6px 16px; font-size: 13px">
+<dt style="color: #536173">Problem jarkom</dt><dd style="margin: 0">Modem VSAT tidak sinkron setelah dinyalakan ulang (Rx lock hilang). Perlu cek BUC/LNB dan kabel IFL di lokasi.</dd>
+<dt style="color: #536173">Kontak di lokasi</dt><dd style="margin: 0">Hendra, Kepala Unit · +62 811-0000-0217</dd>
+<dt style="color: #536173">Diteruskan ke SD</dt><dd style="margin: 0">{{ttCopyNote}}</dd>
+</dl>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 2px">
+<button type="button" onClick="{{copyTT}}" style="min-width: 186px; height: 36px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{copyIcon}}"></path></svg>
+{{copyLabel}}
+</button>
+<button type="button" onClick="{{openVisit}}" style="height: 36px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Catat hasil kunjungan</button>
+<span role="status" style="font-size: 13px; color: #1b6430; font-weight: 500">{{copyStatus}}</span>
+</div>
+</section>
+</sc-if>
 <div role="tablist" aria-label="Bagian tiket" style="display: flex; gap: 4px; border-bottom: 1px solid #dce1e7; overflow-x: auto">
 <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
 <button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="height: 44px; padding: 0 12px; border: 0; background: transparent; font: inherit; white-space: nowrap; cursor: pointer; margin-bottom: -1px; color: {{t.fg}}; font-weight: {{t.weight}}; border-bottom: 2px solid {{t.line}}">{{t.label}}</button>
@@ -226,7 +250,7 @@ Tambah tindakan
 </li>
 </sc-for>
 </ol>
-<span style="font-size: 13px; color: #66727f; padding-left: 46px">Awal linimasa · tiket dibuat otomatis dari alert</span>
+<span style="font-size: 13px; color: #66727f; padding-left: 46px">Awal linimasa · NPR dibuat otomatis dari alert</span>
 </div>
 </sc-if>
 
@@ -261,7 +285,7 @@ Tambah tindakan
 <div style="display: flex; flex-direction: column; gap: 6px">
 <span style="font-size: 12px; font-weight: 500; color: #536173">Remote · BNA-MKS-0217</span>
 <h2 style="margin: 0; font-size: 18px; font-weight: 600">ATM KCP Pasar Sentral</h2>
-<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 999px; background: #fbe3e3; color: #a12424; font-size: 12px; font-weight: 600">
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; background: #fbe3e3; color: #a12424; font-size: 12px; font-weight: 600; white-space: nowrap">
 <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #c42b2b"></span>
 Down sejak 14:12 WITA
 </span>
@@ -288,7 +312,7 @@ Down sejak 14:12 WITA
 <span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">30 hari terakhir</span>
 <span style="font-size: 13px">3 tiket sebelumnya · rata-rata pulih 2 j 10 m</span>
 </div>
-<p style="margin: 0; font-size: 12px; color: #536173; background: #f6f8fb; border-radius: 6px; padding: 8px 10px">Data remote hanya bisa diubah di halaman Remote, tidak dari tiket.</p>
+<p style="margin: 0; font-size: 12px; color: #536173; background: #f6f8fb; border-radius: 6px; padding: 8px 10px">Data remote hanya bisa diubah admin.</p>
 <a href="Segera.dc.html" style="font-size: 13px; font-weight: 600">Buka halaman remote</a>
 </aside>
 </div>
@@ -311,13 +335,14 @@ Down sejak 14:12 WITA
 <div style="flex: 1 1 auto; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px">
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="jenis" style="font-size: 13px; font-weight: 600">Apa yang dikerjakan</label>
-<select id="jenis" ref="{{firstFieldRef}}" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
-<option>Cek jaringan</option>
-<option>Cek lokasi / hubungi PIC</option>
-<option>Hubungi customer</option>
-<option>Catatan</option>
+<select id="jenis" ref="{{firstFieldRef}}" value="{{kind}}" onChange="{{setKind}}" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
+<option value="jaringan">Cek jaringan</option>
+<option value="lokasi">Cek lokasi / hubungi PIC</option>
+<option value="customer">Hubungi customer</option>
+<option value="hasil">Hasil kunjungan SD (TT)</option>
+<option value="catatan">Catatan</option>
 </select>
-<span style="font-size: 12px; color: #536173">Daftar ini menunggu sesi Take Action dengan user.</span>
+<span style="font-size: 12px; color: #536173">{{kindHint}}</span>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="catatan" style="font-size: 13px; font-weight: 600">Catatan</label>
@@ -350,15 +375,28 @@ Down sejak 14:12 WITA
 <span style="font-size: 12px; color: #7a4a00">Jam SLA berhenti selama pending dan tercatat di linimasa.</span>
 </div>
 </sc-if>
-<sc-if value="{{nextEskalasi}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{nextL2}}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 6px; background: #fdf3ec; border: 1px solid #f3cdb5">
-<label for="tujuan" style="font-size: 13px; font-weight: 600">Eskalasi ke</label>
+<label for="tujuan" style="font-size: 13px; font-weight: 600">Tujuan di L2 NOC</label>
 <select id="tujuan" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
-<option>L2 NOC</option>
-<option>L3</option>
-<option>Teknisi lapangan (buat TT)</option>
+<option>Antrean L2 NOC (siapa pun yang bertugas)</option>
+<option>Arif S. · L2</option>
+<option>Sari P. · L2</option>
 </select>
-<span style="font-size: 12px; color: #536173">Catatan, hasil cek, dan lampiran ikut berpindah bersama tiket.</span>
+<span style="font-size: 12px; color: #536173">Catatan, hasil cek, dan lampiran ikut berpindah bersama NPR.</span>
+</div>
+</sc-if>
+<sc-if value="{{nextTt}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 6px; background: #fdf3ec; border: 1px solid #f3cdb5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="tt-problem" style="font-size: 13px; font-weight: 600">Problem jarkom</label>
+<textarea id="tt-problem" rows="3" placeholder="Contoh: modem VSAT tidak sinkron, perlu cek BUC/LNB" style="border: 1px solid #c9d0d9; border-radius: 6px; padding: 10px; font: inherit; color: #182433; background: #ffffff; resize: vertical"></textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="tt-kontak" style="font-size: 13px; font-weight: 600">Kontak di lokasi</label>
+<input id="tt-kontak" type="text" value="Hendra, Kepala Unit · +62 811-0000-0217" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433; background: #ffffff">
+</div>
+<span style="font-size: 12px; color: #536173">Sesudah disimpan, teruskan TT ke SD dengan Salin ringkasan TT. SD tidak menerima notifikasi di portal.</span>
 </div>
 </sc-if>
 <div style="display: flex; flex-direction: column; gap: 6px">
@@ -375,16 +413,25 @@ Down sejak 14:12 WITA
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["L1","L2/L3"],"default":"L1","section":"Keadaan"},"panelTindakanTerbuka":{"editor":"boolean","default":false,"section":"Keadaan"},"$preview":{"width":1440,"height":1320}}'>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["L1","L2"],"default":"L1","section":"Keadaan"},"punyaTT":{"editor":"boolean","default":false,"section":"Keadaan"},"panelTindakanTerbuka":{"editor":"boolean","default":false,"section":"Keadaan"},"$preview":{"width":1440,"height":1320}}'>
 class Component extends DCLogic {
   renderVals() {
     var st = this.state || {};
     var self = this;
     var role = this.props.peran ?? 'L1';
+    var hasTT = !!(this.props.punyaTT ?? false);
     var tab = st.tab || 'linimasa';
     var drawerOpen = typeof st.drawer === 'boolean' ? st.drawer : (this.props.panelTindakanTerbuka ?? false);
     var next = st.next || 'tetap';
-    var isSenior = role === 'L2/L3';
+    var kind = st.kind || 'jaringan';
+    var copies = hasTT ? (st.copies || 0) : 0;
+    // K21: L1 boleh menutup NPR tanpa TT; NPR dengan TT hanya ditutup L2.
+    var isL2 = String(role).indexOf('L2') === 0;
+    var canClose = isL2 || !hasTT;
+    var userName = isL2 ? 'Arif S.' : 'Dewi A.';
+    var TT_NO = 'TT/VSAT/BNA/2026/11/0093';
+    var TT_PROBLEM = 'Modem VSAT tidak sinkron setelah dinyalakan ulang (Rx lock hilang). Perlu cek BUC/LNB dan kabel IFL di lokasi.';
+    var statusNow = hasTT ? 'Eskalasi · SD' : 'Dikerjakan';
 
     var IC = {
       dash: 'M4 4h6v8h-6z M14 4h6v4h-6z M14 12h6v8h-6z M4 16h6v4h-6z',
@@ -400,7 +447,9 @@ class Component extends DCLogic {
       edit: 'M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4 M13.5 6.5l4 4',
       clock: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3',
       check: 'M5 12l5 5l10 -10',
-      signal: 'M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0'
+      signal: 'M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0',
+      send: 'M10 14l11 -11 M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5',
+      copy: 'M8 8h12v12h-12z M16 8v-4h-12v12h4'
     };
     function navItem(label, icon, href, count, active) {
       return {
@@ -416,7 +465,7 @@ class Component extends DCLogic {
         navItem('Overview', IC.dash, 'Main.dc.html', '', false),
         navItem('Alert', IC.bell, 'Alert.dc.html', '9', false),
         navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', true),
-        navItem('Gamas', IC.layers, 'Gamas.dc.html', '1', false)
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', false)
       ] },
       { title: 'Data', items: [
         navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
@@ -426,7 +475,8 @@ class Component extends DCLogic {
       { title: 'Sistem', items: [ navItem('Admin', IC.sliders, 'Segera.dc.html', '', false) ] }
     ];
 
-    var tabs = [['linimasa', 'Linimasa (6)'], ['lampiran', 'Lampiran (2)'], ['riwayat', 'Riwayat remote (3)']].map(function (t) {
+    var timelineCount = 6 + (hasTT ? 1 : 0) + copies;
+    var tabs = [['linimasa', 'Linimasa (' + timelineCount + ')'], ['lampiran', 'Lampiran (2)'], ['riwayat', 'Riwayat remote (3)']].map(function (t) {
       var on = t[0] === tab;
       return {
         label: t[1], selected: on ? 'true' : 'false',
@@ -440,7 +490,8 @@ class Component extends DCLogic {
       sys: ['#eaedf1', '#454f5c'],
       fix: ['#ebe7fb', '#4a37a3'],
       warn: ['#fcefd2', '#7a4a00'],
-      ok: ['#d5f0ec', '#0d5c55']
+      ok: ['#d5f0ec', '#0d5c55'],
+      esc: ['#fde4d5', '#9a3d0d']
     };
     function entry(o) {
       var t = TAG[o.kind];
@@ -464,11 +515,21 @@ class Component extends DCLogic {
         text: 'Menghubungi PIC cabang, Hendra (Kepala Unit). Listrik di lokasi menyala; petugas akan mengecek dan menyalakan ulang modem. Gangguan mulai sekitar 14:30.',
         note: 'Dikoreksi oleh entri 16:05.' }),
       entry({ who: 'Dewi A.', role: 'L1', tag: 'Verifikasi', kind: 'ok', icon: IC.check, time: '14:24 WITA',
-        text: 'Alert benar gangguan, dijadikan tiket dan diambil.',
+        text: 'Alert benar gangguan, dijadikan NPR dan diambil.',
         status: [{ from: 'Kandidat', to: 'Terbuka' }, { from: 'Terbuka', to: 'Dikerjakan' }] }),
       entry({ who: 'Sistem', role: 'SNMP NOC', tag: 'Alert diterima', kind: 'sys', icon: IC.signal, time: '14:16 WITA',
-        text: 'ICMP tidak merespons dari 10.41.17.22. Waktu kejadian 14:12 WITA, diterima portal 14:16 WITA. Kandidat tiket dibuat.' })
+        text: 'ICMP tidak merespons dari 10.41.17.22. Waktu kejadian 14:12 WITA, diterima portal 14:16 WITA. Kandidat NPR dibuat.' })
     ];
+    if (hasTT) {
+      timeline.unshift(entry({ who: 'Dewi A.', role: 'L1', tag: 'TT dibuat', kind: 'esc', icon: IC.send, time: '17:55 WITA',
+        text: TT_NO + ' dibuat untuk SD. ' + TT_PROBLEM,
+        status: [{ from: 'Dikerjakan', to: 'Eskalasi · SD' }] }));
+    }
+    // K25: setiap salin ringkasan TT tercatat di linimasa.
+    for (var c = 0; c < copies; c++) {
+      timeline.unshift(entry({ who: userName, role: isL2 ? 'L2' : 'L1', tag: 'Salin ringkasan', kind: 'sys', icon: IC.copy, time: '17:58 WITA',
+        text: 'Ringkasan TT disalin untuk SD: ' + TT_NO + '.' }));
+    }
 
     var files = [
       { name: 'ping-1752.png', meta: 'Gambar · 84 KB · Dewi A. · 17:52 WITA' },
@@ -480,7 +541,7 @@ class Component extends DCLogic {
       { npr: 'NPR/VSAT/BNA/2026/10/0874', when: '21 Okt · 1 j 45 m', cause: 'Kabel LAN longgar' }
     ];
 
-    var nextOptions = [['tetap', 'Tetap Dikerjakan'], ['pending', 'Pending'], ['eskalasi', 'Eskalasi'], ['selesai', 'Selesai']].map(function (o) {
+    var nextOptions = [['tetap', 'Tetap ' + statusNow], ['pending', 'Pending'], ['l2', 'Eskalasi ke L2'], ['tt', 'Buat TT ke SD'], ['pulih', 'Pulih']].map(function (o) {
       var on = o[0] === next;
       return {
         label: o[1], pressed: on ? 'true' : 'false',
@@ -494,10 +555,14 @@ class Component extends DCLogic {
     if (!this._firstFieldRef) {
       this._firstFieldRef = function (el) { if (el) { setTimeout(function () { el.focus(); }, 0); } };
     }
-    var openDrawer = function () {
-      self._returnFocus = document.activeElement;
-      self.setState({ drawer: true });
+    // Tiap tombol pembuka memilih isian awal panel (status sesudah tindakan, jenis tindakan).
+    var openWith = function (nextVal, kindVal) {
+      return function () {
+        self._returnFocus = document.activeElement;
+        self.setState({ drawer: true, next: nextVal, kind: kindVal });
+      };
     };
+    var openDrawer = openWith('tetap', 'jaringan');
     var closeDrawer = function () {
       self.setState({ drawer: false });
       setTimeout(function () { if (self._returnFocus && self._returnFocus.focus) self._returnFocus.focus(); }, 0);
@@ -512,20 +577,43 @@ class Component extends DCLogic {
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
 
+    var copyTT = function () {
+      var text = [TT_NO + ' (NPR/VSAT/BNA/2026/11/0418)', 'Remote: ATM KCP Pasar Sentral, Bank Nusa (BNA-MKS-0217)', 'Lokasi: Jl. Sulawesi No. 12, Makassar · WITA', 'Problem: ' + TT_PROBLEM, 'Kontak: Hendra, Kepala Unit, +62 811-0000-0217'].join('\n');
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+      self.setState({ copies: copies + 1 });
+    };
+    var ST = { 'Dikerjakan': ['#d5f0ec', '#0d5c55'], 'Eskalasi · SD': ['#fde4d5', '#9a3d0d'] };
+
     return {
       navGroups: navGroups, tabs: tabs, timeline: timeline, files: files, history: history,
       tabLinimasa: tab === 'linimasa', tabLampiran: tab === 'lampiran', tabRiwayat: tab === 'riwayat',
-      canClose: isSenior, cannotClose: !isSenior,
-      userName: isSenior ? 'Arif S.' : 'Dewi A.',
-      userInitials: isSenior ? 'AS' : 'DA',
-      userRole: isSenior ? 'L2 · Shift Siang' : 'L1 · Shift Siang',
+      statusNow: statusNow, statusBg: ST[statusNow][0], statusFg: ST[statusNow][1],
+      canClose: canClose, cannotClose: !canClose,
+      hasTT: hasTT,
+      copyTT: copyTT,
+      copyLabel: copies ? 'Ringkasan disalin' : 'Salin ringkasan TT',
+      copyIcon: copies ? IC.check : IC.copy,
+      copyStatus: copies === 0 ? '' : (copies === 1 ? 'Tercatat di linimasa 17:58 WITA.' : 'Disalin ' + copies + ' kali, semua tercatat di linimasa.'),
+      ttCopyNote: copies ? 'Ringkasan disalin 17:58 WITA' : 'Belum, ringkasan belum disalin',
+      openVisit: openWith('tetap', 'hasil'),
+      openL2: openWith('l2', 'jaringan'),
+      openTt: openWith('tt', 'jaringan'),
+      kind: kind,
+      setKind: function (e) { self.setState({ kind: e.target.value }); },
+      kindHint: kind === 'hasil'
+        ? (hasTT ? 'Isi hasil kunjungan dari SD. Sesudah disimpan, status TT menjadi Hasil masuk.' : 'NPR ini belum punya TT.')
+        : 'Daftar ini menunggu sesi Take Action dengan user.',
+      userName: userName,
+      userInitials: isL2 ? 'AS' : 'DA',
+      userRole: isL2 ? 'L2 NOC · Shift Siang' : 'L1 Monitoring · Shift Siang',
+      userAria: isL2 ? 'Akun: Arif S., L2 NOC, Shift Siang' : 'Akun: Dewi A., L1 Monitoring, Shift Siang',
       drawerOpen: drawerOpen,
       openDrawer: openDrawer,
       closeDrawer: closeDrawer,
       dialogKey: dialogKey,
       firstFieldRef: this._firstFieldRef,
       nextOptions: nextOptions,
-      nextPending: next === 'pending', nextEskalasi: next === 'eskalasi'
+      nextPending: next === 'pending', nextL2: next === 'l2', nextTt: next === 'tt'
     };
   }
 }
