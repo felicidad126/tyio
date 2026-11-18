@@ -8,7 +8,7 @@ export function ticketPeriod(at: Date): string {
 
 /** NPR/VSAT/MRS/2026/11/0001 — urut minimal empat digit. */
 export function formatTicketNumber(
-  kind: 'NPR',
+  kind: 'NPR' | 'TT',
   jarkomCode: string,
   tenantCode: string,
   period: string,

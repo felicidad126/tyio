@@ -16,6 +16,7 @@ import {
   createRemote,
   createTenant,
   createTicket,
+  createTroubleTicket,
   createUser,
   ensureCategory,
   ensureJarkom,
@@ -115,6 +116,8 @@ describe('daftar tiket', () => {
       createdById: other.id,
       systemId,
     });
+    // Tiket Eskalasi punya TT (1.5b): masuk tab TT aktif.
+    await createTroubleTicket(ds, t.eskalasi, 'TT/UJI/TNA/2026/11/0001');
     t.selesai = await createTicket(ds, pasar, 'NPR/UJI/TNA/2026/11/0005', {
       occurredAt: at(5),
       status: 'selesai',
@@ -147,7 +150,7 @@ describe('daftar tiket', () => {
     expect(body.total).toBe(5);
     expect(body.pageSize).toBe(50);
     // Jumlah hanya untuk tampilan antrean; riwayat (Selesai, Semua) dihitung saat dibuka.
-    expect(body.counts).toEqual({ aktif: 5, saya: 2, pending: 1, eskalasi: 1 });
+    expect(body.counts).toEqual({ aktif: 5, saya: 2, pending: 1, eskalasi: 1, tt: 1 });
   });
 
   it('setiap baris memuat remote, customer, pending, pembuat, dan tindakan terakhir dengan catatan dipotong', async () => {
@@ -179,6 +182,7 @@ describe('daftar tiket', () => {
     ['pending', ['NPR/UJI/TNA/2026/11/0003']],
     ['eskalasi', ['NPR/UJI/TNA/2026/11/0004']],
     ['selesai', ['NPR/UJI/TNA/2026/11/0005']],
+    ['tt', ['NPR/UJI/TNA/2026/11/0004']],
     // Tiket aktif yang saya buat atau pernah saya beri tindakan; yang selesai tidak.
     ['saya', ['NPR/UJI/TNA/2026/11/0002', 'NPR/UJI/TNA/2026/11/0001']],
   ])('tampilan %s', async (view, expected) => {
@@ -191,14 +195,14 @@ describe('daftar tiket', () => {
     const res = await list({ view: 'semua' }).expect(200);
     expect(numbers(res)).toHaveLength(6);
     expect((res.body as TicketListResponse).total).toBe(6);
-    expect((res.body as TicketListResponse).counts).toEqual({ aktif: 5, saya: 2, pending: 1, eskalasi: 1 });
+    expect((res.body as TicketListResponse).counts).toEqual({ aktif: 5, saya: 2, pending: 1, eskalasi: 1, tt: 1 });
   });
 
   it('saringan customer, kategori, dan jarkom; jumlah per tampilan ikut saringan', async () => {
     const byTenant = (await list({ view: 'semua', tenantId: b.id }).expect(200)).body as TicketListResponse;
     expect(byTenant.items.map((i) => i.number)).toEqual(['NPR/UJI/TNB/2026/11/0001']);
     expect(byTenant.total).toBe(1);
-    expect(byTenant.counts).toEqual({ aktif: 1, saya: 0, pending: 0, eskalasi: 0 });
+    expect(byTenant.counts).toEqual({ aktif: 1, saya: 0, pending: 0, eskalasi: 0, tt: 0 });
 
     expect(numbers(await list({ view: 'semua', categoryId: otherCategoryId }).expect(200))).toEqual([
       'NPR/UJI/TNA/2026/11/0003',
@@ -224,7 +228,7 @@ describe('daftar tiket', () => {
 
   it('pencarian ikut membatasi jumlah per tampilan', async () => {
     const body = (await list({ q: 'pasar raya' }).expect(200)).body as TicketListResponse;
-    expect(body.counts).toEqual({ aktif: 3, saya: 1, pending: 1, eskalasi: 1 });
+    expect(body.counts).toEqual({ aktif: 3, saya: 1, pending: 1, eskalasi: 1, tt: 1 });
     expect(((await list({ q: 'pasar raya', view: 'selesai' }).expect(200)).body as TicketListResponse).total).toBe(1);
     expect(((await list({ q: 'pasar raya', view: 'semua' }).expect(200)).body as TicketListResponse).total).toBe(4);
   });

@@ -6,11 +6,11 @@ import {
   PENDING_REASON_MAX,
   PENDING_REASON_MIN,
   type PendingParty,
+  MANUAL_ACTION_TYPES,
+  type ManualActionType,
   TICKET_ACTION_TYPE_LABELS,
-  TICKET_ACTION_TYPES,
   TICKET_FUTURE_TOLERANCE_MINUTES,
   TICKET_STATUSES,
-  type TicketActionType,
   type TicketStatus,
 } from '@tyio/shared';
 import { invalid } from '../ticket-input.js';
@@ -22,7 +22,7 @@ const EARLIEST = Date.UTC(2020, 0, 1);
 export type ActionInput =
   | {
       kind: 'action';
-      type: TicketActionType;
+      type: ManualActionType;
       occurredAt: Date;
       note: string | null;
       status: { to: TicketStatus; expected: TicketStatus; pending: { party: PendingParty; reason: string } | null } | null;
@@ -50,10 +50,11 @@ export function parseActionInput(body: unknown, files: UploadedFile[], now = new
     throw invalid(`Catatan paling banyak ${ACTION_NOTE_MAX.toLocaleString('id-ID')} karakter.`, 'note');
   }
 
-  if (input.type !== undefined && !TICKET_ACTION_TYPES.includes(input.type as TicketActionType)) {
-    throw invalid(`Jenis tindakan harus salah satu dari: ${TICKET_ACTION_TYPES.join(', ')}.`, 'type');
+  // Eskalasi To SD tidak dipilih di sini: dibuat sistem saat TT dibuka (1.5b).
+  if (input.type !== undefined && !MANUAL_ACTION_TYPES.includes(input.type as ManualActionType)) {
+    throw invalid(`Jenis tindakan harus salah satu dari: ${MANUAL_ACTION_TYPES.join(', ')}.`, 'type');
   }
-  const type = (input.type as TicketActionType | undefined) ?? 'catatan';
+  const type = (input.type as ManualActionType | undefined) ?? 'catatan';
   if (input.correctsId !== undefined) {
     if (type !== 'catatan') throw invalid('Koreksi tidak punya jenis tindakan; tulis koreksinya saja.', 'type');
     if (typeof input.correctsId !== 'string' || !UUID.test(input.correctsId)) {

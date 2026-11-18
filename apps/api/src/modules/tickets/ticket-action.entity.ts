@@ -75,7 +75,10 @@ export const TicketActionEntity = new EntitySchema<TicketAction>({
   ],
   checks: [
     { name: 'ticket_actions_has_content', expression: 'note IS NOT NULL OR status_to IS NOT NULL' },
-    { name: 'ticket_actions_type_valid', expression: `action_type IN ('catatan', 'cek_lokasi', 'problem')` },
+    {
+      name: 'ticket_actions_type_valid',
+      expression: `action_type IN ('catatan', 'cek_lokasi', 'problem', 'eskalasi_sd')`,
+    },
     { name: 'ticket_actions_type_note', expression: `action_type = 'catatan' OR note IS NOT NULL` },
     { name: 'ticket_actions_note_length', expression: 'char_length(note) BETWEEN 1 AND 4000' },
     { name: 'ticket_actions_status_valid', expression: `status_from IN ${STATUSES} AND status_to IN ${STATUSES}` },

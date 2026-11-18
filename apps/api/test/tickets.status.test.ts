@@ -9,13 +9,15 @@ import { createTestApp } from './create-test-app.js';
 import { resetData } from './db.js';
 import { asTester, createRemote, createTenant, createTicket, createUser, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
 
-// Tabel transisi yang disetujui user (1.4). Ditulis ulang di sini, terpisah dari kode, agar
-// perubahan diam-diam pada TICKET_TRANSITIONS ketahuan.
+// Tabel transisi yang disetujui user (1.4), diubah 2026-11-18 (T69): Eskalasi = TT dibuka,
+// hanya lewat "Eskalasi To SD", lalu dari Eskalasi ke Dikerjakan, Pending, atau Selesai.
+// Ditulis ulang di sini, terpisah dari kode, agar perubahan diam-diam pada TICKET_TRANSITIONS
+// ketahuan.
 const APPROVED: Record<TicketStatus, TicketStatus[]> = {
-  terbuka: ['dikerjakan', 'pending', 'eskalasi', 'selesai'],
-  dikerjakan: ['pending', 'eskalasi', 'selesai'],
+  terbuka: ['dikerjakan', 'pending', 'selesai'],
+  dikerjakan: ['pending', 'selesai'],
   pending: ['dikerjakan'],
-  eskalasi: ['dikerjakan'],
+  eskalasi: ['dikerjakan', 'pending', 'selesai'],
   selesai: ['dikerjakan'],
 };
 

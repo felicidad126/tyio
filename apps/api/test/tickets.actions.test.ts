@@ -136,7 +136,7 @@ describe('linimasa tindakan tiket', () => {
     })();
 
     const results = await Promise.all([
-      add({ statusTo: 'eskalasi', expectedStatus: 'terbuka' }),
+      add({ statusTo: 'dikerjakan', expectedStatus: 'terbuka' }),
       add({ statusTo: 'selesai', expectedStatus: 'terbuka' }, other),
     ]);
 

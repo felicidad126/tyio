@@ -99,6 +99,7 @@ describe('buat tiket (NPR)', () => {
       createdAt: expect.any(String),
       customerTicketNumber: null,
       pending: null,
+      tt: null,
     });
     const detail = await http().get(`/api/tickets/${ticket.id}`).set('Cookie', cookie).expect(200);
     expect((detail.body as TicketResponse).ticket).toEqual(ticket);

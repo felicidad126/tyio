@@ -12,6 +12,7 @@ import { resetData } from './db.js';
 import { createTenant, createUser, ensureCategory, sessionCookieFrom, TEST_PASSWORD } from './fixtures.js';
 import { TicketEntity } from '../src/modules/tickets/ticket.entity.js';
 import { TicketActionEntity } from '../src/modules/tickets/ticket-action.entity.js';
+import { TroubleTicketEntity } from '../src/modules/trouble-tickets/trouble-ticket.entity.js';
 import {
   seedTenantOwnedData,
   TENANT_COLUMN_NOT_OWNED,
@@ -95,7 +96,13 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   });
 
   // Setiap rute tenant yang mengubah data wajib punya uji lintas-tenant sendiri di bawah ini.
-  const MUTATION_TESTED = ['POST /api/tickets', 'POST /api/tickets/:id/actions', 'PATCH /api/tickets/:id'];
+  const MUTATION_TESTED = [
+    'POST /api/tickets',
+    'POST /api/tickets/:id/actions',
+    'PATCH /api/tickets/:id',
+    'POST /api/tickets/:id/tt',
+    'POST /api/tickets/:id/tt/salin',
+  ];
   // Rute yang menjawab berkas, bukan JSON: kontrol positifnya cukup 200 untuk id milik A.
   const BINARY_ROUTES = ['GET /api/attachments/:id'];
 
@@ -129,6 +136,24 @@ describe('isolasi tenant di semua rute terdaftar', () => {
       status: statusBefore,
       customerTicketNumber: null,
     });
+  });
+
+  it('pengguna tenant A tidak bisa membuka TT atau menyalin ringkasan TT tiket tenant B (404, tidak berubah)', async () => {
+    const ticketB = bIds[2]!;
+    const actionsBefore = await ds.getRepository(TicketActionEntity).count();
+    const ttBefore = await ds.getRepository(TroubleTicketEntity).count();
+    const statusBefore = (await ds.getRepository(TicketEntity).findOneByOrFail({ id: ticketB })).status;
+
+    const open = await call('POST', `/api/tickets/${ticketB}/tt`, 'a').send({ problem: 'Coba TT customer lain', expectedStatus: statusBefore });
+    const copy = await call('POST', `/api/tickets/${ticketB}/tt/salin`, 'a').send({});
+
+    for (const res of [open, copy]) {
+      expect(res.status).toBe(404);
+      for (const marker of bMarkers()) expect(JSON.stringify(res.body)).not.toContain(marker);
+    }
+    expect(await ds.getRepository(TicketActionEntity).count()).toBe(actionsBefore);
+    expect(await ds.getRepository(TroubleTicketEntity).count()).toBe(ttBefore);
+    expect((await ds.getRepository(TicketEntity).findOneByOrFail({ id: ticketB })).status).toBe(statusBefore);
   });
 
   it('pengguna tenant A tidak bisa membuat tiket pada remote tenant B (404, tidak ada yang dibuat)', async () => {

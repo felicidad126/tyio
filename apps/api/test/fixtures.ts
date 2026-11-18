@@ -1,3 +1,4 @@
+import { type TroubleTicket, TroubleTicketEntity } from '../src/modules/trouble-tickets/trouble-ticket.entity.js';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { UserRole } from '@tyio/shared';
@@ -122,6 +123,19 @@ export async function createTicket(
       problem: 'Remote down (uji)',
       createdById: creator.id,
       ...overrides,
+    }),
+  );
+}
+
+/** TT uji langsung di database (tanpa API), untuk tiket yang sudah ada. */
+export async function createTroubleTicket(ds: DataSource, ticket: Ticket, number: string): Promise<TroubleTicket> {
+  return withActor(ds, TEST_ACTOR, (m) =>
+    m.getRepository(TroubleTicketEntity).save({
+      tenantId: ticket.tenantId,
+      ticketId: ticket.id,
+      number,
+      problem: 'Modem VSAT mati (uji)',
+      createdById: ticket.createdById,
     }),
   );
 }

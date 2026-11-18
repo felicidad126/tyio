@@ -18,17 +18,23 @@ export const TICKET_STATUS_LABELS: Readonly<Record<TicketStatus, string>> = {
 };
 
 /**
- * Jalur status yang sah: satu-satunya sumber untuk API (menolak jalur lain) dan web
- * (hanya menawarkan jalur ini). Eskalasi semula berarti ke L2 (NOC); karena hanya ada satu peran
- * Helpdesk (K30), artinya ditetapkan ulang bersama TT/Eskalasi To SD (1.5b).
+ * Jalur status yang bisa dipilih Helpdesk: satu-satunya sumber untuk API (menolak jalur lain)
+ * dan web (hanya menawarkan jalur ini). **Eskalasi = TT dibuka, menunggu kunjungan teknisi**
+ * (T69): hanya terpasang lewat "Eskalasi To SD" (buka TT), tidak dipilih manual. Dari Eskalasi,
+ * setelah kunjungan: Dikerjakan, Pending (mis. part ATM belum siap), atau Selesai.
  */
 export const TICKET_TRANSITIONS: Readonly<Record<TicketStatus, readonly TicketStatus[]>> = {
-  terbuka: ['dikerjakan', 'pending', 'eskalasi', 'selesai'],
-  dikerjakan: ['pending', 'eskalasi', 'selesai'],
+  terbuka: ['dikerjakan', 'pending', 'selesai'],
+  dikerjakan: ['pending', 'selesai'],
   pending: ['dikerjakan'],
-  eskalasi: ['dikerjakan'],
+  eskalasi: ['dikerjakan', 'pending', 'selesai'],
   selesai: ['dikerjakan'],
 };
+
+/** TT bisa dibuka dari status mana pun yang belum Selesai, sekali per NPR (K27, K44). */
+export function canOpenTroubleTicket(status: TicketStatus): boolean {
+  return status !== 'selesai';
+}
 
 export function canTransition(from: TicketStatus, to: TicketStatus): boolean {
   return TICKET_TRANSITIONS[from].includes(to);
@@ -52,17 +58,22 @@ export const PENDING_PARTY_HINTS: Readonly<Record<PendingParty, string>> = {
  * Jenis tindakan (Take Action sistem lama, K32). Eskalasi To SD menjadi TT (1.5b) dan Close
  * menjadi penutupan (1.6), jadi tidak ada di sini.
  */
-export const TICKET_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem'] as const;
+export const TICKET_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem', 'eskalasi_sd'] as const;
 export type TicketActionType = (typeof TICKET_ACTION_TYPES)[number];
+
+/** Yang bisa dipilih di form Tambah tindakan; Eskalasi To SD dibuat sistem saat TT dibuka. */
+export const MANUAL_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem'] as const satisfies readonly TicketActionType[];
+export type ManualActionType = (typeof MANUAL_ACTION_TYPES)[number];
 
 // "Bebas" mengikuti nama di sistem lama; "Catatan" sudah dipakai untuk kolom isinya.
 export const TICKET_ACTION_TYPE_LABELS: Readonly<Record<TicketActionType, string>> = {
   catatan: 'Bebas',
   cek_lokasi: 'Cek lokasi',
   problem: 'Problem',
+  eskalasi_sd: 'Eskalasi To SD',
 };
 
-export const TICKET_ACTION_TYPE_HINTS: Readonly<Record<TicketActionType, string>> = {
+export const TICKET_ACTION_TYPE_HINTS: Readonly<Record<ManualActionType, string>> = {
   catatan: 'Catatan bebas, perubahan status, atau lampiran.',
   cek_lokasi: 'Minta PIC di lokasi mengecek. Tulis siapa yang dihubungi dan apa yang diminta.',
   problem: 'Hasil pengecekan PIC: tulis penyebab masalahnya.',
@@ -123,6 +134,32 @@ export interface TicketSummary {
   createdAt: string;
 }
 
+/** Trouble Ticket: eskalasi ke Service Delivery untuk kunjungan teknisi (K27, K44). */
+export interface TroubleTicket {
+  id: string;
+  /** TT/<jarkom>/<customer>/<tahun>/<bulan>/<urut>, dibuat sistem (K41). */
+  number: string;
+  problem: string;
+  createdAt: string;
+  createdBy: { id: string; displayName: string };
+}
+
+export const TT_PROBLEM_MIN = 3;
+export const TT_PROBLEM_MAX = 2000;
+
+/** Isian "Eskalasi To SD". */
+export interface OpenTroubleTicketRequest {
+  /** Problem jarkom yang perlu dikerjakan teknisi. */
+  problem: string;
+  /** Status yang dilihat Helpdesk; bila sudah berubah, API menjawab 409. */
+  expectedStatus: TicketStatus;
+}
+
+/** Teks ringkasan TT siap tempel ke chat SD; penyalinannya tercatat di linimasa (K25). */
+export interface TroubleTicketSummaryResponse {
+  text: string;
+}
+
 export interface TicketDetail extends TicketSummary {
   remote: TicketRemote;
   jarkom: MasterRef;
@@ -133,6 +170,8 @@ export interface TicketDetail extends TicketSummary {
   customerTicketNumber: string | null;
   /** Terisi hanya saat status pending. */
   pending: { party: PendingParty; reason: string } | null;
+  /** TT tiket ini, bila sudah dieskalasi ke SD (paling banyak satu). */
+  tt: TroubleTicket | null;
 }
 
 export interface TicketAttachment {
@@ -171,7 +210,7 @@ export interface TicketActionsResponse {
 /** Isian "Tambah tindakan" (bagian `data` dari multipart; lampiran di bagian `lampiran`). */
 export interface AddTicketActionRequest {
   /** Bawaan "catatan". Cek lokasi dan Problem wajib berisi catatan. Tidak untuk koreksi. */
-  type?: TicketActionType;
+  type?: ManualActionType;
   /** UTC ISO; wajib kecuali untuk koreksi. */
   occurredAt?: string;
   note?: string;
@@ -223,7 +262,7 @@ export interface OpenTicketsConflict {
  * Tampilan daftar tiket (tab di halaman Tiket). "Aktif" = belum Selesai; "Milik saya" = tiket
  * aktif yang saya buat atau pernah saya beri tindakan.
  */
-export const TICKET_VIEWS = ['aktif', 'saya', 'pending', 'eskalasi', 'selesai', 'semua'] as const;
+export const TICKET_VIEWS = ['aktif', 'saya', 'pending', 'eskalasi', 'tt', 'selesai', 'semua'] as const;
 export type TicketView = (typeof TICKET_VIEWS)[number];
 
 export const TICKET_VIEW_LABELS: Readonly<Record<TicketView, string>> = {
@@ -231,6 +270,7 @@ export const TICKET_VIEW_LABELS: Readonly<Record<TicketView, string>> = {
   saya: 'Milik saya',
   pending: 'Pending',
   eskalasi: 'Eskalasi',
+  tt: 'TT aktif',
   selesai: 'Selesai',
   semua: 'Semua',
 };
@@ -239,7 +279,7 @@ export const TICKET_VIEW_LABELS: Readonly<Record<TicketView, string>> = {
  * Tampilan antrean: jumlahnya selalu tampil di tab. Selesai dan Semua (riwayat) hanya dihitung
  * saat dibuka, karena jumlahnya terus bertambah dan tidak perlu dipantau.
  */
-export const TICKET_QUEUE_VIEWS = ['aktif', 'saya', 'pending', 'eskalasi'] as const satisfies readonly TicketView[];
+export const TICKET_QUEUE_VIEWS = ['aktif', 'saya', 'pending', 'eskalasi', 'tt'] as const satisfies readonly TicketView[];
 export type TicketQueueView = (typeof TICKET_QUEUE_VIEWS)[number];
 
 /** Status yang masih perlu ditangani. */
@@ -252,7 +292,7 @@ export const TICKET_LIST_NOTE_EXCERPT = 140;
 /** Parameter daftar tiket (query string). */
 export interface TicketListQuery {
   view?: TicketView;
-  /** Cari di no. NPR, no. tiket customer, Site ID, nama, kota, dan kanca remote. */
+  /** Cari di no. NPR, no. TT, no. tiket customer, Site ID, nama, kota, dan kanca remote. */
   q?: string;
   tenantId?: string;
   categoryId?: string;
@@ -264,6 +304,8 @@ export interface TicketListQuery {
 export interface TicketListItem extends TicketSummary {
   remote: Pick<TicketRemote, 'id' | 'siteId' | 'name' | 'city' | 'timeZone'>;
   customerTicketNumber: string | null;
+  /** Nomor TT, bila ada. */
+  tt: { number: string } | null;
   pending: { party: PendingParty; reason: string } | null;
   createdBy: { id: string; displayName: string };
   /** Entri linimasa terbaru menurut waktu tindakan; catatan dipotong. */

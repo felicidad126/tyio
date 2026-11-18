@@ -27,6 +27,7 @@ import { TenantEntity } from '../tenants/tenant.entity.js';
 import { UserEntity } from '../users/user.entity.js';
 import { invalid, type CreateTicketInput } from './ticket-input.js';
 import { formatTicketNumber, ticketPeriod } from './ticket-number.js';
+import { TroubleTicketEntity } from '../trouble-tickets/trouble-ticket.entity.js';
 import { TicketActionEntity } from './ticket-action.entity.js';
 import type { ParsedTicketListQuery } from './ticket-list-query.js';
 import { type Ticket, TicketEntity, TICKET_SEARCH_EXPRESSION } from './ticket.entity.js';
@@ -42,6 +43,8 @@ const VIEW_CONDITIONS: Readonly<Record<TicketView, string | null>> = {
     '(SELECT 1 FROM ticket_actions ta WHERE ta.ticket_id = t.id AND ta.created_by = :me))',
   pending: "t.status = 'pending'",
   eskalasi: "t.status = 'eskalasi'",
+  // TT yang NPR-nya belum Selesai (TT ditutup bersama NPR di 1.6).
+  tt: "t.status <> 'selesai' AND EXISTS (SELECT 1 FROM trouble_tickets x WHERE x.ticket_id = t.id)",
   selesai: "t.status = 'selesai'",
   semua: null,
 };
@@ -103,7 +106,7 @@ export class TicketsService {
 
       const jarkom = await m.getRepository(JarkomEntity).findOneByOrFail({ id: remote.jarkomId });
       const period = ticketPeriod(new Date());
-      const sequence = await nextSequence(m, tenant.id, jarkom.id, period);
+      const sequence = await nextSequence(m, 'NPR', tenant.id, jarkom.id, period);
       const saved = await m.getRepository(TicketEntity).save({
         tenantId: tenant.id,
         remoteId: remote.id,
@@ -149,7 +152,8 @@ export class TicketsService {
         qb.andWhere(
           `t.id IN (SELECT ts.id FROM tickets ts WHERE ${TICKET_SEARCH_EXPRESSION('ts')} ILIKE :q ` +
             `UNION SELECT tr.id FROM tickets tr JOIN remotes rs ON rs.id = tr.remote_id ` +
-            `WHERE ${REMOTE_SEARCH_EXPRESSION('rs')} ILIKE :q)`,
+            `WHERE ${REMOTE_SEARCH_EXPRESSION('rs')} ILIKE :q ` +
+            `UNION SELECT tt.ticket_id FROM trouble_tickets tt WHERE tt.number ILIKE :q)`,
           { q: likePattern(query.q) },
         );
       }
@@ -196,11 +200,13 @@ export class TicketsService {
     const m = this.dataSource.manager;
     const remote = await m.getRepository(RemoteEntity).findOneByOrFail({ id: ticket.remoteId });
     const [summary] = await summaries(m, [ticket]);
-    const [jarkom, system, creator] = await Promise.all([
+    const [jarkom, system, creator, tt] = await Promise.all([
       m.getRepository(JarkomEntity).findOneByOrFail({ id: remote.jarkomId }),
       ticket.systemId ? m.getRepository(SystemEntity).findOneByOrFail({ id: ticket.systemId }) : null,
       m.getRepository(UserEntity).findOneByOrFail({ id: ticket.createdById }),
+      m.getRepository(TroubleTicketEntity).findOneBy({ ticketId: ticket.id }),
     ]);
+    const ttCreator = tt ? await m.getRepository(UserEntity).findOneByOrFail({ id: tt.createdById }) : null;
     return {
       ...summary!,
       remote: {
@@ -220,6 +226,16 @@ export class TicketsService {
       pending:
         ticket.pendingParty && ticket.pendingReason
           ? { party: ticket.pendingParty, reason: ticket.pendingReason }
+          : null,
+      tt:
+        tt && ttCreator
+          ? {
+              id: tt.id,
+              number: tt.number,
+              problem: tt.problem,
+              createdAt: tt.createdAt.toISOString(),
+              createdBy: { id: ttCreator.id, displayName: ttCreator.displayName },
+            }
           : null,
     };
   }
@@ -244,14 +260,20 @@ export class TicketsService {
  * menyatakan "tambah satu saat bentrok lalu kembalikan nilainya". INSERT ... ON CONFLICT
  * mengunci baris penghitung sampai transaksi selesai, jadi operator lain menunggu giliran.
  */
-async function nextSequence(m: EntityManager, tenantId: string, jarkomId: string, period: string): Promise<number> {
+export async function nextSequence(
+  m: EntityManager,
+  kind: 'NPR' | 'TT',
+  tenantId: string,
+  jarkomId: string,
+  period: string,
+): Promise<number> {
   const rows: Array<{ last_value: number }> = await m.query(
     `INSERT INTO ticket_sequences (kind, tenant_id, jarkom_id, period, last_value)
-     VALUES ('NPR', $1, $2, $3, 1)
+     VALUES ($4, $1, $2, $3, 1)
      ON CONFLICT (kind, tenant_id, jarkom_id, period)
      DO UPDATE SET last_value = ticket_sequences.last_value + 1
      RETURNING last_value`,
-    [tenantId, jarkomId, period],
+    [tenantId, jarkomId, period, kind],
   );
   return rows[0]!.last_value;
 }
@@ -277,11 +299,13 @@ async function listItems(m: EntityManager, tickets: Ticket[]): Promise<TicketLis
     [ticketIds, TICKET_LIST_NOTE_EXCERPT],
   );
   const userIds = [...new Set([...tickets.map((t) => t.createdById), ...lastActions.map((a) => a.created_by)])];
-  const [summaryList, remotes, users] = await Promise.all([
+  const [summaryList, remotes, users, tts] = await Promise.all([
     summaries(m, tickets),
     m.getRepository(RemoteEntity).findBy({ id: In([...new Set(tickets.map((t) => t.remoteId))]) }),
     m.getRepository(UserEntity).findBy({ id: In(userIds) }),
+    m.getRepository(TroubleTicketEntity).findBy({ ticketId: In(ticketIds) }),
   ]);
+  const ttByTicket = new Map(tts.map((x) => [x.ticketId, x.number]));
   const remoteById = new Map(remotes.map((r) => [r.id, r]));
   const userById = new Map(users.map((u) => [u.id, { id: u.id, displayName: u.displayName }]));
   const lastByTicket = new Map(lastActions.map((a) => [a.ticket_id, a]));
@@ -292,6 +316,7 @@ async function listItems(m: EntityManager, tickets: Ticket[]): Promise<TicketLis
       ...summaryList[i]!,
       remote: { id: remote.id, siteId: remote.siteId, name: remote.name, city: remote.city, timeZone: remote.timeZone },
       customerTicketNumber: t.customerTicketNumber,
+      tt: ttByTicket.has(t.id) ? { number: ttByTicket.get(t.id)! } : null,
       pending: t.pendingParty && t.pendingReason ? { party: t.pendingParty, reason: t.pendingReason } : null,
       createdBy: userById.get(t.createdById)!,
       lastAction: last

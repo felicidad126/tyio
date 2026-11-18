@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { MasterModule } from './modules/master/master.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
 import { SearchModule } from './modules/search/search.module.js';
+import { TroubleTicketsModule } from './modules/trouble-tickets/trouble-tickets.module.js';
 import { TicketsModule } from './modules/tickets/tickets.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 
@@ -30,6 +31,7 @@ export class AppModule {
         RemotesModule,
         TicketsModule,
         SearchModule,
+        TroubleTicketsModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],
