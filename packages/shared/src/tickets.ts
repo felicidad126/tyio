@@ -3,8 +3,8 @@ import type { MasterItem } from './master.js';
 import type { RemoteStatus, TimeZoneName } from './remotes.js';
 
 /**
- * Status tiket (alur disetujui user, langkah 1.4). "Ditutup" menyusul bersama aturan
- * penutupan K21 (langkah 1.6); sampai itu semua tiket masih terbuka (closed_at kosong).
+ * Status tiket (alur disetujui user, langkah 1.4). **Selesai = NPR ditutup** lewat tindakan
+ * Close (1.6, K32): waktunya (jarkom online kembali) tersimpan sebagai `closedAt`.
  */
 export const TICKET_STATUSES = ['terbuka', 'dikerjakan', 'pending', 'eskalasi', 'selesai'] as const;
 export type TicketStatus = (typeof TICKET_STATUSES)[number];
@@ -18,10 +18,11 @@ export const TICKET_STATUS_LABELS: Readonly<Record<TicketStatus, string>> = {
 };
 
 /**
- * Jalur status yang bisa dipilih Helpdesk: satu-satunya sumber untuk API (menolak jalur lain)
- * dan web (hanya menawarkan jalur ini). **Eskalasi = TT dibuka, menunggu kunjungan teknisi**
- * (T69): hanya terpasang lewat "Eskalasi To SD" (buka TT), tidak dipilih manual. Dari Eskalasi,
- * setelah kunjungan: Dikerjakan, Pending (mis. part ATM belum siap), atau Selesai.
+ * Jalur status: satu-satunya sumber untuk API (menolak jalur lain) dan web (hanya menawarkan
+ * jalur ini). **Eskalasi = TT dibuka, menunggu kunjungan teknisi** (T69): hanya terpasang lewat
+ * "Eskalasi To SD" (buka TT), tidak dipilih manual. Dari Eskalasi, setelah kunjungan:
+ * Dikerjakan, Pending (mis. part ATM belum siap), atau Selesai. **Selesai hanya lewat tindakan
+ * Close** (T74); Selesai → Dikerjakan membuka NPR lagi.
  */
 export const TICKET_TRANSITIONS: Readonly<Record<TicketStatus, readonly TicketStatus[]>> = {
   terbuka: ['dikerjakan', 'pending', 'selesai'],
@@ -30,6 +31,16 @@ export const TICKET_TRANSITIONS: Readonly<Record<TicketStatus, readonly TicketSt
   eskalasi: ['dikerjakan', 'pending', 'selesai'],
   selesai: ['dikerjakan'],
 };
+
+/** Status yang bisa dipilih di "Ubah status"; Selesai dipasang tindakan Close (T74). */
+export function manualStatusTargets(from: TicketStatus): readonly TicketStatus[] {
+  return TICKET_TRANSITIONS[from].filter((to) => to !== 'selesai');
+}
+
+/** NPR yang belum Selesai bisa ditutup (Close) dari status mana pun yang punya jalur ke Selesai. */
+export function canCloseTicket(status: TicketStatus): boolean {
+  return TICKET_TRANSITIONS[status].includes('selesai');
+}
 
 /** TT bisa dibuka dari status mana pun yang belum Selesai, sekali per NPR (K27, K44). */
 export function canOpenTroubleTicket(status: TicketStatus): boolean {
@@ -55,14 +66,14 @@ export const PENDING_PARTY_HINTS: Readonly<Record<PendingParty, string>> = {
 };
 
 /**
- * Jenis tindakan (Take Action sistem lama, K32). Eskalasi To SD menjadi TT (1.5b) dan Close
- * menjadi penutupan (1.6), jadi tidak ada di sini.
+ * Jenis tindakan (Take Action sistem lama, K32). Eskalasi To SD dibuat sistem saat TT dibuka
+ * (1.5b); Close menutup NPR (1.6).
  */
-export const TICKET_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem', 'eskalasi_sd'] as const;
+export const TICKET_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem', 'eskalasi_sd', 'close'] as const;
 export type TicketActionType = (typeof TICKET_ACTION_TYPES)[number];
 
 /** Yang bisa dipilih di form Tambah tindakan; Eskalasi To SD dibuat sistem saat TT dibuka. */
-export const MANUAL_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem'] as const satisfies readonly TicketActionType[];
+export const MANUAL_ACTION_TYPES = ['catatan', 'cek_lokasi', 'problem', 'close'] as const satisfies readonly TicketActionType[];
 export type ManualActionType = (typeof MANUAL_ACTION_TYPES)[number];
 
 // "Bebas" mengikuti nama di sistem lama; "Catatan" sudah dipakai untuk kolom isinya.
@@ -71,12 +82,28 @@ export const TICKET_ACTION_TYPE_LABELS: Readonly<Record<TicketActionType, string
   cek_lokasi: 'Cek lokasi',
   problem: 'Problem',
   eskalasi_sd: 'Eskalasi To SD',
+  close: 'Close',
 };
 
 export const TICKET_ACTION_TYPE_HINTS: Readonly<Record<ManualActionType, string>> = {
   catatan: 'Catatan bebas, perubahan status, atau lampiran.',
   cek_lokasi: 'Minta PIC di lokasi mengecek. Tulis siapa yang dihubungi dan apa yang diminta.',
   problem: 'Hasil pengecekan PIC: tulis penyebab masalahnya.',
+  close: 'Tutup NPR karena jarkom terpantau online kembali. Tulis penyelesaiannya.',
+};
+
+/**
+ * Part yang diganti saat kunjungan teknisi (K32), dipilih waktu Close NPR yang punya TT.
+ * Daftar kosong berarti tidak ada part yang diganti.
+ */
+export const REPLACED_PARTS = ['modem', 'adaptor', 'indoor', 'buc', 'lnb'] as const;
+export type ReplacedPart = (typeof REPLACED_PARTS)[number];
+export const REPLACED_PART_LABELS: Readonly<Record<ReplacedPart, string>> = {
+  modem: 'Modem',
+  adaptor: 'Adaptor',
+  indoor: 'Perangkat indoor',
+  buc: 'BUC',
+  lnb: 'LNB',
 };
 
 /** Tanda NPR yang perlu diperbarui (K36): masih aktif dan sudah down sekian hari. */
@@ -132,6 +159,8 @@ export interface TicketSummary {
   occurredAt: string;
   /** Waktu pencatatan (UTC ISO), diisi sistem. */
   createdAt: string;
+  /** Waktu jarkom online kembali (UTC ISO) saat NPR ditutup; kosong selama belum Selesai. */
+  closedAt: string | null;
 }
 
 /** Trouble Ticket: eskalasi ke Service Delivery untuk kunjungan teknisi (K27, K44). */
@@ -142,6 +171,8 @@ export interface TroubleTicket {
   problem: string;
   createdAt: string;
   createdBy: { id: string; displayName: string };
+  /** Ditutup bersama NPR-nya (T75); kosong lagi bila NPR dibuka lagi. */
+  closedAt: string | null;
 }
 
 export const TT_PROBLEM_MIN = 3;
@@ -197,6 +228,8 @@ export interface TicketAction {
   statusFrom: TicketStatus | null;
   statusTo: TicketStatus | null;
   pending: { party: PendingParty; reason: string } | null;
+  /** Hanya untuk Close NPR yang punya TT: part yang diganti teknisi (kosong = tidak ada). */
+  replacedParts: ReplacedPart[] | null;
   correctsId: string | null;
   correctedBy: string[];
   attachments: TicketAttachment[];
@@ -209,12 +242,20 @@ export interface TicketActionsResponse {
 
 /** Isian "Tambah tindakan" (bagian `data` dari multipart; lampiran di bagian `lampiran`). */
 export interface AddTicketActionRequest {
-  /** Bawaan "catatan". Cek lokasi dan Problem wajib berisi catatan. Tidak untuk koreksi. */
+  /**
+   * Bawaan "catatan". Cek lokasi, Problem, dan Close wajib berisi catatan. Close wajib bersama
+   * `statusTo: 'selesai'`, dan Selesai hanya lewat Close. Tidak untuk koreksi.
+   */
   type?: ManualActionType;
-  /** UTC ISO; wajib kecuali untuk koreksi. */
+  /** UTC ISO; wajib kecuali untuk koreksi. Untuk Close: waktu jarkom online kembali. */
   occurredAt?: string;
   note?: string;
   statusTo?: TicketStatus;
+  /**
+   * Hanya untuk Close NPR yang punya TT, dan wajib di sana (bersama lampiran laporan teknisi):
+   * part yang diganti, atau daftar kosong bila tidak ada.
+   */
+  replacedParts?: ReplacedPart[];
   /** Status yang dilihat operator; bila sudah berubah, API menjawab 409. Wajib bila statusTo diisi. */
   expectedStatus?: TicketStatus;
   pendingParty?: PendingParty;
@@ -297,6 +338,8 @@ export interface TicketListQuery {
   tenantId?: string;
   categoryId?: string;
   jarkomId?: string;
+  /** Riwayat tiket satu remote (halaman remote). */
+  remoteId?: string;
   page?: number;
 }
 

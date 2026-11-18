@@ -159,6 +159,7 @@ export class TicketsService {
       }
       if (query.tenantId) qb.andWhere('t.tenantId = :tenantId', { tenantId: query.tenantId });
       if (query.categoryId) qb.andWhere('t.categoryId = :categoryId', { categoryId: query.categoryId });
+      if (query.remoteId) qb.andWhere('t.remoteId = :remoteId', { remoteId: query.remoteId });
       if (query.jarkomId) qb.andWhere('r.jarkomId = :jarkomId', { jarkomId: query.jarkomId });
       return qb;
     };
@@ -235,6 +236,7 @@ export class TicketsService {
               problem: tt.problem,
               createdAt: tt.createdAt.toISOString(),
               createdBy: { id: ttCreator.id, displayName: ttCreator.displayName },
+              closedAt: tt.closedAt?.toISOString() ?? null,
             }
           : null,
     };
@@ -349,6 +351,7 @@ async function summaries(m: EntityManager, tickets: Ticket[]): Promise<TicketSum
     category: categoryById.get(t.categoryId)!,
     occurredAt: t.occurredAt.toISOString(),
     createdAt: t.createdAt.toISOString(),
+    closedAt: t.closedAt?.toISOString() ?? null,
   }));
 }
 

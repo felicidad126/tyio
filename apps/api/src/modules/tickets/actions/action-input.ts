@@ -8,6 +8,9 @@ import {
   type PendingParty,
   MANUAL_ACTION_TYPES,
   type ManualActionType,
+  REPLACED_PART_LABELS,
+  REPLACED_PARTS,
+  type ReplacedPart,
   TICKET_ACTION_TYPE_LABELS,
   TICKET_FUTURE_TOLERANCE_MINUTES,
   TICKET_STATUSES,
@@ -16,7 +19,17 @@ import {
 import { invalid } from '../ticket-input.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ALLOWED = ['type', 'occurredAt', 'note', 'statusTo', 'expectedStatus', 'pendingParty', 'pendingReason', 'correctsId'];
+const ALLOWED = [
+  'type',
+  'occurredAt',
+  'note',
+  'statusTo',
+  'expectedStatus',
+  'pendingParty',
+  'pendingReason',
+  'replacedParts',
+  'correctsId',
+];
 const EARLIEST = Date.UTC(2020, 0, 1);
 
 export type ActionInput =
@@ -26,6 +39,8 @@ export type ActionInput =
       occurredAt: Date;
       note: string | null;
       status: { to: TicketStatus; expected: TicketStatus; pending: { party: PendingParty; reason: string } | null } | null;
+      /** Hanya untuk Close; wajib atau dilarang tergantung ada TT (diperiksa layanan). */
+      replacedParts: ReplacedPart[] | null;
     }
   | { kind: 'correction'; correctsId: string; note: string };
 
@@ -60,7 +75,12 @@ export function parseActionInput(body: unknown, files: UploadedFile[], now = new
     if (typeof input.correctsId !== 'string' || !UUID.test(input.correctsId)) {
       throw invalid('Entri yang dikoreksi tidak sah.', 'correctsId');
     }
-    if (input.statusTo !== undefined || input.pendingParty !== undefined || input.pendingReason !== undefined) {
+    if (
+      input.statusTo !== undefined ||
+      input.pendingParty !== undefined ||
+      input.pendingReason !== undefined ||
+      input.replacedParts !== undefined
+    ) {
       throw invalid('Koreksi hanya berisi catatan; status diubah lewat tindakan biasa.', 'statusTo');
     }
     if (files.length > 0) throw invalid('Koreksi tidak bisa membawa lampiran.', 'lampiran');
@@ -99,6 +119,20 @@ export function parseActionInput(body: unknown, files: UploadedFile[], now = new
     throw invalid('Pihak dan alasan pending hanya untuk status Pending.', 'pendingParty');
   }
 
+  // Close = tutup NPR (K32, T74): selalu ke Selesai, dan Selesai hanya lewat Close.
+  if (type === 'close' && status?.to !== 'selesai') {
+    throw invalid('Close menutup NPR: status tujuannya Selesai.', 'statusTo');
+  }
+  if (type !== 'close' && status?.to === 'selesai') {
+    throw invalid('NPR ditutup lewat jenis tindakan Close, bukan Ubah status.', 'statusTo');
+  }
+  let replacedParts: ReplacedPart[] | null = null;
+  if (input.replacedParts !== undefined) {
+    if (type !== 'close') throw invalid('Part yang diganti hanya diisi saat Close.', 'replacedParts');
+    replacedParts = partsOf(input.replacedParts);
+  }
+
+  if (type === 'close' && !note) throw invalid('Tulis catatan penyelesaian: apa yang membuat jarkom online kembali.', 'note');
   if (type !== 'catatan' && !note) {
     throw invalid(`Tulis catatan untuk tindakan ${TICKET_ACTION_TYPE_LABELS[type]}.`, 'note');
   }
@@ -107,7 +141,17 @@ export function parseActionInput(body: unknown, files: UploadedFile[], now = new
   if (files.length > ATTACHMENT_MAX_FILES) {
     throw invalid(`Paling banyak ${ATTACHMENT_MAX_FILES} lampiran per tindakan.`, 'lampiran');
   }
-  return { kind: 'action', type, occurredAt, note, status };
+  return { kind: 'action', type, occurredAt, note, status, replacedParts };
+}
+
+function partsOf(value: unknown): ReplacedPart[] {
+  const labels = REPLACED_PARTS.map((p) => REPLACED_PART_LABELS[p]).join(', ');
+  if (!Array.isArray(value) || value.some((p) => !REPLACED_PARTS.includes(p as ReplacedPart))) {
+    throw invalid(`Part yang diganti hanya: ${labels}; atau kosong bila tidak ada.`, 'replacedParts');
+  }
+  if (new Set(value).size !== value.length) throw invalid('Part yang diganti tidak boleh berulang.', 'replacedParts');
+  // Urutan tetap seperti daftar, agar tampilannya sama siapa pun yang memilih.
+  return REPLACED_PARTS.filter((p) => value.includes(p));
 }
 
 /** Nomor tiket customer: teks bebas satu baris, atau kosong untuk menghapus. */

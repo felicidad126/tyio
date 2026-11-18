@@ -123,7 +123,7 @@ describe('linimasa tindakan tiket', () => {
     await addOk({ statusTo: 'dikerjakan', expectedStatus: 'terbuka' });
     const before = (await timeline()).length;
 
-    const res = await add({ note: 'Selesai', statusTo: 'selesai', expectedStatus: 'terbuka' }).expect(409);
+    const res = await add({ type: 'close', note: 'Online', statusTo: 'selesai', expectedStatus: 'terbuka' }).expect(409);
 
     expect(res.body).toMatchObject({ currentStatus: 'dikerjakan', message: expect.stringMatching(/sudah berubah menjadi Dikerjakan/) });
     expect((await timeline()).length).toBe(before);
@@ -137,7 +137,8 @@ describe('linimasa tindakan tiket', () => {
 
     const results = await Promise.all([
       add({ statusTo: 'dikerjakan', expectedStatus: 'terbuka' }),
-      add({ statusTo: 'selesai', expectedStatus: 'terbuka' }, other),
+      // Waktu online kembali tidak boleh sebelum kejadian (tiket ini dibuat dengan waktu sekarang).
+      add({ type: 'close', occurredAt: new Date().toISOString(), note: 'Online kembali', statusTo: 'selesai', expectedStatus: 'terbuka' }, other),
     ]);
 
     expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
@@ -279,7 +280,7 @@ describe('linimasa tindakan tiket', () => {
     await http()
       .post(`/api/tickets/${ticketId}/actions`)
       .set('Cookie', cookie)
-      .field('data', JSON.stringify({ occurredAt: at, note: 'x', statusTo: 'selesai', expectedStatus: 'terbuka' }))
+      .field('data', JSON.stringify({ type: 'close', occurredAt: at, note: 'x', statusTo: 'selesai', expectedStatus: 'terbuka' }))
       .attach('lampiran', TINY_PNG, 'a.png')
       .expect(409);
 

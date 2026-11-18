@@ -28,6 +28,7 @@ import {
   ensureJarkom,
   sessionCookieFrom,
   TEST_PASSWORD,
+  TINY_PNG,
 } from './fixtures.js';
 
 describe('Trouble Ticket (Eskalasi To SD)', () => {
@@ -112,6 +113,7 @@ describe('Trouble Ticket (Eskalasi To SD)', () => {
       problem: PROBLEM,
       createdAt: expect.any(String),
       createdBy: { id: expect.any(String), displayName: 'Helpdesk Uji' },
+      closedAt: null,
     });
     const [entry] = await timeline(npr.id);
     expect(entry).toMatchObject({
@@ -173,7 +175,7 @@ describe('Trouble Ticket (Eskalasi To SD)', () => {
     await http()
       .post(`/api/tickets/${npr.id}/actions`)
       .set('Cookie', cookie)
-      .send({ occurredAt: new Date().toISOString(), statusTo: 'selesai', expectedStatus: 'terbuka' })
+      .send({ type: 'close', occurredAt: new Date().toISOString(), note: 'Listrik pulih, online', statusTo: 'selesai', expectedStatus: 'terbuka' })
       .expect(201);
     expect((await openTt(npr, { problem: PROBLEM, expectedStatus: 'selesai' }).expect(400)).body).toMatchObject({
       field: 'expectedStatus',
@@ -282,7 +284,18 @@ describe('Trouble Ticket (Eskalasi To SD)', () => {
     await http()
       .post(`/api/tickets/${done.id}/actions`)
       .set('Cookie', cookie)
-      .send({ occurredAt: new Date().toISOString(), note: 'Teknisi selesai, online', statusTo: 'selesai', expectedStatus: 'eskalasi' })
+      .field(
+        'data',
+        JSON.stringify({
+          type: 'close',
+          occurredAt: new Date().toISOString(),
+          note: 'Teknisi ganti modem, online',
+          statusTo: 'selesai',
+          expectedStatus: 'eskalasi',
+          replacedParts: ['modem'],
+        }),
+      )
+      .attach('lampiran', TINY_PNG, 'laporan-teknisi.png')
       .expect(201);
 
     const list = (await http().get('/api/tickets?view=tt').set('Cookie', cookie).expect(200)).body as TicketListResponse;

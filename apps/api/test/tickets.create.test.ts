@@ -100,6 +100,7 @@ describe('buat tiket (NPR)', () => {
       customerTicketNumber: null,
       pending: null,
       tt: null,
+      closedAt: null,
     });
     const detail = await http().get(`/api/tickets/${ticket.id}`).set('Cookie', cookie).expect(200);
     expect((detail.body as TicketResponse).ticket).toEqual(ticket);
@@ -179,6 +180,7 @@ describe('buat tiket (NPR)', () => {
         category: ticket.category,
         occurredAt,
         createdAt: ticket.createdAt,
+        closedAt: null,
       },
     ]);
   });

@@ -24,7 +24,10 @@ export interface Ticket {
   /** Terisi hanya saat status pending; riwayatnya ada di linimasa. */
   pendingParty: PendingParty | null;
   pendingReason: string | null;
-  /** Kosong = tiket masih terbuka. Diisi saat ditutup (langkah 1.6). */
+  /**
+   * Waktu jarkom online kembali, diisi tindakan Close (1.6); kosong selama belum Selesai
+   * (dijaga database) dan dikosongkan lagi bila NPR dibuka lagi.
+   */
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -111,6 +114,7 @@ export const TicketEntity = new EntitySchema<Ticket>({
       expression: `(status = 'pending') = (pending_party IS NOT NULL AND pending_reason IS NOT NULL)`,
     },
     { name: 'tickets_pending_party_valid', expression: `pending_party IN ('customer', 'tm')` },
+    { name: 'tickets_closed', expression: `(status = 'selesai') = (closed_at IS NOT NULL)` },
     { name: 'tickets_problem_length', expression: 'char_length(problem) BETWEEN 3 AND 4000' },
   ],
 });

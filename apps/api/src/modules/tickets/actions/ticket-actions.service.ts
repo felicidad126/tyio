@@ -10,6 +10,7 @@ import { DataSource, type EntityManager, In } from 'typeorm';
 import { type Actor, withActor } from '../../../common/audit/actor.js';
 import type { TenantAccess } from '../../../common/tenant/tenant-access.js';
 import { TenantScopedRepository } from '../../../common/tenant/tenant-scoped.repository.js';
+import { TroubleTicketEntity } from '../../trouble-tickets/trouble-ticket.entity.js';
 import { UserEntity } from '../../users/user.entity.js';
 import { assertTransition } from '../status/ticket-status.js';
 import { invalid } from '../ticket-input.js';
@@ -99,6 +100,11 @@ export class TicketActionsService {
           entry = { type: input.type, occurredAt: input.occurredAt, note: input.note };
           if (input.status) {
             assertTransition(ticket.status, input.status.expected, input.status.to);
+            const closing = input.status.to === 'selesai';
+            if (closing) {
+              const parts = await checkClose(m, ticket, input, saved.length);
+              entry = { ...entry, replacedParts: parts };
+            }
             entry = {
               ...entry,
               statusFrom: ticket.status,
@@ -106,11 +112,18 @@ export class TicketActionsService {
               pendingParty: input.status.pending?.party ?? null,
               pendingReason: input.status.pending?.reason ?? null,
             };
+            // Close mengisi waktu online kembali; membuka lagi (Selesai → Dikerjakan) mengosongkannya.
+            // TT ikut NPR-nya (T75): ditutup bersama, aktif lagi bila NPR dibuka lagi.
+            const closedAt = closing ? input.occurredAt : null;
             await m.getRepository(TicketEntity).update(ticket.id, {
               status: input.status.to,
               pendingParty: input.status.pending?.party ?? null,
               pendingReason: input.status.pending?.reason ?? null,
+              closedAt,
             });
+            if (closing || ticket.status === 'selesai') {
+              await m.getRepository(TroubleTicketEntity).update({ ticketId: ticket.id }, { closedAt });
+            }
           }
         }
         const action = await actions.save({ ...entry, tenantId: ticket.tenantId, ticketId: ticket.id, createdById: userId });
@@ -213,6 +226,7 @@ async function toViews(m: EntityManager, rows: TicketAction[]): Promise<TicketAc
     statusFrom: r.statusFrom,
     statusTo: r.statusTo,
     pending: r.pendingParty && r.pendingReason ? { party: r.pendingParty, reason: r.pendingReason } : null,
+    replacedParts: r.replacedParts,
     correctsId: r.correctsId,
     correctedBy: corrections.filter((c) => c.correctsId === r.id).map((c) => c.id),
     attachments: attachments
@@ -221,6 +235,34 @@ async function toViews(m: EntityManager, rows: TicketAction[]): Promise<TicketAc
         (a): TicketAttachment => ({ id: a.id, fileName: a.fileName, contentType: a.contentType, sizeBytes: a.sizeBytes }),
       ),
   }));
+}
+
+/**
+ * Syarat Close (K32, T75–T77): waktu online kembali tidak sebelum kejadian; NPR dengan TT
+ * (ada kunjungan teknisi) wajib melampirkan laporan teknisi dan memilih part yang diganti
+ * (boleh "tidak ada"); NPR tanpa TT tidak punya part. Mengembalikan part untuk disimpan.
+ */
+async function checkClose(
+  m: EntityManager,
+  ticket: Ticket,
+  input: Extract<ActionInput, { kind: 'action' }>,
+  attachmentCount: number,
+): Promise<TicketAction['replacedParts']> {
+  if (input.occurredAt.getTime() < ticket.occurredAt.getTime()) {
+    throw invalid('Waktu online kembali tidak boleh sebelum waktu kejadian NPR.', 'occurredAt');
+  }
+  const tt = await m.getRepository(TroubleTicketEntity).findOneBy({ ticketId: ticket.id });
+  if (!tt) {
+    if (input.replacedParts !== null) {
+      throw invalid('Part yang diganti hanya untuk NPR dengan kunjungan teknisi (TT).', 'replacedParts');
+    }
+    return null;
+  }
+  if (input.replacedParts === null) {
+    throw invalid(`Pilih part yang diganti teknisi untuk ${tt.number}, atau "Tidak ada part yang diganti".`, 'replacedParts');
+  }
+  if (attachmentCount === 0) throw invalid(`Lampirkan laporan teknisi untuk ${tt.number}.`, 'lampiran');
+  return input.replacedParts;
 }
 
 function notFound(message: string): NotFoundException {

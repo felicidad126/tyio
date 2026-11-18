@@ -1,4 +1,4 @@
-import type { AttachmentType, PendingParty, TicketActionType, TicketStatus } from '@tyio/shared';
+import type { AttachmentType, PendingParty, ReplacedPart, TicketActionType, TicketStatus } from '@tyio/shared';
 import { EntitySchema } from 'typeorm';
 import { UserEntity } from '../users/user.entity.js';
 import { TicketEntity } from './ticket.entity.js';
@@ -13,7 +13,7 @@ export interface TicketAction {
   id: string;
   tenantId: string;
   ticketId: string;
-  /** Jenis tindakan (K32): catatan, cek lokasi, atau problem. */
+  /** Jenis tindakan (K32): catatan, cek lokasi, problem, eskalasi_sd (sistem), atau close. */
   type: TicketActionType;
   /** Waktu tindakan, diisi operator (R-F). */
   occurredAt: Date;
@@ -22,6 +22,8 @@ export interface TicketAction {
   statusTo: TicketStatus | null;
   pendingParty: PendingParty | null;
   pendingReason: string | null;
+  /** Hanya pada Close NPR yang punya TT (1.6): part yang diganti; kosong = tidak ada. */
+  replacedParts: ReplacedPart[] | null;
   correctsId: string | null;
   createdById: string;
   /** Waktu pencatatan, diisi sistem. */
@@ -42,6 +44,7 @@ export const TicketActionEntity = new EntitySchema<TicketAction>({
     statusTo: { name: 'status_to', type: 'varchar', length: 16, nullable: true },
     pendingParty: { name: 'pending_party', type: 'varchar', length: 16, nullable: true },
     pendingReason: { name: 'pending_reason', type: 'varchar', length: 500, nullable: true },
+    replacedParts: { name: 'replaced_parts', type: 'text', array: true, nullable: true },
     correctsId: { name: 'corrects_id', type: 'uuid', nullable: true },
     createdById: {
       name: 'created_by',
@@ -77,7 +80,13 @@ export const TicketActionEntity = new EntitySchema<TicketAction>({
     { name: 'ticket_actions_has_content', expression: 'note IS NOT NULL OR status_to IS NOT NULL' },
     {
       name: 'ticket_actions_type_valid',
-      expression: `action_type IN ('catatan', 'cek_lokasi', 'problem', 'eskalasi_sd')`,
+      expression: `action_type IN ('catatan', 'cek_lokasi', 'problem', 'eskalasi_sd', 'close')`,
+    },
+    // Close selalu menutup NPR (T74); Selesai hanya lewat Close dijaga API (entri lama tetap).
+    { name: 'ticket_actions_close', expression: `action_type <> 'close' OR status_to IS NOT DISTINCT FROM 'selesai'` },
+    {
+      name: 'ticket_actions_replaced_parts',
+      expression: `replaced_parts IS NULL OR (action_type = 'close' AND replaced_parts <@ ARRAY['modem', 'adaptor', 'indoor', 'buc', 'lnb'] AND array_position(replaced_parts, NULL) IS NULL)`,
     },
     { name: 'ticket_actions_type_note', expression: `action_type = 'catatan' OR note IS NOT NULL` },
     { name: 'ticket_actions_note_length', expression: 'char_length(note) BETWEEN 1 AND 4000' },

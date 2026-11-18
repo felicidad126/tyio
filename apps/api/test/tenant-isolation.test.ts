@@ -174,6 +174,17 @@ describe('isolasi tenant di semua rute terdaftar', () => {
     expect(await ds.getRepository(TicketEntity).count()).toBe(before);
   });
 
+  it('riwayat tiket remote customer lain (GET /api/tickets?remoteId=) kosong untuk pengguna tenant A', async () => {
+    const remoteB = bIds[1]!;
+    const own = await call('GET', `/api/tickets?view=semua&remoteId=${remoteB}`, 'semua').expect(200);
+    expect(own.body.total).toBeGreaterThan(0);
+
+    const res = await call('GET', `/api/tickets?view=semua&remoteId=${remoteB}`, 'a').expect(200);
+
+    expect(res.body).toMatchObject({ items: [], total: 0 });
+    for (const marker of bMarkers()) expect(JSON.stringify(res.body)).not.toContain(marker);
+  });
+
   it('setiap tabel ber-tenant_id punya data uji lintas-tenant', async () => {
     const rows: Array<{ table_name: string }> = await ds.query(
       `SELECT table_name FROM information_schema.columns

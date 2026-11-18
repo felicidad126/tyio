@@ -122,6 +122,8 @@ export async function createTicket(
       occurredAt: new Date('2026-11-01T01:00:00Z'),
       problem: 'Remote down (uji)',
       createdById: creator.id,
+      // Selesai selalu punya waktu tutup (dijaga database).
+      closedAt: overrides.status === 'selesai' ? new Date('2026-11-01T05:00:00Z') : null,
       ...overrides,
     }),
   );

@@ -11,6 +11,7 @@ import { asTester, createRemote, createTenant, createTicket, createUser, session
 
 // Tabel transisi yang disetujui user (1.4), diubah 2026-11-18 (T69): Eskalasi = TT dibuka,
 // hanya lewat "Eskalasi To SD", lalu dari Eskalasi ke Dikerjakan, Pending, atau Selesai.
+// Selesai hanya lewat tindakan Close (T74), jadi kasus ke Selesai dikirim sebagai Close.
 // Ditulis ulang di sini, terpisah dari kode, agar perubahan diam-diam pada TICKET_TRANSITIONS
 // ketahuan.
 const APPROVED: Record<TicketStatus, TicketStatus[]> = {
@@ -52,6 +53,7 @@ describe('alur status tiket', () => {
         status,
         pendingParty: status === 'pending' ? 'customer' : null,
         pendingReason: status === 'pending' ? 'Menunggu konfirmasi' : null,
+        closedAt: status === 'selesai' ? new Date() : null,
       }),
     );
 
@@ -60,6 +62,7 @@ describe('alur status tiket', () => {
       .post(`/api/tickets/${ticket.id}/actions`)
       .set('Cookie', cookie)
       .send({
+        ...(to === 'selesai' ? { type: 'close' } : {}),
         occurredAt: new Date().toISOString(),
         note: `Dari ${from} ke ${to}`,
         statusTo: to,
