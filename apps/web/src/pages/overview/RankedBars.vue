@@ -58,9 +58,6 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
 .ranked {
   --bar: #2a78d6;
 }
-:global([data-bs-theme='dark']) .ranked {
-  --bar: #3987e5;
-}
 .row-link {
   display: grid;
   grid-template-columns: minmax(0, 14em) minmax(0, 1fr) 3.5em;
@@ -111,5 +108,13 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
   text-align: end;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+</style>
+
+<style>
+/* Tidak scoped: `:global(...)` di blok scoped memasang aturan di <html>, sehingga nilai terang di
+   komponen tetap menang. Warna tema gelap dari palet yang sama (tervalidasi untuk permukaan gelap). */
+html[data-bs-theme='dark'] .ranked {
+  --bar: #3987e5;
 }
 </style>

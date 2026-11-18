@@ -232,10 +232,6 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
   --series-closed: #eb6834;
   --grid: var(--tblr-border-color);
 }
-:global([data-bs-theme='dark']) .trend {
-  --series-opened: #3987e5;
-  --series-closed: #d95926;
-}
 .series-opened {
   background: var(--series-opened);
 }
@@ -357,5 +353,14 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
 }
 .numeric {
   font-variant-numeric: tabular-nums;
+}
+</style>
+
+<style>
+/* Tidak scoped: `:global(...)` di blok scoped memasang aturan di <html>, sehingga nilai terang di
+   komponen tetap menang. Warna tema gelap dari palet yang sama (tervalidasi untuk permukaan gelap). */
+html[data-bs-theme='dark'] .trend {
+  --series-opened: #3987e5;
+  --series-closed: #d95926;
 }
 </style>

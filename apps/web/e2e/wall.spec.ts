@@ -58,7 +58,8 @@ test.describe('layar dinding', () => {
     await page.goto('/dinding?putar=2');
     await expect(page.getByTestId('status-langsung')).toHaveText('Langsung');
     await page.mouse.click(10, 10); // klik pertama: izin bunyi (dan layar penuh bila diizinkan)
-    await expect(panelTitle(page)).toHaveText('NPR baru dan Selesai per hari', { timeout: 4000 });
+    // Tunggu sampai panel lain (bukan antrean), lalu NPR baru harus mengembalikannya ke antrean.
+    await expect(panelTitle(page)).not.toHaveText('NPR aktif terbaru', { timeout: 6000 });
 
     const problem = `Modem mati di dinding ${Date.now()}`;
     await createTicket(page, 'MRS-025', problem);

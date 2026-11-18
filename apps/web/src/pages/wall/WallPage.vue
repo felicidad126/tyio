@@ -17,6 +17,7 @@ import DataReceived from '../../components/DataReceived.vue';
 import LiveStatus from '../../components/LiveStatus.vue';
 import { useLiveNotices, useLiveStore } from '../../stores/live';
 import { formatDuration, TICKET_STATUS_BADGE } from '../tickets/detail/ticket-display';
+import RemoteMap from '../overview/map/RemoteMap.vue';
 import RankedBars from '../overview/RankedBars.vue';
 import TrendChart from '../overview/TrendChart.vue';
 import { Chime } from './chime';
@@ -30,10 +31,11 @@ const QUEUE_SIZE = 8;
 const ALERT_MS = 90_000;
 const REFRESH_MS = 60_000;
 const PANELS = [
-  { key: 'antrean', title: 'NPR aktif terbaru' },
-  { key: 'tren', title: 'NPR baru dan Selesai per hari' },
-  { key: 'sebaran', title: 'Tiket aktif per kategori dan customer' },
-  { key: 'remote', title: 'Remote paling sering bermasalah' },
+  { key: 'antrean', title: 'NPR aktif terbaru', short: 'Antrean' },
+  { key: 'peta', title: 'Peta remote', short: 'Peta' },
+  { key: 'tren', title: 'NPR baru dan Selesai per hari', short: 'Tren' },
+  { key: 'sebaran', title: 'Tiket aktif per kategori dan customer', short: 'Sebaran' },
+  { key: 'remote', title: 'Remote paling sering bermasalah', short: 'Remote teratas' },
 ] as const;
 
 const route = useRoute();
@@ -406,6 +408,12 @@ const customerBars = computed(() =>
         </ol>
       </template>
 
+      <RemoteMap
+        v-else-if="current.key === 'peta'"
+        :height="`${chartHeight + 60}px`"
+        :interactive="false"
+      />
+
       <TrendChart
         v-else-if="current.key === 'tren'"
         :trend="overview.trend"
@@ -469,7 +477,7 @@ const customerBars = computed(() =>
         :key="p.key"
         class="wall-dot"
         :class="{ active: index === panel }"
-      >{{ p.title }}</span>
+      >{{ p.short }}</span>
       <span
         :key="rotationKey"
         class="wall-progress"
@@ -478,7 +486,7 @@ const customerBars = computed(() =>
       <span
         v-if="!soundReady"
         class="wall-hint"
-      >Klik sekali di layar untuk layar penuh dan bunyi peringatan.</span>
+      >Klik sekali di layar untuk layar penuh dan bunyi.</span>
     </footer>
   </div>
 </template>
@@ -695,6 +703,9 @@ const customerBars = computed(() =>
   to {
     width: 100%;
   }
+}
+.wall-footer {
+  white-space: nowrap;
 }
 .wall-hint {
   margin-left: auto;

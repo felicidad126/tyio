@@ -18,6 +18,7 @@ import { useAuthStore } from '../../stores/auth';
 import { useLiveNotices } from '../../stores/live';
 import { TICKET_STATUS_BADGE } from '../tickets/detail/ticket-display';
 import { formatDayRange } from './overview-display';
+import RemoteMap from './map/RemoteMap.vue';
 import RankedBars from './RankedBars.vue';
 import TrendChart from './TrendChart.vue';
 
@@ -271,6 +272,29 @@ const topLink = (remoteId: string) =>
             </ul>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section
+      class="card mb-3"
+      aria-labelledby="peta"
+    >
+      <div class="card-header">
+        <div>
+          <h2
+            id="peta"
+            class="card-title"
+          >
+            Peta remote
+          </h2>
+          <div class="card-subtitle text-secondary small mt-1">
+            Warna menurut NPR aktif; titik yang berdekatan dikelompokkan dengan warna kondisi terparah.
+            Klik titik untuk membuka remote.
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <RemoteMap height="min(420px, 60vh)" />
       </div>
     </section>
 

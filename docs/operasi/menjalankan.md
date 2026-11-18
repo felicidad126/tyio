@@ -31,6 +31,8 @@ database tidak bisa dihubungi.
 | `ATTACHMENTS_DIR` | staging/produksi | Folder lampiran tiket. Di image sudah diisi `/app/data/lampiran`, dipasang sebagai volume `attachments` di compose. Dev dan uji memakai `data/lampiran` |
 | `STREAM_HEARTBEAT_MS` | tidak | Jarak detak koneksi pembaruan langsung, 50–55000 ms (bawaan 25000). Harus di bawah batas diam proxy (Nginx `proxy_read_timeout`, bawaan 60 detik) |
 | `STREAM_MAX_MS` | tidak | Umur koneksi pembaruan langsung sebelum server menutupnya dengan rapi agar sesi diperiksa ulang, 200–3600000 ms (bawaan 300000 = 5 menit) |
+| `MAP_TILE_URL` | tidak | Sumber gambar peta remote, URL https dengan `{z}`, `{x}`, `{y}`. Bawaan OpenStreetMap. Di compose staging diisi lewat `TYIO_MAP_TILE_URL` |
+| `MAP_TILE_ATTRIBUTION` | tidak | Atribusi yang wajib tampil di peta. Bawaan `© OpenStreetMap contributors` |
 | `TYIO_SEED_PASSWORD` | untuk seed di staging | Kata sandi pengguna contoh, minimal 12 karakter. Dev memakai bawaan di bawah |
 
 Aplikasi menolak start bila konfigurasi tidak sah dan menyebut variabel yang bermasalah,
@@ -231,6 +233,31 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
   `sistem:migrasi`).
 
+### Peta remote (2.3)
+
+- Di **Overview** (kartu Peta remote) dan sebagai panel di **layar dinding**. Satu titik per
+  remote yang punya koordinat, berwarna menurut kondisinya sekarang:
+  - **Gangguan (NPR aktif)**, merah: ada NPR yang belum Selesai dan tidak Pending (termasuk
+    Eskalasi);
+  - **Pending**, kuning: semua NPR aktifnya Pending;
+  - **Normal**, hijau: tanpa NPR aktif;
+  - **Nonaktif / Dismantle**, abu-abu: remote nonaktif atau Dismantle tanpa NPR aktif.
+- Titik yang berdekatan dikelompokkan; angka di kelompok = jumlah remote, warnanya kondisi
+  terparah di dalamnya. Klik kelompok untuk memperbesar; klik titik untuk info remote (Site ID,
+  kota, customer, jumlah NPR aktif) dan **Buka remote**.
+- Keterangan di atas peta menampilkan jumlah per kondisi; centang untuk menyembunyikan atau
+  menampilkan satu kondisi (mis. sembunyikan Normal agar yang bermasalah menonjol). Remote tanpa
+  koordinat disebut jumlahnya; isi koordinat lewat kolom Latitude/Longitude di impor Excel.
+- Warna diperbarui sendiri saat ada perubahan tiket (pembaruan langsung): hanya kondisi
+  terkini yang diambil (`GET /api/map/states`, ±12 KB untuk 5.000 remote); data lengkap dimuat
+  saat dibuka, setelah koneksi pulih, dan tiap 10 menit.
+- Gambar peta dari **OpenStreetMap** (browser pengguna perlu akses internet; gratis untuk
+  pemakaian ringan dengan atribusi). Bila pemakaian membesar, isi `MAP_TILE_URL` dan
+  `MAP_TILE_ATTRIBUTION` dengan penyedia berlangganan. Di tema gelap (layar dinding) peta dasar
+  digelapkan; warna titik tetap.
+- Kinerja (diukur dengan 5.075 remote): data peta 175 KB setelah gzip (API kini mengompresi
+  jawaban JSON, kecuali koneksi pembaruan langsung), peta tampil 0,7 detik, zoom 0,3–0,5 detik.
+
 ### Layar dinding 24/7 (2.4)
 
 - Alamat **`/dinding`** (tombol **Layar dinding** di Overview), untuk TV atau monitor besar di
@@ -238,7 +265,7 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   - Atas: jam WIB (detik demi detik), status koneksi (Langsung/Terputus), dan waktu data diterima.
   - Angka tiket aktif selalu tampil: total, per status, TT aktif, Down ≥ 7 hari.
   - Panel berganti tiap 20 detik: **NPR aktif terbaru** (remote, customer, status, umur),
-    **NPR baru dan Selesai per hari**, **per kategori dan customer**, **remote paling sering
+    **Peta remote**, **NPR baru dan Selesai per hari**, **per kategori dan customer**, **remote paling sering
     bermasalah**. Lama per panel bisa diatur lewat alamat, mis. `/dinding?putar=30` (2–300 detik).
   - **NPR baru** memunculkan peringatan kuning besar (remote, customer, no. NPR, problem) selama
     90 detik, berbunyi, dan panel kembali ke antrean.

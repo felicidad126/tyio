@@ -100,6 +100,9 @@ jobs:
         id: staging
         run: |
           echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)" > "$GITHUB_WORKSPACE/../staging-ci.env"
+          # Uji layar tidak meminta gambar peta ke OpenStreetMap (kebijakan pemakaiannya melarang
+          # permintaan otomatis massal); .invalid tidak pernah ada di DNS.
+          echo "TYIO_MAP_TILE_URL=https://peta.invalid/{z}/{x}/{y}.png" >> "$GITHUB_WORKSPACE/../staging-ci.env"
           $STAGING up -d --wait
 
       # Pengguna contoh dengan kata sandi acak per run (disamarkan di log), seperti di staging.
