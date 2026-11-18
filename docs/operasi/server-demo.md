@@ -226,10 +226,12 @@ Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, W
 Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
 dashboard lama). Jarkom berisi nilai contoh.
 
-### Alur demo yang disarankan (sampai langkah 1.6)
+### Alur demo yang disarankan (sampai langkah 2.1)
 
-1. Masuk sebagai `helpdesk.contoh`. Tunjukkan menu, lalu **Remote**: cari, saring, dan buka detail
-   remote.
+1. Masuk sebagai `helpdesk.contoh`. Halaman pertama adalah **Overview**: tiket aktif per status,
+   per kategori dan customer, tren 14 hari, dan remote paling sering bermasalah. Klik sebuah
+   angka (mis. Pending, atau batang hari ini): daftar Tiket terbuka dengan jumlah yang sama dan
+   saringannya sebagai chip. Lalu menu **Remote**: cari, saring, dan buka detail remote.
 2. **Buat tiket untuk remote ini**: data lokasi dan jaringan terisi sendiri, dan nomor NPR
    dibuat sistem.
 3. Di halaman tiket, **Tambah tindakan**: pilih jenis **Cek lokasi** (minta PIC mengecek),
@@ -254,7 +256,8 @@ dashboard lama). Jarkom berisi nilai contoh.
    terlihat, juga di pencarian.
 9. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
-Belum ada: Overview, monitor 24/7, SLA, dan laporan. (Gamas tidak dibuat.)
+Belum ada: pembaruan langsung tanpa muat ulang, peta remote, layar dinding 24/7, SLA, dan
+laporan. (Gamas tidak dibuat.)
 Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah

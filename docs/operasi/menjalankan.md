@@ -229,6 +229,25 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
   `sistem:migrasi`).
 
+### Overview (2.1)
+
+- Halaman pertama setelah masuk. Semua angka dibatasi customer yang boleh dilihat pengguna,
+  dan **setiap angka adalah tautan** ke daftar Tiket yang menghasilkan jumlah yang sama persis:
+  - **Tiket aktif** (belum Selesai): jumlah seluruhnya, per status (Terbuka, Dikerjakan,
+    Pending, Eskalasi), **TT aktif**, dan **Down ≥ 7 hari**.
+  - **Tiket aktif per kategori** dan **per customer**, terbanyak dulu.
+  - **NPR baru dan Selesai per hari**, 14 hari terakhir (hari menurut WIB): NPR baru menurut
+    waktu kejadian, Selesai menurut waktu online kembali. Arahkan kursor atau fokus ke batang
+    untuk melihat angkanya, atau buka **Lihat sebagai tabel**.
+  - **Remote paling sering bermasalah**: 10 remote dengan NPR terbanyak menurut waktu kejadian
+    dalam 30 hari terakhir (termasuk yang sudah Selesai). Nama remote membuka halaman remote,
+    jumlahnya membuka daftar NPR remote itu dalam rentang yang sama.
+- Angka dimuat ulang tiap menit selama halaman terbuka, saat halaman kembali dibuka, atau
+  lewat tombol muat ulang; waktu "Diperbarui" ada di kanan atas. Pembaruan langsung tanpa
+  menunggu menit menyusul di langkah 2.2.
+- Database: tren Selesai per hari memakai indeks `tickets_closed_at_idx` (migrasi
+  `Overview…`). Diukur pada 100.000 tiket: Overview 31–63 ms.
+
 ### Daftar tiket dan pencarian
 
 - **Tiket** di menu: daftar tiket yang boleh dilihat pengguna (dibatasi customer), 50 per
@@ -243,6 +262,10 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   yang sedang dipakai.
 - Saringan: customer, kategori, jarkom. Kotak **Cari** menerima potongan no. NPR
   (mis. `2026/11/0002`), no. TT, no. tiket customer, Site ID, nama, kota, atau kanca remote.
+- Saringan yang datang dari angka **Overview** (status, tanggal kejadian, tanggal online
+  kembali, remote, Down ≥ 7 hari) tampil sebagai chip di bawah kolom saringan; tombol × pada
+  chip menghapusnya. Di alamat: `status`, `dari`/`sampai`, `ditutupDari`/`ditutupSampai`
+  (tanggal WIB, TTTT-BB-HH), `remote`, `lama`.
 - Tab, pencarian, saringan, dan halaman tersimpan di alamat halaman. Alamatnya bisa
   dibagikan atau ditandai di browser, dan tombol kembali dari tiket membuka tab yang sama.
 - Setiap baris menampilkan status (pending dengan pihak dan alasannya), waktu kejadian menurut

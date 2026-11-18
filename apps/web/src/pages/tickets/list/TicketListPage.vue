@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconPlus, IconSearch, IconTicket } from '@tabler/icons-vue';
+import { IconAlertTriangle, IconPlus, IconSearch, IconTicket, IconX } from '@tabler/icons-vue';
 import {
   canOpenModule,
   formatInZone,
@@ -10,12 +10,14 @@ import {
   TICKET_FLAG_DAYS,
   TICKET_QUEUE_VIEWS,
   TICKET_STATUS_LABELS,
+  TICKET_STATUSES,
   TICKET_VIEW_LABELS,
   TICKET_VIEWS,
   type TicketListItem,
   type TicketListQuery,
   type TicketListResponse,
   type TicketQueueView,
+  type TicketStatus,
   type TicketView,
   ticketNeedsUpdate,
 } from '@tyio/shared';
@@ -24,10 +26,12 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { type LocationQuery, RouterLink, useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../../../api/client';
 import { masterApi } from '../../../api/master';
+import { remotesApi } from '../../../api/remotes';
 import TicketNumber from '../../../components/TicketNumber.vue';
 import { tenantsApi } from '../../../api/tenants';
 import { ticketsApi } from '../../../api/tickets';
 import { useAuthStore } from '../../../stores/auth';
+import { linkFilterChips, type ListLinkFilters } from '../../overview/overview-display';
 import { TICKET_STATUS_BADGE } from '../detail/ticket-display';
 
 // Pola halaman: daftar. Tampilan, pencarian, saringan, dan halaman tersimpan di alamat (bisa
@@ -38,6 +42,9 @@ const { user } = storeToRefs(useAuthStore());
 const canCreate = computed(() => (user.value ? canOpenModule(user.value.role, 'tiket') : false));
 
 type FilterKey = 'q' | 'customer' | 'kategori' | 'jarkom';
+/** Saringan yang datang dari tautan Overview (2.1); tampil sebagai chip yang bisa dihapus. */
+const LINK_KEYS = ['status', 'dari', 'sampai', 'ditutupDari', 'ditutupSampai', 'remote', 'lama'] as const;
+const FILTER_KEYS = ['q', 'customer', 'kategori', 'jarkom', ...LINK_KEYS] as const;
 const one = (value: LocationQuery[string] | undefined) => (typeof value === 'string' ? value : '');
 const filters = computed(() => ({
   tampilan: (TICKET_VIEWS as readonly string[]).includes(one(route.query.tampilan))
@@ -47,12 +54,41 @@ const filters = computed(() => ({
   customer: one(route.query.customer),
   kategori: one(route.query.kategori),
   jarkom: one(route.query.jarkom),
+  status: (TICKET_STATUSES as readonly string[]).includes(one(route.query.status))
+    ? (one(route.query.status) as TicketStatus)
+    : undefined,
+  dari: one(route.query.dari),
+  sampai: one(route.query.sampai),
+  ditutupDari: one(route.query.ditutupDari),
+  ditutupSampai: one(route.query.ditutupSampai),
+  remote: one(route.query.remote),
+  lama: one(route.query.lama),
   halaman: Math.max(1, Number(one(route.query.halaman)) || 1),
 }));
-const hasFilters = computed(() => {
-  const f = filters.value;
-  return Boolean(f.q || f.customer || f.kategori || f.jarkom);
-});
+const hasFilters = computed(() => FILTER_KEYS.some((key) => Boolean(filters.value[key])));
+
+// Nama remote untuk chip saringan remote (dari "Remote paling sering bermasalah" di Overview).
+const remoteLabel = ref('');
+watch(
+  () => filters.value.remote,
+  async (id) => {
+    remoteLabel.value = '';
+    if (!id) return;
+    try {
+      const remote = await remotesApi.get(id);
+      if (filters.value.remote === id) remoteLabel.value = `${remote.siteId} · ${remote.name}`;
+    } catch {
+      remoteLabel.value = 'terpilih';
+    }
+  },
+  { immediate: true },
+);
+const chips = computed(() => linkFilterChips(filters.value as ListLinkFilters, remoteLabel.value || '…'));
+function removeChip(keys: ReadonlyArray<keyof ListLinkFilters>): void {
+  const query = viewQuery(filters.value.tampilan);
+  for (const key of keys) delete query[key];
+  void router.replace({ query });
+}
 
 const tenants = ref<TenantRef[]>([]);
 const categories = ref<MasterItem[]>([]);
@@ -81,6 +117,13 @@ async function load(): Promise<void> {
     tenantId: f.customer || undefined,
     categoryId: f.kategori || undefined,
     jarkomId: f.jarkom || undefined,
+    status: f.status,
+    occurredFrom: f.dari || undefined,
+    occurredTo: f.sampai || undefined,
+    closedFrom: f.ditutupDari || undefined,
+    closedTo: f.ditutupSampai || undefined,
+    remoteId: f.remote || undefined,
+    flagged: f.lama ? true : undefined,
     page: f.halaman,
   };
   state.value = result.value ? 'ready' : 'loading';
@@ -102,7 +145,10 @@ watch(filters, load, { immediate: true, deep: true });
 function viewQuery(view: TicketView): Record<string, string> {
   const f = filters.value;
   const query: Record<string, string> = view === 'aktif' ? {} : { tampilan: view };
-  for (const key of ['q', 'customer', 'kategori', 'jarkom'] as const) if (f[key]) query[key] = f[key];
+  for (const key of FILTER_KEYS) {
+    const value = f[key];
+    if (value) query[key] = value;
+  }
   return query;
 }
 
@@ -306,6 +352,31 @@ function lastActionText(item: TicketListItem): string {
           </select>
         </div>
       </div>
+      <ul
+        v-if="chips.length > 0"
+        class="list-inline mt-3 mb-0 d-flex flex-wrap gap-2"
+        aria-label="Saringan dari Overview"
+      >
+        <li
+          v-for="chip in chips"
+          :key="chip.label"
+          class="badge bg-blue-lt filter-chip"
+        >
+          {{ chip.label }}
+          <button
+            type="button"
+            class="btn btn-ghost-secondary btn-icon btn-sm chip-remove"
+            :aria-label="`Hapus saringan ${chip.label}`"
+            :title="`Hapus saringan ${chip.label}`"
+            @click="removeChip(chip.keys)"
+          >
+            <IconX
+              :size="14"
+              aria-hidden="true"
+            />
+          </button>
+        </li>
+      </ul>
     </div>
   </div>
 
@@ -544,6 +615,20 @@ function lastActionText(item: TicketListItem): string {
 </template>
 
 <style scoped>
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: normal;
+  text-align: start;
+}
+.chip-remove {
+  min-width: 44px;
+  min-height: 44px;
+}
 .action-target,
 .view-target,
 .form-control,
