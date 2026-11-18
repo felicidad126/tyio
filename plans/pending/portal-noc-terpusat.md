@@ -19,7 +19,7 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K2 | Contoh data lama tidak tersedia; model data disusun dari screenshot. | User |
 | K3 | Portal berbentuk PWA; harus mudah dikelola dan dioperasikan, tampilan ramah pengguna. | User |
 | K4 | Tiket hanya boleh ditutup oleh L2–L3. **Diperjelas oleh K21.** | User |
-| K5 | Gamas = gangguan massal. Gamas List mencatat kapan terjadi, lama penanganan, troubleshooting yang dikerjakan, dan penyelesaiannya. | User |
+| K5 | **Diganti K45 (Gamas dihapus).** Gamas = gangguan massal. Gamas List mencatat kapan terjadi, lama penanganan, troubleshooting yang dikerjakan, dan penyelesaiannya. | User |
 | K6 | Home = ringkasan monitoring dan analitik kejadian. | User |
 | K7 | Tiket dibuat otomatis dari alert monitoring, lalu dikoreksi/diverifikasi manusia. | User |
 | K8 | Sistem customer eksternal bisa membuat tiket otomatis sesuai tenant. | User |
@@ -60,6 +60,12 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K38 | Status remote "Dibongkar" dinamai **Dismantle**. | User |
 | K39 | Problem pada ATM yang membuat jarkom down **tetap dibuat NPR** sebagai catatan (melengkapi K13). | User |
 | K40 | Jarkom sempat up lalu down lagi: dicatat di **NPR yang sama** ("jarkom termonitor down kembali"), bukan NPR baru. | User |
+| K42 | **NDR** = Network Detection and Response (istilah; tidak ada fitur NDR di portal kecuali diminta). | User |
+| K43 | **"Remote Status" lama menggantikan Kategori.** Kategori NPR: Remote Down, Relokasi, Reposisi, Preventive Maintenance; Corrective Maintenance tidak dipakai. Label di layar tetap "Kategori" (status remote Aktif/Nonaktif/Dismantle adalah hal lain). | User |
+| K44 | **TT hanya ada bila ada kunjungan teknisi.** Tanpa kunjungan, penanganan tetap di NPR (memperjelas K27). | User |
+| K45 | **Gamas dihapus** dari portal (menu, modul, laporan, notifikasi, saran dari alert). | User |
+| K46 | **Admin** = pengelola aplikasi (master data, remote, akun). Pekerjaan operasional oleh Helpdesk (K30). | User |
+| K47 | **SLA** mengikuti "SLA L1 pada umumnya sesuai kebijakan ISO" milik user; angka targetnya belum diberikan. **Monitoring VSAT memakai Jupiter.** | User |
 | K41 | Disetujui: format nomor TT seperti NPR, bulan nomor menurut WIB saat dibuat, linimasa urut waktu tindakan, linimasa tidak bisa diubah (koreksi), lampiran ≤ 5 MB dan ≤ 5 berkas, pending menghentikan SLA. Kerja harian di desktop. | User |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
@@ -231,7 +237,7 @@ Langkah teknis per rilis (file, perintah verifikasi) ditulis setelah R-A s.d. R-
 | **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis, audit log, checklist kepatuhan bank/OJK | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
 | **R1 Remote + Tiket** | Master remote, buat tiket (data remote terisi otomatis), linimasa tindakan, antrean, penutupan oleh L2/L3, pencarian | Satu gangguan bisa dicatat dari awal sampai ditutup tanpa sistem lama | R0, alur status disetujui |
 | **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, peta remote berwarna status, mode layar dinding, alert di dashboard, indikator "data terakhir diterima" | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
-| **R3 Gamas + laporan teknisi** | Gamas dengan remote terdampak dan tiket anak; pencatatan hasil kunjungan SD oleh L1/L2 (TT dasar pindah ke R1, lihat K16; SD tidak login, K23) | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
+| **R3 Gamas + laporan teknisi** — **dibatalkan (K31, K45)** | Gamas dengan remote terdampak dan tiket anak; pencatatan hasil kunjungan SD oleh L1/L2 (TT dasar pindah ke R1, lihat K16; SD tidak login, K23) | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
 | **R4 SLA + Laporan** | Aturan SLA, hitung mundur, jeda saat pending; template laporan + ekspor | Laporan bulanan dihasilkan tanpa olah manual di Excel | R1, sesi SLA |
 | **R5 Notifikasi** | Bot Telegram dan email: tiket baru, eskalasi, SLA hampir lewat, Gamas | Notifikasi sampai dalam hitungan detik dan tidak dobel | R4 untuk SLA |
 | **R6 Alert otomatis** | Pintu masuk alert dari SNMP/ping NOC dan dari sistem VSAT, kandidat tiket, verifikasi L1, deduplikasi, debounce untuk gangguan sesaat (rain fade), dugaan penyebab (link / perangkat / listrik / cuaca), saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Akses ke alat SNMP dan sistem VSAT yang ada |
@@ -247,14 +253,14 @@ dan tiket manual harus sudah stabil sebelum dibanjiri alert.
 
 ## 9. Pertanyaan yang masih terbuka
 
-**Setelah jawaban konfirmasi 2026-11-17 masih terbuka:**
-- **NDR**: belum dijawab.
-- **"Remote Status" lama vs Kategori** (K34): menggantikan Kategori, atau kolom terpisah?
-- **TT dan kunjungan** (K27): jawaban menyebut "TT belum tentu kunjungan teknisi", tetapi
-  Eskalasi To SD "pasti dijadwalkan teknisi jaringan". Apakah setiap TT berarti kunjungan?
-- **Admin** (K30): siapa yang mengelola master data, remote, dan akun helpdesk?
-- Topik sesi (bagian 4 dokumen konfirmasi) belum dijawab: aturan SLA, Gamas, laporan wajib,
-  alat monitoring, screenshot.
+**Setelah jawaban 2026-11-18 masih terbuka** (NDR, Remote Status, TT, admin, Gamas terjawab
+di K42–K46):
+- **Angka SLA** dari kebijakan ISO user (K47): target respons dan penyelesaian, per kategori
+  atau per customer, dan kapan jam berhenti selain pending. Dibutuhkan untuk R4.
+- **Jupiter** (K47): apakah ini Hughes JUPITER, dan bagaimana alert-nya bisa keluar (API,
+  SNMP trap, email)? Alat apa untuk jarkom selain VSAT? Dibutuhkan untuk R6.
+- **Laporan wajib**: contoh laporan yang dikirim ke customer dan jadwalnya. Dibutuhkan untuk R4.
+- Screenshot dashboard lama yang belum ada (Home, List Remote, SLA).
 
 Gerbang sekarang (jawab "ya" = setuju rekomendasi):
 1. Setuju R-A s.d. R-G di bagian 5?

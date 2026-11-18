@@ -260,10 +260,11 @@ Selesai bila: angka Overview cocok dengan daftar tiket; layar dinding jalan 24 j
 - Berkas: `apps/web/src/pages/wall/`
 - Menunggu: 2.2
 
-### R3 — Gamas + laporan teknisi
-Selesai bila: satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket.
+### R3 — Gamas + laporan teknisi — **Dibatalkan** (K31, K45)
+Gamas dihapus dari portal; penugasan dan laporan teknisi di luar portal. TT tercatat di linimasa
+NPR lewat 1.5b.
 
-**3.1 Gamas: buat, tautkan, tutup (M)**
+**3.1 Gamas: buat, tautkan, tutup (M)** — **Dibatalkan (K45)**
 - Terima: Gamas menyimpan waktu mulai/selesai, durasi, penyebab, troubleshooting, penyelesaian; remote dan tiket bisa ditautkan massal; menutup Gamas menawarkan penutupan tiket anak.
 - Verifikasi: `pnpm test:api gamas && pnpm e2e gamas`
 - Berkas: `apps/api/src/modules/gamas/`, `apps/web/src/pages/gamas/`
@@ -291,7 +292,7 @@ Selesai bila: laporan bulanan dihasilkan tanpa olah manual di Excel.
 - Menunggu: 1.4 · **Butuh: sesi aturan SLA**
 
 **4.2 Template laporan dan ekspor (M)**
-- Terima: laporan NPR, Gamas, SLA, dan teknisi dengan filter periode/customer/kategori; ekspor Excel dan PDF; laporan besar dikerjakan di latar dan diunduh saat siap.
+- Terima: laporan NPR dan SLA (Gamas dan laporan teknisi tidak dipakai, K31/K45) dengan filter periode/customer/kategori; ekspor Excel dan PDF; laporan besar dikerjakan di latar dan diunduh saat siap.
 - Verifikasi: `pnpm test:api reports && pnpm e2e reports`
 - Berkas: `apps/api/src/modules/reports/`, `apps/web/src/pages/reports/`
 - Menunggu: 4.1, 3.1 · **Butuh: contoh laporan wajib**
@@ -300,7 +301,7 @@ Selesai bila: laporan bulanan dihasilkan tanpa olah manual di Excel.
 Selesai bila: notifikasi sampai cepat dan tidak dobel.
 
 **5.1 Mesin notifikasi dan pusat notifikasi di aplikasi (M)**
-- Terima: kejadian (tiket baru, eskalasi, SLA hampir lewat, Gamas) menjadi notifikasi lewat antrean; kiriman gagal dicoba ulang; satu kejadian satu notifikasi per penerima per kanal.
+- Terima: kejadian (tiket baru, eskalasi/TT, SLA hampir lewat) menjadi notifikasi lewat antrean; kiriman gagal dicoba ulang; satu kejadian satu notifikasi per penerima per kanal.
 - Verifikasi: `pnpm test:api notifications`
 - Berkas: `apps/api/src/modules/notifications/`
 - Menunggu: 2.2
@@ -330,10 +331,10 @@ Selesai bila: remote turun di alat monitoring → kandidat muncul; pulih → tik
 - Berkas: `apps/web/src/pages/alerts/`
 - Menunggu: 6.1
 
-**6.3 Dugaan penyebab dan saran Gamas (M)**
-- Terima: kandidat diberi dugaan (link / perangkat / listrik / cuaca) dari gabungan data SNMP dan VSAT; banyak remote turun dalam satu jendela waktu pada hub/wilayah yang sama memunculkan saran Gamas.
-- Verifikasi: `pnpm test:api alerts.classify alerts.gamas-suggest`
-- Menunggu: 6.2, 3.1
+**6.3 Dugaan penyebab (S)** — saran Gamas dibatalkan (K45)
+- Terima: kandidat diberi dugaan (link / perangkat / listrik / cuaca) dari gabungan data SNMP dan VSAT (Jupiter, K47).
+- Verifikasi: `pnpm test:api alerts.classify`
+- Menunggu: 6.2
 
 ### R7 — Integrasi customer
 **7.1 API tiket per tenant (M)** — kunci API per tenant, pembuatan tiket yang aman diulang (kunci idempoten), nomor tiket customer tersimpan, batas laju. Verifikasi: `pnpm test:api public-api`. Menunggu: 6.1.
@@ -369,7 +370,7 @@ Langkah paling berisiko dikerjakan paling awal di rilisnya: 0.4 (isolasi tenant)
 | Keputusan hosting + server staging + registry image | 0.2 (pemasangan staging), 0.6 | Anda |
 | Alur status tiket disetujui | 1.4 | Sesi dengan user |
 | Server produksi (dua unit) | 1.7 | Anda |
-| Detail Gamas, arti eskalasi/Take Action | 3.1, 3.2 | Sesi dengan user |
+| ~~Detail Gamas, arti eskalasi/Take Action~~ | — | Terjawab: Take Action K32, Gamas dihapus K45 |
 | Aturan SLA, contoh laporan wajib | 4.1, 4.2 | Sesi dengan user |
 | Akun bot Telegram, server email | 5.2 | Anda |
 | Nama produk + akses alat SNMP dan sistem VSAT | 6.0 | Tim NOC |
@@ -396,4 +397,5 @@ Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai b
 | 1.4 Linimasa tindakan dan mesin status | **Selesai 2026-11-17 — titik periksa dengan user.** Alur status disetujui user. `pnpm test:api tickets.actions tickets.status` lulus dari salinan bersih (48 uji): **26 uji tabel transisi** (seluruh 25 pasangan status ditambah pemeriksaan bahwa tabel di kode sama dengan tabel yang disetujui); 22 uji linimasa: entri awal saat tiket dibuat, catatan tanpa ubah status, pending wajib pihak dan alasan, status yang sudah berubah → 409 tanpa menyimpan apa pun, dua operator bersamaan → satu berhasil satu 409, koreksi merujuk entri lama (tanpa status, tanpa lampiran, hanya di tiket yang sama), UPDATE/DELETE lewat SQL langsung ditolak database, lampiran PNG dan PDF (jenis dari isi, nama dibersihkan, header unduh aman), berkas palsu / lebih dari 5 MB / lebih dari 5 ditolak tanpa sisa di disk, berkas dihapus lagi bila tindakan ditolak, nomor tiket customer, urutan per menit, isian salah, audit. Harness lintas-tenant: dua rute tulis baru diuji (404, tidak berubah), lampiran milik customer lain 404. `pnpm e2e ticket-detail` (5 uji): jalur status yang ditawarkan, pending, lampiran lewat pilih dan tempel, koreksi, nomor tiket customer di tempat tanpa menggeser isi, status diubah rekan. Uji mutasi (13): tanpa cek jalur, tanpa cek status yang dilihat, tanpa kunci tiket (tertangkap 3 dari 3 kali), jenis berkas dari nama, berkas tidak dibersihkan, pending tanpa pihak, koreksi lintas tiket, unduh tanpa batas tenant, nomor customer tanpa entri linimasa, PDF inline, tanpa CSP sandbox, tiket tanpa entri awal, urut per detik: semuanya membuat uji merah. Ditemukan dan diperbaiki: pesan "status sudah berubah" hilang karena form dibuat ulang (kini di tingkat halaman, dan uji memastikannya tetap tampil); linimasa urut waktu catat tampak acak (kini urut waktu tindakan per menit); peringatan tiket terbuka menampilkan 5 tiket tertua (kini terbaru); miniatur gambar kecil tak terlihat. Seluruhnya 223 uji API, 9 uji unit web, 38 uji layar lulus (uji layar dua kali berturut-turut). CI run #30 (commit `4f83b5b`, API) dan run #31 (commit `63dd64e`) hijau, termasuk 38 uji layar terhadap image lewat compose staging dengan volume lampiran. |
 | 1.5 Antrean tiket dan pencarian global | **Selesai 2026-11-17.** Dipercepat karena operator di server demo tidak bisa menemukan tiket setelah halaman tiket ditutup (belum ada daftar). `pnpm test:api tickets.list search` lulus (37 uji): tab Aktif bawaan urut waktu kejadian terbaru, Pending/Eskalasi/Selesai/Semua, Milik saya (buat atau beri tindakan; yang selesai tidak), jumlah per tab ikut saringan dan pencarian, saringan customer/kategori/system/jarkom, cari potongan no. NPR, no. tiket customer (huruf kecil), Site ID, nama dan kota remote, `%`/`_` apa adanya, 50 per halaman tanpa tumpang tindih dengan urutan stabil, pengguna terbatas hanya customernya, parameter salah 400; pencarian global: tiket dan remote, maks 10 dengan total, minimal 2 karakter, data customer lain tidak muncul. Harness lintas-tenant kini memeriksa `/api/tickets` dan `/api/search` (dengan kata yang cocok untuk kedua tenant). `pnpm e2e ticket-queue` (6 uji): tiket baru di Aktif dan Milik saya lalu dibuka dan kembali ke tab yang sama, tab Pending dengan pihak dan alasan, pencarian header (no. tiket customer, Site ID), pengguna terbatas, 1280 px tabel di dalam kartu, 375 px tanpa gulir samping dan cari lewat menu. Uji mutasi (16): daftar atau remote di pencarian tanpa batas tenant, wildcard tidak di-escape, Milik saya tanpa syarat aktif atau tanpa tindakan saya, jumlah tab tanpa saringan atau tanpa batas status aktif, total Selesai/Semua dari jumlah antrean, tindakan terakhir terlama, cari tanpa no. tiket customer atau tanpa remote, urut terlama, tanpa penentu urutan id, pencarian tanpa panjang minimum atau tanpa batas 10, tampilan tak dikenal diterima: semuanya membuat uji merah (urutan id awalnya lolos; uji diperketat). **Diukur pada 100.000 tiket, 200.000 entri linimasa, 5.000 remote** (API sungguhan, query dari log Postgres): daftar Aktif 210 → 32–49 ms (jumlah tab 183 → 11,5 ms), cari di daftar 190–340 → 20–22 ms, pencarian global 200–320 → 15–26 ms, Selesai halaman 1.500 89 ms. Ditemukan dan diperbaiki: di 375 px halaman bergulir ke samping dan di 1280 px kolom Tindakan terakhir keluar kartu (uji lama memeriksa sebelum tabel dimuat; kedua uji baru merah pada image lama); nomor tiket patah di tengah angka urut (kini hanya setelah "/"); "Status Terbuka" sebagai tindakan terakhir (kini "Tiket dibuat"); uji skema bergantung urutan berkas (pembatalan migrasi linimasa gagal bila berkas lain meninggalkan tiket berstatus selain terbuka; kini mengosongkan data dulu); label uji lama bertabrakan dengan kotak cari global (dibuat persis). Seluruhnya 260 uji API, 9 uji unit web, dan 44 uji layar lulus dari database kosong (uji layar dua kali berturut-turut). CI run #36 (commit `7cc7b98`) hijau: lint, build, 260 uji API, 44 uji layar terhadap image lewat compose staging; image diterbitkan dan tag `demo` dipindah, jadi server demo bisa diperbarui dengan `deploy/scripts/server.sh perbarui`. **Belum:** no. TT di pencarian (1.5b); "Milik saya" berdasarkan penugasan; urutan per sisa SLA (R4). |
 | 1.5c Penyesuaian dari jawaban user | **Selesai 2026-11-17.** Dari jawaban konfirmasi K26–K41 (T60–T65). API: kolom `action_type` di linimasa (migrasi `ActionType…`; entri lama menjadi Bebas), Cek lokasi/Problem wajib catatan (API 400 dan penjaga database), jenis tak dikenal dan koreksi berjenis ditolak, tindakan terakhir di daftar membawa jenisnya, saringan System dihapus dari daftar, impor menerima "Dismantle", pesan "berstatus Dismantle". Web: System hilang dari Buat tiket/detail/daftar/Master data (`/admin/master/system` tidak ada lagi), menu Dokumen hilang, label Dismantle, pilihan jenis tindakan dengan petunjuk, keterangan pihak pending sebagai deskripsi radio, tanda "Down ≥ 7 hari" di detail dan "≥ 7 hari" di daftar. Uji: 263 uji API (3 baru dan beberapa disesuaikan), 16 uji unit web (7 baru untuk aturan tanda), 49 uji layar (5 baru: jenis tindakan, keterangan pending, tanda 7 hari, Dismantle, tab master tanpa System) lulus dari database kosong, dua kali berturut-turut. Uji mutasi (9): jenis tindakan tidak disimpan, Cek lokasi/Problem tanpa catatan diterima, jenis tak dikenal diterima, koreksi berjenis, penjaga database dicabut, tindakan terakhir tanpa jenis, impor tanpa "Dismantle", tanda setelah 14 hari, tanda untuk tiket selesai: semuanya membuat uji merah. Ditemukan dan diperbaiki: pilihan "Catatan" bernama sama dengan kolom Catatan (kini "Bebas"); keterangan pihak pending ikut menjadi nama radio sehingga "Customer" cocok dengan "TM" karena kata "ATM" (kini deskripsi di luar label, diuji dengan nama persis dan deskripsi). CI run #39 (commit `240a614`) hijau: lint, build, 263 uji API, 49 uji layar terhadap image; tag `demo` dipindah. **Belum:** satu peran Helpdesk (K30), TT (1.5b), Close (1.6), penghapusan kolom System di database. |
+| 1.5d Kategori baru, Gamas dihapus | **Selesai 2026-11-18.** Dari jawaban K42–K47: menu dan modul Gamas dihapus (K45; `/gamas` tidak ada lagi, ringkasan Alert dan Laporan tanpa Gamas); kategori data contoh menjadi Remote Down, Relokasi, Reposisi, Preventive Maintenance (K43; Corrective Maintenance tidak di-seed). Server yang sudah terpasang tidak berubah kategorinya oleh `perbarui` (seed tidak berjalan): tambahkan Relokasi dan Reposisi lalu nonaktifkan Corrective Maintenance di Admin › Master data, atau `ulang-data`. Rencana: R3 dan 6.3 (saran Gamas) dibatalkan, laporan dan notifikasi tanpa Gamas. |
 | 1.6–1.7, R2–R8 | Belum mulai |

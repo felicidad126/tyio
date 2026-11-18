@@ -38,12 +38,12 @@ describe('data contoh (tenant dan pengguna)', () => {
     }
   });
 
-  it('mengisi master contoh: kategori dari dashboard lama, system dan jarkom contoh', async () => {
+  it('mengisi master contoh: kategori dari "Remote Status" dashboard lama, system dan jarkom contoh', async () => {
     await seed(ds, 'development', createSeeders({ password: 'sandi-contoh-panjang' }));
 
     const codes = async (list: 'kategori' | 'system' | 'jarkom') =>
       (await ds.getRepository(MASTER_ENTITIES[list]).find({ order: { code: 'ASC' } })).map((r) => r.code);
-    expect(await codes('kategori')).toEqual(['CM', 'PM', 'RD']);
+    expect(await codes('kategori')).toEqual(['PM', 'RD', 'REL', 'REP']);
     expect(await codes('system')).toEqual(['SYSA', 'SYSB']);
     expect(await codes('jarkom')).toEqual(['JKCA', 'VSAT']);
   });

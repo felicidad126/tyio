@@ -22,8 +22,10 @@ export const DEMO_TENANTS = [
  */
 export const DEMO_MASTER = {
   kategori: [
+    // Nilai "Remote Status" dari form NPR lama, yang menggantikan kategori (K43).
     { code: 'RD', name: 'Remote Down' },
-    { code: 'CM', name: 'Corrective Maintenance' },
+    { code: 'REL', name: 'Relokasi' },
+    { code: 'REP', name: 'Reposisi' },
     { code: 'PM', name: 'Preventive Maintenance' },
   ],
   system: [

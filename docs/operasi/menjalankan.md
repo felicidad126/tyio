@@ -73,9 +73,8 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
 - **Nama**: unik per daftar tanpa membedakan huruf besar/kecil; bisa diganti langsung di tabel.
 - **Hapus** hanya bila belum dipakai. Yang sudah dipakai ditolak dengan saran
   **nonaktifkan**: nilai nonaktif tidak muncul di pilihan baru, data lama tetap utuh.
-- Data contoh dev: kategori dari dashboard lama (Remote Down, Corrective Maintenance,
-  Preventive Maintenance); System dan Jarkom berisi nilai contoh sampai isinya dibahas
-  bersama tim NOC.
+- Data contoh dev: kategori = nilai "Remote Status" dashboard lama (Remote Down, Relokasi,
+  Reposisi, Preventive Maintenance; K43). Jarkom berisi nilai contoh.
 - Untuk pengembang: tabel baru yang merujuk tabel master wajib memakai foreign key
   `ON DELETE RESTRICT`. Uji `pnpm test:api master` gagal bila ada yang memakai CASCADE,
   karena menghapus master akan ikut menghapus data yang merujuknya.

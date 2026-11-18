@@ -220,7 +220,8 @@ Kata sandi sama untuk semua akun, dicetak saat `pasang` dan `ulang-data`, dan te
 | `l1.merapi` | L1 Monitoring | Hanya Bank Merapi Sejahtera |
 
 Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, WITA, dan WIT.
-Kategori dari dashboard lama; System dan Jarkom berisi nilai contoh.
+Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
+dashboard lama). Jarkom berisi nilai contoh.
 
 ### Alur demo yang disarankan (sampai langkah 1.5)
 
@@ -240,7 +241,8 @@ Kategori dari dashboard lama; System dan Jarkom berisi nilai contoh.
    terlihat, juga di pencarian.
 7. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
-Belum ada: TT ke Service Delivery, penutupan tiket, Overview, Gamas, SLA, dan laporan.
+Belum ada: TT ke Service Delivery, penutupan tiket, Overview, SLA, dan laporan. (Gamas tidak
+dibuat.)
 Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah

@@ -1,5 +1,4 @@
 import {
-  IconAlertOctagon,
   IconAntenna,
   IconBellRinging,
   IconLayoutDashboard,
@@ -37,7 +36,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     path: '/alert',
     icon: IconBellRinging,
     release: 'R6',
-    summary: 'Alert dari SNMP dan sistem VSAT, verifikasi L1, kandidat tiket, dan saran Gamas.',
+    summary: 'Alert dari sistem VSAT (Jupiter) dan SNMP, diverifikasi helpdesk, lalu menjadi kandidat NPR.',
   },
   {
     module: 'tiket',
@@ -46,14 +45,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: IconTicket,
     release: 'R1',
     summary: 'Antrean NPR dan TT, buat NPR, detail dengan linimasa tindakan, dan penutupan.',
-  },
-  {
-    module: 'gamas',
-    label: 'Gamas',
-    path: '/gamas',
-    icon: IconAlertOctagon,
-    release: 'R3',
-    summary: 'Gangguan massal: waktu kejadian, remote terdampak, troubleshooting, dan penyelesaian.',
   },
   {
     module: 'remote',
@@ -69,7 +60,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     path: '/laporan',
     icon: IconReportAnalytics,
     release: 'R4',
-    summary: 'Template laporan NPR, Gamas, SLA, dan teknisi dengan ekspor Excel dan PDF.',
+    summary: 'Template laporan NPR dan SLA dengan ekspor Excel dan PDF.',
   },
   {
     module: 'admin',
