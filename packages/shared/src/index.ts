@@ -155,3 +155,5 @@ export {
   wibDayStart,
 } from './overview.js';
 export type { ActiveTicketStatus, OverviewResponse } from './overview.js';
+export { STREAM_CHANGE_KINDS } from './stream.js';
+export type { StreamChange, StreamChangeKind, StreamPing, StreamReady } from './stream.js';

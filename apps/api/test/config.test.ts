@@ -17,7 +17,18 @@ describe('loadConfig', () => {
       sessionCookieSecure: true,
       trustProxyHops: 0,
       attachmentsDir: '/app/data/lampiran',
+      streamHeartbeatMs: 25_000,
+      streamMaxMs: 300_000,
     });
+  });
+
+  it('detak dan umur koneksi langsung: di bawah batas diam proxy, bisa diatur', () => {
+    expect(loadConfig({ ...valid, STREAM_HEARTBEAT_MS: '10000', STREAM_MAX_MS: '60000' })).toMatchObject({
+      streamHeartbeatMs: 10_000,
+      streamMaxMs: 60_000,
+    });
+    expect(() => loadConfig({ ...valid, STREAM_HEARTBEAT_MS: '60000' })).toThrow(/STREAM_HEARTBEAT_MS/);
+    expect(() => loadConfig({ ...valid, STREAM_MAX_MS: 'lama' })).toThrow(/STREAM_MAX_MS/);
   });
 
   it('cookie sesi Secure aktif bawaan di staging/produksi, mati di dev/uji, bisa diatur', () => {

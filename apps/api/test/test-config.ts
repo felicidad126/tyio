@@ -19,6 +19,9 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     sessionCookieSecure: false,
     trustProxyHops: 0,
     attachmentsDir: TEST_ATTACHMENTS_DIR,
+    // Pendek agar uji koneksi langsung (dan pemeriksaan semua rute GET) tidak menunggu lama.
+    streamHeartbeatMs: 100,
+    streamMaxMs: 600,
     ...overrides,
   };
 }

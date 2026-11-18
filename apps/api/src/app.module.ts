@@ -10,6 +10,7 @@ import { MasterModule } from './modules/master/master.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
 import { OverviewModule } from './modules/overview/overview.module.js';
 import { SearchModule } from './modules/search/search.module.js';
+import { StreamModule } from './modules/stream/stream.module.js';
 import { TroubleTicketsModule } from './modules/trouble-tickets/trouble-tickets.module.js';
 import { TicketsModule } from './modules/tickets/tickets.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
@@ -34,6 +35,7 @@ export class AppModule {
         SearchModule,
         TroubleTicketsModule,
         OverviewModule,
+        StreamModule,
       ],
       providers: [{ provide: APP_CONFIG, useValue: config }],
       exports: [APP_CONFIG],

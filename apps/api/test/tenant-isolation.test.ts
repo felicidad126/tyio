@@ -105,6 +105,11 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   ];
   // Rute yang menjawab berkas, bukan JSON: kontrol positifnya cukup 200 untuk id milik A.
   const BINARY_ROUTES = ['GET /api/attachments/:id'];
+  // Rute kabar perubahan (2.2): saat dibuka belum berisi data, hanya kabar ketika ada perubahan.
+  // Penyaringan per customer diuji dengan koneksi sungguhan di stream.test.ts; di sini rute ini
+  // tetap ikut pemeriksaan "tidak membocorkan data tenant B".
+  const EVENT_ROUTES = ['GET /api/stream'];
+  const dataReads = () => scopedReads().filter((r) => !EVENT_ROUTES.includes(`${r.method} ${r.path}`));
 
   it('setiap rute tenant yang mengubah data punya uji mutasi lintas-tenant', () => {
     const mutating = scopedRoutes().filter((r) => r.method !== 'GET');
@@ -218,7 +223,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   // Kontrol positif: rute yang sama memang mengembalikan data tenant A, jadi uji
   // di atas tidak lulus hanya karena rutenya kosong atau rusak.
   it('rute yang sama mengembalikan data tenant A kepada pengguna tenant A', async () => {
-    for (const route of scopedReads()) {
+    for (const route of dataReads()) {
       const ids = hasParams(route.path) ? aIds : [''];
       const answers = await Promise.all(ids.map(async (id) => ({ id, res: await get(fill(route.path, id), 'a') })));
       const binary = BINARY_ROUTES.includes(`${route.method} ${route.path}`);
@@ -234,7 +239,7 @@ describe('isolasi tenant di semua rute terdaftar', () => {
   });
 
   it('pengguna semua tenant melihat A dan B; pengguna tanpa tenant tidak melihat keduanya', async () => {
-    for (const route of scopedReads().filter((r) => !hasParams(r.path))) {
+    for (const route of dataReads().filter((r) => !hasParams(r.path))) {
       const all = JSON.stringify((await get(route.path, 'semua').expect(200)).body);
       const none = JSON.stringify((await get(route.path, 'kosong').expect(200)).body);
 

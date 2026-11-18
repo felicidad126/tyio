@@ -25,6 +25,7 @@ import { HelpdeskRole1794981235697 } from './migrations/1794981235697-helpdesk-r
 import { TroubleTickets1794982712464 } from './migrations/1794982712464-trouble-tickets.js';
 import { TicketClose1794985460094 } from './migrations/1794985460094-ticket-close.js';
 import { Overview1794987675303 } from './migrations/1794987675303-overview.js';
+import { LiveChanges1794989311752 } from './migrations/1794989311752-live-changes.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -62,4 +63,5 @@ export const migrations = [
   TroubleTickets1794982712464,
   TicketClose1794985460094,
   Overview1794987675303,
+  LiveChanges1794989311752,
 ];

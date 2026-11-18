@@ -16,6 +16,13 @@ export interface AppConfig {
   trustProxyHops: number;
   /** Folder lampiran tiket (T8: volume yang ikut backup). Nama berkas di dalamnya diacak. */
   attachmentsDir: string;
+  /**
+   * Pembaruan langsung (2.2): jarak detak di koneksi `/api/stream` (agar proxy tidak menutup
+   * koneksi yang diam dan browser tahu koneksinya hidup), dan umur koneksi paling lama sebelum
+   * server menutupnya dengan rapi agar browser menyambung ulang dan sesinya diperiksa lagi.
+   */
+  streamHeartbeatMs: number;
+  streamMaxMs: number;
 }
 
 /**
@@ -59,6 +66,15 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     problems.push('ATTACHMENTS_DIR wajib diisi dengan folder lampiran tiket');
   }
 
+  const streamHeartbeatMs = Number(source.STREAM_HEARTBEAT_MS ?? 25_000);
+  if (!Number.isInteger(streamHeartbeatMs) || streamHeartbeatMs < 50 || streamHeartbeatMs > 55_000) {
+    problems.push('STREAM_HEARTBEAT_MS harus bilangan bulat 50–55000 (di bawah batas diam proxy, 60 detik)');
+  }
+  const streamMaxMs = Number(source.STREAM_MAX_MS ?? 300_000);
+  if (!Number.isInteger(streamMaxMs) || streamMaxMs < 200 || streamMaxMs > 3_600_000) {
+    problems.push('STREAM_MAX_MS harus bilangan bulat 200–3600000');
+  }
+
   if (
     problems.length > 0 ||
     !isTyioEnv(env) ||
@@ -77,6 +93,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     sessionCookieSecure,
     trustProxyHops,
     attachmentsDir,
+    streamHeartbeatMs,
+    streamMaxMs,
   };
 }
 
