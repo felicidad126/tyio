@@ -43,7 +43,7 @@ function submit(): void {
         v-model="q"
         type="search"
         class="form-control"
-        placeholder="Cari no. NPR, tiket customer, atau remote"
+        placeholder="Cari no. NPR/TT, tiket customer, atau remote"
         autocomplete="off"
         maxlength="100"
         enterkeyhint="search"

@@ -91,7 +91,7 @@ const nothing = computed(() => result.value && result.value.ticketTotal === 0 &&
           v-model="input"
           type="search"
           class="form-control"
-          placeholder="No. NPR, no. tiket customer, Site ID, atau nama remote"
+          placeholder="No. NPR atau TT, no. tiket customer, Site ID, atau nama remote"
           autocomplete="off"
           maxlength="100"
         >
@@ -109,7 +109,7 @@ const nothing = computed(() => result.value && result.value.ticketTotal === 0 &&
     v-if="state === 'idle'"
     class="text-secondary"
   >
-    Ketik paling sedikit {{ SEARCH_MIN_LENGTH }} karakter: no. NPR (atau potongannya), no. tiket customer, Site ID,
+    Ketik paling sedikit {{ SEARCH_MIN_LENGTH }} karakter: no. NPR atau TT (atau potongannya), no. tiket customer, Site ID,
     nama, kota, atau kanca remote.
   </p>
 
@@ -203,6 +203,9 @@ const nothing = computed(() => result.value && result.value.ticketTotal === 0 &&
             </div>
             <div class="small text-secondary">
               {{ formatInZone(t.occurredAt, t.remote.timeZone) }} · {{ t.category.name }}
+              <template v-if="t.tt">
+                · <span class="font-monospace">{{ t.tt.number }}</span>
+              </template>
               <template v-if="t.customerTicketNumber">
                 · No. tiket customer <span class="font-monospace">{{ t.customerTicketNumber }}</span>
               </template>

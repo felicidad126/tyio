@@ -150,6 +150,7 @@ const range = computed(() => {
 const lastPage = computed(() => (result.value ? Math.max(1, Math.ceil(result.value.total / result.value.pageSize)) : 1));
 
 const EMPTY_TITLES: Record<TicketView, string> = {
+  tt: 'Tidak ada TT aktif',
   aktif: 'Tidak ada tiket aktif',
   saya: 'Belum ada tiket aktif milik Anda',
   pending: 'Tidak ada tiket pending',
@@ -226,7 +227,7 @@ function lastActionText(item: TicketListItem): string {
               v-model="search"
               type="search"
               class="form-control"
-              placeholder="No. NPR, no. tiket customer, Site ID, atau nama remote"
+              placeholder="No. NPR atau TT, no. tiket customer, Site ID, atau nama remote"
               autocomplete="off"
               maxlength="100"
             >
@@ -448,6 +449,13 @@ function lastActionText(item: TicketListItem): string {
               <div class="text-truncate">
                 {{ item.remote.name }}
                 <span class="text-secondary">· {{ item.remote.siteId }} · {{ item.remote.city }}</span>
+              </div>
+              <div
+                v-if="item.tt"
+                class="small"
+              >
+                <span class="badge bg-azure-lt">TT</span>
+                <span class="font-monospace"><TicketNumber :number="item.tt.number" /></span>
               </div>
               <div
                 v-if="item.customerTicketNumber"

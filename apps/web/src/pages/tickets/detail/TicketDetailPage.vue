@@ -17,6 +17,7 @@ import CustomerTicketNumber from './CustomerTicketNumber.vue';
 import { TICKET_STATUS_BADGE } from './ticket-display';
 import TicketActionForm from './TicketActionForm.vue';
 import TimelineEntry from './TimelineEntry.vue';
+import TroubleTicketCard from './TroubleTicketCard.vue';
 
 // Pola halaman: detail. Kiri: tambah tindakan dan linimasa (terbaru di atas); kanan:
 // ringkasan gangguan dan remote. Linimasa hanya bisa ditambah; kesalahan dikoreksi.
@@ -52,6 +53,18 @@ async function load(id: string): Promise<void> {
 watch(() => route.params.id as string, load, { immediate: true });
 
 const byId = computed(() => new Map(actions.value.map((a) => [a.id, a])));
+
+function onTtOpened(updated: TicketDetail): void {
+  ticket.value = updated;
+  warning.value = '';
+  notice.value = `TT ${updated.tt?.number ?? ''} dibuka. Status menjadi Eskalasi.`;
+  void ticketsApi.actions(updated.id).then((list) => (actions.value = list));
+}
+
+/** Penyalinan ringkasan TT tercatat di linimasa: muat ulang linimasanya. */
+function onTtCopied(): void {
+  if (ticket.value) void ticketsApi.actions(ticket.value.id).then((list) => (actions.value = list));
+}
 
 function onSaved(result: AddTicketActionResponse): void {
   ticket.value = result.ticket;
@@ -115,6 +128,10 @@ function onSaved(result: AddTicketActionResponse): void {
           :class="TICKET_STATUS_BADGE[ticket.status]"
           data-testid="status-tiket"
         >{{ TICKET_STATUS_LABELS[ticket.status] }}</span>
+        <span
+          v-if="ticket.tt"
+          class="badge bg-azure-lt font-monospace"
+        >{{ ticket.tt.number }}</span>
         <span
           v-if="ticketNeedsUpdate(ticket)"
           class="badge bg-danger text-white"
@@ -184,6 +201,12 @@ function onSaved(result: AddTicketActionResponse): void {
         </section>
       </div>
       <div class="col-12 col-lg-5 d-flex flex-column gap-3">
+        <TroubleTicketCard
+          :ticket="ticket"
+          @opened="onTtOpened"
+          @stale="onStale"
+          @copied="onTtCopied"
+        />
         <section
           class="card"
           aria-labelledby="gangguan"

@@ -36,7 +36,8 @@ test.describe('detail tiket dan linimasa', () => {
     await signInAs(page, 'helpdesk.contoh');
     await openNewTicket(page);
     await expect(timeline(page).first()).toContainText('Tiket dibuat');
-    expect(await statusOptions(page)).toEqual(['Tetap Terbuka', 'Dikerjakan', 'Pending', 'Eskalasi', 'Selesai']);
+    // Eskalasi tidak dipilih di sini: terpasang lewat Eskalasi To SD (buka TT).
+    expect(await statusOptions(page)).toEqual(['Tetap Terbuka', 'Dikerjakan', 'Pending', 'Selesai']);
 
     await page.getByLabel('Ubah status').selectOption({ label: 'Dikerjakan' });
     await page.getByLabel('Catatan').fill('Cek ping ke remote: timeout.');
@@ -44,7 +45,7 @@ test.describe('detail tiket dan linimasa', () => {
     await expect(page.getByTestId('status-tiket')).toHaveText('Dikerjakan');
     await expect(timeline(page).first()).toContainText('Cek ping ke remote: timeout.');
     await expect(timeline(page).first()).toContainText('Terbuka');
-    expect(await statusOptions(page)).toEqual(['Tetap Dikerjakan', 'Pending', 'Eskalasi', 'Selesai']);
+    expect(await statusOptions(page)).toEqual(['Tetap Dikerjakan', 'Pending', 'Selesai']);
 
     await page.getByLabel('Ubah status').selectOption({ label: 'Pending' });
     await page.getByRole('button', { name: 'Simpan tindakan' }).click();
@@ -120,7 +121,7 @@ test.describe('detail tiket dan linimasa', () => {
     await expect(page.getByTestId('status-tiket')).toHaveText('Dikerjakan');
     // Pesan tetap terlihat setelah tiket dimuat ulang, dan pilihan status mengikuti status baru.
     await expect(page.getByRole('alert').filter({ hasText: 'Status tiket sudah berubah menjadi Dikerjakan' })).toBeVisible();
-    expect(await statusOptions(page)).toEqual(['Tetap Dikerjakan', 'Pending', 'Eskalasi', 'Selesai']);
+    expect(await statusOptions(page)).toEqual(['Tetap Dikerjakan', 'Pending', 'Selesai']);
   });
 
   test('jenis tindakan Cek lokasi dan Problem wajib catatan, tampil di linimasa dan di daftar', async ({ page }) => {

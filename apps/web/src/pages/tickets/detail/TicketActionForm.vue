@@ -15,11 +15,11 @@ import {
   type PendingParty,
   TICKET_ACTION_TYPE_HINTS,
   TICKET_ACTION_TYPE_LABELS,
-  TICKET_ACTION_TYPES,
+  MANUAL_ACTION_TYPES,
   TICKET_FUTURE_TOLERANCE_MINUTES,
   TICKET_STATUS_LABELS,
   TICKET_TRANSITIONS,
-  type TicketActionType,
+  type ManualActionType,
   type TicketDetail,
   type TicketStatus,
   timeZoneLabel,
@@ -41,7 +41,7 @@ const zone = computed(() => props.ticket.remote.timeZone);
 const nextStatuses = computed(() => TICKET_TRANSITIONS[props.ticket.status]);
 
 const form = reactive({
-  type: 'catatan' as TicketActionType,
+  type: 'catatan' as ManualActionType,
   occurredAt: utcToLocalInput(new Date(), zone.value),
   statusTo: '' as TicketStatus | '',
   pendingParty: '' as PendingParty | '',
@@ -212,7 +212,7 @@ async function submit(): Promise<void> {
             :aria-describedby="`${ids.type}-hint`"
           >
             <label
-              v-for="type in TICKET_ACTION_TYPES"
+              v-for="type in MANUAL_ACTION_TYPES"
               :key="type"
               class="form-selectgroup-item"
             >

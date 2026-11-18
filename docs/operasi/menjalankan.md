@@ -132,10 +132,12 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
 - Halaman tiket berisi **Tambah tindakan** dan **Linimasa** (urut waktu tindakan, terbaru di
   atas). Setiap entri mencatat waktu tindakan (diisi operator, jam lokasi remote) dan waktu
   pencatatan beserta nama pencatat (diisi sistem).
-- **Alur status** (disetujui): Terbuka → Dikerjakan / Pending / Eskalasi / Selesai;
-  Dikerjakan → Pending / Eskalasi / Selesai; Pending → Dikerjakan; Eskalasi → Dikerjakan;
-  Selesai → Dikerjakan. Form hanya menawarkan jalur ini, dan server menolak jalur lain.
-  Ditutup menyusul bersama aturan penutupan (langkah 1.6).
+- **Alur status** (disetujui, Eskalasi disesuaikan di 1.5b): Terbuka → Dikerjakan / Pending /
+  Selesai; Dikerjakan → Pending / Selesai; Pending → Dikerjakan; Eskalasi → Dikerjakan /
+  Pending / Selesai; Selesai → Dikerjakan. **Eskalasi** tidak dipilih di form: status ini
+  dipasang otomatis saat TT dibuka lewat **Eskalasi To SD** (lihat Trouble Ticket di bawah).
+  Form hanya menawarkan jalur ini, dan server menolak jalur lain. Ditutup menyusul bersama
+  aturan penutupan (langkah 1.6).
 - **Pending** wajib memilih pihak yang ditunggu (Customer atau TM) dan alasannya; keduanya
   tampil di kepala tiket selama pending.
 - Bila rekan mengubah status saat form Anda terbuka, penyimpanan ditolak dengan pesan, dan
@@ -160,7 +162,7 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   - **Problem**: hasil pengecekan PIC, yaitu penyebab masalahnya. Wajib catatan.
 
   Jenisnya tampil sebagai lencana di linimasa dan di kolom Tindakan terakhir daftar tiket.
-  Eskalasi To SD (TT) dan Close menyusul di langkah 1.5b dan 1.6.
+  Jenis **Eskalasi To SD** dicatat sistem saat TT dibuka (1.5b); Close menyusul di 1.6.
 - **Pihak pending**: **TM** untuk problem jaringan (jarkom) di lokasi; **Customer** untuk
   listrik, obstacle, renovasi, atau part ATM yang belum siap.
 - **Tanda "Down ≥ 7 hari"**: tiket yang belum Selesai dan waktu kejadiannya sudah 7 hari atau
@@ -168,18 +170,46 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
 - Kolom **System** tidak dipakai lagi dan tidak tampil di layar. Status remote yang dibongkar
   bernama **Dismantle**; impor Excel menerima "Dismantle" atau "Dibongkar".
 
+### Trouble Ticket (TT) ke Service Delivery (1.5b)
+
+- **TT** dibuka bila problem jaringan (pihak TM) perlu **kunjungan teknisi**. Tanpa kunjungan,
+  cukup NPR. Penjadwalan teknisi tetap di luar portal.
+- Di halaman tiket, kartu **Trouble Ticket (TT)** → **Eskalasi To SD** → isi **Problem untuk
+  teknisi** (terisi awal dari keterangan NPR, 3–2.000 karakter) → **Buka TT**.
+  - Nomor dibuat sistem: `TT/<jarkom>/<customer>/<tahun>/<bulan>/<urut>`, mis.
+    `TT/VSAT/TNA/2026/11/0001`. Urutnya sendiri, terpisah dari nomor NPR, per customer,
+    jarkom, dan bulan (WIB).
+  - Status NPR menjadi **Eskalasi** (menunggu kunjungan teknisi); pihak pending dikosongkan.
+  - Linimasa NPR mendapat entri **Eskalasi To SD** berisi nomor TT dan problemnya.
+- **Satu NPR paling banyak satu TT.** Setelah TT dibuka, tombol Eskalasi To SD hilang; bila
+  rekan membuka TT lebih dulu, permintaan Anda ditolak dan halaman menampilkan TT rekan.
+  TT bisa dibuka dari Terbuka, Dikerjakan, Pending, atau Eskalasi lama, tidak dari Selesai
+  (ubah ke Dikerjakan dulu).
+- **Salin ringkasan TT** menyalin teks siap tempel untuk chat Service Delivery: no. TT dan NPR,
+  customer (dan no. tiket customer), remote dan Site ID, lokasi, jarkom dan IP, problem,
+  kontak lokasi, serta waktu dan pembuka TT. Setiap penyalinan tercatat di linimasa. Bila
+  browser menolak salin otomatis, teksnya ditampilkan untuk disalin manual.
+- Hasil kunjungan dicatat di NPR seperti biasa (tindakan, lampiran laporan), lalu status
+  diubah ke Dikerjakan, Pending, atau Selesai. Penutupan bersama TT menyusul di 1.6.
+- No. TT tampil di kepala tiket, di baris daftar, dan di hasil pencarian.
+- Database: tabel `trouble_tickets` (migrasi `TroubleTickets…`), satu TT per NPR dijaga
+  constraint unik, TT selalu milik customer yang sama dengan NPR-nya, perubahan tercatat di
+  audit log.
+
 ### Daftar tiket dan pencarian
 
 - **Tiket** di menu: daftar tiket yang boleh dilihat pengguna (dibatasi customer), 50 per
   halaman, waktu kejadian terbaru di atas. Tab:
   - **Aktif** (bawaan): belum Selesai.
   - **Milik saya**: tiket aktif yang Anda buat atau pernah Anda beri tindakan.
-  - **Pending**, **Eskalasi**, **Selesai**, **Semua**.
+  - **Pending**, **Eskalasi** (menunggu kunjungan teknisi).
+  - **TT aktif**: NPR yang punya TT dan belum Selesai, apa pun statusnya.
+  - **Selesai**, **Semua**.
 
-  Angka di tab Aktif, Milik saya, Pending, dan Eskalasi ikut pencarian dan saringan yang
-  sedang dipakai.
+  Angka di tab Aktif, Milik saya, Pending, Eskalasi, dan TT aktif ikut pencarian dan saringan
+  yang sedang dipakai.
 - Saringan: customer, kategori, jarkom. Kotak **Cari** menerima potongan no. NPR
-  (mis. `2026/11/0002`), no. tiket customer, Site ID, nama, kota, atau kanca remote.
+  (mis. `2026/11/0002`), no. TT, no. tiket customer, Site ID, nama, kota, atau kanca remote.
 - Tab, pencarian, saringan, dan halaman tersimpan di alamat halaman. Alamatnya bisa
   dibagikan atau ditandai di browser, dan tombol kembali dari tiket membuka tab yang sama.
 - Setiap baris menampilkan status (pending dengan pihak dan alasannya), waktu kejadian menurut

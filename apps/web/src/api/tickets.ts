@@ -1,4 +1,6 @@
 import type {
+  OpenTroubleTicketRequest,
+  TroubleTicketSummaryResponse,
   AddTicketActionRequest,
   AddTicketActionResponse,
   CreateTicketRequest,
@@ -50,6 +52,16 @@ export const ticketsApi = {
   },
 
   attachmentUrl: (id: string) => `/api/attachments/${encodeURIComponent(id)}`,
+
+  /** "Eskalasi To SD": buka TT untuk NPR ini (1.5b). */
+  async openTroubleTicket(id: string, request: OpenTroubleTicketRequest): Promise<TicketDetail> {
+    return (await apiRequest<TicketResponse>('POST', `/tickets/${encodeURIComponent(id)}/tt`, request)).ticket;
+  },
+
+  /** Teks ringkasan TT untuk SD; penyalinannya tercatat di linimasa. */
+  async troubleTicketSummary(id: string): Promise<string> {
+    return (await apiRequest<TroubleTicketSummaryResponse>('POST', `/tickets/${encodeURIComponent(id)}/tt/salin`)).text;
+  },
 
   /** Tiket yang belum ditutup pada satu remote. */
   async openForRemote(remoteId: string): Promise<TicketSummary[]> {

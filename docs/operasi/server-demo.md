@@ -226,7 +226,7 @@ Data contoh: tiga bank rekaan dengan 25 remote masing-masing, tersebar di WIB, W
 Kategori: Remote Down, Relokasi, Reposisi, Preventive Maintenance (nilai "Remote Status"
 dashboard lama). Jarkom berisi nilai contoh.
 
-### Alur demo yang disarankan (sampai langkah 1.5)
+### Alur demo yang disarankan (sampai langkah 1.5b)
 
 1. Masuk sebagai `helpdesk.contoh`. Tunjukkan menu, lalu **Remote**: cari, saring, dan buka detail
    remote.
@@ -236,16 +236,21 @@ dashboard lama). Jarkom berisi nilai contoh.
    lalu **Problem** (hasil cek PIC); ubah status ke Pending dengan pihak TM atau Customer; tempel
    tangkapan layar (Ctrl+V) sebagai lampiran.
 4. **Koreksi** sebuah entri. Linimasa tidak bisa diubah atau dihapus.
-5. Buka menu **Tiket**: tab Aktif, Milik saya, dan Pending, dengan status, pihak yang
-   ditunggu, dan tanda merah "≥ 7 hari" untuk NPR yang sudah lama down terlihat tanpa membuka
-   tiketnya. Lalu cari potongan nomor tiket atau nama lokasi
-   di kotak cari header.
-6. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
+5. Masih di tiket itu, kartu **Trouble Ticket (TT)** → **Eskalasi To SD**: sesuaikan problem
+   untuk teknisi → **Buka TT**. Nomor TT dibuat sistem, status menjadi Eskalasi, dan
+   linimasa mencatatnya. Tekan **Salin ringkasan TT** lalu tempel di chat (mis. Notepad):
+   teks siap kirim ke Service Delivery, dan penyalinannya tercatat. Tombol Eskalasi To SD
+   hilang setelah TT dibuka: satu NPR paling banyak satu TT.
+6. Buka menu **Tiket**: tab Aktif, Milik saya, Pending, Eskalasi, dan **TT aktif**, dengan
+   status, pihak yang ditunggu, no. TT, dan tanda merah "≥ 7 hari" untuk NPR yang sudah lama
+   down terlihat tanpa membuka tiketnya. Lalu cari potongan nomor NPR atau TT, atau nama
+   lokasi, di kotak cari header.
+7. Masuk sebagai `helpdesk.merapi` untuk menunjukkan bahwa remote dan tiket customer lain tidak
    terlihat, juga di pencarian.
-7. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
+8. Masuk sebagai `admin.contoh` untuk menunjukkan Master data dan **Impor dari Excel**.
 
-Belum ada: TT ke Service Delivery, penutupan tiket, Overview, SLA, dan laporan. (Gamas tidak
-dibuat.)
+Belum ada: penutupan tiket (Close, termasuk laporan teknisi dan part yang diganti), Overview,
+SLA, dan laporan. (Gamas tidak dibuat.)
 Halaman menu yang belum dibangun menjelaskan isinya dan kapan hadir.
 
 ## Bila ada masalah
