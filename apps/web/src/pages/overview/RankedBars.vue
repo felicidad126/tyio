@@ -4,11 +4,16 @@ import { RouterLink, type RouteLocationRaw } from 'vue-router';
 
 // Batang horizontal berperingkat, satu warna (besaran, bukan identitas): nama, batang, angka.
 // Satu baris = satu tautan ke daftar Tiket dengan jumlah yang sama.
-const props = defineProps<{
-  items: Array<{ key: string; label: string; count: number; to: RouteLocationRaw }>;
-  unit: string;
-  empty: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    items: Array<{ key: string; label: string; count: number; to: RouteLocationRaw }>;
+    unit: string;
+    empty: string;
+    /** Baris sebagai tautan (tidak di layar dinding). */
+    links?: boolean;
+  }>(),
+  { links: true },
+);
 const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
 </script>
 
@@ -27,8 +32,9 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
       v-for="item in items"
       :key="item.key"
     >
-      <RouterLink
-        :to="item.to"
+      <component
+        :is="links ? RouterLink : 'div'"
+        :to="links ? item.to : undefined"
         class="row-link"
         :aria-label="`${item.label}: ${item.count.toLocaleString('id-ID')} ${unit}`"
       >
@@ -43,7 +49,7 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
           />
         </span>
         <span class="count">{{ item.count.toLocaleString('id-ID') }}</span>
-      </RouterLink>
+      </component>
     </li>
   </ul>
 </template>
@@ -57,7 +63,7 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
 }
 .row-link {
   display: grid;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) 3rem;
+  grid-template-columns: minmax(0, 14em) minmax(0, 1fr) 3.5em;
   grid-template-areas: 'name track count';
   align-items: center;
   column-gap: 0.75rem;
@@ -81,12 +87,12 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.count)));
 .track {
   grid-area: track;
   display: block;
-  height: 12px;
+  height: 0.85em;
 }
 /* Di layar sempit nama di baris sendiri, batang dan angka di bawahnya. */
 @media (max-width: 575.98px) {
   .row-link {
-    grid-template-columns: minmax(0, 1fr) 3rem;
+    grid-template-columns: minmax(0, 1fr) 3.5em;
     grid-template-areas:
       'name name'
       'track count';

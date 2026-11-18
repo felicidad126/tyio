@@ -1,9 +1,22 @@
 <script setup lang="ts">
 import { useRegisterSW } from 'virtual:pwa-register/vue';
+import { watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 // Versi baru portal tidak dimuat paksa: operator mungkin sedang mengisi form.
-// Tawaran muat ulang muncul, dan operator memilih kapan.
+// Tawaran muat ulang muncul, dan operator memilih kapan. Kecuali di layar dinding (2.4),
+// yang tidak disentuh siapa pun: versi baru dipasang sendiri setelah 30 detik.
 const { needRefresh, updateServiceWorker } = useRegisterSW();
+const route = useRoute();
+let autoUpdate: ReturnType<typeof setTimeout> | undefined;
+watch(
+  () => needRefresh.value && route.name === 'wall',
+  (onWall) => {
+    clearTimeout(autoUpdate);
+    if (onWall) autoUpdate = setTimeout(() => void updateServiceWorker(true), 30_000);
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

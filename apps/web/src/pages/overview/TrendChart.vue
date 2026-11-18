@@ -8,7 +8,18 @@ import { formatDay } from './overview-display';
 // Selesai (menurut online kembali). Kolom tipis dari satu garis dasar, legenda selalu ada,
 // tooltip saat hover/fokus, dan tabel untuk yang tidak memakai grafik. Setiap batang menuju
 // daftar Tiket dengan jumlah yang sama.
-const props = defineProps<{ trend: OverviewResponse['trend'] }>();
+const props = withDefaults(
+  defineProps<{
+    trend: OverviewResponse['trend'];
+    /** Tinggi area batang (px); layar dinding memakai lebih tinggi. */
+    height?: number;
+    /** Tampilan tabel di bawah grafik (tidak di layar dinding). */
+    table?: boolean;
+    /** Batang sebagai tautan ke daftar Tiket (tidak di layar dinding). */
+    links?: boolean;
+  }>(),
+  { height: 180, table: true, links: true },
+);
 
 type Series = 'opened' | 'closed';
 const SERIES: ReadonlyArray<{ key: Series; label: string; link: (date: string) => RouteLocationRaw }> = [
@@ -56,7 +67,10 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
 </script>
 
 <template>
-  <div class="trend">
+  <div
+    class="trend"
+    :style="{ '--plot-height': `${height}px` }"
+  >
     <ul
       class="legend list-unstyled mb-3"
       aria-label="Keterangan grafik"
@@ -108,10 +122,11 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
           class="day"
         >
           <div class="bars">
-            <RouterLink
+            <component
+              :is="links ? RouterLink : 'span'"
               v-for="s in SERIES"
               :key="s.key"
-              :to="s.link(day.date)"
+              :to="links ? s.link(day.date) : undefined"
               class="hit"
               :aria-label="`${formatDay(day.date)}: ${day[s.key].toLocaleString('id-ID')} ${s.label}`"
               :aria-describedby="tip?.date === day.date ? tooltipId : undefined"
@@ -124,7 +139,7 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
                 :class="`series-${s.key}`"
                 :style="{ height: `${(day[s.key] / max) * 100}%` }"
               />
-            </RouterLink>
+            </component>
           </div>
           <span
             class="day-label"
@@ -158,7 +173,10 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
       </div>
     </div>
 
-    <details class="mt-3">
+    <details
+      v-if="table"
+      class="mt-3"
+    >
       <summary class="py-2">
         Lihat sebagai tabel
       </summary>
@@ -213,7 +231,6 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
   --series-opened: #2a78d6;
   --series-closed: #eb6834;
   --grid: var(--tblr-border-color);
-  --plot-height: 180px;
 }
 :global([data-bs-theme='dark']) .trend {
   --series-opened: #3987e5;
@@ -246,8 +263,8 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
 .axis {
   position: relative;
   height: var(--plot-height);
-  min-width: 1.75rem;
-  font-size: 0.75rem;
+  min-width: 2em;
+  font-size: 0.85em;
   font-variant-numeric: tabular-nums;
   color: var(--tblr-secondary);
 }
@@ -315,8 +332,8 @@ const tipDay = computed(() => (tip.value ? props.trend.find((d) => d.date === ti
   border-radius: 4px 4px 0 0;
 }
 .day-label {
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
+  margin-top: 0.25em;
+  font-size: 0.85em;
   color: var(--tblr-secondary);
   white-space: nowrap;
 }

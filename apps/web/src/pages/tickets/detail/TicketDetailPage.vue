@@ -58,6 +58,14 @@ watch(() => route.params.id as string, load, { immediate: true });
 
 const byId = computed(() => new Map(actions.value.map((a) => [a.id, a])));
 
+/** Simpanan yang sedang berjalan dari halaman ini (form tindakan, TT). */
+let saving = 0;
+let savedUntil = 0;
+function onBusy(busy: boolean): void {
+  saving = Math.max(0, saving + (busy ? 1 : -1));
+  if (!busy) savedUntil = Date.now() + 3000;
+}
+
 // Pembaruan langsung (2.2): tiket ini berubah di tempat lain (rekan, tab lain), atau kabar
 // mungkin terlewat: muat ulang kepala tiket dan linimasa. Form tindakan tidak dibuat ulang,
 // jadi catatan yang sedang diketik tetap; bila statusnya berubah, Helpdesk diberi tahu.
@@ -69,7 +77,10 @@ useLiveNotices((notice) => {
     try {
       const [detail, timeline] = await Promise.all([ticketsApi.get(current.id), ticketsApi.actions(current.id)]);
       if (ticket.value?.id !== current.id) return;
-      if (detail.status !== ticket.value.status) {
+      // Simpanan dari halaman ini sendiri yang kabarnya tiba lebih dulu dari jawaban server bukan
+      // "di tempat lain". Tab atau perangkat lain (juga dengan akun yang sama) tetap diberi tahu.
+      const own = saving > 0 || Date.now() < savedUntil;
+      if (detail.status !== ticket.value.status && !own) {
         warning.value = `Status tiket diubah menjadi ${TICKET_STATUS_LABELS[detail.status]} di tempat lain. Periksa sebelum menyimpan.`;
       }
       ticket.value = detail;
@@ -204,6 +215,7 @@ function onSaved(result: AddTicketActionResponse): void {
         </div>
         <TicketActionForm
           :ticket="ticket"
+          @busy="onBusy"
           @saved="onSaved"
           @stale="onStale"
         />
@@ -238,6 +250,7 @@ function onSaved(result: AddTicketActionResponse): void {
       <div class="col-12 col-lg-5 d-flex flex-column gap-3">
         <TroubleTicketCard
           :ticket="ticket"
+          @busy="onBusy"
           @opened="onTtOpened"
           @stale="onStale"
           @copied="onTtCopied"

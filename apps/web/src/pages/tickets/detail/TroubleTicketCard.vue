@@ -10,7 +10,7 @@ import AppDialog from '../../../components/AppDialog.vue';
 // ringkasannya disalin untuk chat Service Delivery (K25). Pola permukaan: panel dari kanan
 // (form singkat satu kolom), bukan halaman sendiri.
 const props = defineProps<{ ticket: TicketDetail }>();
-const emit = defineEmits<{ opened: [ticket: TicketDetail]; stale: [message: string]; copied: [] }>();
+const emit = defineEmits<{ opened: [ticket: TicketDetail]; stale: [message: string]; copied: []; busy: [busy: boolean] }>();
 
 const ids = { title: useId(), problem: useId(), summary: useId() };
 const drawer = ref(false);
@@ -42,6 +42,7 @@ async function submit(): Promise<void> {
   formError.value = '';
   if (problemError.value) return;
   saving.value = true;
+  emit('busy', true);
   try {
     const ticket = await ticketsApi.openTroubleTicket(props.ticket.id, {
       problem: problem.value.trim(),
@@ -61,6 +62,7 @@ async function submit(): Promise<void> {
     }
   } finally {
     saving.value = false;
+    emit('busy', false);
   }
 }
 

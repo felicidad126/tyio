@@ -37,7 +37,7 @@ import { formatBytes, TICKET_STATUS_BADGE } from './ticket-display';
 // Pola permukaan: form di halaman detail (bukan dialog), karena isinya beberapa kolom dan
 // operator sering menempel tangkapan layar sambil membaca linimasa.
 const props = defineProps<{ ticket: TicketDetail }>();
-const emit = defineEmits<{ saved: [result: AddTicketActionResponse]; stale: [message: string] }>();
+const emit = defineEmits<{ saved: [result: AddTicketActionResponse]; stale: [message: string]; busy: [busy: boolean] }>();
 
 const ids = {
   type: useId(),
@@ -195,6 +195,7 @@ async function submit(): Promise<void> {
   formError.value = '';
   if (Object.values(errors.value).some(Boolean)) return;
   saving.value = true;
+  emit('busy', true);
   const statusTo = closing.value ? 'selesai' : form.statusTo;
   try {
     const result = await ticketsApi.addAction(
@@ -241,6 +242,7 @@ async function submit(): Promise<void> {
     }
   } finally {
     saving.value = false;
+    emit('busy', false);
   }
 }
 </script>

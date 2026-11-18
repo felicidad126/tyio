@@ -231,6 +231,37 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
   `sistem:migrasi`).
 
+### Layar dinding 24/7 (2.4)
+
+- Alamat **`/dinding`** (tombol **Layar dinding** di Overview), untuk TV atau monitor besar di
+  ruang NOC. Tanpa menu, bertema gelap, dan berjalan tanpa disentuh:
+  - Atas: jam WIB (detik demi detik), status koneksi (Langsung/Terputus), dan waktu data diterima.
+  - Angka tiket aktif selalu tampil: total, per status, TT aktif, Down ≥ 7 hari.
+  - Panel berganti tiap 20 detik: **NPR aktif terbaru** (remote, customer, status, umur),
+    **NPR baru dan Selesai per hari**, **per kategori dan customer**, **remote paling sering
+    bermasalah**. Lama per panel bisa diatur lewat alamat, mis. `/dinding?putar=30` (2–300 detik).
+  - **NPR baru** memunculkan peringatan kuning besar (remote, customer, no. NPR, problem) selama
+    90 detik, berbunyi, dan panel kembali ke antrean.
+  - Koneksi putus: spanduk merah "Koneksi terputus sejak …". Layar menyambung ulang sendiri dan
+    memuat ulang data; NPR yang dibuat selama putus ikut tampil.
+- **Bunyi**: browser baru mengizinkan suara setelah ada satu klik di halaman. Klik sekali di
+  layar setelah membuka `/dinding` (sekaligus masuk layar penuh). Untuk PC khusus layar dinding,
+  jalankan Chrome dalam mode kios agar bunyi dan layar penuh aktif tanpa klik, juga setelah PC
+  menyala ulang:
+
+  ```bash
+  google-chrome --kiosk --autoplay-policy=no-user-gesture-required https://<domain>/dinding
+  ```
+
+  (Windows: buat pintasan ke `chrome.exe` dengan argumen yang sama, taruh di folder Startup.)
+- **Tidak tidur**: halaman meminta layar tetap menyala (Wake Lock). Tetap matikan juga
+  "sleep"/"screen off" di pengaturan daya sistem operasi PC tersebut.
+- **Sesi**: setiap muat ulang memperpanjang sesi, jadi layar tidak keluar sendiri selama
+  dipakai. Batas mutlak sesi tetap 7 hari: seminggu sekali (atau bila sesi diputus admin)
+  layar menampilkan halaman masuk dan kembali ke `/dinding` setelah masuk.
+- **Perawatan sendiri**: versi baru portal dipasang otomatis 30 detik setelah tersedia, dan
+  halaman dimuat ulang sekali sehari pukul 03.00 WIB untuk membersihkan memori browser.
+
 ### Pembaruan langsung (2.2)
 
 - Overview, daftar Tiket, dan halaman tiket memuat ulang sendiri saat ada tiket baru atau

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconRefresh } from '@tabler/icons-vue';
+import { IconAlertTriangle, IconDeviceTv, IconRefresh } from '@tabler/icons-vue';
 import {
   type ActiveTicketStatus,
   canOpenModule,
@@ -139,12 +139,25 @@ const topLink = (remoteId: string) =>
     </div>
     <div
       v-if="data"
-      class="d-flex align-items-center gap-2"
+      class="d-flex flex-wrap align-items-center gap-2"
     >
       <DataReceived
         :at="data.generatedAt"
         data-testid="overview-diperbarui"
       />
+      <!-- Layar dinding untuk monitor besar di ruang NOC; tidak ditawarkan di ponsel. -->
+      <RouterLink
+        :to="{ name: 'wall' }"
+        class="btn action-target d-none d-md-inline-flex"
+        title="Tampilan untuk layar besar di ruang NOC, berjalan tanpa disentuh"
+      >
+        <IconDeviceTv
+          class="icon"
+          :size="18"
+          aria-hidden="true"
+        />
+        Layar dinding
+      </RouterLink>
       <button
         type="button"
         class="btn btn-icon action-target"

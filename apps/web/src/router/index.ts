@@ -93,6 +93,13 @@ export const router = createRouter({
       meta: { public: true, title: 'Masuk' },
     },
     {
+      // Layar dinding 24/7 (2.4): tanpa menu dan header aplikasi.
+      path: '/dinding',
+      name: 'wall',
+      component: () => import('../pages/wall/WallPage.vue'),
+      meta: { module: 'overview', title: 'Layar dinding' },
+    },
+    {
       path: '/',
       component: () => import('../layouts/AppLayout.vue'),
       children: [
