@@ -332,5 +332,5 @@ List Report Teknisi, Shared.
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
 | R0 Fondasi | 0.1–0.5 selesai (0.1–0.2 di `main` lewat PR #1); pemasangan staging dan 0.6 menunggu keputusan hosting; lihat Progres di langkah-teknis.md |
 | R1 Remote + Tiket | Berjalan — 1.1–1.6 selesai (master data, remote, buat tiket, linimasa dan alur status, antrean dan pencarian, TT lewat Eskalasi To SD, Close dan riwayat remote) dan terpasang di server demo; tersisa 1.7 (produksi pertama, menunggu server) |
-| R2 Overview + monitor 24/7 | Berjalan — 2.1 (Overview: ringkasan dan analitik kejadian) selesai; berikutnya 2.2 pembaruan langsung, 2.3 peta, 2.4 layar dinding |
+| R2 Overview + monitor 24/7 | Berjalan — 2.1 (Overview) dan 2.2 (pembaruan langsung) selesai; berikutnya 2.4 layar dinding; 2.3 peta menunggu jawaban soal akses internet di NOC |
 | R3–R8 | Belum mulai (R3 dibatalkan) |

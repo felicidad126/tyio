@@ -29,7 +29,7 @@ import {
   timeZoneLabel,
   utcToLocalInput,
 } from '@tyio/shared';
-import { computed, reactive, ref, useId, useTemplateRef } from 'vue';
+import { computed, reactive, ref, useId, useTemplateRef, watch } from 'vue';
 import { ApiError } from '../../../api/client';
 import { ticketsApi } from '../../../api/tickets';
 import { formatBytes, TICKET_STATUS_BADGE } from './ticket-display';
@@ -129,6 +129,17 @@ const errors = computed(() => {
       serverErrors.lampiran || (show && visit.value && files.value.length === 0 ? 'Lampirkan laporan teknisi.' : ''),
   };
 });
+
+// Status berubah dari luar form (rekan lewat pembaruan langsung, atau jawaban 409): pilihan
+// yang bergantung pada status dikosongkan; catatan, waktu, dan lampiran yang sedang diisi tetap.
+watch(
+  () => props.ticket.status,
+  () => {
+    Object.assign(form, { type: 'catatan', statusTo: '', pendingParty: '', pendingReason: '', parts: [], noParts: false });
+    submitted.value = false;
+    for (const key of Object.keys(serverErrors)) serverErrors[key] = '';
+  },
+);
 
 function clearServer(field: string): void {
   serverErrors[field] = '';

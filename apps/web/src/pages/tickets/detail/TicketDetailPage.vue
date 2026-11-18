@@ -13,6 +13,8 @@ import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '../../../api/client';
 import { ticketsApi } from '../../../api/tickets';
+import DataReceived from '../../../components/DataReceived.vue';
+import { useLiveNotices } from '../../../stores/live';
 import CustomerTicketNumber from './CustomerTicketNumber.vue';
 import { formatDuration, TICKET_STATUS_BADGE } from './ticket-display';
 import TicketActionForm from './TicketActionForm.vue';
@@ -29,6 +31,7 @@ const loadError = ref('');
 const notice = ref('');
 /** Peringatan yang harus tetap terlihat, mis. status sudah diubah rekan. */
 const warning = ref('');
+const receivedAt = ref<Date | null>(null);
 
 function onStale(message: string): void {
   warning.value = message;
@@ -41,6 +44,7 @@ async function load(id: string): Promise<void> {
     const [detail, timeline] = await Promise.all([ticketsApi.get(id), ticketsApi.actions(id)]);
     ticket.value = detail;
     actions.value = timeline;
+    receivedAt.value = new Date();
     state.value = 'ready';
   } catch (error) {
     if (error instanceof ApiError && (error.status === 404 || error.status === 400)) state.value = 'missing';
@@ -53,6 +57,29 @@ async function load(id: string): Promise<void> {
 watch(() => route.params.id as string, load, { immediate: true });
 
 const byId = computed(() => new Map(actions.value.map((a) => [a.id, a])));
+
+// Pembaruan langsung (2.2): tiket ini berubah di tempat lain (rekan, tab lain), atau kabar
+// mungkin terlewat: muat ulang kepala tiket dan linimasa. Form tindakan tidak dibuat ulang,
+// jadi catatan yang sedang diketik tetap; bila statusnya berubah, Helpdesk diberi tahu.
+useLiveNotices((notice) => {
+  const current = ticket.value;
+  if (!current || state.value !== 'ready') return;
+  if (notice.type === 'changes' && !notice.changes.some((c) => c.ticketId === current.id)) return;
+  void (async () => {
+    try {
+      const [detail, timeline] = await Promise.all([ticketsApi.get(current.id), ticketsApi.actions(current.id)]);
+      if (ticket.value?.id !== current.id) return;
+      if (detail.status !== ticket.value.status) {
+        warning.value = `Status tiket diubah menjadi ${TICKET_STATUS_LABELS[detail.status]} di tempat lain. Periksa sebelum menyimpan.`;
+      }
+      ticket.value = detail;
+      actions.value = timeline;
+      receivedAt.value = new Date();
+    } catch {
+      // Gagal memuat ulang: data lama tetap tampil; spanduk koneksi menjelaskan bila putus.
+    }
+  })();
+});
 
 function onTtOpened(updated: TicketDetail): void {
   ticket.value = updated;
@@ -145,6 +172,12 @@ function onSaved(result: AddTicketActionResponse): void {
           class="text-secondary"
         >Menunggu {{ PENDING_PARTY_LABELS[ticket.pending.party] }}: {{ ticket.pending.reason }}</span>
       </p>
+      <div class="mt-2 d-flex flex-wrap align-items-center column-gap-3">
+        <DataReceived
+          :at="receivedAt"
+          data-testid="tiket-diperbarui"
+        />
+      </div>
       <div class="mt-2">
         <CustomerTicketNumber
           :ticket="ticket"
@@ -170,7 +203,6 @@ function onSaved(result: AddTicketActionResponse): void {
           {{ warning }}
         </div>
         <TicketActionForm
-          :key="ticket.status"
           :ticket="ticket"
           @saved="onSaved"
           @stale="onStale"

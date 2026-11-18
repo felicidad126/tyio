@@ -29,6 +29,8 @@ database tidak bisa dihubungi.
 | `SESSION_COOKIE_SECURE` | tidak | `true`/`false`. Bawaan `true` di staging dan produksi: cookie sesi hanya lewat HTTPS dan bernama `__Host-tyio_sid`. Browser memperlakukan `http://localhost` sebagai aman, jadi uji lokal tetap jalan |
 | `TRUST_PROXY_HOPS` | tidak | Jumlah reverse proxy di depan aplikasi (0–5, bawaan 0). Isi dengan tepat: alamat IP klien dipakai untuk membatasi percobaan login |
 | `ATTACHMENTS_DIR` | staging/produksi | Folder lampiran tiket. Di image sudah diisi `/app/data/lampiran`, dipasang sebagai volume `attachments` di compose. Dev dan uji memakai `data/lampiran` |
+| `STREAM_HEARTBEAT_MS` | tidak | Jarak detak koneksi pembaruan langsung, 50–55000 ms (bawaan 25000). Harus di bawah batas diam proxy (Nginx `proxy_read_timeout`, bawaan 60 detik) |
+| `STREAM_MAX_MS` | tidak | Umur koneksi pembaruan langsung sebelum server menutupnya dengan rapi agar sesi diperiksa ulang, 200–3600000 ms (bawaan 300000 = 5 menit) |
 | `TYIO_SEED_PASSWORD` | untuk seed di staging | Kata sandi pengguna contoh, minimal 12 karakter. Dev memakai bawaan di bawah |
 
 Aplikasi menolak start bila konfigurasi tidak sah dan menyebut variabel yang bermasalah,
@@ -229,6 +231,33 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   waktu tutup dari entri terakhir yang mengubahnya ke Selesai (tercatat di audit atas nama
   `sistem:migrasi`).
 
+### Pembaruan langsung (2.2)
+
+- Overview, daftar Tiket, dan halaman tiket memuat ulang sendiri saat ada tiket baru atau
+  berubah (dibuat, diberi tindakan, status berubah, TT dibuka), tanpa menekan muat ulang.
+  Di daftar, baris yang berubah disorot sebentar. Setiap panel menampilkan **Data diterima
+  HH.MM.SS WIB**.
+- Header menampilkan **Langsung** (tersambung), **Menyambung…**, atau **Terputus**. Selama
+  terputus, spanduk kuning di atas halaman menjelaskan bahwa data mungkin tidak terbaru, dengan
+  tombol **Sambungkan sekarang**. Browser menyambung ulang sendiri (jeda 1–15 detik), lalu semua
+  halaman memuat ulang datanya agar perubahan selama putus tidak terlewat.
+- Di halaman tiket, bila rekan mengubah status saat Anda sedang mengisi Tambah tindakan,
+  muncul peringatan dan pilihan status menyesuaikan; catatan yang sedang diketik tetap.
+- Cara kerja: trigger database mengirim `NOTIFY tyio_changes` (customer dan ID tiket saja) setiap
+  ada perubahan di tiket, linimasa, atau TT (migrasi `LiveChanges…`). Aplikasi mendengarkannya
+  lewat satu koneksi database khusus dan meneruskannya lewat `GET /api/stream` (Server-Sent
+  Events) hanya ke pengguna yang boleh melihat customer itu. Isinya hanya penanda; datanya
+  diambil lewat rute biasa. Bila koneksi database pendengar putus, aplikasi menyambung ulang
+  sendiri dan meminta browser memuat ulang. Karena sumbernya database, ini tetap benar bila
+  aplikasi berjalan di lebih dari satu server.
+- Server mengirim detak tiap 25 detik dan menutup koneksi dengan rapi tiap 5 menit (browser
+  langsung menyambung lagi, sesi diperiksa ulang): sesi yang habis atau pengguna yang
+  dinonaktifkan berhenti menerima kabar paling lama 5 menit kemudian.
+- Proxy: jawaban `/api/stream` membawa `X-Accel-Buffering: no`, sehingga Nginx (aaPanel)
+  meneruskannya tanpa menahan; Caddy meneruskan event stream langsung. Potongan konfigurasi
+  Nginx di panduan server demo sudah cukup (`proxy_read_timeout 120s` di atas jarak detak).
+  Diuji lewat Nginx 1.28 dan Caddy 2: kabar tiba dalam ±30 ms.
+
 ### Overview (2.1)
 
 - Halaman pertama setelah masuk. Semua angka dibatasi customer yang boleh dilihat pengguna,
@@ -242,9 +271,9 @@ Membuka `/admin` tanpa hak menampilkan halaman "tidak tersedia untuk peran Anda"
   - **Remote paling sering bermasalah**: 10 remote dengan NPR terbanyak menurut waktu kejadian
     dalam 30 hari terakhir (termasuk yang sudah Selesai). Nama remote membuka halaman remote,
     jumlahnya membuka daftar NPR remote itu dalam rentang yang sama.
-- Angka dimuat ulang tiap menit selama halaman terbuka, saat halaman kembali dibuka, atau
-  lewat tombol muat ulang; waktu "Diperbarui" ada di kanan atas. Pembaruan langsung tanpa
-  menunggu menit menyusul di langkah 2.2.
+- Angka dimuat ulang saat ada perubahan tiket (pembaruan langsung, 2.2), tiap menit (untuk
+  angka yang berubah karena waktu, mis. Down ≥ 7 hari), saat halaman kembali dibuka, atau lewat
+  tombol muat ulang; waktu "Data diterima" ada di kanan atas.
 - Database: tren Selesai per hari memakai indeks `tickets_closed_at_idx` (migrasi
   `Overview…`). Diukur pada 100.000 tiket: Overview 31–63 ms.
 

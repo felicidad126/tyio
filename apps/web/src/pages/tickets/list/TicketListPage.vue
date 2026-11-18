@@ -27,10 +27,12 @@ import { type LocationQuery, RouterLink, useRoute, useRouter } from 'vue-router'
 import { ApiError } from '../../../api/client';
 import { masterApi } from '../../../api/master';
 import { remotesApi } from '../../../api/remotes';
+import DataReceived from '../../../components/DataReceived.vue';
 import TicketNumber from '../../../components/TicketNumber.vue';
 import { tenantsApi } from '../../../api/tenants';
 import { ticketsApi } from '../../../api/tickets';
 import { useAuthStore } from '../../../stores/auth';
+import { useLiveNotices } from '../../../stores/live';
 import { linkFilterChips, type ListLinkFilters } from '../../overview/overview-display';
 import { TICKET_STATUS_BADGE } from '../detail/ticket-display';
 
@@ -104,6 +106,7 @@ const isQueueView = (view: TicketView): view is TicketQueueView =>
 const result = ref<TicketListResponse | null>(null);
 // Waktu acuan tanda "≥ 7 hari", diperbarui setiap daftar dimuat.
 let now = new Date();
+const receivedAt = ref<Date | null>(null);
 const state = ref<'loading' | 'ready' | 'error'>('loading');
 const loadError = ref('');
 let latest = 0;
@@ -131,6 +134,7 @@ async function load(): Promise<void> {
     const response = await ticketsApi.list(query);
     if (request !== latest) return; // jawaban lama datang setelah yang baru
     now = new Date();
+    receivedAt.value = now;
     result.value = response;
     state.value = 'ready';
   } catch (error) {
@@ -140,6 +144,19 @@ async function load(): Promise<void> {
   }
 }
 watch(filters, load, { immediate: true, deep: true });
+
+// Pembaruan langsung (2.2): daftar dimuat ulang diam-diam; baris yang berubah disorot sebentar.
+const recent = ref(new Set<string>());
+useLiveNotices((notice) => {
+  if (notice.type === 'changes') {
+    const ids = new Set(notice.changes.map((c) => c.ticketId));
+    recent.value = new Set([...recent.value, ...ids]);
+    setTimeout(() => {
+      recent.value = new Set([...recent.value].filter((id) => !ids.has(id)));
+    }, 4000);
+  }
+  void load();
+});
 
 /** Alamat untuk satu tampilan dengan saringan yang sama, mulai dari halaman 1. */
 function viewQuery(view: TicketView): Record<string, string> {
@@ -220,8 +237,12 @@ function lastActionText(item: TicketListItem): string {
     <h1 class="page-title">
       Tiket
     </h1>
-    <p class="text-secondary mb-0">
-      Antrean NPR: yang masih ditangani dan riwayatnya.
+    <p class="text-secondary mb-0 d-flex flex-wrap column-gap-3">
+      <span>Antrean NPR: yang masih ditangani dan riwayatnya.</span>
+      <DataReceived
+        :at="receivedAt"
+        data-testid="daftar-diperbarui"
+      />
     </p>
   </div>
 
@@ -509,6 +530,7 @@ function lastActionText(item: TicketListItem): string {
           <tr
             v-for="item in result.items"
             :key="item.id"
+            :class="{ 'row-updated': recent.has(item.id) }"
           >
             <td class="ticket-cell">
               <RouterLink
@@ -615,6 +637,24 @@ function lastActionText(item: TicketListItem): string {
 </template>
 
 <style scoped>
+/* Baris yang baru berubah (kabar langsung) disorot lalu memudar. */
+.row-updated > td {
+  animation: row-updated 4s ease-out;
+}
+@keyframes row-updated {
+  from {
+    background-color: var(--tblr-primary-lt, rgb(32 107 196 / 12%));
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-updated > td {
+    animation: none;
+    background-color: var(--tblr-primary-lt, rgb(32 107 196 / 12%));
+  }
+}
 .filter-chip {
   display: inline-flex;
   align-items: center;

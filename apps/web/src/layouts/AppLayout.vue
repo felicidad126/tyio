@@ -2,15 +2,25 @@
 import { IconMenu2, IconPlus, IconX } from '@tabler/icons-vue';
 import { APP_NAME, canOpenModule } from '@tyio/shared';
 import { storeToRefs } from 'pinia';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import GlobalSearch from '../components/GlobalSearch.vue';
+import LiveBanner from '../components/LiveBanner.vue';
+import LiveStatus from '../components/LiveStatus.vue';
 import UserMenu from '../components/UserMenu.vue';
 import { NAV_ITEMS } from '../navigation';
 import { useAuthStore } from '../stores/auth';
+import { useLiveStore } from '../stores/live';
 
 const { user } = storeToRefs(useAuthStore());
 const route = useRoute();
+
+// Pembaruan langsung (2.2) selama pengguna berada di dalam aplikasi; berhenti saat keluar.
+const live = useLiveStore();
+onMounted(() => {
+  if (user.value && canOpenModule(user.value.role, 'tiket')) live.start();
+});
+onBeforeUnmount(() => live.stop());
 const menuOpen = ref(false);
 
 // Aksi global "Buat tiket" (prinsip pengemasan: aksi global selalu terjangkau).
@@ -69,7 +79,8 @@ function isActive(path: string): boolean {
           >
           <span class="brand-name">{{ APP_NAME }}</span>
         </RouterLink>
-        <div class="navbar-nav flex-row d-md-none">
+        <div class="navbar-nav flex-row align-items-center gap-2 d-md-none">
+          <LiveStatus compact />
           <UserMenu />
         </div>
         <div
@@ -130,6 +141,7 @@ function isActive(path: string): boolean {
         <div class="container-fluid">
           <GlobalSearch />
           <div class="navbar-nav flex-row ms-auto align-items-center gap-3">
+            <LiveStatus />
             <RouterLink
               v-if="canCreateTicket"
               :to="{ name: 'ticket-create' }"
@@ -152,6 +164,7 @@ function isActive(path: string): boolean {
         tabindex="-1"
       >
         <div class="container-fluid app-content">
+          <LiveBanner />
           <RouterView />
         </div>
       </main>

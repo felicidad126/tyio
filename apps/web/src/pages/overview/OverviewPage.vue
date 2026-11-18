@@ -3,7 +3,6 @@ import { IconAlertTriangle, IconRefresh } from '@tabler/icons-vue';
 import {
   type ActiveTicketStatus,
   canOpenModule,
-  formatInZone,
   type OverviewResponse,
   TICKET_FLAG_DAYS,
   TICKET_STATUS_LABELS,
@@ -14,7 +13,9 @@ import { RouterLink, type RouteLocationRaw } from 'vue-router';
 import { ApiError } from '../../api/client';
 import { overviewApi } from '../../api/overview';
 import { ROLE_LABELS, tenantScopeLabel } from '../../labels';
+import DataReceived from '../../components/DataReceived.vue';
 import { useAuthStore } from '../../stores/auth';
+import { useLiveNotices } from '../../stores/live';
 import { TICKET_STATUS_BADGE } from '../tickets/detail/ticket-display';
 import { formatDayRange } from './overview-display';
 import RankedBars from './RankedBars.vue';
@@ -45,6 +46,10 @@ async function load(): Promise<void> {
     refreshing.value = false;
   }
 }
+
+// Kabar perubahan tiket (2.2) memuat ulang angka saat itu juga; muat ulang tiap menit tetap
+// berjalan untuk angka yang berubah karena waktu (Down ≥ 7 hari, hari baru di tren).
+useLiveNotices(() => void load());
 
 let timer: ReturnType<typeof setInterval> | undefined;
 function onVisibility(): void {
@@ -136,10 +141,10 @@ const topLink = (remoteId: string) =>
       v-if="data"
       class="d-flex align-items-center gap-2"
     >
-      <span
-        class="text-secondary small"
+      <DataReceived
+        :at="data.generatedAt"
         data-testid="overview-diperbarui"
-      >Diperbarui {{ formatInZone(data.generatedAt, 'Asia/Jakarta') }}</span>
+      />
       <button
         type="button"
         class="btn btn-icon action-target"
