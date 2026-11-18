@@ -15,6 +15,8 @@ a{color:#066fd1;text-decoration:none}
 a:hover{color:#0558a8}
 .skip-link{position:absolute;left:12px;top:-80px;z-index:30;padding:10px 16px;border-radius:6px;background:#ffffff;color:#066fd1;font-weight:600;box-shadow:0 4px 12px rgba(24,36,51,0.25)}
 .skip-link:focus{top:12px}
+.cell-check:hover{background:#f3f7fd}
+.btn-open:disabled{background:#dce1e7 !important;color:#454f5c !important;cursor:not-allowed !important}
 @media (max-width: 900px){
 .shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
 .side-sub,.side-title{display:none !important}
@@ -24,6 +26,7 @@ a:hover{color:#0558a8}
 }
 @media (max-width: 640px){
 .top-clock,.top-user-text{display:none !important}
+.cell-check,.tap-44{min-height:44px !important}
 }
 </style>
 </helmet>
@@ -81,11 +84,11 @@ Mode monitor 24/7
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
 <span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
 </button>
-<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
-Buat tiket
+Buat NPR
 </button>
-<button type="button" aria-label="Akun: {{userName}}, {{userRole}}" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<button type="button" aria-label="{{userAria}}" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
 <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{userInitials}}</span>
 <span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
 <span style="font-size: 13px; font-weight: 600">{{userName}}</span>
@@ -104,9 +107,9 @@ Buat tiket
 
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px">
 <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
-<h1 style="margin: 0; font-size: clamp(20px, 5.4vw, 26px); line-height: 1.2; font-weight: 700">{{title}}</h1>
+<h1 ref="{{headRef}}" tabindex="-1" style="margin: 0; font-size: clamp(20px, 5.4vw, 26px); line-height: 1.2; font-weight: 700">{{title}}</h1>
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #536173">
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{statusBg}}; color: {{statusFg}}">{{statusLabel}}</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{statusBg}}; color: {{statusFg}}">{{statusLabel}}</span>
 <span>Sulawesi Tengah · VSAT hub Palu-1</span>
 <span aria-hidden="true">·</span>
 <span>4 customer</span>
@@ -117,8 +120,7 @@ Buat tiket
 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
 <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end">
 <sc-if value="{{isSaran}}" hint-placeholder-val="{{ true }}">
-<button type="button" onClick="{{reject}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Bukan Gamas</button>
-<button type="button" onClick="{{openGamas}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">{{openLabel}}</button>
+<button type="button" class="btn-open" disabled="{{noneIncluded}}" onClick="{{openGamas}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">{{openLabel}}</button>
 </sc-if>
 <sc-if value="{{isAktif}}" hint-placeholder-val="{{ false }}">
 <sc-if value="{{canClose}}" hint-placeholder-val="{{ true }}">
@@ -137,17 +139,28 @@ Tutup Gamas
 </sc-if>
 </div>
 <sc-if value="{{showCloseReason}}" hint-placeholder-val="{{ false }}">
-<span id="alasan-tutup-gamas" style="font-size: 12px; color: #536173">Menutup Gamas ikut menutup tiket, jadi hanya L2/L3.</span>
+<span id="alasan-tutup-gamas" style="max-width: 320px; text-align: right; font-size: 12px; color: #536173">Menutup Gamas ikut menutup banyak NPR, jadi sementara hanya L2 (menunggu sesi Gamas).</span>
 </sc-if>
 <sc-if value="{{isSelesai}}" hint-placeholder-val="{{ false }}">
 <span style="font-size: 13px; color: #536173">Ditutup 18:40 WITA oleh Arif S. (L2)</span>
 </sc-if>
+<sc-if value="{{isDitolak}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 13px; color: #536173">{{rejectedBy}}</span>
+</sc-if>
 </div>
 </div>
 
+<div style="display: flex; flex-direction: column; gap: 6px">
 <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-radius: 8px; border: 1px solid {{noteBorder}}; background: {{noteBg}}; color: {{noteFg}}">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 9h.01 M11 12h1v4h1"></path></svg>
 <span>{{noteText}}</span>
+</div>
+<sc-if value="{{isSaran}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; font-size: 13px; color: #536173">
+<span>Bukan gangguan massal?</span>
+<button type="button" class="tap-44" onClick="{{openReject}}" style="height: 36px; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: #182433; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">Tolak saran</button>
+</div>
+</sc-if>
 </div>
 
 <section aria-label="Ringkasan Gamas" style="display: flex; flex-wrap: wrap; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px">
@@ -182,22 +195,24 @@ Tutup Gamas
 <th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Customer</th>
 <th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Turun sejak</th>
 <th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Status</th>
-<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Tiket</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">NPR</th>
 </tr>
 </thead>
 <tbody>
 <sc-for list="{{remotes}}" as="r" hint-placeholder-count="14">
 <tr style="background: {{r.rowBg}}">
 <sc-if value="{{isSaran}}" hint-placeholder-val="{{ true }}">
-<td style="padding: 8px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle">
+<td style="padding: 0; border-bottom: 1px solid #eaedf1; vertical-align: middle">
+<label class="cell-check" style="display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 10px; box-sizing: border-box; cursor: pointer">
 <input type="checkbox" checked="{{r.checked}}" onChange="{{r.toggle}}" aria-label="Ikutkan {{r.name}} ke Gamas" style="width: 18px; height: 18px; margin: 0; cursor: pointer">
+</label>
 </td>
 </sc-if>
 <td style="padding: 8px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap; font-weight: 500">{{r.name}}</td>
 <td style="padding: 8px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">{{r.customer}}</td>
 <td style="padding: 8px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">{{r.since}}</td>
 <td style="padding: 8px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
-<span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{r.stBg}}; color: {{r.stFg}}">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{r.stBg}}; color: {{r.stFg}}">
 <span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{r.dot}}"></span>
 {{r.status}}
 </span>
@@ -235,7 +250,7 @@ Tutup Gamas
 <sc-for list="{{log}}" as="e" hint-placeholder-count="4">
 <li style="display: flex; gap: 14px">
 <div aria-hidden="true" style="display: flex; flex-direction: column; align-items: center; flex: 0 0 32px">
-<span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: {{e.avBg}}; color: {{e.avFg}}">{{e.initials}}</span>
+<span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: {{e.avBg}}; color: {{e.avFg}}">{{e.initials}}</span>
 <span style="flex: 1 1 auto; width: 2px; background: #dce1e7; min-height: 16px"></span>
 </div>
 <article style="flex: 1 1 auto; min-width: 0; padding-bottom: 18px; display: flex; flex-direction: column; gap: 4px">
@@ -285,7 +300,7 @@ Tutup Gamas
 <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 24px; border-bottom: 1px solid #dce1e7">
 <div>
 <h2 id="judul-tutup-gamas" style="margin: 0; font-size: 18px; font-weight: 600">Tutup Gamas GMS/2026/11/0008</h2>
-<p style="margin: 2px 0 0; font-size: 13px; color: #536173">Gangguan hub Palu-1 · 14 tiket anak</p>
+<p style="margin: 2px 0 0; font-size: 13px; color: #536173">Gangguan hub Palu-1 · 14 NPR anak</p>
 </div>
 <button type="button" aria-label="Tutup dialog" onClick="{{closeDialog}}" style="width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: #536173; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12 M6 6l12 12"></path></svg>
@@ -312,9 +327,9 @@ Tutup Gamas
 <span style="font-size: 12px; color: #536173">Dipakai untuk menghitung lama gangguan di laporan.</span>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 6px; background: #f6f8fb; border: 1px solid #e3e7ec">
-<span style="font-weight: 600">Yang terjadi pada tiket anak</span>
-<span style="display: flex; gap: 8px; align-items: flex-start"><span aria-hidden="true" style="color: #1b6430; font-weight: 700">✓</span><span><b>12 tiket</b> dengan remote yang sudah pulih ditutup bersama Gamas.</span></span>
-<span style="display: flex; gap: 8px; align-items: flex-start"><span aria-hidden="true" style="color: #7a4a00; font-weight: 700">!</span><span><b>2 tiket</b> dengan remote yang masih down (KCP Donggala, Kampus IAIN Palu) dilepas dari Gamas dan tetap terbuka.</span></span>
+<span style="font-weight: 600">Yang terjadi pada NPR anak</span>
+<span style="display: flex; gap: 8px; align-items: flex-start"><span aria-hidden="true" style="color: #1b6430; font-weight: 700">✓</span><span><b>12 NPR</b> dengan remote yang sudah pulih ditutup bersama Gamas.</span></span>
+<span style="display: flex; gap: 8px; align-items: flex-start"><span aria-hidden="true" style="color: #7a4a00; font-weight: 700">!</span><span><b>2 NPR</b> dengan remote yang masih down (KCP Donggala, Kampus IAIN Palu) dilepas dari Gamas dan tetap terbuka.</span></span>
 </div>
 <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px">
 <input type="checkbox" checked="{{notify}}" onChange="{{toggleNotify}}" style="width: 18px; height: 18px; margin: 0">
@@ -323,25 +338,47 @@ Kirim pemberitahuan penutupan ke 4 customer
 </div>
 <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid #dce1e7">
 <button type="button" onClick="{{closeDialog}}" style="height: 40px; padding: 0 16px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Batal</button>
-<button type="button" onClick="{{confirmClose}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Tutup Gamas dan 12 tiket</button>
+<button type="button" onClick="{{confirmClose}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Tutup Gamas dan 12 NPR</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{rejectOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(24,36,51,0.45); z-index: 40; display: flex; justify-content: center; align-items: flex-start; padding: 120px 16px 16px; box-sizing: border-box">
+<div role="dialog" aria-modal="true" aria-labelledby="judul-tolak-saran" aria-describedby="isi-tolak-saran" onKeyDown="{{rejectKey}}" style="width: 100%; max-width: 500px; background: #ffffff; border-radius: 10px; box-shadow: 0 16px 40px rgba(24,36,51,0.25); display: flex; flex-direction: column">
+<div style="padding: 20px 24px 0">
+<h2 id="judul-tolak-saran" style="margin: 0; font-size: 18px; font-weight: 600">Tolak saran Gamas hub Palu-1?</h2>
+</div>
+<div id="isi-tolak-saran" style="padding: 12px 24px 20px; display: flex; flex-direction: column; gap: 8px">
+<p style="margin: 0">Saran ini tidak dijadikan Gamas. Akibatnya:</p>
+<ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; color: #3c4858">
+<li><b>13 alert</b> kembali ke halaman Alert sebagai kandidat biasa dan diverifikasi satu per satu.</li>
+<li>NPR/VSAT/BNA/2026/11/0421 yang sudah ada tetap berjalan seperti sekarang.</li>
+<li><b>Customer tidak diberi tahu.</b></li>
+</ul>
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid #dce1e7">
+<button type="button" ref="{{rejectFirstRef}}" onClick="{{closeReject}}" style="height: 40px; padding: 0 16px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Batal</button>
+<button type="button" onClick="{{confirmReject}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Tolak saran</button>
 </div>
 </div>
 </div>
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["L2/L3","L1"],"default":"L2/L3","section":"Keadaan"},"statusAwal":{"editor":"enum","options":["Saran","Aktif","Selesai"],"default":"Saran","section":"Keadaan"},"$preview":{"width":1440,"height":1300}}'>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["L2","L1"],"default":"L2","section":"Keadaan"},"statusAwal":{"editor":"enum","options":["Saran","Aktif","Selesai"],"default":"Saran","section":"Keadaan"},"$preview":{"width":1440,"height":1300}}'>
 class Component extends DCLogic {
   renderVals() {
     var st = this.state || {};
     var self = this;
-    var role = this.props.peran ?? 'L2/L3';
+    var role = this.props.peran ?? 'L2';
     var startMap = { Saran: 'saran', Aktif: 'aktif', Selesai: 'selesai' };
     var status = st.status || startMap[this.props.statusAwal ?? 'Saran'] || 'saran';
     var tab = st.tab || 'remote';
     var excluded = st.excluded || {};
     var notes = st.notes || [];
-    var isSenior = role === 'L2/L3';
+    var isSenior = role !== 'L1';
 
     var IC = {
       dash: 'M4 4h6v8h-6z M14 4h6v4h-6z M14 12h6v8h-6z M4 16h6v4h-6z',
@@ -367,7 +404,7 @@ class Component extends DCLogic {
         navItem('Overview', IC.dash, 'Main.dc.html', '', false),
         navItem('Alert', IC.bell, 'Alert.dc.html', '9', false),
         navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', false),
-        navItem('Gamas', IC.layers, 'Gamas.dc.html', '1', true)
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', true)
       ] },
       { title: 'Data', items: [
         navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
@@ -396,6 +433,12 @@ class Component extends DCLogic {
     ];
     var STILL_DOWN = { 10: true, 13: true };
     var includedCount = R.filter(function (r, i) { return !excluded[i]; }).length;
+    // Akibat membuka Gamas: remote #0 sudah punya NPR (ditautkan), sisanya dibuatkan NPR anak; customer dihitung dari remote yang ikut.
+    var linkedCount = excluded[0] ? 0 : 1;
+    var newChildCount = includedCount - linkedCount;
+    var custSeen = {};
+    R.forEach(function (r, i) { if (!excluded[i]) custSeen[r[1]] = true; });
+    var custCount = Object.keys(custSeen).length;
     var remotes = R.map(function (r, i) {
       var no = i === 0 ? 'NPR/VSAT/BNA/2026/11/0421' : 'NPR/VSAT/' + r[2] + '/2026/11/0' + (421 + i);
       var x = {
@@ -409,12 +452,12 @@ class Component extends DCLogic {
       if (status === 'saran' || status === 'ditolak') {
         s = down;
         x.hasTicket = i === 0; x.ticket = no;
-        x.ticketNote = i === 0 ? 'sudah ada sebelum saran' : (status === 'ditolak' ? 'kembali jadi kandidat di Alert' : 'alert, belum jadi tiket');
+        x.ticketNote = i === 0 ? 'sudah ada sebelum saran' : (status === 'ditolak' ? 'kembali jadi kandidat di Alert' : 'alert, belum jadi NPR');
         if (status === 'saran' && excluded[i]) { x.rowBg = '#f6f8fb'; x.ticketNote = 'tidak ikut, tetap kandidat di Alert'; }
       } else {
         s = STILL_DOWN[i] ? down : up;
         x.hasTicket = true; x.ticket = no;
-        if (status === 'aktif') x.ticketNote = i === 0 ? 'ditautkan' : 'tiket anak';
+        if (status === 'aktif') x.ticketNote = i === 0 ? 'ditautkan' : 'NPR anak';
         else x.ticketNote = STILL_DOWN[i] ? 'dilepas, tetap terbuka' : 'ditutup bersama Gamas';
       }
       x.status = s[0]; x.stBg = s[1]; x.stFg = s[2]; x.dot = s[3];
@@ -425,9 +468,9 @@ class Component extends DCLogic {
       ['Arif S.', 'L2', '18:31 WITA', '12 remote kembali up setelah carrier pulih. KCP Donggala dan Kampus IAIN Palu masih down; dugaan modem hang, PIC cabang diminta menyalakan ulang modem.'],
       ['Arif S.', 'L2', '18:20 WITA', 'Vendor satelit mengonfirmasi perangkat RF di stasiun bumi Palu-1 rusak dan sudah diganti. Carrier kembali 18:18.'],
       ['Arif S.', 'L2', '18:05 WITA', 'Lapor ke vendor satelit, tiket vendor VS-4412. Carrier hub Palu-1 hilang dari spektrum sejak 16:41.'],
-      ['Sistem', 'Otomatis', '17:58 WITA', 'Gamas dibuka oleh Arif S. dari saran. 13 tiket anak dibuat, 1 tiket yang sudah ada ditautkan. Pemberitahuan dikirim ke 4 customer.']
+      ['Sistem', 'Otomatis', '17:58 WITA', 'Gamas dibuka oleh Arif S. dari saran. 13 NPR anak dibuat, 1 NPR yang sudah ada ditautkan. Pemberitahuan dikirim ke 4 customer.']
     ];
-    var LOG_SELESAI = [['Arif S.', 'L2', '18:40 WITA', 'Gamas ditutup. 12 tiket anak ditutup bersama Gamas; tiket KCP Donggala dan Kampus IAIN Palu dilepas dan tetap terbuka. Pemberitahuan penutupan dikirim ke 4 customer.']].concat(LOG_AKTIF);
+    var LOG_SELESAI = [['Arif S.', 'L2', '18:40 WITA', 'Gamas ditutup. 12 NPR anak ditutup bersama Gamas; NPR KCP Donggala dan Kampus IAIN Palu dilepas dan tetap terbuka. Pemberitahuan penutupan dikirim ke 4 customer.']].concat(LOG_AKTIF);
     var rawLog = status === 'aktif' ? notes.concat(LOG_AKTIF) : (status === 'selesai' ? LOG_SELESAI : []);
     var log = rawLog.map(function (e) {
       var sys = e[0] === 'Sistem';
@@ -447,33 +490,39 @@ class Component extends DCLogic {
       saran: ['Saran', '#ebe7fb', '#4a37a3'],
       aktif: ['Aktif', '#fde4d5', '#9a3d0d'],
       selesai: ['Selesai', '#dcf2e1', '#1b6430'],
-      ditolak: ['Bukan Gamas', '#eaedf1', '#454f5c']
+      ditolak: ['Ditolak', '#eaedf1', '#454f5c']
     }[status];
 
     function S(label, value, sub) { return { label: label, value: value, sub: sub }; }
     var summary = {
-      saran: [S('Mulai', '16:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 mnt', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('Tiket', '1 tiket', '+ 13 alert belum jadi tiket'), S('Customer', '4 customer', 'semua bank di hub ini')],
-      ditolak: [S('Mulai', '16:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 mnt', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('Tiket', '1 tiket', '13 alert kembali ke Alert'), S('Customer', '4 customer', 'semua bank di hub ini')],
-      aktif: [S('Mulai', '16:41 WITA', 'Gamas dibuka 17:58'), S('Lama', '1 j 54 m', 'masih berjalan'), S('Remote terdampak', '12 pulih · 2 down', 'carrier kembali 18:18'), S('Tiket anak', '14 tiket', '13 baru · 1 ditautkan'), S('Penanggung', 'Arif S. · L2', 'sejak 17:58')],
-      selesai: [S('Lama gangguan', '1 j 37 m', '16:41 – 18:18 WITA'), S('Lama penanganan', '1 j 59 m', '16:41 – 18:40 WITA'), S('Remote terdampak', '12 pulih · 2 dilepas', 'modem 2 remote masih hang'), S('Tiket anak', '12 ditutup', '2 tetap terbuka'), S('Penanggung', 'Arif S. · L2', 'menutup 18:40')]
+      saran: [S('Mulai', '16:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 m', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('NPR', '1 NPR', '+ 13 alert belum jadi NPR'), S('Customer', '4 customer', 'semua bank di hub ini')],
+      ditolak: [S('Mulai', '16:41 WITA', 'alert pertama dari NMS VSAT'), S('Lama', '17 m', 'masih berjalan'), S('Remote terdampak', '14 down', 'dari 52 remote di hub Palu-1'), S('NPR', '1 NPR', '13 alert kembali ke Alert'), S('Customer', '4 customer', 'semua bank di hub ini')],
+      aktif: [S('Mulai', '16:41 WITA', 'Gamas dibuka 17:58'), S('Lama', '1 j 54 m', 'masih berjalan'), S('Remote terdampak', '12 pulih · 2 down', 'carrier kembali 18:18'), S('NPR anak', '14 NPR', '13 baru · 1 ditautkan'), S('Penanggung', 'Arif S. · L2', 'sejak 17:58')],
+      selesai: [S('Lama gangguan', '1 j 37 m', '16:41 – 18:18 WITA'), S('Lama penanganan', '1 j 59 m', '16:41 – 18:40 WITA'), S('Remote terdampak', '12 pulih · 2 dilepas', 'modem 2 remote masih hang'), S('NPR anak', '12 ditutup', '2 tetap terbuka'), S('Penanggung', 'Arif S. · L2', 'menutup 18:40')]
     }[status];
 
+    var acts = [];
+    if (newChildCount > 0) acts.push('membuat ' + newChildCount + ' NPR anak');
+    if (linkedCount) acts.push('menautkan 1 NPR yang sudah ada');
+    acts.push('mengirim pemberitahuan Gamas ke ' + custCount + ' customer');
+    var actText = acts.length === 1 ? acts[0] : (acts.length === 2 ? acts.join(' dan ') : acts.slice(0, -1).join(', ') + ', dan ' + acts[acts.length - 1]);
+    var saranNote = includedCount === 0 ? 'Centang minimal satu remote untuk membuka Gamas.' : 'Membuka Gamas akan ' + actText + '. Remote yang tidak dicentang tetap menjadi kandidat biasa di halaman Alert.';
     var note = {
-      saran: ['Membuka Gamas akan membuat ' + Math.max(0, includedCount - 1) + ' tiket anak dan menautkan 1 tiket yang sudah ada. Remote yang tidak dicentang tetap menjadi kandidat biasa di halaman Alert.', '#dfeafb', '#0b4f99', '#b6d0f2'],
-      ditolak: ['Saran ditolak. 13 alert dikembalikan ke halaman Alert sebagai kandidat biasa dan diverifikasi satu per satu.', '#eaedf1', '#454f5c', '#dce1e7'],
-      aktif: ['Gamas aktif. Tiket anak mengikuti Gamas: catatan troubleshooting cukup ditulis di sini, tidak perlu di tiap tiket.', '#fdf3ec', '#9a3d0d', '#f3cdb5'],
-      selesai: ['Gamas selesai. Catatan dan tiket anak tersimpan untuk laporan; tidak ada yang bisa dihapus.', '#dcf2e1', '#1b6430', '#b9e2c4']
+      saran: [saranNote, '#dfeafb', '#0b4f99', '#b6d0f2'],
+      ditolak: ['Saran ditolak. 13 alert dikembalikan ke halaman Alert sebagai kandidat biasa dan diverifikasi satu per satu. Customer tidak diberi tahu.', '#eaedf1', '#454f5c', '#dce1e7'],
+      aktif: ['Gamas aktif. NPR anak mengikuti Gamas: catatan troubleshooting cukup ditulis di sini, tidak perlu di tiap NPR.', '#fdf3ec', '#9a3d0d', '#f3cdb5'],
+      selesai: ['Gamas selesai. Catatan dan NPR anak tersimpan untuk laporan; tidak ada yang bisa dihapus.', '#dcf2e1', '#1b6430', '#b9e2c4']
     }[status];
 
     var cause = status === 'selesai' ? {
       label: 'Penyebab dan penyelesaian', title: 'Link: perangkat RF stasiun bumi Palu-1 rusak',
-      items: ['Vendor satelit mengganti perangkat RF; carrier kembali 18:18 WITA (tiket vendor VS-4412).', '12 remote pulih otomatis dalam 6 menit setelah carrier kembali.', 'KCP Donggala dan Kampus IAIN Palu masih down karena modem hang; tiketnya ditangani terpisah.']
+      items: ['Vendor satelit mengganti perangkat RF; carrier kembali 18:18 WITA (tiket vendor VS-4412).', '12 remote pulih otomatis dalam 6 mnt setelah carrier kembali.', 'KCP Donggala dan Kampus IAIN Palu masih down karena modem hang; NPR-nya ditangani terpisah.']
     } : (status === 'aktif' ? {
       label: 'Penyebab (dikonfirmasi vendor 18:20)', title: 'Perangkat RF stasiun bumi Palu-1',
-      items: ['14 remote dari 4 customer turun dalam 3 menit (16:41–16:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tiket vendor satelit: VS-4412.']
+      items: ['14 remote dari 4 customer turun dalam 3 mnt (16:41–16:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tiket vendor satelit: VS-4412.']
     } : {
       label: 'Dugaan penyebab', title: 'Hub atau link satelit Palu-1',
-      items: ['14 remote dari 4 customer turun dalam 3 menit (16:41–16:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tidak ada info pemadaman PLN di Palu.', 'Cuaca cerah menurut BMKG, jadi bukan rain fade.']
+      items: ['14 remote dari 4 customer turun dalam 3 mnt (16:41–16:44).', 'Semua di hub Palu-1; 38 remote di hub lain di Sulawesi normal.', 'Tidak ada info pemadaman PLN di Palu.', 'Cuaca cerah menurut BMKG, jadi bukan rain fade.']
     });
 
     var impact = [['Bank Nusa', 5], ['Bank Selaras', 4], ['Bank Andalas', 3], ['BPD Timur', 2]].map(function (m) {
@@ -489,24 +538,35 @@ class Component extends DCLogic {
     var clocks = { saran: ['16:58', '17:58', '18:58'], ditolak: ['16:58', '17:58', '18:58'], aktif: ['17:35', '18:35', '19:35'], selesai: ['17:40', '18:40', '19:40'] }[status];
 
     // Fokus dialog: masuk ke isian pertama, Escape menutup, Tab berputar, kembali ke tombol pembuka.
+    // Dialog "Tolak saran" memakai pola yang sama; fokus awal di "Batal" (pilihan aman).
     if (!this._firstFieldRef) {
       this._firstFieldRef = function (el) { if (el) { setTimeout(function () { el.focus(); }, 0); } };
       this._noteRef = function (el) { self._noteEl = el; };
+      this._headRef = function (el) { self._headEl = el; };
     }
     var openDialog = function () { self._returnFocus = document.activeElement; self.setState({ dialog: true }); };
     var closeDialog = function () {
       self.setState({ dialog: false });
       setTimeout(function () { if (self._returnFocus && self._returnFocus.focus) self._returnFocus.focus(); }, 0);
     };
-    var dialogKey = function (e) {
-      if (e.key === 'Escape') { e.stopPropagation(); closeDialog(); return; }
-      if (e.key !== 'Tab') return;
-      var nodes = e.currentTarget.querySelectorAll('button:not([disabled]), select, input, textarea, a[href]');
-      if (!nodes.length) return;
-      var first = nodes[0], last = nodes[nodes.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    var openReject = function () { self._returnFocus = document.activeElement; self.setState({ rejectDialog: true }); };
+    var closeReject = function () {
+      self.setState({ rejectDialog: false });
+      setTimeout(function () { if (self._returnFocus && self._returnFocus.focus) self._returnFocus.focus(); }, 0);
     };
+    function trapKeys(close) {
+      return function (e) {
+        if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+        if (e.key !== 'Tab') return;
+        var nodes = e.currentTarget.querySelectorAll('button:not([disabled]), select, input, textarea, a[href]');
+        if (!nodes.length) return;
+        var first = nodes[0], last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      };
+    }
+    var dialogKey = trapKeys(closeDialog);
+    var rejectKey = trapKeys(closeReject);
 
     return {
       navGroups: navGroups, remotes: remotes, log: log, tabs: tabs, summary: summary, impact: impact,
@@ -520,8 +580,15 @@ class Component extends DCLogic {
       causeLabel: cause.label, causeTitle: cause.title, causeItems: cause.items.map(function (t) { return { text: t }; }),
       notifyText: notifyText,
       openLabel: 'Buka Gamas (' + includedCount + ' remote)',
-      openGamas: function () { self.setState({ status: 'aktif', tab: 'remote' }); },
-      reject: function () { self.setState({ status: 'ditolak' }); },
+      noneIncluded: includedCount === 0,
+      openGamas: function () { if (!includedCount) return; self.setState({ status: 'aktif', tab: 'remote' }); },
+      rejectOpen: !!st.rejectDialog, openReject: openReject, closeReject: closeReject, rejectKey: rejectKey,
+      rejectFirstRef: this._firstFieldRef, headRef: this._headRef,
+      confirmReject: function () {
+        self.setState({ rejectDialog: false, status: 'ditolak', tab: 'remote' });
+        setTimeout(function () { if (self._headEl) self._headEl.focus(); }, 0);
+      },
+      rejectedBy: 'Ditolak 17:58 WITA oleh ' + (isSenior ? 'Arif S. (L2)' : 'Dewi A. (L1)'),
       goNote: function () { self.setState({ tab: 'log' }); setTimeout(function () { if (self._noteEl) self._noteEl.focus(); }, 0); },
       noteRef: this._noteRef,
       draft: st.draft || '',
@@ -535,7 +602,8 @@ class Component extends DCLogic {
       notify: st.notify !== false,
       toggleNotify: function () { self.setState({ notify: st.notify === false }); },
       confirmClose: function () { self.setState({ dialog: false, status: 'selesai', tab: 'log' }); },
-      userName: isSenior ? 'Arif S.' : 'Dewi A.', userInitials: isSenior ? 'AS' : 'DA', userRole: isSenior ? 'L2 · Shift Siang' : 'L1 · Shift Siang',
+      userName: isSenior ? 'Arif S.' : 'Dewi A.', userInitials: isSenior ? 'AS' : 'DA', userRole: isSenior ? 'L2 NOC · Shift Siang' : 'L1 Monitoring · Shift Siang',
+      userAria: isSenior ? 'Akun: Arif S., L2 NOC, Shift Siang' : 'Akun: Dewi A., L1 Monitoring, Shift Siang',
       clockWib: clocks[0], clockWita: clocks[1], clockWit: clocks[2]
     };
   }

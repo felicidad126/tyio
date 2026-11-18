@@ -32,6 +32,8 @@ a:hover{color:#0558a8}
 }
 @media (max-width: 640px){
 .top-clock,.top-user-text{display:none !important}
+.act-bar{padding:12px 16px !important}
+.act-bar button,.act-bar select,.act-bar input,.act-bar a{min-height:44px}
 }
 </style>
 </helmet>
@@ -89,15 +91,15 @@ Mode monitor 24/7
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
 <span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
 </button>
-<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
-Buat tiket
+Buat NPR
 </button>
-<button type="button" aria-label="Akun: Dewi A., L1, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<button type="button" aria-label="Akun: Dewi A., L1 Monitoring, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
 <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">DA</span>
 <span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
 <span style="font-size: 13px; font-weight: 600">Dewi A.</span>
-<span style="font-size: 12px; color: #536173">L1 · Shift Siang</span>
+<span style="font-size: 12px; color: #536173">L1 Monitoring · Shift Siang</span>
 </span>
 </button>
 </header>
@@ -107,7 +109,7 @@ Buat tiket
 <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
 <div style="display: flex; flex-direction: column; gap: 4px">
 <h1 style="margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700">Alert</h1>
-<p style="margin: 0; color: #536173; font-size: 15px">Alert dari SNMP NOC dan NMS VSAT yang perlu diverifikasi L1 sebelum menjadi tiket.</p>
+<p style="margin: 0; color: #536173; font-size: 15px">Alert dari SNMP NOC dan NMS VSAT yang perlu diverifikasi L1 sebelum menjadi NPR.</p>
 </div>
 <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
 <span style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #dcf2e1; color: #1b6430; font-size: 13px; font-weight: 600">
@@ -125,7 +127,7 @@ NMS VSAT · 4 mnt lalu · terlambat
 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-8 4l8 4l8 -4l-8 -4 M4 12l8 4l8 -4 M4 16l8 4l8 -4"></path></svg>
 <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px">
 <strong style="font-size: 15px">Saran Gamas · hub Palu-1</strong>
-<span style="color: #6e1d1d">13 alert dari hub Palu-1 digabung ke saran ini dan tidak tampil satu per satu di bawah. 1 remote lain sudah punya tiket.</span>
+<span style="color: #6e1d1d">13 alert dari hub Palu-1 digabung ke saran ini dan tidak tampil satu per satu di bawah. 1 remote lain sudah punya NPR.</span>
 </div>
 <a href="GamasDetail.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 6px; background: #a12424; color: #ffffff; font-weight: 600">Tinjau saran Gamas</a>
 </div>
@@ -173,7 +175,7 @@ Filter
 <sc-if value="{{it.hasTags}}" hint-placeholder-val="{{ true }}">
 <span style="display: flex; flex-wrap: wrap; gap: 4px; padding-top: 2px">
 <sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="2">
-<span style="display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: {{tg.bg}}; color: {{tg.fg}}">{{tg.label}}</span>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{tg.bg}}; color: {{tg.fg}}">{{tg.label}}</span>
 </sc-for>
 </span>
 </sc-if>
@@ -208,8 +210,8 @@ Filter
 <sc-if value="{{isCandidate}}" hint-placeholder-val="{{ true }}">
 <div style="padding: 20px 24px 16px; border-bottom: 1px solid #eaedf1; display: flex; flex-direction: column; gap: 8px">
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; background: #ebe7fb; color: #4a37a3; font-size: 12px; font-weight: 600">Kandidat</span>
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600">{{cur.src}}</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #ebe7fb; color: #4a37a3; font-size: 12px; font-weight: 600; white-space: nowrap">Kandidat</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">{{cur.src}}</span>
 <span style="font-size: 13px; color: #536173">menunggu {{cur.age}}</span>
 </div>
 <h2 style="margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700">{{cur.remote}}</h2>
@@ -227,13 +229,19 @@ Filter
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">Status 60 menit terakhir</span>
-<div role="img" aria-label="{{cur.stripLabel}}" style="display: flex; gap: 2px; height: 22px">
+<div role="img" aria-label="{{cur.stripLabel}}" style="display: flex; align-items: flex-end; gap: 2px; height: 28px">
 <sc-for list="{{cur.strip}}" as="c" hint-placeholder-count="30">
-<span style="flex: 1 1 0; border-radius: 2px; background: {{c.bg}}"></span>
+<span style="flex: 1 1 0; border-radius: 2px; height: {{c.h}}px; background: {{c.bg}}"></span>
 </sc-for>
 </div>
 <div style="display: flex; justify-content: space-between; font-size: 12px; color: #66727f"><span>60 mnt lalu</span><span>sekarang</span></div>
 <span style="font-size: 13px; color: #3c4858">{{cur.stripText}}</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: #536173">
+<span>Tinggi batang:</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="display: flex; align-items: flex-end; width: 8px; height: 16px"><span style="flex: 1 1 auto; height: 16px; border-radius: 2px; background: #c42b2b"></span></span>Down · penuh</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="display: flex; align-items: flex-end; width: 8px; height: 16px"><span style="flex: 1 1 auto; height: 12px; border-radius: 2px; background: #e0a100"></span></span>Lambat · ¾</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="display: flex; align-items: flex-end; width: 8px; height: 16px"><span style="flex: 1 1 auto; height: 8px; border-radius: 2px; background: #1f8a3f"></span></span>Up · ½</span>
+</div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 8px; background: #f6f8fb; border: 1px solid #e3e7ec">
 <span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">Dugaan penyebab</span>
@@ -249,22 +257,22 @@ Filter
 <dt style="color: #536173">Jarkom / hub</dt><dd style="margin: 0">{{cur.hub}}</dd>
 <dt style="color: #536173">IP LAN</dt><dd style="margin: 0; font-family: ui-monospace, Menlo, monospace">{{cur.lan}}</dd>
 <dt style="color: #536173">Kontak di lokasi</dt><dd style="margin: 0">{{cur.pic}}</dd>
-<dt style="color: #536173">Tiket terbuka</dt><dd style="margin: 0">{{cur.openTickets}}</dd>
+<dt style="color: #536173">NPR terbuka</dt><dd style="margin: 0">{{cur.openTickets}}</dd>
 <dt style="color: #536173">30 hari terakhir</dt><dd style="margin: 0">{{cur.history}}</dd>
 </dl>
 </div>
-<div style="margin-top: auto; border-top: 1px solid #dce1e7; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
+<div class="act-bar" style="margin-top: auto; position: sticky; bottom: 0; z-index: 5; background: #ffffff; border-top: 1px solid #dce1e7; border-radius: 0 0 7px 7px; box-shadow: 0 -6px 16px rgba(24,36,51,0.08); padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
 <sc-if value="{{notRejecting}}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
 <sc-if value="{{cur.hasGamas}}" hint-placeholder-val="{{ false }}">
 <button type="button" onClick="{{attachGamas}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Tempel ke Gamas {{cur.gamasNo}}</button>
-<button type="button" onClick="{{makeTicket}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Jadikan tiket sendiri</button>
+<button type="button" onClick="{{makeTicket}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Jadikan NPR sendiri</button>
 </sc-if>
 <sc-if value="{{cur.noGamas}}" hint-placeholder-val="{{ true }}">
-<button type="button" onClick="{{makeTicket}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Jadikan tiket</button>
+<button type="button" onClick="{{makeTicket}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Jadikan NPR</button>
 </sc-if>
 <button type="button" onClick="{{startReject}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Bukan gangguan</button>
-<a href="Segera.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 600">Buka halaman remote</a>
+<a href="Segera.dc.html" style="margin-left: auto; display: inline-flex; align-items: center; min-height: 40px; font-size: 13px; font-weight: 600">Buka halaman remote</a>
 </div>
 </sc-if>
 <sc-if value="{{rejecting}}" hint-placeholder-val="{{ false }}">
@@ -283,9 +291,9 @@ Filter
 <label for="catatan-bukan" style="font-size: 13px; font-weight: 600">Catatan <span style="font-weight: 400; color: #536173">(opsional)</span></label>
 <input id="catatan-bukan" type="text" placeholder="Contoh: jadwal PM dari customer, nomor surat 112/XI" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433">
 </div>
-<div style="display: flex; gap: 8px">
-<button type="button" onClick="{{confirmReject}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Simpan sebagai bukan gangguan</button>
-<button type="button" onClick="{{cancelReject}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Batal</button>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" onClick="{{confirmReject}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer">Simpan sebagai bukan gangguan</button>
+<button type="button" onClick="{{cancelReject}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer">Batal</button>
 </div>
 </div>
 </sc-if>
@@ -295,8 +303,8 @@ Filter
 <sc-if value="{{isUnmatched}}" hint-placeholder-val="{{ false }}">
 <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; background: #fcefd2; color: #7a4a00; font-size: 12px; font-weight: 600">Tidak cocok remote</span>
-<span style="display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600">{{um.src}}</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #fcefd2; color: #7a4a00; font-size: 12px; font-weight: 600; white-space: nowrap">Tidak cocok remote</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">{{um.src}}</span>
 <span style="font-size: 13px; color: #536173">menunggu {{um.age}}</span>
 </div>
 <h2 style="margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700; font-family: ui-monospace, Menlo, monospace">{{um.title}}</h2>
@@ -316,7 +324,7 @@ Filter
 
 <sc-if value="{{isProcessed}}" hint-placeholder-val="{{ false }}">
 <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
-<span style="align-self: flex-start; display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{pr.pillBg}}; color: {{pr.pillFg}}">{{pr.pill}}</span>
+<span style="align-self: flex-start; display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{pr.pillBg}}; color: {{pr.pillFg}}">{{pr.pill}}</span>
 <h2 style="margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700">{{pr.title}}</h2>
 <span style="font-size: 13px; color: #536173">{{pr.meta}}</span>
 <p style="margin: 0; font-size: 15px">{{pr.outcome}}</p>
@@ -337,7 +345,7 @@ Filter
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1380}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1390}}'>
 class Component extends DCLogic {
   renderVals() {
     var st = this.state || {};
@@ -365,23 +373,23 @@ class Component extends DCLogic {
     };
 
     var C = [
-      { id: 'a1', remote: 'ATM SPBU Antang', rid: 'BNA-MKS-0388', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Makassar · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.41.18.7', lan: '192.168.88.1', age: 7, occurred: '17:51 WITA', received: '17:51 WITA (12 dtk)', hub: 'VSAT · hub Makassar-2', pic: 'Rahmat · Kepala Unit · +62 811-0000-0388', openTickets: 'Tidak ada', history: '1 tiket · modem hang', cause: 'device', causeTitle: 'Perangkat atau listrik di lokasi', evidence: ['Remote lain di hub Makassar-2 normal (41 dari 41 up).', 'Tidak ada Gamas aktif atau saran Gamas di area ini.', 'Sinyal satelit normal sampai saat putus.'], pattern: 'down', tags: [] },
-      { id: 'a2', remote: 'ATM Bandara Mopah', rid: 'BPT-MKQ-0041', customer: 'BPD Timur', code: 'BPT', jk: 'VSAT', city: 'Merauke · WIT', src: 'NMS VSAT', msg: 'Modem offline, Es/No turun 6 dB sebelum putus', ip: '10.52.4.41', lan: '192.168.41.1', age: 6, occurred: '18:52 WIT', received: '18:52 WIT (20 dtk)', hub: 'VSAT · hub Jayapura-2', pic: 'Yuliana · Supervisor · +62 811-0000-0041', openTickets: 'Tidak ada', history: '3 tiket · semua cuaca', cause: 'weather', causeTitle: 'Cuaca: hujan lebat (rain fade)', evidence: ['Es/No turun bertahap 15 menit sebelum putus, pola khas rain fade.', 'Prakiraan BMKG: hujan lebat di Merauke sampai 20:00 WIT.', 'Biasanya pulih sendiri setelah hujan reda.'], pattern: 'weather', tags: [['Dugaan cuaca', 'blue']] },
-      { id: 'a3', remote: 'ATM KCP Ampenan', rid: 'BAD-AMI-0112', customer: 'Bank Andalas', code: 'BAD', jk: 'VPN', city: 'Mataram · WITA', src: 'SNMP NOC', msg: 'ICMP putus-sambung 3× dalam 30 menit', ip: '10.33.12.112', lan: '192.168.112.1', age: 5, occurred: '17:53 WITA', received: '17:53 WITA (9 dtk)', hub: 'VPN-IP · PE Mataram', pic: 'Lalu Ahmad · Kepala Unit · +62 811-0000-0112', openTickets: 'Tidak ada', history: '2 tiket · link tidak stabil', cause: 'link', causeTitle: 'Link tidak stabil', evidence: ['Putus-sambung 3× dalam 30 menit, tiap kali 1–3 menit.', 'Remote lain di PE Mataram normal.', 'Bulan ini sudah 2 tiket dengan penyebab sama.'], pattern: 'flap', tags: [['Putus-sambung 3×', 'amber']] },
-      { id: 'a4', remote: 'ATM Pasar Remu', rid: 'BNA-SOQ-0090', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Sorong · WIT', src: 'NMS VSAT', msg: 'Modem offline', ip: '10.52.9.90', lan: '192.168.90.1', age: 5, occurred: '18:53 WIT', received: '18:53 WIT (15 dtk)', hub: 'VSAT · hub Jayapura-2', pic: 'Markus · Kepala Unit · +62 811-0000-0090', openTickets: 'Tidak ada', history: 'Tidak ada tiket', cause: 'power', causeTitle: 'Listrik di lokasi', evidence: ['Modem melapor tegangan rendah 3 menit sebelum offline.', 'Remote lain di hub Jayapura-2 normal.', 'Tidak ada info pemadaman PLN di Sorong.'], pattern: 'down', tags: [] },
-      { id: 'a5', remote: 'ATM Hotel Aston', rid: 'BSL-KOE-0057', customer: 'Bank Selaras', code: 'BSL', jk: 'VSAT', city: 'Kupang · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.44.2.57', lan: '192.168.57.1', age: 4, occurred: '17:54 WITA', received: '17:54 WITA (11 dtk)', hub: 'VSAT · hub Kupang-1', pic: 'Front office hotel · +62 811-0000-0057', openTickets: 'Tidak ada', history: '1 tiket · adaptor modem', cause: 'device', causeTitle: 'Perangkat di lokasi', evidence: ['Remote lain di hub Kupang-1 normal.', 'Modem tidak mengirim laporan apa pun sebelum putus.', 'Riwayat: adaptor modem diganti 2 bulan lalu.'], pattern: 'down', tags: [] },
-      { id: 'a6', remote: 'ATM Pasar Batu Merah', rid: 'BPT-AMQ-0033', customer: 'BPD Timur', code: 'BPT', jk: 'VSAT', city: 'Ambon · WIT', src: 'NMS VSAT', msg: 'Modem offline, Es/No turun', ip: '10.52.6.33', lan: '192.168.33.1', age: 4, occurred: '18:54 WIT', received: '18:54 WIT (18 dtk)', hub: 'VSAT · hub Ambon-1', pic: 'Nus · Kepala Unit · +62 811-0000-0033', openTickets: 'Tidak ada', history: '4 tiket · 3 cuaca', cause: 'weather', causeTitle: 'Cuaca: hujan lebat (rain fade)', evidence: ['Es/No turun 4 dB dalam 10 menit.', 'Dua remote lain di Ambon juga turun sinyalnya, belum putus.', 'Prakiraan BMKG: hujan lebat di Ambon.'], pattern: 'weather', tags: [['Dugaan cuaca', 'blue']] },
-      { id: 'a7', remote: 'ATM KCP Lhokseumawe', rid: 'BAD-LSW-0019', customer: 'Bank Andalas', code: 'BAD', jk: 'VPN', city: 'Lhokseumawe · WIB', src: 'SNMP NOC', msg: 'Latensi di atas 2.000 ms, paket hilang 40%', ip: '10.31.7.19', lan: '192.168.19.1', age: 3, occurred: '16:55 WIB', received: '16:55 WIB (8 dtk)', hub: 'VPN-IP · PE Medan', pic: 'Teuku Rizal · Kepala Unit · +62 811-0000-0019', openTickets: 'Tidak ada', history: 'Tidak ada tiket', cause: 'link', causeTitle: 'Link padat atau terganggu', evidence: ['Remote masih terjangkau tapi sangat lambat.', 'Dua remote lain di PE Medan juga naik latensinya.', 'Belum ada laporan dari penyedia link.'], pattern: 'degraded', tags: [['Lambat, belum putus', 'amber']] },
-      { id: 'a8', remote: 'ATM Gedung Graha', rid: 'BNA-BPN-0144', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Balikpapan · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.43.3.144', lan: '192.168.144.1', age: 2, occurred: '17:56 WITA', received: '17:56 WITA (10 dtk)', hub: 'VSAT · hub Balikpapan-1', pic: 'Satpam gedung · +62 811-0000-0144', openTickets: 'Tidak ada', history: 'Tidak ada tiket', cause: 'power', causeTitle: 'Listrik padam (Gamas aktif di area ini)', evidence: ['Lokasi masuk area Gamas aktif GMS/2026/11/0007, listrik padam Balikpapan Utara.', '3 remote lain di area yang sama sudah down sejak 15:20.', 'PLN memperkirakan pemulihan sekitar 19:00 WITA.'], pattern: 'down', tags: [['Area Gamas aktif', 'orange']], gamasNo: 'GMS/2026/11/0007' },
-      { id: 'a9', remote: 'ATM Stasiun Tugu', rid: 'BSL-JOG-0201', customer: 'Bank Selaras', code: 'BSL', jk: 'VPN', city: 'Yogyakarta · WIB', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.32.5.201', lan: '192.168.201.1', age: 2, occurred: '16:56 WIB', received: '16:56 WIB (7 dtk)', hub: 'VPN-IP · PE Yogyakarta', pic: 'Petugas stasiun · +62 811-0000-0201', openTickets: 'Tidak ada', history: '1 tiket · kabel LAN', cause: 'device', causeTitle: 'Perangkat atau listrik di lokasi', evidence: ['Remote lain di PE Yogyakarta normal.', 'Tidak ada Gamas di area ini.', 'Alert masih baru; pastikan bukan gangguan sesaat.'], pattern: 'down', tags: [] }
+      { id: 'a1', remote: 'ATM SPBU Antang', rid: 'BNA-MKS-0388', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Makassar · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.41.18.7', lan: '192.168.88.1', age: 7, occurred: '17:51 WITA', received: '17:51 WITA (12 dtk)', hub: 'VSAT · hub Makassar-2', pic: 'Rahmat · Kepala Unit · +62 811-0000-0388', openTickets: 'Tidak ada', history: '1 NPR · modem hang', cause: 'device', causeTitle: 'Perangkat atau listrik di lokasi', evidence: ['Remote lain di hub Makassar-2 normal (41 dari 41 up).', 'Tidak ada Gamas aktif atau saran Gamas di area ini.', 'Sinyal satelit normal sampai saat putus.'], pattern: 'down', tags: [] },
+      { id: 'a2', remote: 'ATM Bandara Mopah', rid: 'BPT-MKQ-0041', customer: 'BPD Timur', code: 'BPT', jk: 'VSAT', city: 'Merauke · WIT', src: 'NMS VSAT', msg: 'Modem offline, Es/No turun 6 dB sebelum putus', ip: '10.52.4.41', lan: '192.168.41.1', age: 6, occurred: '18:52 WIT', received: '18:52 WIT (20 dtk)', hub: 'VSAT · hub Jayapura-2', pic: 'Yuliana · Supervisor · +62 811-0000-0041', openTickets: 'Tidak ada', history: '3 NPR · semua cuaca', cause: 'weather', causeTitle: 'Cuaca: hujan lebat (rain fade)', evidence: ['Es/No turun bertahap 15 mnt sebelum putus, pola khas rain fade.', 'Prakiraan BMKG: hujan lebat di Merauke sampai 20:00 WIT.', 'Biasanya pulih sendiri setelah hujan reda.'], pattern: 'weather', tags: [['Dugaan cuaca', 'blue']] },
+      { id: 'a3', remote: 'ATM KCP Ampenan', rid: 'BAD-AMI-0112', customer: 'Bank Andalas', code: 'BAD', jk: 'VPN', city: 'Mataram · WITA', src: 'SNMP NOC', msg: 'ICMP putus-sambung 3× dalam 30 mnt', ip: '10.33.12.112', lan: '192.168.112.1', age: 5, occurred: '17:53 WITA', received: '17:53 WITA (9 dtk)', hub: 'VPN-IP · PE Mataram', pic: 'Lalu Ahmad · Kepala Unit · +62 811-0000-0112', openTickets: 'Tidak ada', history: '2 NPR · link tidak stabil', cause: 'link', causeTitle: 'Link tidak stabil', evidence: ['Putus-sambung 3× dalam 30 mnt, tiap kali 1–3 mnt.', 'Remote lain di PE Mataram normal.', 'Bulan ini sudah 2 tiket dengan penyebab sama.'], pattern: 'flap', tags: [['Putus-sambung 3×', 'amber']] },
+      { id: 'a4', remote: 'ATM Pasar Remu', rid: 'BNA-SOQ-0090', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Sorong · WIT', src: 'NMS VSAT', msg: 'Modem offline', ip: '10.52.9.90', lan: '192.168.90.1', age: 5, occurred: '18:53 WIT', received: '18:53 WIT (15 dtk)', hub: 'VSAT · hub Jayapura-2', pic: 'Markus · Kepala Unit · +62 811-0000-0090', openTickets: 'Tidak ada', history: 'Tidak ada NPR', cause: 'power', causeTitle: 'Listrik di lokasi', evidence: ['Modem melapor tegangan rendah 3 mnt sebelum offline.', 'Remote lain di hub Jayapura-2 normal.', 'Tidak ada info pemadaman PLN di Sorong.'], pattern: 'down', tags: [] },
+      { id: 'a5', remote: 'ATM Hotel Aston', rid: 'BSL-KOE-0057', customer: 'Bank Selaras', code: 'BSL', jk: 'VSAT', city: 'Kupang · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.44.2.57', lan: '192.168.57.1', age: 4, occurred: '17:54 WITA', received: '17:54 WITA (11 dtk)', hub: 'VSAT · hub Kupang-1', pic: 'Front office hotel · +62 811-0000-0057', openTickets: 'Tidak ada', history: '1 NPR · adaptor modem', cause: 'device', causeTitle: 'Perangkat di lokasi', evidence: ['Remote lain di hub Kupang-1 normal.', 'Modem tidak mengirim laporan apa pun sebelum putus.', 'Riwayat: adaptor modem diganti 2 bulan lalu.'], pattern: 'down', tags: [] },
+      { id: 'a6', remote: 'ATM Pasar Batu Merah', rid: 'BPT-AMQ-0033', customer: 'BPD Timur', code: 'BPT', jk: 'VSAT', city: 'Ambon · WIT', src: 'NMS VSAT', msg: 'Modem offline, Es/No turun', ip: '10.52.6.33', lan: '192.168.33.1', age: 4, occurred: '18:54 WIT', received: '18:54 WIT (18 dtk)', hub: 'VSAT · hub Ambon-1', pic: 'Nus · Kepala Unit · +62 811-0000-0033', openTickets: 'Tidak ada', history: '4 NPR · 3 cuaca', cause: 'weather', causeTitle: 'Cuaca: hujan lebat (rain fade)', evidence: ['Es/No turun 4 dB dalam 10 mnt.', 'Dua remote lain di Ambon juga turun sinyalnya, belum putus.', 'Prakiraan BMKG: hujan lebat di Ambon.'], pattern: 'weather', tags: [['Dugaan cuaca', 'blue']] },
+      { id: 'a7', remote: 'ATM KCP Lhokseumawe', rid: 'BAD-LSW-0019', customer: 'Bank Andalas', code: 'BAD', jk: 'VPN', city: 'Lhokseumawe · WIB', src: 'SNMP NOC', msg: 'Latensi di atas 2.000 ms, paket hilang 40%', ip: '10.31.7.19', lan: '192.168.19.1', age: 3, occurred: '16:55 WIB', received: '16:55 WIB (8 dtk)', hub: 'VPN-IP · PE Medan', pic: 'Teuku Rizal · Kepala Unit · +62 811-0000-0019', openTickets: 'Tidak ada', history: 'Tidak ada NPR', cause: 'link', causeTitle: 'Link padat atau terganggu', evidence: ['Remote masih terjangkau tapi sangat lambat.', 'Dua remote lain di PE Medan juga naik latensinya.', 'Belum ada laporan dari penyedia link.'], pattern: 'degraded', tags: [['Lambat, belum putus', 'amber']] },
+      { id: 'a8', remote: 'ATM Gedung Graha', rid: 'BNA-BPN-0144', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Balikpapan · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.43.3.144', lan: '192.168.144.1', age: 2, occurred: '17:56 WITA', received: '17:56 WITA (10 dtk)', hub: 'VSAT · hub Balikpapan-1', pic: 'Satpam gedung · +62 811-0000-0144', openTickets: 'Tidak ada', history: 'Tidak ada NPR', cause: 'power', causeTitle: 'Listrik padam (Gamas aktif di area ini)', evidence: ['Lokasi masuk area Gamas aktif GMS/2026/11/0007, listrik padam Balikpapan Utara.', '3 remote lain di area yang sama sudah down sejak 15:20.', 'PLN memperkirakan pemulihan sekitar 19:00 WITA.'], pattern: 'down', tags: [['Area Gamas aktif', 'orange']], gamasNo: 'GMS/2026/11/0007' },
+      { id: 'a9', remote: 'ATM Stasiun Tugu', rid: 'BSL-JOG-0201', customer: 'Bank Selaras', code: 'BSL', jk: 'VPN', city: 'Yogyakarta · WIB', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.32.5.201', lan: '192.168.201.1', age: 2, occurred: '16:56 WIB', received: '16:56 WIB (7 dtk)', hub: 'VPN-IP · PE Yogyakarta', pic: 'Petugas stasiun · +62 811-0000-0201', openTickets: 'Tidak ada', history: '1 NPR · kabel LAN', cause: 'device', causeTitle: 'Perangkat atau listrik di lokasi', evidence: ['Remote lain di PE Yogyakarta normal.', 'Tidak ada Gamas di area ini.', 'Alert masih baru; pastikan bukan gangguan sesaat.'], pattern: 'down', tags: [] }
     ];
     var UNMATCHED = [
       { id: 'u1', title: '10.41.99.12', src: 'SNMP NOC', msg: 'ICMP tidak merespons', age: 12, why: 'IP ini tidak terdaftar di remote mana pun. Mungkin remote baru yang belum diimpor, atau IP remote berubah.' },
       { id: 'u2', title: 'Modem SN 7F3A-21C9', src: 'NMS VSAT', msg: 'Modem offline', age: 25, why: 'Nomor seri modem tidak tercatat di data remote. Mungkin modem diganti di lapangan tanpa diperbarui di portal.' }
     ];
     var BASE_DONE = [
-      { id: 'p1', title: 'ATM Kantor Pos Sorong', meta: 'BPD Timur · Sorong · WIT', kind: 'tiket', outcome: 'Dijadikan tiket NPR/VSAT/BPT/2026/11/0125.', by: 'Dewi A. · 18:56 WIT', href: 'DetailTiket.dc.html' },
-      { id: 'p2', title: 'ATM Kampus Tamalanrea', meta: 'Bank Selaras · Makassar · WITA', kind: 'tiket', outcome: 'Dijadikan tiket NPR/VSAT/BSL/2026/11/0063.', by: 'Dewi A. · 17:50 WITA', href: 'DetailTiket.dc.html' },
+      { id: 'p1', title: 'ATM Kantor Pos Sorong', meta: 'BPD Timur · Sorong · WIT', kind: 'tiket', outcome: 'Dijadikan NPR/VSAT/BPT/2026/11/0125.', by: 'Dewi A. · 18:56 WIT', href: 'DetailTiket.dc.html' },
+      { id: 'p2', title: 'ATM Kampus Tamalanrea', meta: 'Bank Selaras · Makassar · WITA', kind: 'tiket', outcome: 'Dijadikan NPR/VSAT/BSL/2026/11/0063.', by: 'Dewi A. · 17:50 WITA', href: 'DetailTiket.dc.html' },
       { id: 'p3', title: 'ATM Mall Panakkukang', meta: 'Bank Selaras · Makassar · WITA', kind: 'bukan', outcome: 'Bukan gangguan: pemeliharaan terjadwal oleh customer.', by: 'Rudi H. · 17:31 WITA', href: '' }
     ];
     var TAGC = { blue: ['#dfeafb', '#0b4f99'], amber: ['#fcefd2', '#7a4a00'], orange: ['#fde4d5', '#9a3d0d'] };
@@ -406,7 +414,7 @@ class Component extends DCLogic {
         navItem('Overview', IC.dash, 'Main.dc.html', '', false),
         navItem('Alert', IC.bell, 'Alert.dc.html', waiting.length ? String(waiting.length) : '', true),
         navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', false),
-        navItem('Gamas', IC.layers, 'Gamas.dc.html', '1', false)
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', false)
       ] },
       { title: 'Data', items: [
         navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
@@ -432,6 +440,8 @@ class Component extends DCLogic {
     for (var i = 0; i < source.length; i++) { if (source[i].id === selId) selIdx = i; }
     if (selIdx === -1 && source.length) { selIdx = 0; selId = source[0].id; }
 
+    // Satuan waktu (ATURAN §4): nilai durasi di daftar "7 m", di kalimat "menunggu 7 mnt".
+    function ageValue(m) { return m + ' m'; }
     function ageText(m) { return m + ' mnt'; }
     var items = source.map(function (s, idx) {
       var on = idx === selIdx;
@@ -446,13 +456,13 @@ class Component extends DCLogic {
         base.icon = cIcon; base.iconBg = '#ebe7fb'; base.iconFg = '#4a37a3';
         base.title = s.remote; base.meta = s.customer + ' · ' + s.city;
         base.msg = s.src + ' · ' + s.msg;
-        base.age = ageText(s.age); base.ageColor = s.age >= 5 ? '#7a4a00' : '#536173';
+        base.age = ageValue(s.age); base.ageColor = s.age >= 5 ? '#7a4a00' : '#536173';
         base.tags = s.tags.map(function (tg) { return { label: tg[0], bg: TAGC[tg[1]][0], fg: TAGC[tg[1]][1] }; });
         base.hasTags = s.tags.length > 0;
       } else if (tab === 'tidakcocok') {
         base.icon = IC.question; base.iconBg = '#fcefd2'; base.iconFg = '#7a4a00';
         base.title = s.title; base.meta = s.src; base.msg = s.msg;
-        base.age = ageText(s.age); base.ageColor = '#7a4a00';
+        base.age = ageValue(s.age); base.ageColor = '#7a4a00';
         base.tags = []; base.hasTags = false;
       } else {
         var isT = s.kind === 'tiket', isG = s.kind === 'gamas';
@@ -477,13 +487,14 @@ class Component extends DCLogic {
         if (sel.pattern === 'weather' && minsAgo >= 18 && minsAgo <= 20) up = false;
         if (sel.pattern === 'flap') up = !((minsAgo >= 26 && minsAgo <= 28) || (minsAgo >= 14 && minsAgo <= 16) || minsAgo < sel.age);
         var degraded = sel.pattern === 'degraded' && minsAgo < 4;
-        cells.push({ bg: degraded ? '#e0a100' : (up ? '#1f8a3f' : '#c42b2b') });
+        // Status dibedakan juga oleh tinggi (ATURAN §7): down penuh 28 px, lambat ¾ 21 px, up ½ 14 px; rata bawah.
+        cells.push(degraded ? { bg: '#e0a100', h: 21 } : (up ? { bg: '#1f8a3f', h: 14 } : { bg: '#c42b2b', h: 28 }));
       }
       var stripText = {
-        down: 'Down sejak ' + sel.occurred + ' (' + sel.age + ' menit). Sebelumnya up terus.',
-        weather: 'Sempat putus singkat 20 menit lalu, lalu down sejak ' + sel.occurred + '.',
-        flap: 'Putus 3 kali dalam 30 menit; terakhir sejak ' + sel.occurred + '.',
-        degraded: 'Masih terjangkau, tapi lambat sejak ' + sel.occurred + '.'
+        down: 'Down sejak ' + sel.occurred + ' (' + sel.age + ' mnt). Sebelumnya up terus.',
+        weather: 'Sempat putus singkat sekitar 20 mnt lalu, lalu down sejak ' + sel.occurred + '.',
+        flap: 'Putus 3 kali dalam 30 mnt; terakhir down sejak ' + sel.occurred + '.',
+        degraded: 'Masih terjangkau, tapi lambat sejak ' + sel.occurred + '. Sebelumnya up terus.'
       }[sel.pattern];
       cur = {
         src: sel.src, age: ageText(sel.age), remote: sel.remote, rid: sel.rid, customer: sel.customer, city: sel.city,
@@ -491,16 +502,16 @@ class Component extends DCLogic {
         openTickets: sel.openTickets, history: sel.history, causeTitle: sel.causeTitle,
         evidence: sel.evidence.map(function (t) { return { text: t }; }),
         strip: cells, stripText: stripText,
-        stripLabel: 'Status 60 menit terakhir: ' + stripText + ' Hijau berarti up, merah berarti down, kuning berarti lambat.',
+        stripLabel: 'Status 60 menit terakhir, satu batang per 2 menit: ' + stripText + ' Batang setinggi penuh berarti down, tiga perempat berarti lambat, setengah berarti up.',
         hasGamas: !!sel.gamasNo, noGamas: !sel.gamasNo, gamasNo: sel.gamasNo || ''
       };
     } else if (sel && tab === 'tidakcocok') {
       um = { title: sel.title, src: sel.src, msg: sel.msg, age: ageText(sel.age), why: sel.why };
     } else if (sel) {
-      var kindPill = { tiket: ['Dijadikan tiket', '#dcf2e1', '#1b6430'], gamas: ['Ditempel ke Gamas', '#fde4d5', '#9a3d0d'], bukan: ['Bukan gangguan', '#eaedf1', '#454f5c'] }[sel.kind];
+      var kindPill = { tiket: ['Dijadikan NPR', '#dcf2e1', '#1b6430'], gamas: ['Ditempel ke Gamas', '#fde4d5', '#9a3d0d'], bukan: ['Bukan gangguan', '#eaedf1', '#454f5c'] }[sel.kind];
       pr = {
         pill: kindPill[0], pillBg: kindPill[1], pillFg: kindPill[2], title: sel.title, meta: sel.meta, outcome: sel.outcome, by: sel.by,
-        hasLink: !!sel.href, href: sel.href, linkLabel: sel.kind === 'gamas' ? 'Buka Gamas' : 'Buka tiket'
+        hasLink: !!sel.href, href: sel.href, linkLabel: sel.kind === 'gamas' ? 'Buka Gamas' : 'Buka NPR'
       };
     }
 
@@ -546,7 +557,7 @@ class Component extends DCLogic {
       confirmReject: function () { finish('bukan', 'Bukan gangguan: ' + reason.toLowerCase() + '.', '', sel.remote + ' ditandai bukan gangguan (' + reason.toLowerCase() + ').', ''); },
       makeTicket: function () {
         var no = 'NPR/' + sel.jk + '/' + sel.code + '/2026/11/0' + ticketSeq;
-        finish('tiket', 'Dijadikan tiket ' + no + '.', 'DetailTiket.dc.html', 'Tiket ' + no + ' dibuat dari alert ' + sel.remote + '.', 'Buka tiket');
+        finish('tiket', 'Dijadikan ' + no + '.', 'DetailTiket.dc.html', no + ' dibuat dari alert ' + sel.remote + '.', 'Buka NPR');
       },
       attachGamas: function () {
         finish('gamas', 'Ditempel ke Gamas ' + sel.gamasNo + '.', 'Gamas.dc.html', sel.remote + ' ditempel ke Gamas ' + sel.gamasNo + '.', 'Buka Gamas');
