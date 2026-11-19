@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Layar Dinding 24/7 · Portal NOC</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1621}
+a{color:#7fb6f5}
+a:hover{color:#a9cdf8}
+</style>
+</helmet>
+<div style="width: 1920px; height: 1080px; box-sizing: border-box; padding: 28px 32px; background: #0e1621; color: #e8edf3; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; gap: 20px; overflow: hidden">
+
+<header style="display: flex; align-items: center; gap: 32px; height: 64px">
+<div style="display: flex; align-items: center; gap: 14px">
+<div style="width: 48px; height: 48px; border-radius: 10px; background: #066fd1; color: #ffffff; display: flex; align-items: center; justify-content: center">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0 M9 21l3 -9l3 9 M10 19h4"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 26px; font-weight: 700">Tyio NOC</span>
+<span style="font-size: 20px; color: #9aa8b9">Layar monitor · semua customer</span>
+</div>
+</div>
+<div style="display: flex; gap: 28px; margin-left: 24px">
+<div style="display: flex; flex-direction: column; align-items: center"><span style="font-size: 40px; font-weight: 700; line-height: 1">16:58</span><span style="font-size: 20px; color: #9aa8b9">WIB</span></div>
+<div style="display: flex; flex-direction: column; align-items: center"><span style="font-size: 40px; font-weight: 700; line-height: 1">17:58</span><span style="font-size: 20px; color: #9aa8b9">WITA</span></div>
+<div style="display: flex; flex-direction: column; align-items: center"><span style="font-size: 40px; font-weight: 700; line-height: 1">18:58</span><span style="font-size: 20px; color: #9aa8b9">WIT</span></div>
+</div>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 20px">
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 999px; background: #173226; color: #6fe0a0; font-weight: 600">
+<span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: #4cd07d"></span>
+SNMP NOC · 8 dtk
+</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 999px; background: #3a2c12; color: #ffc766; font-weight: 600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3"></path></svg>
+NMS VSAT · 4 mnt · terlambat
+</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; color: #9aa8b9">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 8a5 5 0 0 1 0 8 M17.7 5a9 9 0 0 1 0 14 M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5"></path></svg>
+Bunyi aktif
+</span>
+</div>
+</header>
+
+<sc-if value="{{showAlert}}" hint-placeholder-val="{{ true }}">
+<div role="alert" style="display: flex; align-items: center; gap: 20px; height: 76px; padding: 0 28px; border-radius: 12px; background: #b42323; color: #ffffff">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01"></path></svg>
+<span style="font-size: 22px; font-weight: 800; letter-spacing: 0.08em; padding: 4px 12px; border: 2px solid #ffffff; border-radius: 6px">KRITIS</span>
+<span style="font-size: 30px; font-weight: 600; flex: 1 1 auto">Diduga gangguan massal di Sulawesi: 14 remote di hub Palu-1 turun sejak 17:41 WITA</span>
+<span style="font-size: 36px; font-weight: 700">17 m</span>
+</div>
+</sc-if>
+
+<section aria-label="Angka utama" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; height: 176px">
+<div style="background: #16212f; border: 1px solid #263449; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; justify-content: space-between">
+<span style="font-size: 22px; color: #9aa8b9; font-weight: 500">Remote down</span>
+<span style="font-size: 80px; font-weight: 700; line-height: 1">37</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 20px; color: #9aa8b9">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19v-14 M18 11l-6 -6 M6 11l6 -6"></path></svg>
+naik 14 dalam 1 jam · dari 4.812
+</span>
+</div>
+<div style="background: #2a1619; border: 1px solid #6b2a2f; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; justify-content: space-between">
+<span style="font-size: 22px; color: #ffb3b3; font-weight: 500">SLA sudah lewat</span>
+<span style="font-size: 80px; font-weight: 700; line-height: 1; color: #ff8a8a">2</span>
+<span style="font-size: 20px; color: #ffc766; font-weight: 600">3 lagi tersisa kurang dari 1 jam</span>
+</div>
+<div style="background: #16212f; border: 1px solid #263449; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; justify-content: space-between">
+<span style="font-size: 22px; color: #9aa8b9; font-weight: 500">NPR terbuka</span>
+<span style="font-size: 80px; font-weight: 700; line-height: 1">48</span>
+<span style="font-size: 20px; color: #9aa8b9">12 pending · 5 eskalasi</span>
+</div>
+<div style="background: #16212f; border: 1px solid #263449; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; justify-content: space-between">
+<span style="font-size: 22px; color: #9aa8b9; font-weight: 500">Alert belum diverifikasi</span>
+<span style="font-size: 80px; font-weight: 700; line-height: 1">9</span>
+<span style="font-size: 20px; color: #ffc766; font-weight: 600">terlama 7 mnt</span>
+</div>
+</section>
+
+<div style="flex: 1 1 auto; min-height: 0; display: flex; gap: 20px">
+<section aria-label="Remote down per wilayah" style="flex: 1.25 1 0; min-width: 0; background: #16212f; border: 1px solid #263449; border-radius: 12px; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<h2 style="margin: 0; font-size: 26px; font-weight: 600">Remote down per wilayah</h2>
+<span style="font-size: 20px; color: #9aa8b9">down / total remote</span>
+</div>
+<div style="flex: 1 1 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{regions}}" as="r" hint-placeholder-count="7">
+<div style="border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; justify-content: flex-start; gap: 12px; background: {{r.bg}}; border: 1px solid {{r.border}}">
+<span style="font-size: 22px; font-weight: 600">{{r.name}}</span>
+<span style="display: flex; align-items: baseline; gap: 8px"><b style="font-size: 56px; line-height: 1; color: {{r.numColor}}">{{r.down}}</b><span style="font-size: 20px; color: #9aa8b9">/ {{r.total}}</span></span>
+<span aria-hidden="true" style="display: block; height: 6px; background: #263449; border-radius: 3px; overflow: hidden"><span style="display: block; height: 100%; background: #4c9cf0; border-radius: 3px; width: {{r.pct}}%"></span></span>
+<div style="min-height: 32px; display: flex; align-items: center">
+<sc-if value="{{r.flag}}" hint-placeholder-val="{{ false }}">
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #4a1c20; color: #ffb3b3; font-size: 20px; font-weight: 700">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01"></path></svg>
+Diduga Gamas
+</span>
+</sc-if>
+<sc-if value="{{r.gamas}}" hint-placeholder-val="{{ false }}">
+<span style="align-self: flex-start; display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #43260f; color: #ffbf8f; font-size: 20px; font-weight: 700">Gamas aktif</span>
+</sc-if>
+</div>
+</div>
+</sc-for>
+<div style="border-radius: 10px; padding: 16px 18px; border: 1px dashed #33445e; display: flex; flex-direction: column; justify-content: flex-start; gap: 12px">
+<span style="font-size: 20px; color: #9aa8b9">Total</span>
+<span style="display: flex; align-items: baseline; gap: 8px"><b style="font-size: 56px; line-height: 1">37</b><span style="font-size: 20px; color: #9aa8b9">/ 4.812</span></span>
+<span style="font-size: 20px; color: #9aa8b9">0,8% remote down</span>
+</div>
+</div>
+</section>
+
+<section aria-label="SLA paling dekat" style="flex: 1 1 0; min-width: 0; background: #16212f; border: 1px solid #263449; border-radius: 12px; padding: 22px 24px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px">
+<h2 style="margin: 0; font-size: 26px; font-weight: 600">SLA paling dekat</h2>
+<span style="font-size: 20px; color: #9aa8b9">6 dari 48 NPR</span>
+</div>
+<sc-for list="{{urgent}}" as="u" hint-placeholder-count="6">
+<div style="flex: 1 1 0; display: flex; align-items: center; gap: 18px; border-top: 1px solid #263449">
+<span style="flex: 0 0 224px; display: inline-flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px; box-sizing: border-box; border-radius: 10px; font-size: 26px; font-weight: 700; white-space: nowrap; background: {{u.bg}}; color: {{u.fg}}">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{u.icon}}"></path></svg>
+{{u.sla}}
+</span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column">
+<span style="font-size: 24px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.remote}}</span>
+<span style="font-size: 19px; color: #9aa8b9">{{u.meta}}</span>
+</span>
+<span style="font-size: 19px; color: #c8d3e1; white-space: nowrap">{{u.status}}</span>
+</div>
+</sc-for>
+</section>
+</div>
+
+<footer style="display: flex; align-items: center; gap: 24px; height: 56px; padding: 0 20px; border-radius: 12px; background: #16212f; border: 1px solid #263449; font-size: 20px">
+<span style="flex: 0 0 auto; font-weight: 700; color: #9aa8b9; text-transform: uppercase; letter-spacing: 0.08em; font-size: 19px">Terbaru</span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; gap: 32px; white-space: nowrap; overflow: hidden">
+<span style="flex: 0 0 auto"><b>17:58 WITA</b> <span style="color: #c8d3e1">Alert baru · ATM Kampus Tamalanrea down</span></span>
+<span style="flex: 0 0 auto"><b>17:52 WITA</b> <span style="color: #c8d3e1">Dewi A. cek jaringan · NPR …/0418</span></span>
+<span style="flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis"><b>16:31 WIB</b> <span style="color: #c8d3e1">Pulih · ATM Jl. Sudirman, Pekanbaru</span></span>
+</span>
+<span style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 10px; color: #9aa8b9; white-space: nowrap">
+Panel 1 dari 3 · 20 dtk
+<span aria-hidden="true" style="display: inline-flex; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 50%; background: #e8edf3"></span><span style="width: 10px; height: 10px; border-radius: 50%; background: #3a4a5e"></span><span style="width: 10px; height: 10px; border-radius: 50%; background: #3a4a5e"></span></span>
+</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"alertKritis":{"editor":"boolean","default":true,"section":"Keadaan"},"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var IC = {
+      alert: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      clock: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3'
+    };
+    var regionsRaw = [
+      ['Sumatera', 6, '1.104', 1104, false, false],
+      ['Jawa', 5, '1.876', 1876, false, false],
+      ['Kalimantan', 3, '548', 548, false, true],
+      ['Sulawesi', 17, '612', 612, true, false],
+      ['Bali & Nusra', 2, '301', 301, false, false],
+      ['Maluku', 1, '164', 164, false, false],
+      ['Papua', 3, '207', 207, false, false]
+    ];
+    var regions = regionsRaw.map(function (r) {
+      var ratio = r[1] / r[3];
+      return {
+        name: r[0], down: r[1], total: r[2], flag: r[4], gamas: r[5],
+        pct: Math.max(4, Math.min(100, Math.round(ratio / 0.03 * 100))),
+        bg: r[4] ? '#2a1619' : '#1b2838',
+        border: r[4] ? '#8a3036' : '#263449',
+        numColor: r[4] ? '#ff8a8a' : '#e8edf3'
+      };
+    });
+    var K = {
+      late: ['#4a1c20', '#ffb3b3', IC.alert],
+      warn: ['#3a2c12', '#ffc766', IC.clock],
+      ok: ['#22303f', '#c8d3e1', IC.clock]
+    };
+    function u(sla, kind, remote, meta, status) {
+      return { sla: sla, bg: K[kind][0], fg: K[kind][1], icon: K[kind][2], remote: remote, meta: meta, status: status };
+    }
+    var urgent = [
+      u('Lewat 25 m', 'late', 'ATM SPBU Daya', 'Makassar · Bank Nusa', 'Eskalasi · L2'),
+      u('Lewat 6 m', 'late', 'ATM Kantor Camat Waena', 'Jayapura · BPD Timur', 'Dikerjakan'),
+      u('18 m', 'warn', 'ATM KCP Pasar Sentral', 'Makassar · Bank Nusa', 'Dikerjakan'),
+      u('41 m', 'warn', 'ATM RS Bhayangkara', 'Palu · Bank Andalas', 'Terbuka'),
+      u('52 m', 'warn', 'ATM Bandara Sentani', 'Jayapura · Bank Selaras', 'Eskalasi · SD'),
+      u('1 j 34 m', 'ok', 'ATM Pasar Masomba', 'Palu · Bank Nusa', 'Terbuka')
+    ];
+    return { showAlert: this.props.alertKritis ?? true, regions: regions, urgent: urgent };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Detail Tiket · Portal NOC</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f8fb}
+a{color:#066fd1;text-decoration:none}
+a:hover{color:#0558a8}
+.skip-link{position:absolute;left:12px;top:-80px;z-index:30;padding:10px 16px;border-radius:6px;background:#ffffff;color:#066fd1;font-weight:600;box-shadow:0 4px 12px rgba(24,36,51,0.25)}
+.skip-link:focus{top:12px}
+@media (max-width: 900px){
+.shell-root{align-content:flex-start}
+.shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
+.side-sub,.side-title{display:none !important}
+.side-foot{margin-top:0 !important;flex:0 0 auto;white-space:nowrap}
+.side-nav,.side-group,.side-items{flex-direction:row !important;flex-wrap:nowrap !important;gap:2px !important}
+.side-item{flex:0 0 auto !important;white-space:nowrap}
+}
+@media (max-width: 640px){
+.top-clock,.top-user-text{display:none !important}
+}
+</style>
+</helmet>
+<div class="shell-root" style="position: relative; display: flex; flex-wrap: wrap; min-height: 1320px; background: #f6f8fb; color: #182433; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+<a class="skip-link" href="#konten">Lewati ke konten</a>
+
+<aside class="shell-side" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #182433; color: #c3cdd9; padding: 20px 12px; display: flex; flex-direction: column; gap: 24px">
+<div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 10px">
+<div style="width: 34px; height: 34px; border-radius: 8px; background: #066fd1; color: #ffffff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0 M9 21l3 -9l3 9 M10 19h4"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 15px; font-weight: 700; color: #ffffff; white-space: nowrap">Tyio NOC</span>
+<span class="side-sub" style="font-size: 12px; color: #8d9aab">Portal NOC Terpusat</span>
+</div>
+</div>
+<nav class="side-nav" aria-label="Menu utama" style="display: flex; flex-direction: column; gap: 20px">
+<sc-for list="{{navGroups}}" as="g" hint-placeholder-count="3">
+<div class="side-group" style="display: flex; flex-direction: column; gap: 4px">
+<span class="side-title" style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8d9aab; padding: 0 10px 4px">{{g.title}}</span>
+<div class="side-items" style="display: flex; flex-wrap: wrap; gap: 2px">
+<sc-for list="{{g.items}}" as="item" hint-placeholder-count="3">
+<a class="side-item" href="{{item.href}}" aria-current="{{item.current}}" style="flex: 1 1 180px; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span style="flex: 1 1 auto">{{item.label}}</span>
+<sc-if value="{{item.hasCount}}" hint-placeholder-val="{{ false }}">
+<span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #2c3a4d; color: #e6ebf1; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{item.count}}</span>
+</sc-if>
+</a>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</nav>
+<a class="side-foot" href="Wall.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border: 1px solid #2c3a4d; border-radius: 6px; color: #c3cdd9; font-weight: 500">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z M7 20h10 M9 16v4 M15 16v4"></path></svg>
+Mode monitor 24/7
+</a>
+</aside>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="background: #ffffff; border-bottom: 1px solid #dce1e7; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 280px; min-width: 0; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; position: relative">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
+<label for="cari-global" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Cari di seluruh portal</label>
+<input id="cari-global" type="search" placeholder="Cari NPR, TT, atau remote" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
+<kbd style="font-family: inherit; font-size: 12px; color: #536173; border: 1px solid #dce1e7; border-radius: 4px; padding: 0 6px; background: #ffffff">/</kbd>
+</div>
+<div class="top-clock" style="display: flex; gap: 12px; font-size: 13px; color: #536173; margin-left: auto">
+<span><b style="color: #182433; font-weight: 600">16:58</b> WIB</span>
+<span><b style="color: #182433; font-weight: 600">17:58</b> WITA</span>
+<span><b style="color: #182433; font-weight: 600">18:58</b> WIT</span>
+</div>
+<button type="button" aria-label="Notifikasi, 4 belum dibaca" style="position: relative; width: 40px; height: 40px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
+<span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
+</button>
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
+Buat NPR
+</button>
+<button type="button" aria-label="{{userAria}}" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{userInitials}}</span>
+<span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
+<span style="font-size: 13px; font-weight: 600">{{userName}}</span>
+<span style="font-size: 12px; color: #536173">{{userRole}}</span>
+</span>
+</button>
+</header>
+
+<main id="konten" style="width: 100%; max-width: 1320px; margin: 0 auto; padding: 20px 24px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+<nav aria-label="Jejak" style="font-size: 13px; color: #536173; display: flex; gap: 6px; align-items: center">
+<a href="Tiket.dc.html">Tiket</a>
+<span aria-hidden="true">›</span>
+<span>NPR/VSAT/BNA/2026/11/0418</span>
+</nav>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px">
+<h1 style="flex: 1 1 360px; min-width: 0; margin: 0; padding-top: 4px; font-size: clamp(20px, 5.4vw, 26px); line-height: 1.2; font-weight: 700">NPR/<wbr>VSAT/<wbr>BNA/<wbr>2026/<wbr>11/<wbr>0418</h1>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end">
+<sc-if value="{{canClose}}" hint-placeholder-val="{{ true }}">
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #1b6430; border-radius: 6px; background: #ffffff; color: #1b6430; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"></path></svg>
+Tutup NPR
+</button>
+</sc-if>
+<sc-if value="{{cannotClose}}" hint-placeholder-val="{{ false }}">
+<button type="button" disabled aria-describedby="alasan-tutup" style="height: 40px; padding: 0 14px; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; color: #66727f; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z M8 11v-4a4 4 0 1 1 8 0v4"></path></svg>
+Tutup NPR
+</button>
+</sc-if>
+<button type="button" onClick="{{openL2}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Eskalasi ke L2</button>
+<button type="button" onClick="{{openTt}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Buat TT ke SD</button>
+<button type="button" onClick="{{openDrawer}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
+Tambah tindakan
+</button>
+</div>
+<sc-if value="{{cannotClose}}" hint-placeholder-val="{{ false }}">
+<span id="alasan-tutup" style="font-size: 12px; color: #536173">NPR dengan TT hanya ditutup L2.</span>
+</sc-if>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #536173">
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{statusBg}}; color: {{statusFg}}">{{statusNow}}</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">Remote Down</span>
+<span>ATM KCP Pasar Sentral · Makassar</span>
+<span aria-hidden="true">·</span>
+<span>Bank Nusa</span>
+<span aria-hidden="true">·</span>
+<span>Dibuka 14:16 WITA dari alert SNMP</span>
+</div>
+</div>
+
+<section aria-label="Ringkasan tiket" style="display: flex; flex-wrap: wrap; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px">
+<div style="flex: 1.4 1 240px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid #eaedf1">
+<span style="font-size: 12px; font-weight: 500; color: #536173">Sisa SLA</span>
+<span style="display: flex; align-items: center; gap: 8px; color: #7a4a00">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3"></path></svg>
+<b style="font-size: 22px; line-height: 1.1">18 m</b>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #fcefd2; font-size: 12px; font-weight: 600; white-space: nowrap">Hampir lewat</span>
+</span>
+<span aria-hidden="true" style="display: block; height: 6px; background: #eaedf1; border-radius: 3px; overflow: hidden"><span style="display: block; width: 92%; height: 100%; background: #c98500; border-radius: 3px"></span></span>
+<span style="font-size: 12px; color: #536173">Target contoh 4 jam · jatuh tempo 18:16 WITA</span>
+</div>
+<div style="flex: 1 1 160px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid #eaedf1">
+<span style="font-size: 12px; font-weight: 500; color: #536173">Penanggung</span>
+<span style="font-weight: 600">Dewi A. · L1</span>
+<span style="font-size: 12px; color: #536173">diambil 14:24 WITA</span>
+</div>
+<div style="flex: 1 1 160px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid #eaedf1">
+<span style="font-size: 12px; font-weight: 500; color: #536173">Waktu kejadian</span>
+<span style="font-weight: 600">14:12 WITA</span>
+<span style="font-size: 12px; color: #536173">diterima portal 14:16 · 13:16 WIB</span>
+</div>
+<div style="flex: 1 1 160px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid #eaedf1">
+<span style="font-size: 12px; font-weight: 500; color: #536173">No. tiket customer</span>
+<span style="font-weight: 600">INC-88213</span>
+<span style="font-size: 12px; color: #536173">dari sistem Bank Nusa</span>
+</div>
+<div style="flex: 1 1 160px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 500; color: #536173">Lama gangguan</span>
+<span style="font-weight: 600">3 j 46 m</span>
+<span style="font-size: 12px; color: #536173">masih berjalan</span>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<section style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{hasTT}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="judul-tt" style="background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<h2 id="judul-tt" style="margin: 0; font-size: 16px; font-weight: 600">TT ke SD</h2>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #fde4d5; color: #9a3d0d; font-size: 12px; font-weight: 600; white-space: nowrap">Menunggu SD</span>
+<span style="margin-left: auto; font-size: 13px; color: #536173">dibuat 17:55 WITA · Dewi A.</span>
+</div>
+<span style="font-weight: 600; overflow-wrap: anywhere">TT/VSAT/BNA/2026/11/0093</span>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 6px 16px; font-size: 13px">
+<dt style="color: #536173">Problem jarkom</dt><dd style="margin: 0">Modem VSAT tidak sinkron setelah dinyalakan ulang (Rx lock hilang). Perlu cek BUC/LNB dan kabel IFL di lokasi.</dd>
+<dt style="color: #536173">Kontak di lokasi</dt><dd style="margin: 0">Hendra, Kepala Unit · +62 811-0000-0217</dd>
+<dt style="color: #536173">Diteruskan ke SD</dt><dd style="margin: 0">{{ttCopyNote}}</dd>
+</dl>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 2px">
+<button type="button" onClick="{{copyTT}}" style="min-width: 186px; height: 36px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{copyIcon}}"></path></svg>
+{{copyLabel}}
+</button>
+<button type="button" onClick="{{openVisit}}" style="height: 36px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Catat hasil kunjungan</button>
+<span role="status" style="font-size: 13px; color: #1b6430; font-weight: 500">{{copyStatus}}</span>
+</div>
+</section>
+</sc-if>
+<div role="tablist" aria-label="Bagian tiket" style="display: flex; gap: 4px; border-bottom: 1px solid #dce1e7; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="height: 44px; padding: 0 12px; border: 0; background: transparent; font: inherit; white-space: nowrap; cursor: pointer; margin-bottom: -1px; color: {{t.fg}}; font-weight: {{t.weight}}; border-bottom: 2px solid {{t.line}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{tabLinimasa}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 0">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 12px">
+<span style="font-size: 13px; color: #536173">Terbaru di atas. Entri tidak bisa dihapus atau diubah; perbaikan dicatat sebagai entri koreksi.</span>
+<button type="button" onClick="{{openDrawer}}" style="height: 36px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Tambah tindakan</button>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{timeline}}" as="e" hint-placeholder-count="6">
+<li style="display: flex; gap: 14px">
+<div aria-hidden="true" style="display: flex; flex-direction: column; align-items: center; flex: 0 0 32px">
+<span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: {{e.iconBg}}; color: {{e.iconFg}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{e.icon}}"></path></svg>
+</span>
+<span style="flex: 1 1 auto; width: 2px; background: #dce1e7; min-height: 16px"></span>
+</div>
+<article style="flex: 1 1 auto; min-width: 0; padding-bottom: 20px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<b style="font-size: 14px">{{e.who}}</b>
+<span style="font-size: 12px; color: #536173">{{e.role}}</span>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{e.tagBg}}; color: {{e.tagFg}}">{{e.tag}}</span>
+<span style="margin-left: auto; font-size: 13px; color: #536173">{{e.time}}</span>
+</div>
+<p style="margin: 0; color: #182433">{{e.text}}</p>
+<sc-if value="{{e.hasStatus}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{e.statusChanges}}" as="sc" hint-placeholder-count="1">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; background: #f6f8fb; border: 1px solid #dce1e7; font-size: 12px; color: #182433">Status: {{sc.from}} <span aria-hidden="true">→</span> <b>{{sc.to}}</b></span>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{e.hasFile}}" hint-placeholder-val="{{ false }}">
+<a href="Segera.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; font-size: 13px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"></path></svg>
+{{e.file}}
+</a>
+</sc-if>
+<sc-if value="{{e.hasNote}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; color: #536173">{{e.note}}</span>
+</sc-if>
+</article>
+</li>
+</sc-for>
+</ol>
+<span style="font-size: 13px; color: #66727f; padding-left: 46px">Awal linimasa · NPR dibuat otomatis dari alert</span>
+</div>
+</sc-if>
+
+<sc-if value="{{tabLampiran}}" hint-placeholder-val="{{ false }}">
+<div style="background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px">
+<sc-for list="{{files}}" as="f" hint-placeholder-count="2">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eaedf1">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#536173" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4 M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path></svg>
+<a href="Segera.dc.html" style="font-weight: 600">{{f.name}}</a>
+<span style="font-size: 13px; color: #536173">{{f.meta}}</span>
+</div>
+</sc-for>
+<p style="margin: 0; padding: 12px 16px; font-size: 13px; color: #536173">Tambahkan berkas lewat Tambah tindakan: klik untuk memilih, atau tempel gambar langsung.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{tabRiwayat}}" hint-placeholder-val="{{ false }}">
+<div style="background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px">
+<sc-for list="{{history}}" as="h" hint-placeholder-count="3">
+<a href="Segera.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eaedf1; color: #182433">
+<span style="font-weight: 600; color: #066fd1">{{h.npr}}</span>
+<span style="font-size: 13px; color: #536173">{{h.when}}</span>
+<span style="flex: 1 1 200px; font-size: 13px">{{h.cause}}</span>
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600">Ditutup</span>
+</a>
+</sc-for>
+</div>
+</sc-if>
+</section>
+
+<aside aria-label="Remote" style="flex: 1 1 320px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 500; color: #536173">Remote · BNA-MKS-0217</span>
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">ATM KCP Pasar Sentral</h2>
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; background: #fbe3e3; color: #a12424; font-size: 12px; font-weight: 600; white-space: nowrap">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #c42b2b"></span>
+Down sejak 14:12 WITA
+</span>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 8px 12px; font-size: 13px">
+<dt style="color: #536173">Alamat</dt><dd style="margin: 0">Jl. Sulawesi No. 12, Makassar, Sulawesi Selatan</dd>
+<dt style="color: #536173">Zona waktu</dt><dd style="margin: 0">WITA (UTC+8)</dd>
+<dt style="color: #536173">Kanwil / Kanca</dt><dd style="margin: 0">Kanwil Makassar / KCP Pasar Sentral</dd>
+<dt style="color: #536173">Jarkom</dt><dd style="margin: 0">VSAT · hub Makassar-2</dd>
+<dt style="color: #536173">IP SNMP</dt><dd style="margin: 0; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace">10.41.17.22</dd>
+<dt style="color: #536173">IP LAN</dt><dd style="margin: 0; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace">192.168.217.1</dd>
+<dt style="color: #536173">Online sejak</dt><dd style="margin: 0">12 Mar 2023</dd>
+</dl>
+<div style="border-top: 1px solid #eaedf1; padding-top: 12px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">Kontak di lokasi</span>
+<span style="font-weight: 600">Hendra · Kepala Unit</span>
+<a href="tel:+6281100000217" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2"></path></svg>
++62 811-0000-0217
+</a>
+<span style="font-size: 13px; color: #536173">Pengelola: Bank Nusa KCP Pasar Sentral</span>
+</div>
+<div style="border-top: 1px solid #eaedf1; padding-top: 12px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">30 hari terakhir</span>
+<span style="font-size: 13px">3 tiket sebelumnya · rata-rata pulih 2 j 10 m</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #536173; background: #f6f8fb; border-radius: 6px; padding: 8px 10px">Data remote hanya bisa diubah admin.</p>
+<a href="Segera.dc.html" style="font-size: 13px; font-weight: 600">Buka halaman remote</a>
+</aside>
+</div>
+
+</main>
+</div>
+
+<sc-if value="{{drawerOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(24,36,51,0.40); z-index: 10">
+<div role="dialog" aria-modal="true" aria-labelledby="judul-tindakan" onKeyDown="{{dialogKey}}" style="position: absolute; top: 0; right: 0; bottom: 0; width: 100%; max-width: 480px; background: #ffffff; box-shadow: -8px 0 24px rgba(24,36,51,0.18); display: flex; flex-direction: column">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 24px; border-bottom: 1px solid #dce1e7">
+<div>
+<h2 id="judul-tindakan" style="margin: 0; font-size: 18px; font-weight: 600">Tambah tindakan</h2>
+<p style="margin: 2px 0 0; font-size: 13px; color: #536173">NPR/VSAT/BNA/2026/11/0418 · ATM KCP Pasar Sentral</p>
+</div>
+<button type="button" aria-label="Tutup panel" onClick="{{closeDrawer}}" style="width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: #536173; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12 M6 6l12 12"></path></svg>
+</button>
+</div>
+<div style="flex: 1 1 auto; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="jenis" style="font-size: 13px; font-weight: 600">Apa yang dikerjakan</label>
+<select id="jenis" ref="{{firstFieldRef}}" value="{{kind}}" onChange="{{setKind}}" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
+<option value="jaringan">Cek jaringan</option>
+<option value="lokasi">Cek lokasi / hubungi PIC</option>
+<option value="customer">Hubungi customer</option>
+<option value="hasil">Hasil kunjungan SD (TT)</option>
+<option value="catatan">Catatan</option>
+</select>
+<span style="font-size: 12px; color: #536173">{{kindHint}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="catatan" style="font-size: 13px; font-weight: 600">Catatan</label>
+<textarea id="catatan" rows="4" placeholder="Apa yang dicek, hasilnya, dan langkah berikutnya" style="border: 1px solid #c9d0d9; border-radius: 6px; padding: 10px; font: inherit; color: #182433; resize: vertical"></textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="waktu" style="font-size: 13px; font-weight: 600">Waktu kejadian</label>
+<input id="waktu" type="text" value="16 Nov 2026, 17:58 WITA" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433">
+<span style="font-size: 12px; color: #536173">Waktu pencatatan diisi sistem secara otomatis dan tidak bisa diubah.</span>
+</div>
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 6px">Status sesudah tindakan ini</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{nextOptions}}" as="o" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="height: 36px; padding: 0 12px; border-radius: 6px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}">{{o.label}}</button>
+</sc-for>
+</div>
+</fieldset>
+<sc-if value="{{nextPending}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 6px; background: #fdf8ec; border: 1px solid #f0dcae">
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+<legend style="font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 6px">Menunggu siapa</legend>
+<label style="display: inline-flex; align-items: center; gap: 6px"><input type="radio" name="pihak" checked> Customer</label>
+<label style="display: inline-flex; align-items: center; gap: 6px"><input type="radio" name="pihak"> TM</label>
+</fieldset>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="alasan" style="font-size: 13px; font-weight: 600">Alasan pending</label>
+<input id="alasan" type="text" placeholder="Contoh: listrik PLN padam, menunggu info cabang" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433; background: #ffffff">
+</div>
+<span style="font-size: 12px; color: #7a4a00">Jam SLA berhenti selama pending dan tercatat di linimasa.</span>
+</div>
+</sc-if>
+<sc-if value="{{nextL2}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 6px; background: #fdf3ec; border: 1px solid #f3cdb5">
+<label for="tujuan" style="font-size: 13px; font-weight: 600">Tujuan di L2 NOC</label>
+<select id="tujuan" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
+<option>Antrean L2 NOC (siapa pun yang bertugas)</option>
+<option>Arif S. · L2</option>
+<option>Sari P. · L2</option>
+</select>
+<span style="font-size: 12px; color: #536173">Catatan, hasil cek, dan lampiran ikut berpindah bersama NPR.</span>
+</div>
+</sc-if>
+<sc-if value="{{nextTt}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 6px; background: #fdf3ec; border: 1px solid #f3cdb5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="tt-problem" style="font-size: 13px; font-weight: 600">Problem jarkom</label>
+<textarea id="tt-problem" rows="3" placeholder="Contoh: modem VSAT tidak sinkron, perlu cek BUC/LNB" style="border: 1px solid #c9d0d9; border-radius: 6px; padding: 10px; font: inherit; color: #182433; background: #ffffff; resize: vertical"></textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="tt-kontak" style="font-size: 13px; font-weight: 600">Kontak di lokasi</label>
+<input id="tt-kontak" type="text" value="Hendra, Kepala Unit · +62 811-0000-0217" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433; background: #ffffff">
+</div>
+<span style="font-size: 12px; color: #536173">Sesudah disimpan, teruskan TT ke SD dengan Salin ringkasan TT. SD tidak menerima notifikasi di portal.</span>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600">Lampiran</span>
+<button type="button" style="min-height: 72px; border: 1px dashed #c9d0d9; border-radius: 6px; background: #f6f8fb; color: #536173; font: inherit; font-size: 13px; cursor: pointer">Klik untuk memilih berkas, atau tempel gambar (Ctrl+V)</button>
+</div>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid #dce1e7; background: #ffffff">
+<button type="button" onClick="{{closeDrawer}}" style="height: 40px; padding: 0 16px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Batal</button>
+<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Simpan tindakan</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"peran":{"editor":"enum","options":["L1","L2"],"default":"L1","section":"Keadaan"},"punyaTT":{"editor":"boolean","default":false,"section":"Keadaan"},"panelTindakanTerbuka":{"editor":"boolean","default":false,"section":"Keadaan"},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var role = this.props.peran ?? 'L1';
+    var hasTT = !!(this.props.punyaTT ?? false);
+    var tab = st.tab || 'linimasa';
+    var drawerOpen = typeof st.drawer === 'boolean' ? st.drawer : (this.props.panelTindakanTerbuka ?? false);
+    var next = st.next || 'tetap';
+    var kind = st.kind || 'jaringan';
+    var copies = hasTT ? (st.copies || 0) : 0;
+    // K21: L1 boleh menutup NPR tanpa TT; NPR dengan TT hanya ditutup L2.
+    var isL2 = String(role).indexOf('L2') === 0;
+    var canClose = isL2 || !hasTT;
+    var userName = isL2 ? 'Arif S.' : 'Dewi A.';
+    var TT_NO = 'TT/VSAT/BNA/2026/11/0093';
+    var TT_PROBLEM = 'Modem VSAT tidak sinkron setelah dinyalakan ulang (Rx lock hilang). Perlu cek BUC/LNB dan kabel IFL di lokasi.';
+    var statusNow = hasTT ? 'Eskalasi · SD' : 'Dikerjakan';
+
+    var IC = {
+      dash: 'M4 4h6v8h-6z M14 4h6v4h-6z M14 12h6v8h-6z M4 16h6v4h-6z',
+      bell: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      ticket: 'M15 5v2 M15 11v2 M15 17v2 M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2',
+      layers: 'M12 4l-8 4l8 4l8 -4l-8 -4 M4 12l8 4l8 -4 M4 16l8 4l8 -4',
+      pin: 'M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z',
+      chart: 'M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z',
+      folder: 'M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2',
+      sliders: 'M4 6h8 M16 6h4 M14 4v4 M4 12h2 M10 12h10 M8 10v4 M4 18h11 M19 18h1 M17 16v4',
+      user: 'M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0 M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2',
+      server: 'M3 4h18v8h-18z M3 12h18v8h-18z M7 8h.01 M7 16h.01',
+      edit: 'M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4 M13.5 6.5l4 4',
+      clock: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3',
+      check: 'M5 12l5 5l10 -10',
+      signal: 'M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0',
+      send: 'M10 14l11 -11 M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5',
+      copy: 'M8 8h12v12h-12z M16 8v-4h-12v12h4'
+    };
+    function navItem(label, icon, href, count, active) {
+      return {
+        label: label, icon: icon, href: href, count: count || '', hasCount: !!count,
+        current: active ? 'page' : 'false',
+        bg: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+        fg: active ? '#ffffff' : '#c3cdd9',
+        weight: active ? 600 : 500
+      };
+    }
+    var navGroups = [
+      { title: 'Kerja', items: [
+        navItem('Overview', IC.dash, 'Main.dc.html', '', false),
+        navItem('Alert', IC.bell, 'Alert.dc.html', '9', false),
+        navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', true),
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', false)
+      ] },
+      { title: 'Data', items: [
+        navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
+        navItem('Laporan', IC.chart, 'Segera.dc.html', '', false),
+        navItem('Dokumen', IC.folder, 'Segera.dc.html', '', false)
+      ] },
+      { title: 'Sistem', items: [ navItem('Admin', IC.sliders, 'Segera.dc.html', '', false) ] }
+    ];
+
+    var timelineCount = 6 + (hasTT ? 1 : 0) + copies;
+    var tabs = [['linimasa', 'Linimasa (' + timelineCount + ')'], ['lampiran', 'Lampiran (2)'], ['riwayat', 'Riwayat remote (3)']].map(function (t) {
+      var on = t[0] === tab;
+      return {
+        label: t[1], selected: on ? 'true' : 'false',
+        fg: on ? '#066fd1' : '#536173', weight: on ? 600 : 500, line: on ? '#066fd1' : 'transparent',
+        pick: function () { self.setState({ tab: t[0] }); }
+      };
+    });
+
+    var TAG = {
+      act: ['#dfeafb', '#0b4f99'],
+      sys: ['#eaedf1', '#454f5c'],
+      fix: ['#ebe7fb', '#4a37a3'],
+      warn: ['#fcefd2', '#7a4a00'],
+      ok: ['#d5f0ec', '#0d5c55'],
+      esc: ['#fde4d5', '#9a3d0d']
+    };
+    function entry(o) {
+      var t = TAG[o.kind];
+      return {
+        who: o.who, role: o.role, tag: o.tag, tagBg: t[0], tagFg: t[1], time: o.time, text: o.text,
+        icon: o.icon, iconBg: o.who === 'Sistem' ? '#eaedf1' : '#dfeafb', iconFg: o.who === 'Sistem' ? '#454f5c' : '#0b4f99',
+        statusChanges: o.status || [], hasStatus: !!(o.status && o.status.length),
+        file: o.file || '', hasFile: !!o.file, note: o.note || '', hasNote: !!o.note
+      };
+    }
+    var timeline = [
+      entry({ who: 'Dewi A.', role: 'L1', tag: 'Cek jaringan', kind: 'act', icon: IC.user, time: '17:52 WITA',
+        text: 'Ping ke IP SNMP 10.41.17.22 gagal 100% (20 paket). Remote lain di hub Makassar-2 normal, jadi kemungkinan besar masalah di lokasi (modem atau listrik).',
+        file: 'ping-1752.png' }),
+      entry({ who: 'Sistem', role: 'Otomatis', tag: 'SLA', kind: 'warn', icon: IC.clock, time: '17:16 WITA',
+        text: 'Sisa SLA kurang dari 1 jam. Notifikasi dikirim ke grup Telegram Shift Siang dan ke penanggung.' }),
+      entry({ who: 'Dewi A.', role: 'L1', tag: 'Koreksi', kind: 'fix', icon: IC.edit, time: '16:05 WITA',
+        text: 'Mengoreksi entri 15:02: waktu mulai gangguan 14:12 WITA (dari log NMS), bukan 14:30.',
+        note: 'Entri 15:02 tetap ada dan ditandai “dikoreksi”.' }),
+      entry({ who: 'Dewi A.', role: 'L1', tag: 'Cek lokasi', kind: 'act', icon: IC.user, time: '15:02 WITA',
+        text: 'Menghubungi PIC cabang, Hendra (Kepala Unit). Listrik di lokasi menyala; petugas akan mengecek dan menyalakan ulang modem. Gangguan mulai sekitar 14:30.',
+        note: 'Dikoreksi oleh entri 16:05.' }),
+      entry({ who: 'Dewi A.', role: 'L1', tag: 'Verifikasi', kind: 'ok', icon: IC.check, time: '14:24 WITA',
+        text: 'Alert benar gangguan, dijadikan NPR dan diambil.',
+        status: [{ from: 'Kandidat', to: 'Terbuka' }, { from: 'Terbuka', to: 'Dikerjakan' }] }),
+      entry({ who: 'Sistem', role: 'SNMP NOC', tag: 'Alert diterima', kind: 'sys', icon: IC.signal, time: '14:16 WITA',
+        text: 'ICMP tidak merespons dari 10.41.17.22. Waktu kejadian 14:12 WITA, diterima portal 14:16 WITA. Kandidat NPR dibuat.' })
+    ];
+    if (hasTT) {
+      timeline.unshift(entry({ who: 'Dewi A.', role: 'L1', tag: 'TT dibuat', kind: 'esc', icon: IC.send, time: '17:55 WITA',
+        text: TT_NO + ' dibuat untuk SD. ' + TT_PROBLEM,
+        status: [{ from: 'Dikerjakan', to: 'Eskalasi · SD' }] }));
+    }
+    // K25: setiap salin ringkasan TT tercatat di linimasa.
+    for (var c = 0; c < copies; c++) {
+      timeline.unshift(entry({ who: userName, role: isL2 ? 'L2' : 'L1', tag: 'Salin ringkasan', kind: 'sys', icon: IC.copy, time: '17:58 WITA',
+        text: 'Ringkasan TT disalin untuk SD: ' + TT_NO + '.' }));
+    }
+
+    var files = [
+      { name: 'ping-1752.png', meta: 'Gambar · 84 KB · Dewi A. · 17:52 WITA' },
+      { name: 'log-nms-1412.txt', meta: 'Teks · 3 KB · Dewi A. · 16:05 WITA' }
+    ];
+    var history = [
+      { npr: 'NPR/VSAT/BNA/2026/11/0233', when: '6 Nov · 1 j 40 m', cause: 'Modem hang, pulih setelah dinyalakan ulang' },
+      { npr: 'NPR/VSAT/BNA/2026/10/0981', when: '28 Okt · 3 j 05 m', cause: 'Listrik padam di gedung' },
+      { npr: 'NPR/VSAT/BNA/2026/10/0874', when: '21 Okt · 1 j 45 m', cause: 'Kabel LAN longgar' }
+    ];
+
+    var nextOptions = [['tetap', 'Tetap ' + statusNow], ['pending', 'Pending'], ['l2', 'Eskalasi ke L2'], ['tt', 'Buat TT ke SD'], ['pulih', 'Pulih']].map(function (o) {
+      var on = o[0] === next;
+      return {
+        label: o[1], pressed: on ? 'true' : 'false',
+        border: on ? '#066fd1' : '#c9d0d9', bg: on ? '#dfeafb' : '#ffffff', fg: on ? '#0b4f99' : '#182433',
+        pick: function () { self.setState({ next: o[0] }); }
+      };
+    });
+
+    // Panel: fokus masuk ke isian pertama saat dibuka, Escape menutup,
+    // Tab berputar di dalam panel, fokus kembali ke tombol pembuka saat ditutup.
+    if (!this._firstFieldRef) {
+      this._firstFieldRef = function (el) { if (el) { setTimeout(function () { el.focus(); }, 0); } };
+    }
+    // Tiap tombol pembuka memilih isian awal panel (status sesudah tindakan, jenis tindakan).
+    var openWith = function (nextVal, kindVal) {
+      return function () {
+        self._returnFocus = document.activeElement;
+        self.setState({ drawer: true, next: nextVal, kind: kindVal });
+      };
+    };
+    var openDrawer = openWith('tetap', 'jaringan');
+    var closeDrawer = function () {
+      self.setState({ drawer: false });
+      setTimeout(function () { if (self._returnFocus && self._returnFocus.focus) self._returnFocus.focus(); }, 0);
+    };
+    var dialogKey = function (e) {
+      if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); return; }
+      if (e.key !== 'Tab') return;
+      var nodes = e.currentTarget.querySelectorAll('button:not([disabled]), select, input, textarea, a[href]');
+      if (!nodes.length) return;
+      var first = nodes[0], last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+
+    var copyTT = function () {
+      var text = [TT_NO + ' (NPR/VSAT/BNA/2026/11/0418)', 'Remote: ATM KCP Pasar Sentral, Bank Nusa (BNA-MKS-0217)', 'Lokasi: Jl. Sulawesi No. 12, Makassar · WITA', 'Problem: ' + TT_PROBLEM, 'Kontak: Hendra, Kepala Unit, +62 811-0000-0217'].join('\n');
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+      self.setState({ copies: copies + 1 });
+    };
+    var ST = { 'Dikerjakan': ['#d5f0ec', '#0d5c55'], 'Eskalasi · SD': ['#fde4d5', '#9a3d0d'] };
+
+    return {
+      navGroups: navGroups, tabs: tabs, timeline: timeline, files: files, history: history,
+      tabLinimasa: tab === 'linimasa', tabLampiran: tab === 'lampiran', tabRiwayat: tab === 'riwayat',
+      statusNow: statusNow, statusBg: ST[statusNow][0], statusFg: ST[statusNow][1],
+      canClose: canClose, cannotClose: !canClose,
+      hasTT: hasTT,
+      copyTT: copyTT,
+      copyLabel: copies ? 'Ringkasan disalin' : 'Salin ringkasan TT',
+      copyIcon: copies ? IC.check : IC.copy,
+      copyStatus: copies === 0 ? '' : (copies === 1 ? 'Tercatat di linimasa 17:58 WITA.' : 'Disalin ' + copies + ' kali, semua tercatat di linimasa.'),
+      ttCopyNote: copies ? 'Ringkasan disalin 17:58 WITA' : 'Belum, ringkasan belum disalin',
+      openVisit: openWith('tetap', 'hasil'),
+      openL2: openWith('l2', 'jaringan'),
+      openTt: openWith('tt', 'jaringan'),
+      kind: kind,
+      setKind: function (e) { self.setState({ kind: e.target.value }); },
+      kindHint: kind === 'hasil'
+        ? (hasTT ? 'Isi hasil kunjungan dari SD. Sesudah disimpan, status TT menjadi Hasil masuk.' : 'NPR ini belum punya TT.')
+        : 'Daftar ini menunggu sesi Take Action dengan user.',
+      userName: userName,
+      userInitials: isL2 ? 'AS' : 'DA',
+      userRole: isL2 ? 'L2 NOC · Shift Siang' : 'L1 Monitoring · Shift Siang',
+      userAria: isL2 ? 'Akun: Arif S., L2 NOC, Shift Siang' : 'Akun: Dewi A., L1 Monitoring, Shift Siang',
+      drawerOpen: drawerOpen,
+      openDrawer: openDrawer,
+      closeDrawer: closeDrawer,
+      dialogKey: dialogKey,
+      firstFieldRef: this._firstFieldRef,
+      nextOptions: nextOptions,
+      nextPending: next === 'pending', nextL2: next === 'l2', nextTt: next === 'tt'
+    };
+  }
+}
+</script>
+</body>
+</html>

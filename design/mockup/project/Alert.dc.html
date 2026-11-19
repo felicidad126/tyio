@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Alert · Portal NOC</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f8fb}
+a{color:#066fd1;text-decoration:none}
+a:hover{color:#0558a8}
+.skip-link{position:absolute;left:12px;top:-80px;z-index:30;padding:10px 16px;border-radius:6px;background:#ffffff;color:#066fd1;font-weight:600;box-shadow:0 4px 12px rgba(24,36,51,0.25)}
+.skip-link:focus{top:12px}
+@media (max-width: 900px){
+.shell-root{align-content:flex-start}
+.shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
+.side-sub,.side-title{display:none !important}
+.side-foot{margin-top:0 !important;flex:0 0 auto;white-space:nowrap}
+.side-nav,.side-group,.side-items{flex-direction:row !important;flex-wrap:nowrap !important;gap:2px !important}
+.side-item{flex:0 0 auto !important;white-space:nowrap}
+.pane-list{flex-basis:100% !important}
+.pane-detail{display:none !important}
+.pane-detail.is-open{display:flex !important}
+.pane-list.is-hidden{display:none !important}
+.wide-only{display:none !important}
+}
+@media (min-width: 901px){
+.narrow-only{display:none !important}
+}
+@media (max-width: 640px){
+.top-clock,.top-user-text{display:none !important}
+.act-bar{padding:12px 16px !important}
+.act-bar button,.act-bar select,.act-bar input,.act-bar a{min-height:44px}
+}
+</style>
+</helmet>
+<div class="shell-root" style="position: relative; display: flex; flex-wrap: wrap; min-height: 1200px; background: #f6f8fb; color: #182433; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+<a class="skip-link" href="#konten">Lewati ke konten</a>
+
+<aside class="shell-side" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #182433; color: #c3cdd9; padding: 20px 12px; display: flex; flex-direction: column; gap: 24px">
+<div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 10px">
+<div style="width: 34px; height: 34px; border-radius: 8px; background: #066fd1; color: #ffffff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0 M9 21l3 -9l3 9 M10 19h4"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 15px; font-weight: 700; color: #ffffff; white-space: nowrap">Tyio NOC</span>
+<span class="side-sub" style="font-size: 12px; color: #8d9aab">Portal NOC Terpusat</span>
+</div>
+</div>
+<nav class="side-nav" aria-label="Menu utama" style="display: flex; flex-direction: column; gap: 20px">
+<sc-for list="{{navGroups}}" as="g" hint-placeholder-count="3">
+<div class="side-group" style="display: flex; flex-direction: column; gap: 4px">
+<span class="side-title" style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8d9aab; padding: 0 10px 4px">{{g.title}}</span>
+<div class="side-items" style="display: flex; flex-wrap: wrap; gap: 2px">
+<sc-for list="{{g.items}}" as="item" hint-placeholder-count="3">
+<a class="side-item" href="{{item.href}}" aria-current="{{item.current}}" style="flex: 1 1 180px; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span style="flex: 1 1 auto">{{item.label}}</span>
+<sc-if value="{{item.hasCount}}" hint-placeholder-val="{{ false }}">
+<span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #2c3a4d; color: #e6ebf1; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{item.count}}</span>
+</sc-if>
+</a>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</nav>
+<a class="side-foot" href="Wall.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border: 1px solid #2c3a4d; border-radius: 6px; color: #c3cdd9; font-weight: 500">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z M7 20h10 M9 16v4 M15 16v4"></path></svg>
+Mode monitor 24/7
+</a>
+</aside>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="background: #ffffff; border-bottom: 1px solid #dce1e7; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 280px; min-width: 0; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; position: relative">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
+<label for="cari-global" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Cari di seluruh portal</label>
+<input id="cari-global" type="search" placeholder="Cari NPR, TT, atau remote" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
+<kbd style="font-family: inherit; font-size: 12px; color: #536173; border: 1px solid #dce1e7; border-radius: 4px; padding: 0 6px; background: #ffffff">/</kbd>
+</div>
+<div class="top-clock" style="display: flex; gap: 12px; font-size: 13px; color: #536173; margin-left: auto">
+<span><b style="color: #182433; font-weight: 600">16:58</b> WIB</span>
+<span><b style="color: #182433; font-weight: 600">17:58</b> WITA</span>
+<span><b style="color: #182433; font-weight: 600">18:58</b> WIT</span>
+</div>
+<button type="button" aria-label="Notifikasi, 4 belum dibaca" style="position: relative; width: 40px; height: 40px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
+<span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
+</button>
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
+Buat NPR
+</button>
+<button type="button" aria-label="Akun: Dewi A., L1 Monitoring, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">DA</span>
+<span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
+<span style="font-size: 13px; font-weight: 600">Dewi A.</span>
+<span style="font-size: 12px; color: #536173">L1 Monitoring · Shift Siang</span>
+</span>
+</button>
+</header>
+
+<main id="konten" style="width: 100%; max-width: 1320px; margin: 0 auto; padding: 24px 24px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700">Alert</h1>
+<p style="margin: 0; color: #536173; font-size: 15px">Alert dari SNMP NOC dan NMS VSAT yang perlu diverifikasi L1 sebelum menjadi NPR.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #dcf2e1; color: #1b6430; font-size: 13px; font-weight: 600">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1f8a3f"></span>
+SNMP NOC · 8 dtk lalu
+</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #fcefd2; color: #7a4a00; font-size: 13px; font-weight: 600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3"></path></svg>
+NMS VSAT · 4 mnt lalu · terlambat
+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; background: #fbe3e3; color: #a12424; border: 1px solid #f1bcbc">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-8 4l8 4l8 -4l-8 -4 M4 12l8 4l8 -4 M4 16l8 4l8 -4"></path></svg>
+<div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px">
+<strong style="font-size: 15px">Saran Gamas · hub Palu-1</strong>
+<span style="color: #6e1d1d">13 alert dari hub Palu-1 digabung ke saran ini dan tidak tampil satu per satu di bawah. 1 remote lain sudah punya NPR.</span>
+</div>
+<a href="GamasDetail.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 6px; background: #a12424; color: #ffffff; font-weight: 600">Tinjau saran Gamas</a>
+</div>
+
+<div role="tablist" aria-label="Kelompok alert" style="display: flex; flex-wrap: nowrap; gap: 4px; border-bottom: 1px solid #dce1e7; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font: inherit; white-space: nowrap; cursor: pointer; margin-bottom: -1px; color: {{t.fg}}; font-weight: {{t.weight}}; border-bottom: 2px solid {{t.line}}">
+{{t.label}}
+<span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; background: {{t.countBg}}; color: {{t.countFg}}">{{t.count}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<div style="flex: 1 1 260px; max-width: 420px; display: flex; align-items: center; gap: 8px">
+<label for="cari-alert" style="font-size: 13px; font-weight: 600">Cari</label>
+<div style="flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
+<input id="cari-alert" type="search" placeholder="Remote, IP, atau customer" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
+</div>
+</div>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z"></path></svg>
+Filter
+</button>
+<span class="wide-only" style="margin-left: auto; font-size: 13px; color: #536173">Urut: paling lama menunggu di atas · ↑ ↓ untuk pindah</span>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<div class="pane-list {{listClass}}" style="flex: 0 1 380px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; overflow: hidden">
+<div role="listbox" aria-label="{{listLabel}}" onKeyDown="{{listKey}}" style="display: flex; flex-direction: column">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="9">
+<button type="button" role="option" aria-selected="{{it.selected}}" onClick="{{it.pick}}" style="width: 100%; text-align: left; display: flex; gap: 12px; padding: 12px 14px; border: 0; border-bottom: 1px solid #eaedf1; font: inherit; color: #182433; cursor: pointer; background: {{it.bg}}; box-shadow: {{it.ring}}">
+<span aria-hidden="true" style="flex: 0 0 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: {{it.iconBg}}; color: {{it.iconFg}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{it.icon}}"></path></svg>
+</span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<span style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+<span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{it.title}}</span>
+<span style="flex: 0 0 auto; font-size: 12px; font-weight: 600; color: {{it.ageColor}}">{{it.age}}</span>
+</span>
+<span style="font-size: 12px; color: #536173">{{it.meta}}</span>
+<span style="font-size: 13px; color: #3c4858">{{it.msg}}</span>
+<sc-if value="{{it.hasTags}}" hint-placeholder-val="{{ true }}">
+<span style="display: flex; flex-wrap: wrap; gap: 4px; padding-top: 2px">
+<sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="2">
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{tg.bg}}; color: {{tg.fg}}">{{tg.label}}</span>
+</sc-for>
+</span>
+</sc-if>
+</span>
+</button>
+</sc-for>
+<sc-if value="{{listEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 32px 20px; text-align: center; color: #536173">
+<div style="font-weight: 600; color: #182433">Semua alert sudah diverifikasi</div>
+<div style="font-size: 13px">Alert baru akan muncul di sini begitu diterima.</div>
+</div>
+</sc-if>
+<sc-if value="{{hasListFoot}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 12px 14px; font-size: 13px; color: #536173">{{listFoot}}</div>
+</sc-if>
+</div>
+</div>
+
+<section aria-label="Detail alert" class="pane-detail {{detailClass}}" style="flex: 1 1 480px; min-width: 0; background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; display: flex; flex-direction: column">
+<button type="button" class="narrow-only" onClick="{{backToList}}" style="align-self: flex-start; margin: 12px 16px 0; height: 36px; padding: 0 10px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">← Kembali ke daftar</button>
+
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="margin: 16px 24px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 6px; background: #dcf2e1; color: #1b6430; font-weight: 500">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"></path></svg>
+<span style="flex: 1 1 200px">{{toastText}}</span>
+<sc-if value="{{toastHasLink}}" hint-placeholder-val="{{ false }}">
+<a href="{{toastHref}}" style="font-weight: 600; color: #1b6430; text-decoration: underline">{{toastLinkLabel}}</a>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isCandidate}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 20px 24px 16px; border-bottom: 1px solid #eaedf1; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #ebe7fb; color: #4a37a3; font-size: 12px; font-weight: 600; white-space: nowrap">Kandidat</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">{{cur.src}}</span>
+<span style="font-size: 13px; color: #536173">menunggu {{cur.age}}</span>
+</div>
+<h2 style="margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700">{{cur.remote}}</h2>
+<span style="font-size: 13px; color: #536173">{{cur.rid}} · {{cur.customer}} · {{cur.city}}</span>
+</div>
+<div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">Alert</span>
+<span style="font-size: 16px; font-weight: 600">{{cur.msg}}</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 13px">
+<span><span style="color: #536173">Waktu kejadian</span> <b>{{cur.occurred}}</b></span>
+<span><span style="color: #536173">Diterima portal</span> <b>{{cur.received}}</b></span>
+<span><span style="color: #536173">IP</span> <b style="font-family: ui-monospace, Menlo, monospace; font-weight: 600">{{cur.ip}}</b></span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">Status 60 menit terakhir</span>
+<div role="img" aria-label="{{cur.stripLabel}}" style="display: flex; align-items: flex-end; gap: 2px; height: 28px">
+<sc-for list="{{cur.strip}}" as="c" hint-placeholder-count="30">
+<span style="flex: 1 1 0; border-radius: 2px; height: {{c.h}}px; background: {{c.bg}}"></span>
+</sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 12px; color: #66727f"><span>60 mnt lalu</span><span>sekarang</span></div>
+<span style="font-size: 13px; color: #3c4858">{{cur.stripText}}</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: #536173">
+<span>Tinggi batang:</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="display: flex; align-items: flex-end; width: 8px; height: 16px"><span style="flex: 1 1 auto; height: 16px; border-radius: 2px; background: #c42b2b"></span></span>Down · penuh</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="display: flex; align-items: flex-end; width: 8px; height: 16px"><span style="flex: 1 1 auto; height: 12px; border-radius: 2px; background: #e0a100"></span></span>Lambat · ¾</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="display: flex; align-items: flex-end; width: 8px; height: 16px"><span style="flex: 1 1 auto; height: 8px; border-radius: 2px; background: #1f8a3f"></span></span>Up · ½</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 8px; background: #f6f8fb; border: 1px solid #e3e7ec">
+<span style="font-size: 12px; font-weight: 600; color: #536173; text-transform: uppercase; letter-spacing: 0.04em">Dugaan penyebab</span>
+<span style="font-size: 16px; font-weight: 700">{{cur.causeTitle}}</span>
+<ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; color: #3c4858">
+<sc-for list="{{cur.evidence}}" as="ev" hint-placeholder-count="3">
+<li>{{ev.text}}</li>
+</sc-for>
+</ul>
+<span style="font-size: 12px; color: #536173">Dugaan dari gabungan data SNMP dan VSAT. Keputusan tetap di L1.</span>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 8px 12px; font-size: 13px">
+<dt style="color: #536173">Jarkom / hub</dt><dd style="margin: 0">{{cur.hub}}</dd>
+<dt style="color: #536173">IP LAN</dt><dd style="margin: 0; font-family: ui-monospace, Menlo, monospace">{{cur.lan}}</dd>
+<dt style="color: #536173">Kontak di lokasi</dt><dd style="margin: 0">{{cur.pic}}</dd>
+<dt style="color: #536173">NPR terbuka</dt><dd style="margin: 0">{{cur.openTickets}}</dd>
+<dt style="color: #536173">30 hari terakhir</dt><dd style="margin: 0">{{cur.history}}</dd>
+</dl>
+</div>
+<div class="act-bar" style="margin-top: auto; position: sticky; bottom: 0; z-index: 5; background: #ffffff; border-top: 1px solid #dce1e7; border-radius: 0 0 7px 7px; box-shadow: 0 -6px 16px rgba(24,36,51,0.08); padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
+<sc-if value="{{notRejecting}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<sc-if value="{{cur.hasGamas}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{attachGamas}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Tempel ke Gamas {{cur.gamasNo}}</button>
+<button type="button" onClick="{{makeTicket}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Jadikan NPR sendiri</button>
+</sc-if>
+<sc-if value="{{cur.noGamas}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{makeTicket}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Jadikan NPR</button>
+</sc-if>
+<button type="button" onClick="{{startReject}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Bukan gangguan</button>
+<a href="Segera.dc.html" style="margin-left: auto; display: inline-flex; align-items: center; min-height: 40px; font-size: 13px; font-weight: 600">Buka halaman remote</a>
+</div>
+</sc-if>
+<sc-if value="{{rejecting}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="alasan-bukan" style="font-size: 13px; font-weight: 600">Kenapa bukan gangguan?</label>
+<select id="alasan-bukan" value="{{reason}}" onChange="{{setReason}}" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
+<option>Pemeliharaan terjadwal</option>
+<option>Gangguan sesaat, sudah pulih sendiri</option>
+<option>Alarm uji atau salah konfigurasi</option>
+<option>Remote tidak aktif atau sudah dibongkar</option>
+<option>Lainnya</option>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="catatan-bukan" style="font-size: 13px; font-weight: 600">Catatan <span style="font-weight: 400; color: #536173">(opsional)</span></label>
+<input id="catatan-bukan" type="text" placeholder="Contoh: jadwal PM dari customer, nomor surat 112/XI" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433">
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" onClick="{{confirmReject}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer">Simpan sebagai bukan gangguan</button>
+<button type="button" onClick="{{cancelReject}}" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer">Batal</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isUnmatched}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #fcefd2; color: #7a4a00; font-size: 12px; font-weight: 600; white-space: nowrap">Tidak cocok remote</span>
+<span style="display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; background: #eaedf1; color: #454f5c; font-size: 12px; font-weight: 600; white-space: nowrap">{{um.src}}</span>
+<span style="font-size: 13px; color: #536173">menunggu {{um.age}}</span>
+</div>
+<h2 style="margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700; font-family: ui-monospace, Menlo, monospace">{{um.title}}</h2>
+<span style="font-size: 16px; font-weight: 600">{{um.msg}}</span>
+<p style="margin: 0; color: #3c4858">{{um.why}}</p>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="cari-petakan" style="font-size: 13px; font-weight: 600">Petakan ke remote</label>
+<input id="cari-petakan" type="search" placeholder="Ketik nama atau ID remote" style="height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; padding: 0 10px; font: inherit; color: #182433">
+<span style="font-size: 12px; color: #536173">Setelah dipetakan, alert berikutnya dari sumber ini langsung dikenali.</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #066fd1; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Petakan</button>
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; cursor: pointer">Abaikan alert ini</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isProcessed}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
+<span style="align-self: flex-start; display: inline-flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{pr.pillBg}}; color: {{pr.pillFg}}">{{pr.pill}}</span>
+<h2 style="margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700">{{pr.title}}</h2>
+<span style="font-size: 13px; color: #536173">{{pr.meta}}</span>
+<p style="margin: 0; font-size: 15px">{{pr.outcome}}</p>
+<span style="font-size: 13px; color: #536173">{{pr.by}}</span>
+<sc-if value="{{pr.hasLink}}" hint-placeholder-val="{{ false }}">
+<a href="{{pr.href}}" style="font-weight: 600">{{pr.linkLabel}}</a>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{detailEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 48px 24px; text-align: center; color: #536173">Pilih alert di daftar untuk melihat rinciannya.</div>
+</sc-if>
+</section>
+</div>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1390}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var tab = st.tab || 'menunggu';
+    var done = st.done || {};
+    var doneOrder = st.doneOrder || [];
+
+    var IC = {
+      dash: 'M4 4h6v8h-6z M14 4h6v4h-6z M14 12h6v8h-6z M4 16h6v4h-6z',
+      bell: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      ticket: 'M15 5v2 M15 11v2 M15 17v2 M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2',
+      layers: 'M12 4l-8 4l8 4l8 -4l-8 -4 M4 12l8 4l8 -4 M4 16l8 4l8 -4',
+      pin: 'M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z',
+      chart: 'M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z',
+      folder: 'M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2',
+      sliders: 'M4 6h8 M16 6h4 M14 4v4 M4 12h2 M10 12h10 M8 10v4 M4 18h11 M19 18h1 M17 16v4',
+      signal: 'M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0',
+      cloud: 'M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878',
+      bolt: 'M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11',
+      wave: 'M3 12h4l3 -8l4 16l3 -8h4',
+      question: 'M8 8a3.5 3 0 0 1 3.5 -3h1a3.5 3 0 0 1 3.5 3a3 3 0 0 1 -2 3a3 4 0 0 0 -2 4 M12 19l0 .01',
+      check: 'M5 12l5 5l10 -10',
+      x: 'M18 6l-12 12 M6 6l12 12'
+    };
+
+    var C = [
+      { id: 'a1', remote: 'ATM SPBU Antang', rid: 'BNA-MKS-0388', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Makassar · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.41.18.7', lan: '192.168.88.1', age: 7, occurred: '17:51 WITA', received: '17:51 WITA (12 dtk)', hub: 'VSAT · hub Makassar-2', pic: 'Rahmat · Kepala Unit · +62 811-0000-0388', openTickets: 'Tidak ada', history: '1 NPR · modem hang', cause: 'device', causeTitle: 'Perangkat atau listrik di lokasi', evidence: ['Remote lain di hub Makassar-2 normal (41 dari 41 up).', 'Tidak ada Gamas aktif atau saran Gamas di area ini.', 'Sinyal satelit normal sampai saat putus.'], pattern: 'down', tags: [] },
+      { id: 'a2', remote: 'ATM Bandara Mopah', rid: 'BPT-MKQ-0041', customer: 'BPD Timur', code: 'BPT', jk: 'VSAT', city: 'Merauke · WIT', src: 'NMS VSAT', msg: 'Modem offline, Es/No turun 6 dB sebelum putus', ip: '10.52.4.41', lan: '192.168.41.1', age: 6, occurred: '18:52 WIT', received: '18:52 WIT (20 dtk)', hub: 'VSAT · hub Jayapura-2', pic: 'Yuliana · Supervisor · +62 811-0000-0041', openTickets: 'Tidak ada', history: '3 NPR · semua cuaca', cause: 'weather', causeTitle: 'Cuaca: hujan lebat (rain fade)', evidence: ['Es/No turun bertahap 15 mnt sebelum putus, pola khas rain fade.', 'Prakiraan BMKG: hujan lebat di Merauke sampai 20:00 WIT.', 'Biasanya pulih sendiri setelah hujan reda.'], pattern: 'weather', tags: [['Dugaan cuaca', 'blue']] },
+      { id: 'a3', remote: 'ATM KCP Ampenan', rid: 'BAD-AMI-0112', customer: 'Bank Andalas', code: 'BAD', jk: 'VPN', city: 'Mataram · WITA', src: 'SNMP NOC', msg: 'ICMP putus-sambung 3× dalam 30 mnt', ip: '10.33.12.112', lan: '192.168.112.1', age: 5, occurred: '17:53 WITA', received: '17:53 WITA (9 dtk)', hub: 'VPN-IP · PE Mataram', pic: 'Lalu Ahmad · Kepala Unit · +62 811-0000-0112', openTickets: 'Tidak ada', history: '2 NPR · link tidak stabil', cause: 'link', causeTitle: 'Link tidak stabil', evidence: ['Putus-sambung 3× dalam 30 mnt, tiap kali 1–3 mnt.', 'Remote lain di PE Mataram normal.', 'Bulan ini sudah 2 tiket dengan penyebab sama.'], pattern: 'flap', tags: [['Putus-sambung 3×', 'amber']] },
+      { id: 'a4', remote: 'ATM Pasar Remu', rid: 'BNA-SOQ-0090', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Sorong · WIT', src: 'NMS VSAT', msg: 'Modem offline', ip: '10.52.9.90', lan: '192.168.90.1', age: 5, occurred: '18:53 WIT', received: '18:53 WIT (15 dtk)', hub: 'VSAT · hub Jayapura-2', pic: 'Markus · Kepala Unit · +62 811-0000-0090', openTickets: 'Tidak ada', history: 'Tidak ada NPR', cause: 'power', causeTitle: 'Listrik di lokasi', evidence: ['Modem melapor tegangan rendah 3 mnt sebelum offline.', 'Remote lain di hub Jayapura-2 normal.', 'Tidak ada info pemadaman PLN di Sorong.'], pattern: 'down', tags: [] },
+      { id: 'a5', remote: 'ATM Hotel Aston', rid: 'BSL-KOE-0057', customer: 'Bank Selaras', code: 'BSL', jk: 'VSAT', city: 'Kupang · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.44.2.57', lan: '192.168.57.1', age: 4, occurred: '17:54 WITA', received: '17:54 WITA (11 dtk)', hub: 'VSAT · hub Kupang-1', pic: 'Front office hotel · +62 811-0000-0057', openTickets: 'Tidak ada', history: '1 NPR · adaptor modem', cause: 'device', causeTitle: 'Perangkat di lokasi', evidence: ['Remote lain di hub Kupang-1 normal.', 'Modem tidak mengirim laporan apa pun sebelum putus.', 'Riwayat: adaptor modem diganti 2 bulan lalu.'], pattern: 'down', tags: [] },
+      { id: 'a6', remote: 'ATM Pasar Batu Merah', rid: 'BPT-AMQ-0033', customer: 'BPD Timur', code: 'BPT', jk: 'VSAT', city: 'Ambon · WIT', src: 'NMS VSAT', msg: 'Modem offline, Es/No turun', ip: '10.52.6.33', lan: '192.168.33.1', age: 4, occurred: '18:54 WIT', received: '18:54 WIT (18 dtk)', hub: 'VSAT · hub Ambon-1', pic: 'Nus · Kepala Unit · +62 811-0000-0033', openTickets: 'Tidak ada', history: '4 NPR · 3 cuaca', cause: 'weather', causeTitle: 'Cuaca: hujan lebat (rain fade)', evidence: ['Es/No turun 4 dB dalam 10 mnt.', 'Dua remote lain di Ambon juga turun sinyalnya, belum putus.', 'Prakiraan BMKG: hujan lebat di Ambon.'], pattern: 'weather', tags: [['Dugaan cuaca', 'blue']] },
+      { id: 'a7', remote: 'ATM KCP Lhokseumawe', rid: 'BAD-LSW-0019', customer: 'Bank Andalas', code: 'BAD', jk: 'VPN', city: 'Lhokseumawe · WIB', src: 'SNMP NOC', msg: 'Latensi di atas 2.000 ms, paket hilang 40%', ip: '10.31.7.19', lan: '192.168.19.1', age: 3, occurred: '16:55 WIB', received: '16:55 WIB (8 dtk)', hub: 'VPN-IP · PE Medan', pic: 'Teuku Rizal · Kepala Unit · +62 811-0000-0019', openTickets: 'Tidak ada', history: 'Tidak ada NPR', cause: 'link', causeTitle: 'Link padat atau terganggu', evidence: ['Remote masih terjangkau tapi sangat lambat.', 'Dua remote lain di PE Medan juga naik latensinya.', 'Belum ada laporan dari penyedia link.'], pattern: 'degraded', tags: [['Lambat, belum putus', 'amber']] },
+      { id: 'a8', remote: 'ATM Gedung Graha', rid: 'BNA-BPN-0144', customer: 'Bank Nusa', code: 'BNA', jk: 'VSAT', city: 'Balikpapan · WITA', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.43.3.144', lan: '192.168.144.1', age: 2, occurred: '17:56 WITA', received: '17:56 WITA (10 dtk)', hub: 'VSAT · hub Balikpapan-1', pic: 'Satpam gedung · +62 811-0000-0144', openTickets: 'Tidak ada', history: 'Tidak ada NPR', cause: 'power', causeTitle: 'Listrik padam (Gamas aktif di area ini)', evidence: ['Lokasi masuk area Gamas aktif GMS/2026/11/0007, listrik padam Balikpapan Utara.', '3 remote lain di area yang sama sudah down sejak 15:20.', 'PLN memperkirakan pemulihan sekitar 19:00 WITA.'], pattern: 'down', tags: [['Area Gamas aktif', 'orange']], gamasNo: 'GMS/2026/11/0007' },
+      { id: 'a9', remote: 'ATM Stasiun Tugu', rid: 'BSL-JOG-0201', customer: 'Bank Selaras', code: 'BSL', jk: 'VPN', city: 'Yogyakarta · WIB', src: 'SNMP NOC', msg: 'ICMP tidak merespons', ip: '10.32.5.201', lan: '192.168.201.1', age: 2, occurred: '16:56 WIB', received: '16:56 WIB (7 dtk)', hub: 'VPN-IP · PE Yogyakarta', pic: 'Petugas stasiun · +62 811-0000-0201', openTickets: 'Tidak ada', history: '1 NPR · kabel LAN', cause: 'device', causeTitle: 'Perangkat atau listrik di lokasi', evidence: ['Remote lain di PE Yogyakarta normal.', 'Tidak ada Gamas di area ini.', 'Alert masih baru; pastikan bukan gangguan sesaat.'], pattern: 'down', tags: [] }
+    ];
+    var UNMATCHED = [
+      { id: 'u1', title: '10.41.99.12', src: 'SNMP NOC', msg: 'ICMP tidak merespons', age: 12, why: 'IP ini tidak terdaftar di remote mana pun. Mungkin remote baru yang belum diimpor, atau IP remote berubah.' },
+      { id: 'u2', title: 'Modem SN 7F3A-21C9', src: 'NMS VSAT', msg: 'Modem offline', age: 25, why: 'Nomor seri modem tidak tercatat di data remote. Mungkin modem diganti di lapangan tanpa diperbarui di portal.' }
+    ];
+    var BASE_DONE = [
+      { id: 'p1', title: 'ATM Kantor Pos Sorong', meta: 'BPD Timur · Sorong · WIT', kind: 'tiket', outcome: 'Dijadikan NPR/VSAT/BPT/2026/11/0125.', by: 'Dewi A. · 18:56 WIT', href: 'DetailTiket.dc.html' },
+      { id: 'p2', title: 'ATM Kampus Tamalanrea', meta: 'Bank Selaras · Makassar · WITA', kind: 'tiket', outcome: 'Dijadikan NPR/VSAT/BSL/2026/11/0063.', by: 'Dewi A. · 17:50 WITA', href: 'DetailTiket.dc.html' },
+      { id: 'p3', title: 'ATM Mall Panakkukang', meta: 'Bank Selaras · Makassar · WITA', kind: 'bukan', outcome: 'Bukan gangguan: pemeliharaan terjadwal oleh customer.', by: 'Rudi H. · 17:31 WITA', href: '' }
+    ];
+    var TAGC = { blue: ['#dfeafb', '#0b4f99'], amber: ['#fcefd2', '#7a4a00'], orange: ['#fde4d5', '#9a3d0d'] };
+    var CAUSE_ICON = { device: IC.question, weather: IC.cloud, link: IC.wave, power: IC.bolt };
+
+    var waiting = C.filter(function (c) { return !done[c.id]; });
+    var newDone = doneOrder.map(function (id) { return done[id]; });
+    var processedList = newDone.concat(BASE_DONE);
+    var processedCount = 31 + newDone.length;
+
+    function navItem(label, icon, href, count, active) {
+      return {
+        label: label, icon: icon, href: href, count: count || '', hasCount: !!count,
+        current: active ? 'page' : 'false',
+        bg: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+        fg: active ? '#ffffff' : '#c3cdd9',
+        weight: active ? 600 : 500
+      };
+    }
+    var navGroups = [
+      { title: 'Kerja', items: [
+        navItem('Overview', IC.dash, 'Main.dc.html', '', false),
+        navItem('Alert', IC.bell, 'Alert.dc.html', waiting.length ? String(waiting.length) : '', true),
+        navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', false),
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', false)
+      ] },
+      { title: 'Data', items: [
+        navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
+        navItem('Laporan', IC.chart, 'Segera.dc.html', '', false),
+        navItem('Dokumen', IC.folder, 'Segera.dc.html', '', false)
+      ] },
+      { title: 'Sistem', items: [ navItem('Admin', IC.sliders, 'Segera.dc.html', '', false) ] }
+    ];
+
+    var tabs = [['menunggu', 'Menunggu verifikasi', waiting.length], ['tidakcocok', 'Tidak cocok remote', UNMATCHED.length], ['diproses', 'Diproses hari ini', processedCount]].map(function (t) {
+      var on = t[0] === tab;
+      return {
+        label: t[1], count: t[2], selected: on ? 'true' : 'false',
+        fg: on ? '#066fd1' : '#536173', weight: on ? 600 : 500, line: on ? '#066fd1' : 'transparent',
+        countBg: on ? '#dfeafb' : '#eaedf1', countFg: on ? '#0b4f99' : '#454f5c',
+        pick: function () { self.setState({ tab: t[0], selId: null, rejecting: false, toast: null, mobileOpen: false }); }
+      };
+    });
+
+    var source = tab === 'menunggu' ? waiting : (tab === 'tidakcocok' ? UNMATCHED : processedList);
+    var selId = st.selId;
+    var selIdx = -1;
+    for (var i = 0; i < source.length; i++) { if (source[i].id === selId) selIdx = i; }
+    if (selIdx === -1 && source.length) { selIdx = 0; selId = source[0].id; }
+
+    // Satuan waktu (ATURAN §4): nilai durasi di daftar "7 m", di kalimat "menunggu 7 mnt".
+    function ageValue(m) { return m + ' m'; }
+    function ageText(m) { return m + ' mnt'; }
+    var items = source.map(function (s, idx) {
+      var on = idx === selIdx;
+      var base = {
+        selected: on ? 'true' : 'false',
+        bg: on ? '#eaf2fc' : '#ffffff',
+        ring: on ? 'inset 3px 0 0 #066fd1' : 'none',
+        pick: function () { self.setState({ selId: s.id, rejecting: false, mobileOpen: true }); }
+      };
+      if (tab === 'menunggu') {
+        var cIcon = CAUSE_ICON[s.cause];
+        base.icon = cIcon; base.iconBg = '#ebe7fb'; base.iconFg = '#4a37a3';
+        base.title = s.remote; base.meta = s.customer + ' · ' + s.city;
+        base.msg = s.src + ' · ' + s.msg;
+        base.age = ageValue(s.age); base.ageColor = s.age >= 5 ? '#7a4a00' : '#536173';
+        base.tags = s.tags.map(function (tg) { return { label: tg[0], bg: TAGC[tg[1]][0], fg: TAGC[tg[1]][1] }; });
+        base.hasTags = s.tags.length > 0;
+      } else if (tab === 'tidakcocok') {
+        base.icon = IC.question; base.iconBg = '#fcefd2'; base.iconFg = '#7a4a00';
+        base.title = s.title; base.meta = s.src; base.msg = s.msg;
+        base.age = ageValue(s.age); base.ageColor = '#7a4a00';
+        base.tags = []; base.hasTags = false;
+      } else {
+        var isT = s.kind === 'tiket', isG = s.kind === 'gamas';
+        base.icon = isT || isG ? IC.check : IC.x;
+        base.iconBg = isT ? '#dcf2e1' : (isG ? '#fde4d5' : '#eaedf1');
+        base.iconFg = isT ? '#1b6430' : (isG ? '#9a3d0d' : '#454f5c');
+        base.title = s.title; base.meta = s.meta; base.msg = s.outcome;
+        base.age = ''; base.ageColor = '#536173';
+        base.tags = []; base.hasTags = false;
+      }
+      return base;
+    });
+
+    var cur = null, um = null, pr = null;
+    var sel = selIdx >= 0 ? source[selIdx] : null;
+    if (sel && tab === 'menunggu') {
+      var cells = [];
+      for (var k = 0; k < 30; k++) {
+        var minsAgo = (29 - k) * 2;
+        var up = true;
+        if (sel.pattern === 'down' || sel.pattern === 'weather') up = minsAgo >= sel.age;
+        if (sel.pattern === 'weather' && minsAgo >= 18 && minsAgo <= 20) up = false;
+        if (sel.pattern === 'flap') up = !((minsAgo >= 26 && minsAgo <= 28) || (minsAgo >= 14 && minsAgo <= 16) || minsAgo < sel.age);
+        var degraded = sel.pattern === 'degraded' && minsAgo < 4;
+        // Status dibedakan juga oleh tinggi (ATURAN §7): down penuh 28 px, lambat ¾ 21 px, up ½ 14 px; rata bawah.
+        cells.push(degraded ? { bg: '#e0a100', h: 21 } : (up ? { bg: '#1f8a3f', h: 14 } : { bg: '#c42b2b', h: 28 }));
+      }
+      var stripText = {
+        down: 'Down sejak ' + sel.occurred + ' (' + sel.age + ' mnt). Sebelumnya up terus.',
+        weather: 'Sempat putus singkat sekitar 20 mnt lalu, lalu down sejak ' + sel.occurred + '.',
+        flap: 'Putus 3 kali dalam 30 mnt; terakhir down sejak ' + sel.occurred + '.',
+        degraded: 'Masih terjangkau, tapi lambat sejak ' + sel.occurred + '. Sebelumnya up terus.'
+      }[sel.pattern];
+      cur = {
+        src: sel.src, age: ageText(sel.age), remote: sel.remote, rid: sel.rid, customer: sel.customer, city: sel.city,
+        msg: sel.msg, occurred: sel.occurred, received: sel.received, ip: sel.ip, lan: sel.lan, hub: sel.hub, pic: sel.pic,
+        openTickets: sel.openTickets, history: sel.history, causeTitle: sel.causeTitle,
+        evidence: sel.evidence.map(function (t) { return { text: t }; }),
+        strip: cells, stripText: stripText,
+        stripLabel: 'Status 60 menit terakhir, satu batang per 2 menit: ' + stripText + ' Batang setinggi penuh berarti down, tiga perempat berarti lambat, setengah berarti up.',
+        hasGamas: !!sel.gamasNo, noGamas: !sel.gamasNo, gamasNo: sel.gamasNo || ''
+      };
+    } else if (sel && tab === 'tidakcocok') {
+      um = { title: sel.title, src: sel.src, msg: sel.msg, age: ageText(sel.age), why: sel.why };
+    } else if (sel) {
+      var kindPill = { tiket: ['Dijadikan NPR', '#dcf2e1', '#1b6430'], gamas: ['Ditempel ke Gamas', '#fde4d5', '#9a3d0d'], bukan: ['Bukan gangguan', '#eaedf1', '#454f5c'] }[sel.kind];
+      pr = {
+        pill: kindPill[0], pillBg: kindPill[1], pillFg: kindPill[2], title: sel.title, meta: sel.meta, outcome: sel.outcome, by: sel.by,
+        hasLink: !!sel.href, href: sel.href, linkLabel: sel.kind === 'gamas' ? 'Buka Gamas' : 'Buka NPR'
+      };
+    }
+
+    var ticketSeq = 436 + doneOrder.length;
+    function finish(kind, outcome, href, toastText, toastLink) {
+      var c = sel;
+      var nd = Object.assign({}, done);
+      nd[c.id] = { id: c.id, title: c.remote, meta: c.customer + ' · ' + c.city, kind: kind, outcome: outcome, by: 'Dewi A. · baru saja', href: href };
+      var nextList = waiting.filter(function (w) { return w.id !== c.id; });
+      var nextIdx = Math.min(selIdx, nextList.length - 1);
+      self.setState({
+        done: nd, doneOrder: [c.id].concat(doneOrder), selId: nextIdx >= 0 ? nextList[nextIdx].id : null,
+        rejecting: false, toast: { text: toastText, href: href, label: toastLink }
+      });
+    }
+    var reason = st.reason || 'Pemeliharaan terjadwal';
+    var toast = st.toast;
+
+    return {
+      navGroups: navGroups, tabs: tabs, items: items,
+      listLabel: tab === 'menunggu' ? 'Alert menunggu verifikasi' : (tab === 'tidakcocok' ? 'Alert tidak cocok remote' : 'Alert yang sudah diproses'),
+      listEmpty: source.length === 0,
+      hasListFoot: tab === 'diproses', listFoot: 'Dan ' + (processedCount - processedList.length) + ' alert lain yang diproses hari ini.',
+      listKey: function (e) {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        e.preventDefault();
+        var n = source.length; if (!n) return;
+        var ni = e.key === 'ArrowDown' ? Math.min(n - 1, selIdx + 1) : Math.max(0, selIdx - 1);
+        var box = e.currentTarget;
+        self.setState({ selId: source[ni].id, rejecting: false });
+        setTimeout(function () { var opts = box.querySelectorAll('[role=option]'); if (opts[ni]) opts[ni].focus(); }, 0);
+      },
+      listClass: st.mobileOpen ? 'is-hidden' : '',
+      detailClass: st.mobileOpen ? 'is-open' : '',
+      backToList: function () { self.setState({ mobileOpen: false }); },
+      isCandidate: !!cur, isUnmatched: !!um, isProcessed: !!pr, detailEmpty: !cur && !um && !pr,
+      cur: cur || { evidence: [], strip: [] }, um: um || {}, pr: pr || {},
+      rejecting: !!st.rejecting, notRejecting: !st.rejecting,
+      reason: reason,
+      setReason: function (e) { self.setState({ reason: e.target.value }); },
+      startReject: function () { self.setState({ rejecting: true, toast: null }); },
+      cancelReject: function () { self.setState({ rejecting: false }); },
+      confirmReject: function () { finish('bukan', 'Bukan gangguan: ' + reason.toLowerCase() + '.', '', sel.remote + ' ditandai bukan gangguan (' + reason.toLowerCase() + ').', ''); },
+      makeTicket: function () {
+        var no = 'NPR/' + sel.jk + '/' + sel.code + '/2026/11/0' + ticketSeq;
+        finish('tiket', 'Dijadikan ' + no + '.', 'DetailTiket.dc.html', no + ' dibuat dari alert ' + sel.remote + '.', 'Buka NPR');
+      },
+      attachGamas: function () {
+        finish('gamas', 'Ditempel ke Gamas ' + sel.gamasNo + '.', 'Gamas.dc.html', sel.remote + ' ditempel ke Gamas ' + sel.gamasNo + '.', 'Buka Gamas');
+      },
+      hasToast: !!toast, toastText: toast ? toast.text : '', toastHasLink: !!(toast && toast.href), toastHref: toast ? toast.href : '', toastLinkLabel: toast ? toast.label : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

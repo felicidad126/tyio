@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Antrean Tiket · Portal NOC</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f8fb}
+a{color:#066fd1;text-decoration:none}
+a:hover{color:#0558a8}
+.skip-link{position:absolute;left:12px;top:-80px;z-index:30;padding:10px 16px;border-radius:6px;background:#ffffff;color:#066fd1;font-weight:600;box-shadow:0 4px 12px rgba(24,36,51,0.25)}
+.skip-link:focus{top:12px}
+@media (max-width: 900px){
+.shell-root{align-content:flex-start}
+.shell-side{flex-basis:100% !important;flex-direction:row !important;align-items:center !important;gap:12px !important;padding:8px 12px !important;overflow-x:auto}
+.side-sub,.side-title{display:none !important}
+.side-foot{margin-top:0 !important;flex:0 0 auto;white-space:nowrap}
+.side-nav,.side-group,.side-items{flex-direction:row !important;flex-wrap:nowrap !important;gap:2px !important}
+.side-item{flex:0 0 auto !important;white-space:nowrap}
+}
+@media (max-width: 640px){
+.top-clock,.top-user-text{display:none !important}
+}
+tr.row-click{position:relative}
+tr.row-click:hover > td{background:#f3f7fd}
+.row-link::after{content:"";position:absolute;left:0;top:0;right:0;bottom:0}
+.row-over{position:relative;z-index:1}
+</style>
+</helmet>
+<div class="shell-root" style="position: relative; display: flex; flex-wrap: wrap; min-height: 1080px; background: #f6f8fb; color: #182433; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums">
+<a class="skip-link" href="#konten">Lewati ke konten</a>
+
+<aside class="shell-side" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #182433; color: #c3cdd9; padding: 20px 12px; display: flex; flex-direction: column; gap: 24px">
+<div style="flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 10px">
+<div style="width: 34px; height: 34px; border-radius: 8px; background: #066fd1; color: #ffffff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0 M9 21l3 -9l3 9 M10 19h4"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 15px; font-weight: 700; color: #ffffff; white-space: nowrap">Tyio NOC</span>
+<span class="side-sub" style="font-size: 12px; color: #8d9aab">Portal NOC Terpusat</span>
+</div>
+</div>
+<nav class="side-nav" aria-label="Menu utama" style="display: flex; flex-direction: column; gap: 20px">
+<sc-for list="{{navGroups}}" as="g" hint-placeholder-count="3">
+<div class="side-group" style="display: flex; flex-direction: column; gap: 4px">
+<span class="side-title" style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8d9aab; padding: 0 10px 4px">{{g.title}}</span>
+<div class="side-items" style="display: flex; flex-wrap: wrap; gap: 2px">
+<sc-for list="{{g.items}}" as="item" hint-placeholder-count="3">
+<a class="side-item" href="{{item.href}}" aria-current="{{item.current}}" style="flex: 1 1 180px; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span style="flex: 1 1 auto">{{item.label}}</span>
+<sc-if value="{{item.hasCount}}" hint-placeholder-val="{{ false }}">
+<span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #2c3a4d; color: #e6ebf1; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{item.count}}</span>
+</sc-if>
+</a>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</nav>
+<a class="side-foot" href="Wall.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border: 1px solid #2c3a4d; border-radius: 6px; color: #c3cdd9; font-weight: 500">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z M7 20h10 M9 16v4 M15 16v4"></path></svg>
+Mode monitor 24/7
+</a>
+</aside>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="background: #ffffff; border-bottom: 1px solid #dce1e7; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 280px; min-width: 0; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #dce1e7; border-radius: 6px; background: #f6f8fb; position: relative">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
+<label for="cari-global" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Cari di seluruh portal</label>
+<input id="cari-global" type="search" placeholder="Cari NPR, TT, atau remote" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
+<kbd style="font-family: inherit; font-size: 12px; color: #536173; border: 1px solid #dce1e7; border-radius: 4px; padding: 0 6px; background: #ffffff">/</kbd>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<label for="scope" style="font-size: 13px; color: #536173; font-weight: 500">Customer</label>
+<select id="scope" style="height: 40px; border: 1px solid #dce1e7; border-radius: 6px; padding: 0 10px; font: inherit; background: #ffffff; color: #182433">
+<option>Semua customer</option>
+<option>Bank Nusa</option>
+<option>Bank Andalas</option>
+<option>Bank Selaras</option>
+<option>BPD Timur</option>
+</select>
+</div>
+<div class="top-clock" style="display: flex; gap: 12px; font-size: 13px; color: #536173; margin-left: auto">
+<span><b style="color: #182433; font-weight: 600">16:58</b> WIB</span>
+<span><b style="color: #182433; font-weight: 600">17:58</b> WITA</span>
+<span><b style="color: #182433; font-weight: 600">18:58</b> WIT</span>
+</div>
+<button type="button" aria-label="Notifikasi, 4 belum dibaca" style="position: relative; width: 40px; height: 40px; border: 1px solid #dce1e7; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6 M9 17v1a3 3 0 0 0 6 0v-1"></path></svg>
+<span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 999px; background: #c42b2b; color: #ffffff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box">4</span>
+</button>
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>
+Buat NPR
+</button>
+<button type="button" aria-label="Akun: Dewi A., L1 Monitoring, Shift Siang" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; background: transparent; font: inherit; color: #182433; cursor: pointer">
+<span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #dfeafb; color: #0b4f99; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">DA</span>
+<span class="top-user-text" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2">
+<span style="font-size: 13px; font-weight: 600">Dewi A.</span>
+<span style="font-size: 12px; color: #536173">L1 Monitoring · Shift Siang</span>
+</span>
+</button>
+</header>
+
+<main id="konten" style="width: 100%; max-width: 1320px; margin: 0 auto; padding: 24px 24px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700">Tiket</h1>
+<p style="margin: 0; color: #536173; font-size: 15px">{{intro}}</p>
+</div>
+
+<div role="group" aria-label="Pilih daftar" style="align-self: flex-start; max-width: 100%; box-sizing: border-box; display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 8px; background: #eaedf1">
+<sc-for list="{{lists}}" as="l" hint-placeholder-count="2">
+<button type="button" aria-pressed="{{l.pressed}}" onClick="{{l.pick}}" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; background: {{l.bg}}; color: {{l.fg}}; box-shadow: {{l.shadow}}">{{l.label}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{isNpr}}" hint-placeholder-val="{{ true }}">
+<div role="tablist" aria-label="Tampilan tersimpan" style="display: flex; flex-wrap: nowrap; gap: 4px; border-bottom: 1px solid #dce1e7; overflow-x: auto">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="5">
+<button type="button" role="tab" aria-selected="{{v.selected}}" onClick="{{v.pick}}" style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font: inherit; white-space: nowrap; cursor: pointer; margin-bottom: -1px; color: {{v.fg}}; font-weight: {{v.weight}}; border-bottom: 2px solid {{v.line}}">
+{{v.label}}
+<span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; background: {{v.countBg}}; color: {{v.countFg}}">{{v.count}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<div style="flex: 1 1 260px; max-width: 420px; display: flex; align-items: center; gap: 8px">
+<label for="cari-tiket" style="font-size: 13px; font-weight: 600; color: #182433">Cari</label>
+<div style="flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66727f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6"></path></svg>
+<input id="cari-tiket" type="search" placeholder="NPR, TT, tiket customer, remote" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; color: #182433">
+</div>
+</div>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z"></path></svg>
+Filter
+<span style="min-width: 20px; height: 20px; border-radius: 999px; background: #dfeafb; color: #0b4f99; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">1</span>
+</button>
+<div style="margin-left: auto; display: flex; gap: 8px">
+<button type="button" aria-label="Atur kolom" title="Atur kolom" style="width: 40px; height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v16h-6z M14 4h6v16h-6z"></path></svg>
+</button>
+<button type="button" aria-label="Ekspor ke Excel" title="Ekspor ke Excel" style="width: 40px; height: 40px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2 M7 11l5 5l5 -5 M12 4v12"></path></svg>
+</button>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px">
+<span style="display: inline-flex; align-items: center; gap: 2px; height: 32px; padding: 0 0 0 12px; border-radius: 999px; background: #eaedf1; color: #182433">
+Status: semua kecuali Ditutup
+<button type="button" aria-label="Hapus filter status" style="width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: #454f5c; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12 M6 6l12 12"></path></svg>
+</button>
+</span>
+<button type="button" style="height: 32px; padding: 0 8px; border: 0; background: transparent; color: #066fd1; font: inherit; font-weight: 500; cursor: pointer">Hapus semua</button>
+</div>
+
+<sc-if value="{{isNpr}}" hint-placeholder-val="{{ true }}">
+<div style="background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; overflow: hidden">
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 13px">
+<thead>
+<tr style="background: #f6f8fb; text-align: left">
+<th scope="col" aria-sort="ascending" style="padding: 10px; font-weight: 600; color: #182433; border-bottom: 1px solid #dce1e7; white-space: nowrap">
+<span style="display: inline-flex; align-items: center; gap: 4px">Sisa SLA
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14 M18 13l-6 6 M6 13l6 6"></path></svg>
+</span>
+</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">No. NPR</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Remote</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Customer · Kategori</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Status</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Penanggung</th>
+<th scope="col" style="padding: 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Aksi terakhir</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<tr class="row-click" style="background: {{r.rowBg}}">
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{r.slaBg}}; color: {{r.slaFg}}">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.slaIcon}}"></path></svg>
+{{r.sla}}
+</span>
+</td>
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<a class="row-link" href="DetailTiket.dc.html" style="font-weight: 600">{{r.npr}}</a>
+<sc-if value="{{r.hasTt}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 12px; color: #536173">{{r.tt}}</div>
+</sc-if>
+</td>
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<div style="font-weight: 500">{{r.remote}}</div>
+<div style="font-size: 12px; color: #536173">{{r.city}}</div>
+</td>
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<div>{{r.customer}}</div>
+<div style="font-size: 12px; color: #536173">{{r.category}}</div>
+</td>
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{r.stBg}}; color: {{r.stFg}}">{{r.status}}</span>
+</td>
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<sc-if value="{{r.assigned}}" hint-placeholder-val="{{ true }}">
+<span>{{r.owner}} <span style="color: #536173">· {{r.level}}</span></span>
+</sc-if>
+<sc-if value="{{r.unassigned}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="row-over" aria-label="{{r.takeLabel}}" style="height: 32px; padding: 0 12px; border: 1px solid #066fd1; border-radius: 6px; background: #ffffff; color: #066fd1; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Ambil</button>
+</sc-if>
+</td>
+<td style="padding: 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; min-width: 190px">
+<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{r.last}}</div>
+<div style="font-size: 12px; color: #536173; white-space: nowrap">{{r.lastAgo}}</div>
+</td>
+</tr>
+</sc-for>
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<tr><td colspan="7" style="padding: 32px 16px; text-align: center; color: #536173">Tidak ada NPR di tampilan ini.</td></tr>
+</sc-if>
+</tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid #dce1e7; font-size: 13px; color: #536173">
+<span aria-live="polite">{{rangeLabel}}</span>
+<nav aria-label="Halaman" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px">
+<button type="button" disabled="{{prevDisabled}}" onClick="{{prev}}" style="height: 32px; padding: 0 10px; border: 1px solid #dce1e7; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; background: {{prevBg}}; color: {{prevFg}}">Sebelumnya</button>
+<sc-for list="{{pages}}" as="pg" hint-placeholder-count="4">
+<button type="button" aria-current="{{pg.current}}" onClick="{{pg.pick}}" style="min-width: 32px; height: 32px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; border: 1px solid {{pg.border}}; background: {{pg.bg}}; color: {{pg.fg}}; font-weight: {{pg.weight}}">{{pg.label}}</button>
+</sc-for>
+<button type="button" disabled="{{nextDisabled}}" onClick="{{next}}" style="height: 32px; padding: 0 10px; border: 1px solid #dce1e7; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; background: {{nextBg}}; color: {{nextFg}}">Berikutnya</button>
+</nav>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isTt}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 6px; background: #dcf2e1; color: #1b6430; font-weight: 500">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"></path></svg>
+<span style="flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere">{{toastText}}</span>
+</div>
+</sc-if>
+<div style="background: #ffffff; border: 1px solid #dce1e7; border-radius: 8px; overflow: hidden">
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 13px">
+<thead>
+<tr style="background: #f6f8fb; text-align: left">
+<th scope="col" style="padding: 10px 8px 10px 10px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">No. TT</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Remote</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Problem jarkom</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Status TT</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7; white-space: nowrap">Dikirim ke SD</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7">Penanggung</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 600; color: #536173; border-bottom: 1px solid #dce1e7"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Aksi</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{ttRows}}" as="t" hint-placeholder-count="4">
+<tr class="row-click">
+<td style="padding: 9px 8px 9px 10px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<a class="row-link" href="DetailTiket.dc.html" style="font-weight: 600">{{t.id}}</a>
+<div style="font-size: 12px; color: #536173">{{t.npr}}</div>
+</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<div style="font-weight: 500">{{t.remote}}</div>
+<div style="font-size: 12px; color: #536173">{{t.city}}</div>
+</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; min-width: 180px">{{t.problem}}</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{t.stBg}}; color: {{t.stFg}}">{{t.status}}</span>
+</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">
+<div>{{t.sent}}</div>
+<div style="font-size: 12px; color: {{t.copyFg}}; font-weight: {{t.copyWeight}}">{{t.copyNote}}</div>
+</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap">{{t.owner}} <span style="color: #536173">· L2</span></td>
+<td style="padding: 9px 10px 9px 8px; border-bottom: 1px solid #eaedf1; vertical-align: middle; white-space: nowrap; text-align: right">
+<button type="button" class="row-over" aria-label="{{t.copyAria}}" onClick="{{t.copy}}" style="min-width: 158px; height: 32px; padding: 0 12px; border: 1px solid #c9d0d9; border-radius: 6px; background: #ffffff; color: #182433; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.copyIcon}}"></path></svg>
+{{t.copyLabel}}
+</button>
+</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding: 12px 16px; border-top: 1px solid #dce1e7; font-size: 13px; color: #536173">{{ttRange}}</div>
+</div>
+</sc-if>
+<span role="status" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">{{toastText}}</span>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var list = st.list || 'npr';
+    var view = st.view || 'semua';
+    var page = st.page || 1;
+    var copied = st.copied || {};
+    var self = this;
+    var PER_PAGE = 12;
+    var ME = 'Dewi A.';
+
+    var IC = {
+      dash: 'M4 4h6v8h-6z M14 4h6v4h-6z M14 12h6v8h-6z M4 16h6v4h-6z',
+      bell: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      ticket: 'M15 5v2 M15 11v2 M15 17v2 M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2',
+      layers: 'M12 4l-8 4l8 4l8 -4l-8 -4 M4 12l8 4l8 -4 M4 16l8 4l8 -4',
+      pin: 'M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z',
+      chart: 'M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z',
+      folder: 'M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2',
+      sliders: 'M4 6h8 M16 6h4 M14 4v4 M4 12h2 M10 12h10 M8 10v4 M4 18h11 M19 18h1 M17 16v4',
+      alert: 'M12 9v4 M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z M12 16h.01',
+      clock: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0 M12 7v5l3 3',
+      pause: 'M6 5h4v14h-4z M14 5h4v14h-4z',
+      check: 'M5 12l5 5l10 -10',
+      copy: 'M8 8h12v12h-12z M16 8v-4h-12v12h4'
+    };
+    function navItem(label, icon, href, count, active) {
+      return {
+        label: label, icon: icon, href: href, count: count || '', hasCount: !!count,
+        current: active ? 'page' : 'false',
+        bg: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+        fg: active ? '#ffffff' : '#c3cdd9',
+        weight: active ? 600 : 500
+      };
+    }
+    var navGroups = [
+      { title: 'Kerja', items: [
+        navItem('Overview', IC.dash, 'Main.dc.html', '', false),
+        navItem('Alert', IC.bell, 'Alert.dc.html', '9', false),
+        navItem('Tiket', IC.ticket, 'Tiket.dc.html', '48', true),
+        navItem('Gamas', IC.layers, 'Gamas.dc.html', '2', false)
+      ] },
+      { title: 'Data', items: [
+        navItem('Remote', IC.pin, 'Segera.dc.html', '', false),
+        navItem('Laporan', IC.chart, 'Segera.dc.html', '', false),
+        navItem('Dokumen', IC.folder, 'Segera.dc.html', '', false)
+      ] },
+      { title: 'Sistem', items: [ navItem('Admin', IC.sliders, 'Segera.dc.html', '', false) ] }
+    ];
+
+    // ---- data contoh: 48 NPR terbuka ----
+    var MET = 100000;
+    function T(mins, paused, npr, tt, remote, city, customer, category, status, owner, level, last, lastAgo) {
+      return { mins: mins, paused: paused, npr: npr, tt: tt, remote: remote, city: city, customer: customer, category: category, status: status, owner: owner, level: level, last: last, lastAgo: lastAgo };
+    }
+    var data = [
+      T(-25, false, 'NPR/VSAT/BNA/2026/11/0409', '', 'ATM SPBU Daya', 'Makassar · WITA', 'Bank Nusa', 'Remote Down', 'Eskalasi · L2', 'Arif S.', 'L2', 'Modem tidak merespons, eskalasi ke L2', '14 mnt lalu · Dewi A.'),
+      T(-6, false, 'NPR/VSAT/BPT/2026/11/0122', '', 'ATM Kantor Camat Waena', 'Jayapura · WIT', 'BPD Timur', 'Remote Down', 'Dikerjakan', 'Dewi A.', 'L1', 'PIC cabang belum bisa dihubungi', '9 mnt lalu · Dewi A.'),
+      T(18, false, 'NPR/VSAT/BNA/2026/11/0418', '', 'ATM KCP Pasar Sentral', 'Makassar · WITA', 'Bank Nusa', 'Remote Down', 'Dikerjakan', 'Dewi A.', 'L1', 'Ping gagal 100%, remote lain di hub normal', '6 mnt lalu · Dewi A.'),
+      T(41, false, 'NPR/VPN/BAD/2026/11/0277', '', 'ATM RS Bhayangkara', 'Palu · WITA', 'Bank Andalas', 'Remote Down', 'Terbuka', '', '', 'Dibuat dari alert SNMP, diverifikasi L1', '15 mnt lalu · Sistem'),
+      T(52, false, 'NPR/VSAT/BSL/2026/11/0061', 'TT/VSAT/BSL/2026/11/0019', 'ATM Bandara Sentani', 'Jayapura · WIT', 'Bank Selaras', 'Corrective Maint.', 'Eskalasi · SD', 'Arif S.', 'L2', 'Hasil kunjungan SD dicatat: LNB diganti, menunggu remote stabil', '21 mnt lalu · Arif S.'),
+      T(94, false, 'NPR/VSAT/BNA/2026/11/0421', '', 'ATM Pasar Masomba', 'Palu · WITA', 'Bank Nusa', 'Remote Down', 'Terbuka', '', '', 'Masuk saran Gamas hub Palu‑1', '12 mnt lalu · Sistem'),
+      T(125, false, 'NPR/VPN/BSL/2026/11/0058', '', 'ATM Gedung Juang', 'Medan · WIB', 'Bank Selaras', 'Corrective Maint.', 'Dikerjakan', 'Sari P.', 'L2', 'Ganti adaptor modem dijadwalkan 17:30 WIB', '40 mnt lalu · Sari P.'),
+      T(130, true, 'NPR/VSAT/BAD/2026/11/0270', '', 'ATM Pasar Inpres', 'Kupang · WITA', 'Bank Andalas', 'Remote Down', 'Pending · Customer', 'Rudi H.', 'L1', 'Listrik PLN padam, info dari cabang', '1 jam lalu · Rudi H.'),
+      T(195, true, 'NPR/VSAT/BNA/2026/11/0396', 'TT/VSAT/BNA/2026/11/0087', 'ATM Pelabuhan Tual', 'Maluku Tenggara · WIT', 'Bank Nusa', 'Remote Down', 'Pending · TM', 'Arif S.', 'L2', 'Menunggu teknisi mitra tiba (jadwal kapal)', '2 jam lalu · Arif S.'),
+      T(220, false, 'NPR/VSAT/BPT/2026/11/0119', '', 'ATM Kantor Bupati', 'Merauke · WIT', 'BPD Timur', 'Preventive Maint.', 'Terbuka', '', '', 'Jadwal PM kuartal IV', '3 jam lalu · Sari P.'),
+      T(232, false, 'NPR/VSAT/BSL/2026/11/0063', '', 'ATM Kampus Tamalanrea', 'Makassar · WITA', 'Bank Selaras', 'Remote Down', 'Terbuka', '', '', 'Dibuat dari alert VSAT, diverifikasi L1', '8 mnt lalu · Sistem'),
+      T(238, false, 'NPR/VSAT/BPT/2026/11/0125', '', 'ATM Kantor Pos Sorong', 'Sorong · WIT', 'BPD Timur', 'Remote Down', 'Terbuka', '', '', 'Dibuat dari alert SNMP, diverifikasi L1', '2 mnt lalu · Sistem'),
+      T(MET, false, 'NPR/VPN/BAD/2026/11/0268', '', 'ATM Jl. Sudirman', 'Pekanbaru · WIB', 'Bank Andalas', 'Remote Down', 'Pulih · siap ditutup', 'Dewi A.', 'L1', 'Remote pulih 16:31 WIB, menunggu penutupan', '27 mnt lalu · Sistem')
+    ];
+    var P = {
+      a: ['ATM Pasar Raya', 'Padang · WIB', 'Bank Andalas', 'BAD', 'VPN'],
+      b: ['ATM KCP Panam', 'Pekanbaru · WIB', 'Bank Andalas', 'BAD', 'VPN'],
+      c: ['ATM Terminal Bungurasih', 'Sidoarjo · WIB', 'Bank Selaras', 'BSL', 'VPN'],
+      d: ['ATM RSUD Ulin', 'Banjarmasin · WITA', 'Bank Nusa', 'BNA', 'VSAT'],
+      e: ['ATM Pelabuhan Bitung', 'Bitung · WITA', 'Bank Nusa', 'BNA', 'VSAT'],
+      f: ['ATM Kampus Unpatti', 'Ambon · WIT', 'BPD Timur', 'BPT', 'VSAT'],
+      g: ['ATM Pasar Gamalama', 'Ternate · WIT', 'BPD Timur', 'BPT', 'VSAT'],
+      h: ['ATM SPBU Abepura', 'Jayapura · WIT', 'Bank Selaras', 'BSL', 'VSAT'],
+      i: ['ATM Kantor Bupati Manokwari', 'Manokwari · WIT', 'BPD Timur', 'BPT', 'VSAT'],
+      j: ['ATM Mall Panakkukang', 'Makassar · WITA', 'Bank Selaras', 'BSL', 'VSAT'],
+      k: ['ATM Pasar Oeba', 'Kupang · WITA', 'Bank Andalas', 'BAD', 'VSAT'],
+      l: ['ATM Bandara Lombok', 'Lombok Tengah · WITA', 'Bank Nusa', 'BNA', 'VSAT'],
+      m: ['ATM KCP Samarinda Seberang', 'Samarinda · WITA', 'Bank Nusa', 'BNA', 'VSAT'],
+      n: ['ATM Alun-alun Kendari', 'Kendari · WITA', 'Bank Selaras', 'BSL', 'VSAT'],
+      o: ['ATM Pelabuhan Sorong', 'Sorong · WIT', 'Bank Nusa', 'BNA', 'VSAT'],
+      p: ['ATM Stasiun Medan', 'Medan · WIB', 'Bank Selaras', 'BSL', 'VPN'],
+      q: ['ATM Kantor Camat Biak', 'Biak · WIT', 'BPD Timur', 'BPT', 'VSAT'],
+      r: ['ATM Pasar Tomohon', 'Tomohon · WITA', 'Bank Andalas', 'BAD', 'VSAT'],
+      s: ['ATM KCP Tanjung Selor', 'Bulungan · WITA', 'Bank Nusa', 'BNA', 'VSAT'],
+      t: ['ATM Dermaga Labuan Bajo', 'Manggarai Barat · WITA', 'Bank Andalas', 'BAD', 'VSAT']
+    };
+    var seq = 300;
+    var ttSeq = 90;
+    function X(key, mins, paused, category, status, owner, level, last, ago, withTt) {
+      var p = P[key];
+      seq += 1;
+      var npr = 'NPR/' + p[4] + '/' + p[3] + '/2026/11/0' + seq;
+      var tt = '';
+      if (withTt) { ttSeq += 1; tt = 'TT/' + p[4] + '/' + p[3] + '/2026/11/00' + ttSeq; }
+      data.push(T(mins, paused, npr, tt, p[0], p[1], p[2], category, status, owner, level, last, ago + ' · ' + (owner || 'Sistem')));
+    }
+    var CMt = 'Corrective Maint.', PMt = 'Preventive Maint.';
+    X('a', 262, true, CMt, 'Pending · Customer', 'Rudi H.', 'L1', 'Menunggu cabang membuka ruang ATM', '1 jam lalu');
+    X('d', 290, true, CMt, 'Pending · TM', 'Sari P.', 'L2', 'Menunggu suku cadang modem dari TM', '3 jam lalu');
+    X('f', 305, true, CMt, 'Pending · Customer', 'Arif S.', 'L2', 'Gedung tutup, akses besok pagi', '2 jam lalu');
+    X('g', 330, true, CMt, 'Pending · TM', 'Rudi H.', 'L1', 'Menunggu teknisi mitra (cuaca buruk)', '2 jam lalu');
+    X('j', 352, true, CMt, 'Pending · Customer', 'Dewi A.', 'L1', 'Menunggu konfirmasi PIC cabang', '45 mnt lalu');
+    X('l', 380, true, CMt, 'Pending · Customer', 'Sari P.', 'L2', 'Renovasi gerai, ATM dimatikan customer', '5 jam lalu');
+    X('n', 415, true, CMt, 'Pending · TM', 'Arif S.', 'L2', 'Menunggu pengiriman adaptor', '4 jam lalu');
+    X('o', 450, true, CMt, 'Pending · Customer', 'Rudi H.', 'L1', 'Listrik gedung padam terjadwal', '3 jam lalu');
+    X('q', 520, true, CMt, 'Pending · TM', 'Arif S.', 'L2', 'Menunggu jadwal kapal teknisi', 'kemarin');
+    X('s', 610, true, CMt, 'Pending · Customer', 'Sari P.', 'L2', 'Customer minta penjadwalan ulang', 'kemarin');
+    X('h', 270, false, CMt, 'Eskalasi · L2', 'Arif S.', 'L2', 'Modem merespons ping, transaksi tetap gagal', '30 mnt lalu');
+    X('m', 340, false, CMt, 'Eskalasi · SD', 'Sari P.', 'L2', 'SD menjadwalkan kunjungan besok 08:00 WITA', '1 jam lalu', true);
+    X('r', 470, false, CMt, 'Eskalasi · SD', 'Arif S.', 'L2', 'TT dibuat, ringkasan belum disalin untuk SD', '18 mnt lalu', true);
+    X('c', MET, false, 'Remote Down', 'Pulih · siap ditutup', 'Dewi A.', 'L1', 'Remote pulih 15:42 WIB, menunggu penutupan', '1 jam lalu');
+    X('k', MET, false, CMt, 'Pulih · siap ditutup', 'Rudi H.', 'L1', 'Adaptor diganti, remote stabil', '2 jam lalu');
+    X('b', 245, false, CMt, 'Dikerjakan', 'Dewi A.', 'L1', 'Restart modem dijadwalkan dengan cabang', '20 mnt lalu');
+    X('c', 258, false, CMt, 'Terbuka', '', '', 'Dibuat manual dari laporan customer', '35 mnt lalu');
+    X('e', 274, false, CMt, 'Dikerjakan', 'Rudi H.', 'L1', 'Cek redaman VSAT bersama tim hub', '25 mnt lalu');
+    X('g', 298, false, CMt, 'Terbuka', '', '', 'Dibuat dari alert VSAT', '40 mnt lalu');
+    X('h', 318, false, CMt, 'Dikerjakan', 'Sari P.', 'L2', 'Analisis log modem', '50 mnt lalu');
+    X('j', 344, false, CMt, 'Terbuka', '', '', 'Laporan customer: transaksi lambat', '1 jam lalu');
+    X('k', 372, false, CMt, 'Dikerjakan', 'Dewi A.', 'L1', 'Konfirmasi jadwal kunjungan dengan PIC', '1 jam lalu');
+    X('m', 401, false, CMt, 'Terbuka', '', '', 'Dibuat dari alert SNMP', '1 jam lalu');
+    X('n', 436, false, CMt, 'Dikerjakan', 'Rudi H.', 'L1', 'Ganti kabel LAN oleh petugas cabang', '2 jam lalu');
+    X('p', 468, false, CMt, 'Terbuka', '', '', 'Laporan customer: ATM offline sesaat', '2 jam lalu');
+    X('q', 640, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', '3 jam lalu');
+    X('r', 760, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', '3 jam lalu');
+    X('s', 905, false, PMt, 'Dikerjakan', 'Sari P.', 'L2', 'Koordinasi jadwal teknisi', '4 jam lalu');
+    X('t', 1180, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', '5 jam lalu');
+    X('a', 1500, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', '6 jam lalu');
+    X('i', 1790, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', '7 jam lalu');
+    X('l', 2300, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', 'kemarin');
+    X('o', 2880, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', 'kemarin');
+    X('f', 3600, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', 'kemarin');
+    X('b', 4300, false, PMt, 'Terbuka', '', '', 'Jadwal PM kuartal IV', 'kemarin');
+
+    data.sort(function (x, y) { return x.mins - y.mins; });
+
+    function dur(m) {
+      if (m >= 1440) return Math.floor(m / 1440) + ' h ' + Math.floor((m % 1440) / 60) + ' j';
+      if (m >= 60) { var mm = m % 60; return Math.floor(m / 60) + ' j ' + (mm < 10 ? '0' + mm : mm) + ' m'; }
+      return m + ' m';
+    }
+    var SLA = {
+      late: ['#fbe3e3', '#a12424', IC.alert],
+      warn: ['#fcefd2', '#7a4a00', IC.clock],
+      ok: ['#eaedf1', '#454f5c', IC.clock],
+      paused: ['#eaedf1', '#454f5c', IC.pause],
+      met: ['#dcf2e1', '#1b6430', IC.check]
+    };
+    var ST = {
+      'Terbuka': ['#dfeafb', '#0b4f99'],
+      'Dikerjakan': ['#d5f0ec', '#0d5c55'],
+      'Pending · Customer': ['#fcefd2', '#7a4a00'],
+      'Pending · TM': ['#fcefd2', '#7a4a00'],
+      'Eskalasi · L2': ['#fde4d5', '#9a3d0d'],
+      'Eskalasi · SD': ['#fde4d5', '#9a3d0d'],
+      'Pulih · siap ditutup': ['#dcf2e1', '#1b6430']
+    };
+    function present(t) {
+      var kind, text;
+      if (t.mins >= MET) { kind = 'met'; text = 'Terpenuhi'; }
+      else if (t.paused) { kind = 'paused'; text = 'Jeda ' + dur(t.mins); }
+      else if (t.mins < 0) { kind = 'late'; text = 'Lewat ' + dur(-t.mins); }
+      else if (t.mins < 60) { kind = 'warn'; text = dur(t.mins); }
+      else { kind = 'ok'; text = dur(t.mins); }
+      var s = SLA[kind];
+      return {
+        sla: text, slaBg: s[0], slaFg: s[1], slaIcon: s[2],
+        npr: t.npr, tt: t.tt, hasTt: !!t.tt, remote: t.remote, city: t.city, customer: t.customer, category: t.category,
+        status: t.status, stBg: ST[t.status][0], stFg: ST[t.status][1],
+        owner: t.owner, level: t.level, assigned: !!t.owner, unassigned: !t.owner,
+        takeLabel: 'Ambil ' + t.npr,
+        last: t.last, lastAgo: t.lastAgo,
+        rowBg: kind === 'late' ? '#fffafa' : '#ffffff'
+      };
+    }
+
+    var FILTERS = {
+      semua: function () { return true; },
+      saya: function (t) { return t.owner === ME; },
+      pending: function (t) { return t.status.indexOf('Pending') === 0; },
+      eskalasi: function (t) { return t.status.indexOf('Eskalasi') === 0; },
+      tutup: function (t) { return t.status === 'Pulih · siap ditutup'; }
+    };
+    var views = [
+      ['semua', 'Semua terbuka'], ['saya', 'Milik saya'], ['pending', 'Pending'], ['eskalasi', 'Eskalasi'], ['tutup', 'Siap ditutup']
+    ].map(function (v) {
+      var on = v[0] === view;
+      return {
+        label: v[1], count: data.filter(FILTERS[v[0]]).length, selected: on ? 'true' : 'false',
+        fg: on ? '#066fd1' : '#536173', weight: on ? 600 : 500,
+        line: on ? '#066fd1' : 'transparent',
+        countBg: on ? '#dfeafb' : '#eaedf1', countFg: on ? '#0b4f99' : '#454f5c',
+        pick: function () { self.setState({ view: v[0], page: 1 }); }
+      };
+    });
+
+    var filtered = data.filter(FILTERS[view]);
+    var total = filtered.length;
+    var pageCount = Math.max(1, Math.ceil(total / PER_PAGE));
+    if (page > pageCount) page = pageCount;
+    var start = (page - 1) * PER_PAGE;
+    var rows = filtered.slice(start, start + PER_PAGE).map(present);
+    var pages = [];
+    for (var n = 1; n <= pageCount; n++) {
+      (function (num) {
+        var on = num === page;
+        pages.push({
+          label: String(num), current: on ? 'page' : 'false',
+          border: on ? '#066fd1' : '#dce1e7', bg: on ? '#066fd1' : '#ffffff', fg: on ? '#ffffff' : '#182433', weight: on ? 600 : 400,
+          pick: function () { self.setState({ page: num }); }
+        });
+      })(n);
+    }
+    var prevDisabled = page <= 1, nextDisabled = page >= pageCount;
+
+    // ---- TT aktif: diturunkan dari NPR yang punya TT (urut sisa SLA NPR induk) ----
+    // now = jam sekarang di zona remote, dipakai saat ringkasan disalin.
+    var TTX = {
+      'TT/VSAT/BSL/2026/11/0019': { problem: 'Modem VSAT tidak sinkron (Rx lock hilang). Perlu cek BUC/LNB dan pointing antena.', status: 'Hasil masuk', sent: '15:05 WIT', copiedAt: '15:07', now: '18:58', contact: 'Yohanis, petugas bandara, +62 811-0000-0061' },
+      'TT/VSAT/BNA/2026/11/0087': { problem: 'Kabel IFL terkelupas dan konektor berkarat, sinyal Rx turun. Perlu ganti kabel IFL dan konektor.', status: 'Menunggu SD', sent: '16:40 WIT', copiedAt: '16:42', now: '18:58', contact: 'La Ode, Kepala Unit, +62 811-0000-0396' },
+      'TT/VSAT/BNA/2026/11/0091': { problem: 'Es/No turun di bawah ambang sejak hujan deras. Perlu cek pointing antena dan LNB.', status: 'Menunggu SD', sent: '16:10 WITA', copiedAt: '16:12', now: '17:58', contact: 'Rina, Kepala Unit, +62 811-0000-0312' },
+      'TT/VSAT/BAD/2026/11/0092': { problem: 'Modem VSAT tidak sinkron setelah listrik pulih. Perlu cek BUC/LNB.', status: 'Menunggu SD', sent: '17:40 WITA', copiedAt: '', now: '17:58', contact: 'Frans, petugas cabang, +62 811-0000-0313' }
+    };
+    var TTST = { 'Menunggu SD': ['#fde4d5', '#9a3d0d'], 'Hasil masuk': ['#dcf2e1', '#1b6430'], 'Ditutup': ['#eaedf1', '#454f5c'] };
+    var lastCopied = st.lastCopied || '';
+    var ttRows = data.filter(function (t) { return !!t.tt; }).map(function (t) {
+      var x = TTX[t.tt];
+      var at = copied[t.tt] || x.copiedAt;
+      var just = lastCopied === t.tt;
+      return {
+        id: t.tt, npr: t.npr, remote: t.remote, city: t.city, problem: x.problem,
+        status: x.status, stBg: TTST[x.status][0], stFg: TTST[x.status][1],
+        sent: x.sent, owner: t.owner,
+        copyNote: at ? 'ringkasan disalin ' + at : 'belum disalin',
+        copyFg: at ? '#536173' : '#7a4a00', copyWeight: at ? 400 : 600,
+        copyLabel: just ? 'Ringkasan disalin' : 'Salin ringkasan',
+        copyIcon: just ? IC.check : IC.copy,
+        copyAria: just ? 'Ringkasan ' + t.tt + ' disalin, salin lagi' : 'Salin ringkasan ' + t.tt,
+        copy: function () {
+          var text = [t.tt + ' (' + t.npr + ')', 'Remote: ' + t.remote + ', ' + t.customer, 'Lokasi: ' + t.city, 'Problem: ' + x.problem, 'Kontak: ' + x.contact].join('\n');
+          try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+          var nextCopied = {};
+          for (var k in copied) nextCopied[k] = copied[k];
+          nextCopied[t.tt] = x.now;
+          self.setState({ copied: nextCopied, lastCopied: t.tt });
+        }
+      };
+    });
+    var lists = [['npr', 'NPR aktif (' + data.length + ')'], ['tt', 'TT aktif (' + ttRows.length + ')']].map(function (l) {
+      var on = l[0] === list;
+      return {
+        label: l[1], pressed: on ? 'true' : 'false',
+        bg: on ? '#ffffff' : 'transparent', fg: on ? '#182433' : '#454f5c',
+        shadow: on ? '0 1px 2px rgba(24,36,51,0.16)' : 'none',
+        pick: function () { self.setState({ list: l[0], lastCopied: '' }); }
+      };
+    });
+
+    return {
+      navGroups: navGroups, lists: lists, views: views, rows: rows, pages: pages,
+      isNpr: list === 'npr', isTt: list === 'tt',
+      intro: list === 'tt'
+        ? 'TT ke SD yang belum ditutup. Teruskan ke SD dengan Salin ringkasan; setiap salin tercatat di linimasa NPR induk.'
+        : 'NPR yang belum ditutup. Urutan bawaan: sisa SLA paling sedikit di atas.',
+      ttRows: ttRows,
+      ttRange: 'Menampilkan 1–' + ttRows.length + ' dari ' + ttRows.length + ' TT',
+      hasToast: !!lastCopied,
+      toastText: lastCopied ? 'Ringkasan disalin: ' + lastCopied + '. Tempel ke pesan untuk SD. Salinan tercatat di linimasa NPR induk.' : '',
+      isEmpty: total === 0,
+      rangeLabel: total === 0 ? 'Tidak ada NPR' : 'Menampilkan ' + (start + 1) + '–' + Math.min(start + PER_PAGE, total) + ' dari ' + total + ' NPR',
+      prevDisabled: prevDisabled, nextDisabled: nextDisabled,
+      prevBg: prevDisabled ? '#f6f8fb' : '#ffffff', prevFg: prevDisabled ? '#66727f' : '#182433',
+      nextBg: nextDisabled ? '#f6f8fb' : '#ffffff', nextFg: nextDisabled ? '#66727f' : '#182433',
+      prev: function () { if (!prevDisabled) self.setState({ page: page - 1 }); },
+      next: function () { if (!nextDisabled) self.setState({ page: page + 1 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
