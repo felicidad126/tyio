@@ -8,7 +8,7 @@ import { testConfig } from './test-config.js';
 // selalu teruji, bukan hanya ditulis.
 export default async function setup(): Promise<void> {
   const { databaseUrl } = testConfig();
-  const dataSource = new DataSource(dataSourceOptions(databaseUrl));
+  const dataSource = new DataSource(dataSourceOptions(databaseUrl, { auditSource: 'migrasi' }));
   try {
     await dataSource.initialize();
   } catch (error) {

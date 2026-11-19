@@ -21,6 +21,7 @@ import {
   type SessionUser,
 } from '@tyio/shared';
 import type { Request, Response } from 'express';
+import { NoTenantData, TenantScoped } from '../../common/tenant/tenancy.js';
 import { APP_CONFIG } from '../../config.module.js';
 import type { AppConfig } from '../../config.js';
 import type { User } from '../users/user.entity.js';
@@ -39,6 +40,7 @@ export class AuthController {
 
   /** 200 + cookie sesi; 401 untuk email/kata sandi salah; 429 + Retry-After bila dikunci. */
   @Public()
+  @TenantScoped() // jawabannya memuat daftar customer pengguna
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Header('Cache-Control', 'no-store')
@@ -79,15 +81,17 @@ export class AuthController {
 
   /** Selalu 204 dan menghapus cookie, juga bila sesi sudah berakhir. */
   @Public()
+  @NoTenantData()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Header('Cache-Control', 'no-store')
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response): Promise<void> {
     const token = readCookie(request.headers.cookie, SESSION_COOKIE);
-    if (token) await this.auth.logout(token);
+    if (token) await this.auth.logout(token, clientInfo(request));
     response.clearCookie(SESSION_COOKIE, sessionCookieOptions(this.config.session.cookieSecure));
   }
 
+  @TenantScoped()
   @Get('me')
   @Header('Cache-Control', 'no-store')
   me(@CurrentUser() user: User): Promise<SessionUser> {

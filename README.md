@@ -18,6 +18,7 @@ Langkah teknis dan progres: [plans/pending/langkah-teknis.md](plans/pending/lang
 | `packages/shared` | Tipe dan konstanta yang dipakai API dan web |
 | `deploy/` | Dockerfile (satu image API + web), compose dev dan staging |
 | `docs/operasi/` | Cara menjalankan dan mengoperasikan |
+| `docs/pengembangan/` | Aturan untuk kode baru, mis. [isolasi tenant dan audit](docs/pengembangan/tenant-dan-audit.md) |
 | `.github/workflows/ci.yml` | CI: lint, build, uji, dan uji asap image lewat compose staging di setiap push |
 
 ## Perintah

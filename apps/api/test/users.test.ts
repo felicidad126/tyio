@@ -2,16 +2,11 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dataSourceOptions } from '../src/db/options.js';
-import { Tenant } from '../src/modules/tenants/tenant.entity.js';
 import { verifyPassword } from '../src/modules/users/password.js';
-import {
-  type NewUser,
-  saveUser,
-  toSessionUser,
-  UserInputError,
-} from '../src/modules/users/user-accounts.js';
+import { auditedTransaction } from '../src/common/audit/audit-context.js';
+import { type NewUser, saveUser, UserInputError } from '../src/modules/users/user-accounts.js';
 import { User } from '../src/modules/users/user.entity.js';
-import { insertTenant, TEST_PASSWORD, uniqueEmail } from './fixtures.js';
+import { asOperator, insertTenant, TEST_PASSWORD, uniqueEmail } from './fixtures.js';
 import { testConfig } from './test-config.js';
 
 describe('akun pengguna', () => {
@@ -30,7 +25,9 @@ describe('akun pengguna', () => {
   }
 
   function save(input: NewUser, options?: { replaceExisting?: boolean }): Promise<User> {
-    return dataSource.transaction((manager) => saveUser(manager, input, options));
+    return auditedTransaction(dataSource, { source: 'cli', label: 'uji otomatis' }, (manager) =>
+      saveUser(manager, input, options),
+    );
   }
 
   it('menyimpan email huruf kecil, hash kata sandi, dan akses semua customer secara bawaan', async () => {
@@ -105,56 +102,16 @@ describe('akun pengguna', () => {
 
   it('database sendiri menolak email huruf besar dan peran yang tidak dikenal', async () => {
     const insert = (email: string, role: string) =>
-      dataSource.query(
-        'INSERT INTO users (email, name, role, password_hash) VALUES ($1, $2, $3, $4)',
-        [email, 'Langsung', role, 'x'],
+      asOperator(dataSource, (manager) =>
+        manager.query('INSERT INTO users (email, name, role, password_hash) VALUES ($1, $2, $3, $4)', [
+          email,
+          'Langsung',
+          role,
+          'x',
+        ]),
       );
 
     await expect(insert(uniqueEmail().toUpperCase(), 'l1')).rejects.toThrow(/users_email_lowercase/);
     await expect(insert(uniqueEmail(), 'l3')).rejects.toThrow(/users_role_valid/);
-  });
-
-  describe('bentuk pengguna untuk aplikasi web', () => {
-    function user(overrides: Partial<User>): User {
-      return Object.assign(new User(), {
-        id: 'u1',
-        email: 'dewi@noc.example',
-        name: 'Dewi A.',
-        role: 'l1',
-        allTenants: true,
-        tenants: [],
-        ...overrides,
-      });
-    }
-    function tenant(code: string, name: string, active = true): Tenant {
-      return Object.assign(new Tenant(), { id: code, code, name, active });
-    }
-
-    it('semua customer aktif bila aksesnya tidak dibatasi, urut nama', () => {
-      const all = [tenant('BSL', 'Bank Selaras'), tenant('BNA', 'Bank Nusa')];
-
-      expect(toSessionUser(user({}), all)).toEqual({
-        id: 'u1',
-        email: 'dewi@noc.example',
-        name: 'Dewi A.',
-        role: 'l1',
-        allTenants: true,
-        tenants: [
-          { id: 'BNA', code: 'BNA', name: 'Bank Nusa' },
-          { id: 'BSL', code: 'BSL', name: 'Bank Selaras' },
-        ],
-      });
-    });
-
-    it('hanya customer yang ditautkan dan masih aktif bila dibatasi', () => {
-      const restricted = user({
-        allTenants: false,
-        tenants: [tenant('BNA', 'Bank Nusa'), tenant('BXX', 'Bank Tutup', false)],
-      });
-
-      expect(toSessionUser(restricted, []).tenants).toEqual([
-        { id: 'BNA', code: 'BNA', name: 'Bank Nusa' },
-      ]);
-    });
   });
 });

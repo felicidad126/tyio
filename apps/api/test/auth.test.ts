@@ -7,9 +7,9 @@ import { DEFAULT_LOGIN_LIMIT } from '../src/config.js';
 import { INVALID_LOGIN_MESSAGE } from '../src/modules/auth/auth.controller.js';
 import { SESSION_REQUIRED_MESSAGE } from '../src/modules/auth/auth.guard.js';
 import { SESSION_COOKIE } from '../src/modules/auth/cookies.js';
-import { type NewUser, saveUser } from '../src/modules/users/user-accounts.js';
+import type { NewUser } from '../src/modules/users/user-accounts.js';
 import { createTestApp } from './create-test-app.js';
-import { insertTenant, TEST_PASSWORD, uniqueEmail } from './fixtures.js';
+import { insertTenant, insertUser, operatorQuery, TEST_PASSWORD, uniqueEmail } from './fixtures.js';
 import { testConfig } from './test-config.js';
 
 // Uji lewat HTTP terhadap AppModule utuh dan PostgreSQL asli (T11).
@@ -30,16 +30,8 @@ describe('login, sesi, dan logout', () => {
     await app.close();
   });
 
-  async function createUser(overrides: Partial<NewUser> = {}): Promise<{ id: string; email: string }> {
-    const input: NewUser = {
-      email: uniqueEmail(),
-      name: 'Pengguna Uji',
-      role: 'l1',
-      password: TEST_PASSWORD,
-      ...overrides,
-    };
-    const user = await dataSource.transaction((manager) => saveUser(manager, input));
-    return { id: user.id, email: user.email };
+  function createUser(overrides: Partial<NewUser> = {}): Promise<{ id: string; email: string }> {
+    return insertUser(dataSource, overrides);
   }
 
   function login(client: Agent, email: string, password = TEST_PASSWORD) {
@@ -96,7 +88,7 @@ describe('login, sesi, dan logout', () => {
     it('memberi jawaban yang sama untuk kata sandi salah, email tak terdaftar, dan akun nonaktif', async () => {
       const { email } = await createUser();
       const inactive = await createUser();
-      await dataSource.query('UPDATE users SET active = false WHERE id = $1', [inactive.id]);
+      await operatorQuery(dataSource, 'UPDATE users SET active = false WHERE id = $1', [inactive.id]);
 
       const wrongPassword = await login(agent(), email, 'kata-sandi-salah').expect(401);
       const unknown = await login(agent(), uniqueEmail('tidak-ada')).expect(401);
@@ -248,7 +240,7 @@ describe('login, sesi, dan logout', () => {
       const browser = agent();
       await login(browser, email).expect(200);
 
-      await dataSource.query('UPDATE users SET active = false WHERE id = $1', [id]);
+      await operatorQuery(dataSource, 'UPDATE users SET active = false WHERE id = $1', [id]);
 
       await browser.get('/api/auth/me').expect(401);
       const rows: unknown[] = await dataSource.query('SELECT 1 FROM sessions WHERE user_id = $1', [id]);
@@ -322,11 +314,7 @@ describe('pembatasan percobaan login yang gagal', () => {
   }
 
   async function createUser(): Promise<string> {
-    const email = uniqueEmail('kunci');
-    await dataSource.transaction((manager) =>
-      saveUser(manager, { email, name: 'Kunci Uji', role: 'l1', password: TEST_PASSWORD }),
-    );
-    return email;
+    return (await insertUser(dataSource, { email: uniqueEmail('kunci'), name: 'Kunci Uji' })).email;
   }
 
   function attempt(email: string, password: string, ip = uniqueIp()) {

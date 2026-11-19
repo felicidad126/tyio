@@ -1,5 +1,6 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditModule } from './common/audit/audit.module.js';
 import { ConfigModule } from './config.module.js';
 import type { AppConfig } from './config.js';
 import { dataSourceOptions } from './db/options.js';
@@ -21,6 +22,7 @@ export class AppModule {
         TenantsModule,
         UsersModule,
         AuthModule,
+        AuditModule,
       ],
     };
   }

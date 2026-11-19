@@ -10,6 +10,7 @@ import 'reflect-metadata';
 import { isRole, PASSWORD_MIN_LENGTH, ROLE_LABELS, ROLES } from '@tyio/shared';
 import { parseArgs } from 'node:util';
 import { DataSource } from 'typeorm';
+import { auditedTransaction } from '../../common/audit/audit-context.js';
 import { runScript } from '../../cli.js';
 import { loadConfig } from '../../config.js';
 import { dataSourceOptions } from '../../db/options.js';
@@ -52,7 +53,7 @@ await runScript(async () => {
   const dataSource = new DataSource(dataSourceOptions(loadConfig().databaseUrl));
   await dataSource.initialize();
   try {
-    const user = await dataSource.transaction((manager) =>
+    const user = await auditedTransaction(dataSource, { source: 'cli', label: 'create-user' }, (manager) =>
       saveUser(manager, { email: values.email ?? '', name: values.name ?? '', role, password, tenantCodes }),
     );
     const access = user.allTenants
