@@ -1,0 +1,2 @@
+# Berkas yang di-source dicari relatif terhadap folder skrip, dari mana pun shellcheck dijalankan.
+source-path=SCRIPTDIR

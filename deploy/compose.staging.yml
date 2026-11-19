@@ -49,5 +49,37 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Backup terenkripsi harian (langkah 0.6, docs/operasi/backup.md). Image sama dengan db, yang
+  # sudah membawa pg_dump, psql, dan gpg. Server hanya memegang kunci PUBLIK backup.
+  backup:
+    image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+    restart: unless-stopped
+    entrypoint: [/scripts/backup-terjadwal.sh]
+    environment:
+      PGHOST: db
+      PGUSER: tyio
+      PGPASSWORD: ${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}
+      PGDATABASE: tyio
+      BACKUP_DIR: /backup
+      BACKUP_PUBLIC_KEY: /kunci/backup-public.asc
+      BACKUP_LABEL: staging
+      BACKUP_TIME_UTC: ${TYIO_BACKUP_TIME_UTC:-18:30}
+      BACKUP_RETENTION_DAYS: ${TYIO_BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./scripts:/scripts:ro
+      - ${TYIO_BACKUP_DIR:-./backup}:/backup
+      - ${TYIO_BACKUP_PUBLIC_KEY:?TYIO_BACKUP_PUBLIC_KEY wajib diisi (kunci publik backup, lihat docs/operasi/backup.md)}:/kunci/backup-public.asc:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # "unhealthy" bila tidak ada backup dalam 26 jam terakhir.
+    healthcheck:
+      test: [CMD, /scripts/backup-sehat.sh]
+      interval: 5m
+      timeout: 10s
+      retries: 1
+      start_period: 2m
+      start_interval: 5s
+
 volumes:
   db-data:

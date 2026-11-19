@@ -13,6 +13,9 @@ playwright-report/
 !.env.example
 !*.env.example
 deploy/certs/
+# Backup dan kunci backup di server staging/produksi.
+deploy/backup/
+deploy/kunci/
 
 .DS_Store
 .idea/
