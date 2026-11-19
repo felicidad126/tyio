@@ -92,11 +92,22 @@ jobs:
           echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)" > "$GITHUB_WORKSPACE/../staging-ci.env"
           $STAGING up -d --wait
 
+      # Akun dummy untuk uji login, dengan kata sandi acak per run (staging tidak punya
+      # kata sandi bawaan). Diteruskan ke docker lewat environment, bukan argumen.
+      - name: Seed data dummy
+        run: |
+          SEED_USER_PASSWORD="$(openssl rand -hex 16)"
+          echo "::add-mask::$SEED_USER_PASSWORD"
+          echo "E2E_USER_PASSWORD=$SEED_USER_PASSWORD" >> "$GITHUB_ENV"
+          export SEED_USER_PASSWORD
+          $STAGING run --rm --no-deps -T -e SEED_USER_PASSWORD app node dist/seed/run.js
+
       - name: Pasang Chromium untuk Playwright
         run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
 
-      - name: Uji asap
-        run: pnpm e2e smoke
+      # Staging memakai cookie Secure; Chromium menerimanya di http://localhost.
+      - name: Uji asap dan login
+        run: pnpm e2e smoke auth
         env:
           E2E_BASE_URL: http://localhost:8080
 

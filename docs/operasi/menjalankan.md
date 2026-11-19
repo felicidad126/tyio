@@ -26,6 +26,11 @@ database tidak bisa dihubungi.
 | `DATABASE_URL` | ya | `postgres://pengguna:sandi@host:5432/nama_db` |
 | `PORT` | tidak | Bawaan 3000 |
 | `WEB_DIST_DIR` | tidak | Folder hasil build web; di image sudah diisi `/app/public` |
+| `SESSION_IDLE_MINUTES` | tidak | Sesi berakhir setelah sekian menit tanpa aktivitas. Bawaan 30 (K28) |
+| `SESSION_MAX_HOURS` | tidak | Sesi berakhir paling lama sekian jam setelah login. Bawaan 12 (K28) |
+| `SESSION_COOKIE_SECURE` | tidak | `true`/`false`. Bawaan `true`, kecuali di `development` dan `test`. Lihat [Login dan akun](#login-dan-akun) |
+| `TRUST_PROXY` | tidak | Jumlah reverse proxy di depan aplikasi (mis. `1`), agar IP klien dan HTTPS terbaca dari header proxy. Kosong = aplikasi diakses langsung; jangan diisi bila tidak ada proxy, karena IP klien jadi bisa dipalsukan |
+| `SEED_USER_PASSWORD` | hanya seed di staging | Kata sandi semua akun dummy, minimal 12 karakter. Di `development`/`test` bawaannya `sandi-dev-tyio` |
 
 Aplikasi menolak start bila konfigurasi tidak sah dan menyebut variabel yang bermasalah,
 tanpa mencetak nilainya.
@@ -37,8 +42,19 @@ Kebutuhan: Docker dengan Compose v2, Node.js 26, pnpm (lihat README).
 ```bash
 pnpm install
 pnpm dev:up          # bangun image, jalankan Postgres + migrasi + seed + aplikasi, tunggu sehat
-pnpm e2e smoke       # uji asap terhadap http://localhost:8080
+pnpm e2e smoke auth  # uji asap dan alur login terhadap http://localhost:8080
 ```
+
+- Masuk di http://localhost:8080 dengan salah satu akun dummy di bawah. Kata sandi semuanya
+  `sandi-dev-tyio` (hanya di development dan test; bukan rahasia).
+
+  | Email | Nama | Peran | Customer |
+  | --- | --- | --- | --- |
+  | `admin@noc.example` | Admin NOC | Admin | semua |
+  | `dewi@noc.example` | Dewi A. | L1 Monitoring | semua |
+  | `rudi@noc.example` | Rudi H. | L1 Monitoring | hanya Bank Nusa (BNA) dan Bank Andalas (BAD) |
+  | `arif@noc.example` | Arif S. | L2 NOC | semua |
+  | `sari@noc.example` | Sari P. | L2 NOC | semua |
 
 - Aplikasi: http://localhost:8080 · Postgres: `localhost:5432`, pengguna/sandi `tyio`/`tyio`
   (database dev `tyio`, database uji `tyio_test`). Semua port hanya terikat ke 127.0.0.1.
@@ -90,9 +106,53 @@ curl -s http://127.0.0.1:8080/api/health
 - Kata sandi database: `openssl rand -hex 24` (heksadesimal aman di dalam URL).
 - Migrasi berjalan otomatis sebelum aplikasi. Membatalkan satu migrasi:
   `docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm app node dist/db/migrate.js down`
-- Data dummy untuk uji bersama pengguna (opsional):
-  `docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm app node dist/seed/run.js`
+- Data dummy untuk uji bersama pengguna (opsional). Staging tidak punya kata sandi bawaan
+  untuk akun dummy; isi sendiri (minimal 12 karakter) dan bagikan ke penguji lewat jalur aman:
+
+  ```bash
+  read -rs SEED_USER_PASSWORD && export SEED_USER_PASSWORD
+  docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm -e SEED_USER_PASSWORD app node dist/seed/run.js
+  ```
 - Database tidak membuka port ke host. Aplikasi terikat ke `127.0.0.1:8080` secara bawaan;
   akses dari jaringan lain dan TLS (R-I) disiapkan bersama keputusan hosting.
 - Uji asap terhadap staging dari mesin pengembang:
   `E2E_BASE_URL=http://<alamat-staging>:8080 pnpm e2e smoke`
+- Uji login terhadap staging yang sudah di-seed: tambahkan `E2E_USER_PASSWORD=<kata sandi seed>`
+  lalu `pnpm e2e auth`. Akun lain: `E2E_USER_EMAIL` dan `E2E_USER_SHOWN_AS`
+  (teks yang tampil setelah login, mis. `Arif S. · L2 NOC`).
+
+## Login dan akun
+
+- Login memakai email dan kata sandi (K27). Sesi berakhir setelah 30 menit tanpa aktivitas
+  atau 12 jam setelah login, mana yang lebih dulu (K28). Logout mencabut sesi di server.
+- Pengguna bawaan boleh melihat semua customer; pengguna tertentu bisa dibatasi ke beberapa
+  customer (K26). Peran: L1 Monitoring (`l1`), L2 NOC (`l2`), Admin (`admin`).
+- Lima kali gagal login untuk satu email dalam 15 menit mengunci email itu sampai 15 menit
+  sejak kegagalan pertama; dua puluh kali gagal dari satu IP mengunci IP itu. Kunci habis
+  sendiri. Login berhasil mengatur ulang hitungan email.
+
+### Membuat pengguna (termasuk admin pertama)
+
+Belum ada halaman admin untuk pengguna; akun dibuat dengan perintah di server (K29).
+Kata sandi diminta dua kali tanpa ditampilkan, minimal 12 karakter:
+
+```bash
+docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm app node dist/modules/users/create-user.js --email admin@contoh.co.id --name "Nama Admin" --role admin
+```
+
+- `--role` salah satu dari `l1`, `l2`, `admin`.
+- `--tenants BNA,BAD` membatasi akses ke customer berkode itu; tanpa opsi ini, semua customer.
+- Dari skrip, kata sandi bisa dikirim lewat pipa (tambahkan `-T` setelah `run`); jangan pernah
+  sebagai argumen, karena argumen tercatat di riwayat shell.
+- Di lingkungan lokal tanpa Docker: `node apps/api/dist/modules/users/create-user.js ...`
+  dengan `TYIO_ENV` dan `DATABASE_URL` terisi. Bantuan: `--help`.
+
+### Cookie Secure dan HTTPS
+
+Di staging dan produksi cookie sesi bertanda Secure, jadi peramban hanya menyimpannya lewat
+HTTPS atau `http://localhost`. Selama staging belum punya TLS (R-I) dan dibuka lewat
+`http://<alamat-server>` dari mesin lain, login tampak berhasil lalu kembali ke halaman login.
+Sementara itu isi `TYIO_SESSION_COOKIE_SECURE=false` di `deploy/staging.env`, dan kembalikan ke
+`true` begitu TLS terpasang. Bila TLS ditutup oleh reverse proxy di depan aplikasi, isi juga
+`TYIO_TRUST_PROXY=1`, dan pastikan proxy meneruskan header `Host` asli; permintaan yang
+mengubah data dari origin lain ditolak 403.

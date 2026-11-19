@@ -9,6 +9,10 @@ x-app: &app
   environment:
     TYIO_ENV: staging
     DATABASE_URL: postgres://tyio:${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}@db:5432/tyio
+    # Cookie sesi hanya dikirim lewat HTTPS (atau http://localhost). Lihat staging.env.example.
+    SESSION_COOKIE_SECURE: ${TYIO_SESSION_COOKIE_SECURE:-true}
+    # Jumlah reverse proxy di depan aplikasi; kosong = langsung diakses.
+    TRUST_PROXY: ${TYIO_TRUST_PROXY:-}
 
 services:
   db:

@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 // Uji asap: satu origin melayani aplikasi web dan API, dan API terhubung ke database.
-// Halaman login menyusul di langkah 0.3; sampai saat itu yang diperiksa halaman utama.
+// Tanpa sesi, setiap halaman aplikasi berakhir di halaman login (alurnya di auth.spec.ts).
 test.describe('uji asap', () => {
-  test('halaman utama terbuka tanpa galat di browser', async ({ page }) => {
+  test('halaman login terbuka tanpa galat di browser', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
 
@@ -11,6 +11,7 @@ test.describe('uji asap', () => {
 
     await expect(page).toHaveTitle('Portal NOC Terpusat');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Portal NOC Terpusat');
+    await expect(page.getByRole('button', { name: 'Masuk' })).toBeVisible();
     expect(pageErrors).toEqual([]);
   });
 

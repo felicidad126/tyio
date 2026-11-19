@@ -29,14 +29,17 @@ pnpm lint             # ESLint seluruh repo; peringatan pun dianggap gagal
 pnpm build            # cek tipe + build semua paket (shared lebih dulu)
 pnpm test             # semua uji (uji API memakai Postgres dari dev:up)
 pnpm test:api health  # uji API yang path berkasnya memuat "health"
-pnpm e2e smoke        # uji layar (Playwright) terhadap aplikasi yang sedang jalan
+pnpm e2e smoke auth   # uji layar (Playwright) terhadap aplikasi yang sedang jalan
 pnpm dev:down         # hentikan stack dev (dev:reset juga menghapus datanya)
 ```
 
 Urutan pada clone baru: `pnpm install` → `pnpm dev:up` → `pnpm build` → `pnpm test`.
 Uji API butuh Postgres asli (database `tyio_test`) dan hasil build `packages/shared/dist`.
 
-Cara menjalankan, variabel lingkungan, staging, dan jaringan kantor dengan proxy TLS:
+Akun dummy untuk login di lokal: `dewi@noc.example` (L1), `arif@noc.example` (L2),
+`admin@noc.example` (admin), kata sandi `sandi-dev-tyio`.
+
+Cara menjalankan, variabel lingkungan, akun, staging, dan jaringan kantor dengan proxy TLS:
 [docs/operasi/menjalankan.md](docs/operasi/menjalankan.md).
 
 ## Catatan penting

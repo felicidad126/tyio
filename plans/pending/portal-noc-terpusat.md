@@ -40,6 +40,10 @@ gangguan massal, data remote, SLA, laporan, dokumen, dan tampilan monitor 24/7.
 | K23 | Tim SD tidak login ke portal; SD menerima TT lewat notifikasi. Hasil kunjungan dicatat L1/L2 di linimasa TT. | User |
 | K24 | Peran L3 dibahas nanti; R0 hanya memasang L1, L2, admin. | User |
 | K25 | Sampai R5, TT diteruskan ke SD secara manual lewat tombol "salin ringkasan TT"; notifikasi otomatis ke SD menyusul di R5. | User |
+| K26 | **Akses customer:** pengguna bawaan boleh melihat semua customer; admin bisa membatasi pengguna tertentu ke beberapa customer saja. | User (2026-11-19, langkah 0.3) |
+| K27 | Login memakai **email** + kata sandi; email tidak membedakan huruf besar/kecil. | User (2026-11-19, langkah 0.3) |
+| K28 | **Sesi:** keluar otomatis setelah 30 menit tanpa aktivitas, dan paling lama 12 jam sejak login (kira-kira satu shift). Layar dinding (langkah 2.4) butuh cara sendiri agar tidak keluar. | User (2026-11-19, langkah 0.3) |
+| K29 | Akun admin pertama di staging dan produksi dibuat lewat **perintah CLI** di server, bukan lewat halaman pendaftaran. | User (2026-11-19, langkah 0.3) |
 
 **Ditunda ke sesi berikutnya (bersama user):** aturan SLA, detail Gamas, arti pilihan
 Take Action ("Bebas", "Cek Lokasi"), hak akses per peran, arti System / TM / SD.
@@ -294,5 +298,5 @@ List Report Teknisi, Shared.
 | Rilis | Status |
 | --- | --- |
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
-| R0 Fondasi | Berjalan — 0.1 selesai; lihat Progres di langkah-teknis.md |
+| R0 Fondasi | Berjalan — 0.1–0.3 selesai; lihat Progres di langkah-teknis.md |
 | R1–R8 | Belum mulai |

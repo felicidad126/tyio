@@ -46,6 +46,17 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T17 | TypeORM 1.1 (stabil, mendukung ESM); daftar entity/migrasi eksplisit di satu berkas (`db/registry.ts`) | Tanpa glob yang rapuh di ESM; konfigurasi aplikasi dan skrip migrasi tidak bisa menyimpang |
 | — | Registry image untuk staging: **belum diputuskan** | Bergantung pada hosting (lihat bagian D) |
 
+**Keputusan yang diambil saat 0.3** (mohon dicek; turunan T5, T7, T13, K26–K29):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T18 | Sesi disimpan di PostgreSQL (tabel `sessions`); cookie hanya berisi token acak 256 bit, database hanya menyimpan hash SHA-256-nya. Batas idle dan batas mutlak dihitung dengan jam database | T7 tanpa Redis; sesi bisa dicabut seketika (logout, pengguna dinonaktifkan); bocornya isi tabel tidak memberi akses |
+| T19 | Hash kata sandi argon2id memakai `crypto.argon2` bawaan Node 26 (m=19 MiB, t=2, p=1, format PHC), bukan paket `argon2` | Parameter minimum OWASP; tanpa modul native dan install script (diblokir pnpm) |
+| T20 | Cookie `tyio_sesi`: HttpOnly, SameSite=Strict, Path=/api, Secure di luar development/test. Ditambah penjaga origin: POST/PUT/DELETE dari situs lain ditolak 403; login hanya menerima JSON | Dua lapis lawan CSRF tanpa token CSRF, karena web dan API satu origin (T13) |
+| T21 | Semua endpoint wajib sesi kecuali yang ditandai `@Public()` (health, login, logout) | Endpoint baru otomatis terlindungi tanpa perlu diingat |
+| T22 | Login gagal dibatasi: 5 kali per email (sejak login berhasil terakhir) dan 20 kali per IP, dalam 15 menit; lalu 429 + `Retry-After`. Email tak terdaftar, akun nonaktif, dan kata sandi salah memberi jawaban dan waktu yang sama | Menahan tebakan kata sandi tanpa membocorkan akun mana yang ada; kunci habis sendiri tanpa admin |
+| T23 | Rute web memakai vue-router 5.4.0 (versi terbaru yang sudah berumur ≥ 2 minggu saat dipasang) | Rantai pasok: versi yang baru terbit belum sempat diperiksa komunitas |
+
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
 
@@ -163,6 +174,7 @@ Selesai bila: angka Overview cocok dengan daftar tiket; layar dinding jalan 24 j
 
 **2.4 Mode layar dinding (S)**
 - Terima: tanpa interaksi, teks terbaca dari jauh, berputar antarpanel, bunyi saat kejadian kritis, tidak keluar sesi sendiri, pulih sendiri setelah jaringan putus.
+- Catatan: sesi biasa berakhir paling lama 12 jam (K28), jadi layar dinding butuh cara masuk sendiri (mis. akun perangkat hanya-baca). Diputuskan di langkah ini.
 - Verifikasi: `pnpm e2e wall` + uji rendam 24 jam di staging
 - Berkas: `apps/web/src/pages/wall/`
 - Menunggu: 2.2
@@ -293,6 +305,6 @@ Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai b
 | --- | --- |
 | 0.1 Kerangka repo dan pipeline | **Selesai 2026-11-16** (commit `e27430e`). `pnpm lint && pnpm build && pnpm test:api health` lulus dari salinan bersih (Node 26.13.1, pnpm 12.21.0). CI run #1 di GitHub hijau: lint, build, 2 uji health lulus. API hasil build dijalankan: `GET /health` → 200 `{"status":"ok"}`. Uji mutasi: mematikan metadata dekorator membuat uji merah. Workflow belum diperiksa actionlint (unduhan biner ditolak izin sesi); validitasnya dibuktikan oleh run CI. |
 | 0.2 Lingkungan lokal dan staging | **Selesai 2026-11-16; pemasangan staging menunggu hosting.** `pnpm dev:up && pnpm e2e smoke` lulus dari salinan bersih dengan database baru: Postgres 18 + migrasi + seed + aplikasi sehat dalam ±25 detik, 3 uji asap lulus. 19 uji API lulus terhadap PostgreSQL asli. Uji mutasi pada 4 penjaga (zona waktu UTC, aset hilang = 404, seed ditolak di produksi, health 503) masing-masing membuat uji merah. Compose staging dijalankan lokal dengan image hasil build dan lolos uji asap. CI run #9 (commit `8606787`, memuat kode 0.2 `5003862` + perbaikan CI `1b1f86c`) hijau: job `verify` lint/build/uji API dengan service PostgreSQL 18; job `image` membangun image, menjalankannya dengan compose staging, 3 uji asap lulus, lalu dibersihkan. Run #3–#8 dibatalkan oleh push berikutnya ke branch yang sama (aturan concurrency), bukan gagal. **Belum:** registry image dan pemasangan di server staging (bagian D); seeder masih kosong sampai 0.3 menambah tenant dan pengguna; "uji di halaman login" diganti halaman utama karena login baru ada di 0.3. |
-| 0.3 Tenant, pengguna, login | Siap dikerjakan (T1–T12 disetujui) |
-| 0.5 Kerangka PWA dan navigasi | Siap setelah 0.3 |
+| 0.3 Tenant, pengguna, login | **Selesai 2026-11-19.** `pnpm test:api auth` (24 uji) dan seluruh `pnpm test` (66 uji) lulus terhadap PostgreSQL 18.7 asli; migrasi diterapkan, dibatalkan semua, lalu diterapkan ulang di setiap run uji (jalur turun T3 teruji). `pnpm e2e smoke auth` (9 uji) lulus di Chromium terhadap aplikasi hasil build dengan `TYIO_ENV=staging`, jadi cookie Secure ikut teruji di http://localhost. `pnpm lint` dan `pnpm build` bersih. Perintah `create-user` dicoba manual: membuat admin, menolak email ganda dan peran tak dikenal, lalu akun baru bisa login. CI run #70 (commit `6d92aa9`) hijau: job `verify` lint/build/uji API; job `image` membangun image, menjalankannya dengan compose staging, men-seed akun dummy dengan kata sandi acak, lalu `pnpm e2e smoke auth` lulus (cookie Secure di http://localhost). Run #69 (merge `main`) gagal di pemasangan Chromium karena mirror Ubuntu menjawab 503, bukan karena kode. `pnpm dev:up` belum dijalankan untuk perubahan ini (sesi tanpa Docker); compose staging sudah diuji CI. Halaman setelah login masih sementara (nama, peran, customer, tombol Keluar); layout dan menu di 0.5. Belum: halaman admin untuk mengelola pengguna (pengguna dibuat lewat CLI dan seed dulu). |
+| 0.5 Kerangka PWA dan navigasi | Siap dikerjakan |
 | 0.4, 0.6, R1–R8 | Belum mulai |

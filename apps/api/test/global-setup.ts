@@ -1,9 +1,11 @@
 import 'reflect-metadata';
-import { DataSource } from 'typeorm';
+import { DataSource, MigrationExecutor } from 'typeorm';
 import { dataSourceOptions } from '../src/db/options.js';
 import { testConfig } from './test-config.js';
 
 // Sekali sebelum seluruh uji: pastikan database uji bisa dihubungi dan skemanya terbaru.
+// Setiap migrasi juga dibatalkan lalu diterapkan ulang, sehingga jalur turun (T3)
+// selalu teruji, bukan hanya ditulis.
 export default async function setup(): Promise<void> {
   const { databaseUrl } = testConfig();
   const dataSource = new DataSource(dataSourceOptions(databaseUrl));
@@ -18,6 +20,11 @@ export default async function setup(): Promise<void> {
     );
   }
   try {
+    await dataSource.runMigrations({ transaction: 'each' });
+    const executed = await new MigrationExecutor(dataSource).getExecutedMigrations();
+    for (let i = 0; i < executed.length; i++) {
+      await dataSource.undoLastMigration({ transaction: 'each' });
+    }
     await dataSource.runMigrations({ transaction: 'each' });
   } finally {
     await dataSource.destroy();
