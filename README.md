@@ -30,7 +30,7 @@ pnpm lint             # ESLint seluruh repo; peringatan pun dianggap gagal
 pnpm build            # cek tipe + build semua paket (shared lebih dulu)
 pnpm test             # semua uji (uji API memakai Postgres dari dev:up)
 pnpm test:api health  # uji API yang path berkasnya memuat "health"
-pnpm e2e smoke auth   # uji layar (Playwright) terhadap aplikasi yang sedang jalan
+pnpm e2e smoke auth shell  # uji layar (Playwright) terhadap aplikasi yang sedang jalan
 pnpm dev:down         # hentikan stack dev (dev:reset juga menghapus datanya)
 ```
 

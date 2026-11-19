@@ -1,19 +1,8 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { ACCOUNTS, accountButton, PASSWORD, submitLogin } from './accounts';
 
 // Alur login di browser terhadap aplikasi yang menyala dan sudah di-seed.
-// Bawaan: akun dummy dev (seed). Di staging/CI isi E2E_USER_PASSWORD dengan
-// SEED_USER_PASSWORD yang dipakai saat seed.
-const USER = {
-  email: process.env.E2E_USER_EMAIL ?? 'dewi@noc.example',
-  password: process.env.E2E_USER_PASSWORD ?? 'sandi-dev-tyio',
-  shownAs: process.env.E2E_USER_SHOWN_AS ?? 'Dewi A. · L1 Monitoring',
-};
-
-async function submitLogin(page: Page, email: string, password: string): Promise<void> {
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill(password);
-  await page.getByRole('button', { name: 'Masuk' }).click();
-}
+const USER = ACCOUNTS.l1;
 
 test.describe('login', () => {
   test('tanpa sesi, halaman aplikasi dialihkan ke halaman login', async ({ page }) => {
@@ -27,17 +16,18 @@ test.describe('login', () => {
   test('masuk, melihat nama dan peran, lalu keluar', async ({ page, context }) => {
     await page.goto('/masuk');
 
-    await submitLogin(page, USER.email, USER.password);
+    await submitLogin(page, USER.email, PASSWORD);
 
     await expect(page).toHaveURL('/');
-    await expect(page.getByText(USER.shownAs)).toBeVisible();
+    await expect(accountButton(page, USER)).toBeVisible();
     const cookie = (await context.cookies()).find((c) => c.name === 'tyio_sesi');
     expect(cookie).toMatchObject({ httpOnly: true, sameSite: 'Strict', path: '/api' });
 
     // Sesi bertahan saat halaman dimuat ulang.
     await page.reload();
-    await expect(page.getByText(USER.shownAs)).toBeVisible();
+    await expect(accountButton(page, USER)).toBeVisible();
 
+    await accountButton(page, USER).click();
     await page.getByRole('button', { name: 'Keluar' }).click();
 
     await expect(page).toHaveURL('/masuk');
@@ -76,7 +66,7 @@ test.describe('login', () => {
     await page.goto('/tiket/NPR-CONTOH');
     await expect(page).toHaveURL('/masuk?next=/tiket/NPR-CONTOH');
 
-    await submitLogin(page, USER.email, USER.password);
+    await submitLogin(page, USER.email, PASSWORD);
 
     await expect(page).toHaveURL('/tiket/NPR-CONTOH');
   });
@@ -84,9 +74,9 @@ test.describe('login', () => {
   test('tujuan setelah login ke situs lain diabaikan', async ({ page }) => {
     await page.goto('/masuk?next=//contoh.example/jebakan');
 
-    await submitLogin(page, USER.email, USER.password);
+    await submitLogin(page, USER.email, PASSWORD);
 
     await expect(page).toHaveURL('/');
-    await expect(page.getByText(USER.shownAs)).toBeVisible();
+    await expect(accountButton(page, USER)).toBeVisible();
   });
 });

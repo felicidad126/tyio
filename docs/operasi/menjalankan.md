@@ -42,7 +42,7 @@ Kebutuhan: Docker dengan Compose v2, Node.js 26, pnpm (lihat README).
 ```bash
 pnpm install
 pnpm dev:up          # bangun image, jalankan Postgres + migrasi + seed + aplikasi, tunggu sehat
-pnpm e2e smoke auth  # uji asap dan alur login terhadap http://localhost:8080
+pnpm e2e smoke auth shell  # uji asap, login, dan kerangka aplikasi terhadap http://localhost:8080
 ```
 
 - Masuk di http://localhost:8080 dengan salah satu akun dummy di bawah. Kata sandi semuanya
@@ -117,9 +117,9 @@ curl -s http://127.0.0.1:8080/api/health
   akses dari jaringan lain dan TLS (R-I) disiapkan bersama keputusan hosting.
 - Uji asap terhadap staging dari mesin pengembang:
   `E2E_BASE_URL=http://<alamat-staging>:8080 pnpm e2e smoke`
-- Uji login terhadap staging yang sudah di-seed: tambahkan `E2E_USER_PASSWORD=<kata sandi seed>`
-  lalu `pnpm e2e auth`. Akun lain: `E2E_USER_EMAIL` dan `E2E_USER_SHOWN_AS`
-  (teks yang tampil setelah login, mis. `Arif S. · L2 NOC`).
+- Uji login dan kerangka terhadap staging yang sudah di-seed: tambahkan
+  `E2E_USER_PASSWORD=<kata sandi seed>` lalu `pnpm e2e auth shell`. Uji memakai akun dummy
+  `dewi@`, `arif@`, dan `admin@noc.example` dari seed.
 
 ## Login dan akun
 
@@ -146,6 +146,20 @@ docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run -
   sebagai argumen, karena argumen tercatat di riwayat shell.
 - Di lingkungan lokal tanpa Docker: `node apps/api/dist/modules/users/create-user.js ...`
   dengan `TYIO_ENV` dan `DATABASE_URL` terisi. Bantuan: `--help`.
+
+### Memasang aplikasi (PWA)
+
+Portal bisa dipasang seperti aplikasi: di Chrome/Edge desktop lewat ikon "Pasang" di bilah
+alamat, di Android lewat menu "Tambahkan ke layar utama", di iPhone lewat Bagikan → "Tambahkan
+ke Layar Utama".
+
+- Butuh **HTTPS** (atau `http://localhost`). Selama staging dibuka lewat `http://<alamat-server>`,
+  aplikasi tetap jalan di peramban, tetapi tidak bisa dipasang dan tidak punya service worker.
+- Service worker hanya menyimpan berkas aplikasi (HTML, JS, CSS, ikon). Jawaban API (data
+  customer) tidak pernah disimpan di perangkat.
+- Setelah rilis baru, pengguna melihat pesan "Versi baru portal tersedia" dengan tombol
+  "Muat ulang sekarang"; halaman tidak dimuat ulang sendiri di tengah pekerjaan. Layar yang
+  menyala terus memeriksa versi baru setiap jam.
 
 ### Jejak audit
 

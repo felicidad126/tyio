@@ -9,7 +9,7 @@ test.describe('uji asap', () => {
 
     await page.goto('/');
 
-    await expect(page).toHaveTitle('Portal NOC Terpusat');
+    await expect(page).toHaveTitle('Masuk · Portal NOC Terpusat');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Portal NOC Terpusat');
     await expect(page.getByRole('button', { name: 'Masuk' })).toBeVisible();
     expect(pageErrors).toEqual([]);
