@@ -147,6 +147,29 @@ docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run -
 - Di lingkungan lokal tanpa Docker: `node apps/api/dist/modules/users/create-user.js ...`
   dengan `TYIO_ENV` dan `DATABASE_URL` terisi. Bantuan: `--help`.
 
+### Jejak audit
+
+Setiap perubahan data (customer, pengguna, akses customer, dan tabel data berikutnya)
+tercatat otomatis di tabel `audit_log`: siapa, kapan, dari mana (IP), dan apa yang berubah.
+Login, login gagal, dan logout juga tercatat. Hash kata sandi tidak pernah ikut tercatat.
+
+- Membaca: `GET /api/audit` dengan sesi admin (terbaru dulu; `?limit=`, `?before=`,
+  `?tenantId=`). Admin yang dibatasi ke beberapa customer hanya melihat catatan customer itu.
+  Halaman admin untuk audit menyusul.
+- Catatan tidak bisa diubah atau dihapus, juga oleh aplikasi sendiri.
+- Perbaikan data langsung di database **wajib menyebut siapa pelakunya**; tanpa itu
+  database menolak perubahannya:
+
+  ```sql
+  BEGIN;
+  SELECT set_config('tyio.source', 'manual', true), set_config('tyio.actor_label', 'Nama Operator: alasan', true);
+  UPDATE tenants SET name = 'Bank Nusa' WHERE code = 'BNA';
+  COMMIT;
+  ```
+
+- Belum diatur: lama penyimpanan audit (bersama checklist kepatuhan, langkah 0.6) dan
+  pencatatan siapa *melihat* data (R-I, sebelum produksi).
+
 ### Cookie Secure dan HTTPS
 
 Di staging dan produksi cookie sesi bertanda Secure, jadi peramban hanya menyimpannya lewat

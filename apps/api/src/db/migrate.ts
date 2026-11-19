@@ -12,7 +12,9 @@ await runScript(async () => {
     throw new Error('Pemakaian: node dist/db/migrate.js [up|down]');
   }
 
-  const dataSource = new DataSource(dataSourceOptions(loadConfig().databaseUrl));
+  const dataSource = new DataSource(
+    dataSourceOptions(loadConfig().databaseUrl, { auditSource: 'migrasi' }),
+  );
   await dataSource.initialize();
   try {
     if (direction === 'up') {

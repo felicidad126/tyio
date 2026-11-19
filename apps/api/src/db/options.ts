@@ -1,7 +1,19 @@
 import type { DataSourceOptions } from 'typeorm';
 import { entities, migrations } from './registry.js';
 
-export function dataSourceOptions(databaseUrl: string): DataSourceOptions {
+/**
+ * `auditSource: 'migrasi'` dipakai skrip migrasi: perubahan data di dalam migrasi tercatat
+ * di audit dengan sumber "migrasi". Koneksi aplikasi sengaja tanpa sumber bawaan, sehingga
+ * setiap tulisan aplikasi wajib lewat `auditedTransaction` (ditolak database bila tidak).
+ */
+export function dataSourceOptions(
+  databaseUrl: string,
+  options: { auditSource?: 'migrasi' } = {},
+): DataSourceOptions {
+  const connectionSettings = ['-c timezone=UTC'];
+  if (options.auditSource) {
+    connectionSettings.push(`-c tyio.source=${options.auditSource}`, '-c tyio.actor_label=migrate');
+  }
   return {
     type: 'postgres',
     url: databaseUrl,
@@ -15,6 +27,6 @@ export function dataSourceOptions(databaseUrl: string): DataSourceOptions {
     migrationsRun: false,
     connectTimeoutMS: 10_000,
     // Setiap koneksi memakai zona waktu UTC, apa pun setelan server (T12).
-    extra: { options: '-c timezone=UTC' },
+    extra: { options: connectionSettings.join(' ') },
   };
 }

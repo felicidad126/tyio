@@ -5,7 +5,6 @@ import {
   ROLES,
   isRole,
   type Role,
-  type SessionUser,
 } from '@tyio/shared';
 import { type EntityManager, In } from 'typeorm';
 import { Tenant } from '../tenants/tenant.entity.js';
@@ -92,24 +91,4 @@ export async function saveUser(
   user.tenants = tenants;
   user.active = true;
   return repo.save(user);
-}
-
-/**
- * Bentuk pengguna yang dikirim ke aplikasi web. `allActiveTenants` dipakai bila pengguna
- * boleh melihat semua customer; selain itu hanya customer yang ditautkan dan masih aktif.
- */
-export function toSessionUser(user: User, allActiveTenants: readonly Tenant[]): SessionUser {
-  const visible = user.allTenants
-    ? allActiveTenants
-    : (user.tenants ?? []).filter((tenant) => tenant.active);
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    allTenants: user.allTenants,
-    tenants: [...visible]
-      .sort((a, b) => a.name.localeCompare(b.name, 'id'))
-      .map((tenant) => ({ id: tenant.id, code: tenant.code, name: tenant.name })),
-  };
 }

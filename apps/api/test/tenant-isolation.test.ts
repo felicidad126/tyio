@@ -1,0 +1,249 @@
+import { randomUUID } from 'node:crypto';
+import { DiscoveryModule } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { AuditPage, SessionUser, TenantSummary } from '@tyio/shared';
+import request from 'supertest';
+import { DataSource } from 'typeorm';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { scopeFor, scopeIncludes } from '../src/common/tenant/tenant-scope.js';
+import { TENANT_NOT_FOUND_MESSAGE } from '../src/modules/tenants/tenants.controller.js';
+import { createTestApp } from './create-test-app.js';
+import { insertTenant, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
+import { type RegisteredRoute, registeredRoutes } from './routes.js';
+
+// Isolasi tenant (langkah 0.4): pengguna yang dibatasi ke customer A tidak bisa membaca
+// data customer B lewat endpoint mana pun. Uji ini membaca daftar endpoint dari aplikasi,
+// jadi endpoint baru otomatis ikut diperiksa dan wajib punya uji lintas-tenant di PROBES.
+
+type Agent = ReturnType<typeof request.agent>;
+type Tenant = { id: string; code: string; name: string };
+
+interface Fixture {
+  server: ReturnType<NestExpressApplication['getHttpServer']>;
+  tenantA: Tenant;
+  tenantB: Tenant;
+  /** L1 yang hanya boleh melihat customer A. */
+  operatorA: { email: string; agent: Agent };
+  /** Admin yang hanya boleh melihat customer A. */
+  adminA: { email: string; agent: Agent };
+}
+
+const ids = (items: Array<{ id: string }>) => items.map((item) => item.id);
+
+/**
+ * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
+ * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
+ * dan (sebagai kontrol) data customer A tetap terlihat.
+ */
+const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'POST /api/auth/login': async (fx) => {
+    const res = await request(fx.server)
+      .post('/api/auth/login')
+      .send({ email: fx.operatorA.email, password: TEST_PASSWORD })
+      .expect(200);
+
+    expect(ids((res.body as SessionUser).tenants)).toEqual([fx.tenantA.id]);
+  },
+
+  'GET /api/auth/me': async (fx) => {
+    const res = await fx.operatorA.agent.get('/api/auth/me').expect(200);
+
+    expect(ids((res.body as SessionUser).tenants)).toEqual([fx.tenantA.id]);
+  },
+
+  'GET /api/tenants': async (fx) => {
+    const res = await fx.operatorA.agent.get('/api/tenants').expect(200);
+
+    expect(ids(res.body as TenantSummary[])).toEqual([fx.tenantA.id]);
+  },
+
+  'GET /api/tenants/:id': async (fx) => {
+    const other = await fx.operatorA.agent.get(`/api/tenants/${fx.tenantB.id}`).expect(404);
+    expect(other.body.message).toBe(TENANT_NOT_FOUND_MESSAGE);
+
+    const own = await fx.operatorA.agent.get(`/api/tenants/${fx.tenantA.id}`).expect(200);
+    expect(own.body).toEqual({ id: fx.tenantA.id, code: fx.tenantA.code, name: fx.tenantA.name });
+  },
+
+  'GET /api/audit': async (fx) => {
+    const other = await fx.adminA.agent.get(`/api/audit?tenantId=${fx.tenantB.id}`).expect(200);
+    expect((other.body as AuditPage).entries).toEqual([]);
+
+    const own = await fx.adminA.agent.get(`/api/audit?tenantId=${fx.tenantA.id}`).expect(200);
+    expect((own.body as AuditPage).entries.length).toBeGreaterThan(0);
+
+    // Tanpa filter: hanya catatan customer A; catatan global (login, pengguna) juga tidak.
+    const all = await fx.adminA.agent.get('/api/audit?limit=200').expect(200);
+    const tenants = new Set((all.body as AuditPage).entries.map((entry) => entry.tenantId));
+    expect([...tenants]).toEqual([fx.tenantA.id]);
+  },
+};
+
+describe('isolasi tenant di semua endpoint', () => {
+  let app: NestExpressApplication;
+  let dataSource: DataSource;
+  let routes: RegisteredRoute[];
+  let fx: Fixture;
+
+  beforeAll(async () => {
+    app = await createTestApp(undefined, { imports: [DiscoveryModule] });
+    dataSource = app.get(DataSource);
+    routes = registeredRoutes(app);
+
+    const tenantA = await insertTenant(dataSource, 'Bank Isolasi A');
+    const tenantB = await insertTenant(dataSource, 'Bank Isolasi B');
+    // Data customer B yang nyata di audit: pengguna yang dibatasi ke B.
+    await insertUser(dataSource, { name: 'Operator B', tenantCodes: [tenantB.code] });
+    const operatorA = await insertUser(dataSource, { name: 'Operator A', tenantCodes: [tenantA.code] });
+    const adminA = await insertUser(dataSource, {
+      name: 'Admin A',
+      role: 'admin',
+      tenantCodes: [tenantA.code],
+    });
+
+    const login = async (email: string) => {
+      const agent = request.agent(app.getHttpServer());
+      await agent.post('/api/auth/login').send({ email, password: TEST_PASSWORD }).expect(200);
+      return { email, agent };
+    };
+    fx = {
+      server: app.getHttpServer(),
+      tenantA,
+      tenantB,
+      operatorA: await login(operatorA.email),
+      adminA: await login(adminA.email),
+    };
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('daftar endpoint terbaca (pemeriksa uji ini sendiri)', () => {
+    expect(routes.map((route) => route.key)).toEqual(
+      expect.arrayContaining(['GET /api/health', 'POST /api/auth/login', 'GET /api/tenants/:id']),
+    );
+  });
+
+  it('setiap endpoint menyatakan apakah menyentuh data customer', () => {
+    const undeclared = routes.filter((route) => route.tenancy === undefined).map((route) => route.key);
+
+    // Perbaikan: beri @TenantScoped() atau @NoTenantData() pada handler atau controller-nya.
+    expect(undeclared).toEqual([]);
+  });
+
+  it('setiap endpoint data customer punya uji lintas-tenant, dan sebaliknya', () => {
+    const scoped = routes.filter((route) => route.tenancy === 'scoped').map((route) => route.key);
+
+    // Perbaikan: tambahkan uji ke PROBES di berkas ini dengan kunci "METHOD /api/path".
+    expect(Object.keys(PROBES).sort()).toEqual(scoped.sort());
+  });
+
+  it('setiap endpoint non-publik menolak permintaan tanpa sesi', async () => {
+    const open: string[] = [];
+    for (const route of routes.filter((r) => !r.isPublic)) {
+      const path = route.path.replace(/:[A-Za-z]+/g, randomUUID());
+      const res = await request(fx.server)[route.method.toLowerCase() as 'get'](path);
+      if (res.status !== 401) open.push(`${route.key} → ${res.status}`);
+    }
+
+    expect(open).toEqual([]);
+  });
+
+  // `it.for` dievaluasi saat berkas dimuat, sebelum aplikasi menyala; daftar kunci PROBES
+  // dicocokkan dengan daftar rute oleh uji di atas.
+  it.for(Object.keys(PROBES))('%s tidak membocorkan data customer lain', async (key) => {
+    const probe = PROBES[key];
+    if (!probe) throw new Error(`Tidak ada uji untuk ${key}`);
+    await probe(fx);
+  });
+
+  it('customer nonaktif keluar dari cakupan, walau masih ditautkan', async () => {
+    const closing = await insertTenant(dataSource, 'Bank Tutup');
+    const user = await insertUser(dataSource, { tenantCodes: [closing.code] });
+    const agent = request.agent(fx.server);
+    await agent.post('/api/auth/login').send({ email: user.email, password: TEST_PASSWORD }).expect(200);
+    await agent.get(`/api/tenants/${closing.id}`).expect(200);
+
+    await operatorQuery(dataSource, 'UPDATE tenants SET active = false WHERE id = $1', [closing.id]);
+
+    await agent.get(`/api/tenants/${closing.id}`).expect(404);
+    expect((await agent.get('/api/tenants').expect(200)).body).toEqual([]);
+    expect(((await agent.get('/api/auth/me').expect(200)).body as SessionUser).tenants).toEqual([]);
+  });
+
+  it('daftar customer urut nama seperti dibaca orang, apa pun collation database', async () => {
+    const bpd = await insertTenant(dataSource, 'BPD Zeta');
+    const bank = await insertTenant(dataSource, 'Bank Alfa');
+    const user = await insertUser(dataSource, { tenantCodes: [bpd.code, bank.code] });
+    const agent = request.agent(fx.server);
+    await agent.post('/api/auth/login').send({ email: user.email, password: TEST_PASSWORD }).expect(200);
+
+    const res = await agent.get('/api/tenants').expect(200);
+
+    // Collation "C" mengurutkan huruf besar dulu (BPD < Bank); pembaca mengharapkan Bank < BPD.
+    expect((res.body as TenantSummary[]).map((tenant) => tenant.name)).toEqual(['Bank Alfa', 'BPD Zeta']);
+  });
+
+  it('id yang bukan UUID dijawab seperti id yang tidak ada', async () => {
+    const res = await fx.operatorA.agent.get('/api/tenants/bukan-uuid').expect(404);
+
+    expect(res.body.message).toBe(TENANT_NOT_FOUND_MESSAGE);
+  });
+});
+
+describe('aturan skema: setiap tabel data punya tenant_id (T9)', () => {
+  // Tabel tanpa tenant_id harus disebut di sini beserta alasannya.
+  const GLOBAL_TABLES: Record<string, string> = {
+    migrations: 'catatan migrasi TypeORM',
+    tenants: 'tabel customer itu sendiri; cakupannya lewat kolom id',
+    users: 'pengguna lintas customer; aksesnya di user_tenants',
+    sessions: 'sesi login milik pengguna, bukan data customer',
+    login_attempts: 'catatan keamanan login, bukan data customer',
+  };
+
+  let app: NestExpressApplication;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('tabel di luar daftar global wajib punya kolom tenant_id', async () => {
+    const rows: Array<{ table_name: string }> = await app.get(DataSource).query(
+      `SELECT t.table_name
+       FROM information_schema.tables t
+       WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
+         AND NOT EXISTS (
+           SELECT 1 FROM information_schema.columns c
+           WHERE c.table_schema = 'public' AND c.table_name = t.table_name AND c.column_name = 'tenant_id')
+       ORDER BY t.table_name`,
+    );
+
+    expect(rows.map((row) => row.table_name)).toEqual(Object.keys(GLOBAL_TABLES).sort());
+  });
+});
+
+describe('cakupan customer pengguna', () => {
+  const tenant = (id: string, active = true) => ({ id, active });
+
+  it('semua customer bila tidak dibatasi', () => {
+    const scope = scopeFor({ allTenants: true, tenants: [tenant('a')] });
+
+    expect(scope).toEqual({ all: true });
+    expect(scopeIncludes(scope, 'apa-saja')).toBe(true);
+    expect(scopeIncludes(scope, null)).toBe(true);
+  });
+
+  it('hanya customer aktif yang ditautkan bila dibatasi; catatan tanpa customer tidak termasuk', () => {
+    const scope = scopeFor({ allTenants: false, tenants: [tenant('a'), tenant('b', false)] });
+
+    expect(scope).toEqual({ all: false, tenantIds: ['a'] });
+    expect(scopeIncludes(scope, 'a')).toBe(true);
+    expect(scopeIncludes(scope, 'b')).toBe(false);
+    expect(scopeIncludes(scope, null)).toBe(false);
+  });
+});

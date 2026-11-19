@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { LoginRequest, SessionUser } from '@tyio/shared';
+import { AuditService } from '../../common/audit/audit.service.js';
 import { verifyAgainstDummy, verifyPassword } from '../users/password.js';
 import { normalizeEmail } from '../users/user-accounts.js';
 import type { User } from '../users/user.entity.js';
@@ -18,6 +19,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly sessions: SessionsService,
     private readonly throttle: LoginThrottleService,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -39,12 +41,22 @@ export class AuthService {
       await verifyAgainstDummy(input.password);
     }
     await this.throttle.record(email, client.ip, ok);
-    if (!user || !ok) return { kind: 'invalid' };
+    const details = { user_agent: client.userAgent?.slice(0, 512) ?? null };
+    if (!user || !ok) {
+      // Email yang dicoba ikut dicatat agar percobaan menebak akun terlihat di audit.
+      await this.audit.recordEvent('login_failed', { source: 'api', label: email, clientIp: client.ip }, details);
+      return { kind: 'invalid' };
+    }
 
     if (previousToken) await this.sessions.revoke(previousToken);
     await this.sessions.purgeExpired();
     await this.throttle.purgeOld();
     const { token, expiresAt } = await this.sessions.create(user.id, client);
+    await this.audit.recordEvent(
+      'login',
+      { source: 'api', userId: user.id, label: user.email, clientIp: client.ip },
+      details,
+    );
     return { kind: 'ok', token, expiresAt, user: await this.users.toSessionUser(user) };
   }
 
@@ -60,8 +72,15 @@ export class AuthService {
     return user;
   }
 
-  logout(token: string): Promise<void> {
-    return this.sessions.revoke(token);
+  /** Dicatat di audit hanya bila sesi itu memang masih ada. */
+  async logout(token: string, client: ClientInfo): Promise<void> {
+    const owner = await this.sessions.revoke(token);
+    if (!owner) return;
+    await this.audit.recordEvent(
+      'logout',
+      { source: 'api', userId: owner.userId, label: owner.email, clientIp: client.ip },
+      { user_agent: client.userAgent?.slice(0, 512) ?? null },
+    );
   }
 
   toSessionUser(user: User): Promise<SessionUser> {

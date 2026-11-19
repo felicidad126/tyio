@@ -1,4 +1,5 @@
 import type { DataSource, EntityManager } from 'typeorm';
+import { auditedTransaction } from '../common/audit/audit-context.js';
 import type { TyioEnv } from '../config.js';
 
 /**
@@ -21,7 +22,9 @@ export async function seed(
   }
   const done: string[] = [];
   for (const seeder of seeders) {
-    await dataSource.transaction((manager) => seeder.run(manager));
+    await auditedTransaction(dataSource, { source: 'seed', label: `seed:${seeder.name}` }, (manager) =>
+      seeder.run(manager),
+    );
     done.push(seeder.name);
   }
   return done;

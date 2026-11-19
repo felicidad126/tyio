@@ -63,12 +63,16 @@ export class SessionsService {
     return row ? { userId: row.user_id } : null;
   }
 
-  async revoke(token: string): Promise<void> {
-    if (!TOKEN_PATTERN.test(token)) return;
-    await this.dataSource.query(
-      'WITH gone AS (DELETE FROM sessions WHERE token_hash = $1 RETURNING id) SELECT count(*) FROM gone',
+  /** Mencabut sesi; mengembalikan pemiliknya bila sesi itu memang ada. */
+  async revoke(token: string): Promise<{ userId: string; email: string } | null> {
+    if (!TOKEN_PATTERN.test(token)) return null;
+    const rows: Array<{ user_id: string; email: string }> = await this.dataSource.query(
+      `WITH gone AS (DELETE FROM sessions WHERE token_hash = $1 RETURNING user_id)
+       SELECT gone.user_id, users.email FROM gone JOIN users ON users.id = gone.user_id`,
       [hashToken(token)],
     );
+    const row = rows[0];
+    return row ? { userId: row.user_id, email: row.email } : null;
   }
 
   /** Membuang sesi yang sudah tidak berlaku. Dipanggil sambil lalu saat login. */

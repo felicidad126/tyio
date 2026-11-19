@@ -13,3 +13,5 @@ export {
   isRole,
 } from './auth.js';
 export type { LoginRequest, Role, SessionUser, TenantSummary } from './auth.js';
+export { AUDIT_ACTIONS, AUDIT_PAGE_DEFAULT, AUDIT_PAGE_MAX, AUDIT_SOURCES } from './audit.js';
+export type { AuditAction, AuditEntry, AuditPage, AuditSource } from './audit.js';
