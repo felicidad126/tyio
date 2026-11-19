@@ -106,8 +106,9 @@ jobs:
         run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
 
       # Staging memakai cookie Secure; Chromium menerimanya di http://localhost.
-      - name: Uji asap dan login
-        run: pnpm e2e smoke auth
+      # Service worker PWA juga hanya jalan di HTTPS atau localhost.
+      - name: Uji asap, login, dan kerangka aplikasi
+        run: pnpm e2e smoke auth shell
         env:
           E2E_BASE_URL: http://localhost:8080
 

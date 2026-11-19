@@ -298,5 +298,5 @@ List Report Teknisi, Shared.
 | Rilis | Status |
 | --- | --- |
 | Penemuan | Berjalan — 10 screenshot, 14 keputusan tercatat |
-| R0 Fondasi | Berjalan — 0.1–0.4 selesai; lihat Progres di langkah-teknis.md |
+| R0 Fondasi | Berjalan — 0.1–0.5 selesai; lihat Progres di langkah-teknis.md |
 | R1–R8 | Belum mulai |
