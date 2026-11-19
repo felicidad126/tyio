@@ -115,7 +115,8 @@ yang ada tidak pernah tertimpa. Perubahan setelah waktu backup hilang (lihat RPO
 | Tanggal | Lingkungan | Backup | Hasil | Lama | Oleh |
 | --- | --- | --- | --- | --- | --- |
 | 2026-11-19 | Lokal, PostgreSQL 18.7 (server terpisah, database sementara) | `tyio-lokal-20261119T141916Z` | COCOK: 7 tabel, 437 baris | < 1 detik | Langkah 0.6 (Claude) |
-| Setiap push | CI: container PostgreSQL baru, data staging hasil seed dan uji layar | backup terbaru dari service `backup` | Job `image` gagal bila tidak cocok | — | CI |
+| 2026-11-19 | CI run #81: container PostgreSQL baru, data staging hasil seed dan uji layar | `tyio-staging-20261119T142738Z` | COCOK: 7 tabel, 74 baris | ± 7 detik (termasuk menyalakan container) | CI |
+| Setiap push | CI, seperti di atas | backup terbaru dari service `backup` | Job `image` gagal bila tidak cocok | — | CI |
 | Belum | Server staging sungguhan | — | Menunggu keputusan hosting | — | — |
 
 ## Belum (menunggu keputusan hosting)
