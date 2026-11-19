@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@tyio/shared": "workspace:*",
-    "vue": "3.5.45"
+    "vue": "3.5.45",
+    "vue-router": "5.4.0"
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",

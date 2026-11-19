@@ -1,0 +1,34 @@
+/* Token warna dari mockup (design/mockup/ATURAN.md). Komponen Tabler menyusul di langkah 0.5. */
+:root {
+  --c-text: #182433;
+  --c-muted: #536173;
+  --c-border: #dce1e7;
+  --c-input-border: #c9d0d9;
+  --c-bg: #f6f8fb;
+  --c-surface: #ffffff;
+  --c-primary: #066fd1;
+  --c-primary-hover: #0559a8;
+  --c-focus: rgb(6 111 209 / 0.35);
+  --c-danger-text: #a12424;
+  --c-danger-bg: #fbe3e3;
+  --c-info-text: #0b4f99;
+  --c-info-bg: #dfeafb;
+
+  color-scheme: light;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--c-text);
+  background: var(--c-bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+}
