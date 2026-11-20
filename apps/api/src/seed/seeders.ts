@@ -28,6 +28,19 @@ export const SEED_USERS: ReadonlyArray<{
   { email: 'sari@noc.example', name: 'Sari P.', role: 'l2' },
 ];
 
+/**
+ * Data master dummy, sama untuk setiap customer seed. Kategori mengikuti grafik mockup
+ * (ATURAN.md §7); jarkom VSAT dan VPN mengikuti nomor NPR di mockup.
+ */
+export const SEED_MASTER = {
+  kategori: ['Remote Down', 'Corrective', 'Preventive'],
+  system: ['SNMP NOC', 'NMS VSAT'],
+  jarkom: [
+    { code: 'VSAT', name: 'VSAT' },
+    { code: 'VPN', name: 'VPN IP' },
+  ],
+} as const;
+
 /** Kata sandi semua akun dummy di lingkungan development dan test. Bukan rahasia. */
 export const DEV_SEED_PASSWORD = 'sandi-dev-tyio';
 
@@ -61,6 +74,30 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
              ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, active = true, updated_at = now()`,
             [tenant.code, tenant.name],
           );
+        }
+      },
+    },
+    {
+      name: 'master',
+      run: async (manager) => {
+        // Nilai yang sudah ada diaktifkan lagi; nama dibandingkan tanpa huruf besar/kecil.
+        const upsert = (table: string, columns: string, values: unknown[]) =>
+          manager.query(
+            `INSERT INTO ${table} (tenant_id, ${columns})
+             SELECT id, ${values.slice(1).map((_, i) => `$${i + 2}`).join(', ')} FROM tenants WHERE code = $1
+             ON CONFLICT (tenant_id, lower(name)) DO UPDATE SET active = true, updated_at = now()`,
+            values,
+          );
+        for (const tenant of SEED_TENANTS) {
+          for (const name of SEED_MASTER.kategori) {
+            await upsert('master_categories', 'name', [tenant.code, name]);
+          }
+          for (const name of SEED_MASTER.system) {
+            await upsert('master_systems', 'name', [tenant.code, name]);
+          }
+          for (const network of SEED_MASTER.jarkom) {
+            await upsert('master_networks', 'name, code', [tenant.code, network.name, network.code]);
+          }
         }
       },
     },

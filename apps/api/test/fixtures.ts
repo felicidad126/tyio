@@ -65,3 +65,28 @@ export async function insertUser(
   );
   return { id: user.id, email: user.email };
 }
+
+const MASTER_TABLES = {
+  kategori: 'master_categories',
+  system: 'master_systems',
+  jarkom: 'master_networks',
+} as const;
+
+/** Nilai master uji milik satu customer; jarkom diberi kode acak. */
+export async function insertMasterValue(
+  dataSource: DataSource,
+  kind: keyof typeof MASTER_TABLES,
+  tenantId: string,
+  name = `Nilai ${randomBytes(3).toString('hex')}`,
+): Promise<{ id: string; name: string; code: string | null }> {
+  const code = kind === 'jarkom' ? uniqueTenantCode() : null;
+  const columns = code ? '(tenant_id, name, code) VALUES ($1, $2, $3)' : '(tenant_id, name) VALUES ($1, $2)';
+  const rows = (await operatorQuery(
+    dataSource,
+    `INSERT INTO ${MASTER_TABLES[kind]} ${columns} RETURNING id`,
+    code ? [tenantId, name, code] : [tenantId, name],
+  )) as Array<{ id: string }>;
+  const id = rows[0]?.id;
+  if (!id) throw new Error('Nilai master uji gagal dibuat.');
+  return { id, name, code };
+}

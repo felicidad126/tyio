@@ -6,6 +6,7 @@ import type { AppConfig } from './config.js';
 import { dataSourceOptions } from './db/options.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { MasterModule } from './modules/master/master.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 
@@ -23,6 +24,7 @@ export class AppModule {
         UsersModule,
         AuthModule,
         AuditModule,
+        MasterModule,
       ],
     };
   }

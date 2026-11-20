@@ -6,6 +6,7 @@ import { verifyPassword } from '../src/modules/users/password.js';
 import {
   createSeeders,
   DEV_SEED_PASSWORD,
+  SEED_MASTER,
   SEED_TENANTS,
   SEED_USERS,
   seedUserPassword,
@@ -78,6 +79,26 @@ describe('seeder tenant dan pengguna', () => {
     const admin = users.find((user) => user.email === 'admin@noc.example');
     expect(admin).toMatchObject({ role: 'admin', all_tenants: true, codes: [] });
     expect(await verifyPassword(DEV_SEED_PASSWORD, admin?.password_hash ?? '')).toBe(true);
+
+    // Data master: setiap customer seed punya daftar yang sama, sekali saja walau seed diulang.
+    const master: Array<{ code: string; kategori: string[]; system: string[]; jarkom: string[] }> =
+      await dataSource.query(
+        `SELECT t.code,
+                (SELECT array_agg(name ORDER BY name) FROM master_categories WHERE tenant_id = t.id) AS kategori,
+                (SELECT array_agg(name ORDER BY name) FROM master_systems WHERE tenant_id = t.id) AS system,
+                (SELECT array_agg(code || ':' || name ORDER BY code) FROM master_networks WHERE tenant_id = t.id) AS jarkom
+         FROM tenants t WHERE t.code = ANY($1) ORDER BY t.code`,
+        [SEED_TENANTS.map((tenant) => tenant.code)],
+      );
+    expect(master).toHaveLength(SEED_TENANTS.length);
+    for (const row of master) {
+      expect(row).toEqual({
+        code: row.code,
+        kategori: [...SEED_MASTER.kategori].sort(),
+        system: [...SEED_MASTER.system].sort(),
+        jarkom: SEED_MASTER.jarkom.map((network) => `${network.code}:${network.name}`).sort(),
+      });
+    }
   });
 
   it('tidak membaca kata sandi bila seeder pengguna tidak dijalankan', () => {

@@ -1,9 +1,12 @@
 import { APP_NAME, type Role, type SessionUser } from '@tyio/shared';
+import type { Component } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import { setUnauthorizedHandler } from '../api';
 import AppLayout from '../layouts/AppLayout.vue';
 import { MODULE_PAGES, type ModulePage } from '../navigation';
 import AccountPage from '../pages/account/AccountPage.vue';
+import AdminPage from '../pages/admin/AdminPage.vue';
+import MasterPage from '../pages/admin/master/MasterPage.vue';
 import ComingSoonPage from '../pages/coming-soon/ComingSoonPage.vue';
 import LoginPage from '../pages/login/LoginPage.vue';
 import NotFoundPage from '../pages/not-found/NotFoundPage.vue';
@@ -23,6 +26,11 @@ declare module 'vue-router' {
   }
 }
 
+/** Modul yang halamannya sudah dibangun; sisanya memakai halaman "menyusul". */
+const BUILT_PAGES: Partial<Record<string, Component>> = {
+  admin: AdminPage,
+};
+
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -35,9 +43,16 @@ export const router = createRouter({
           // Anak dari "/" memakai path relatif; Overview adalah path kosong.
           path: page.path.slice(1),
           name: page.name,
-          component: ComingSoonPage,
+          component: BUILT_PAGES[page.name] ?? ComingSoonPage,
           meta: { title: page.label, roles: page.roles, page },
         })),
+        { path: 'admin/master', redirect: { name: 'admin-master', params: { jenis: 'kategori' } } },
+        {
+          path: 'admin/master/:jenis(kategori|system|jarkom|customer)',
+          name: 'admin-master',
+          component: MasterPage,
+          meta: { title: 'Data master', roles: ['admin'] },
+        },
         { path: 'akun', name: 'akun', component: AccountPage, meta: { title: 'Akun' } },
         {
           path: ':pathMatch(.*)*',

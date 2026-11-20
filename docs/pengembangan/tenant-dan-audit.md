@@ -87,3 +87,23 @@ membanjiri audit.
 
 `audit_log` hanya bisa ditambah: UPDATE, DELETE, dan TRUNCATE ditolak, juga TRUNCATE pada
 tabel yang diaudit. Koreksi dilakukan dengan perubahan baru, yang ikut tercatat (R-F).
+
+## 5. Memakai nilai master (langkah 1.1)
+
+Tabel yang memakai kategori, system, jarkom, atau customer (remote, tiket, mulai 1.2–1.3)
+menautkannya dengan foreign key **tanpa `ON DELETE`**:
+
+```sql
+category_id uuid NOT NULL REFERENCES master_categories (id)
+```
+
+Dengan begitu database menolak penghapusan nilai yang sudah dipakai, dan API data master
+menjawab 409 "… Nonaktifkan saja" (T45). Jangan menambah `ON DELETE CASCADE` atau
+`SET NULL` pada tautan ke tabel master.
+
+- Nilai master harus milik customer yang sama dengan baris pemakainya; periksa di
+  service saat menyimpan (nilai customer lain dijawab seperti tidak ada, T29).
+- Formulir hanya menawarkan nilai yang `active`; data lama tetap menampilkan nilai
+  nonaktif yang pernah dipilih.
+- Kode customer dan kode jarkom tidak bisa diubah (trigger `reject_immutable_change`, T46),
+  jadi aman dipakai untuk nomor tiket.

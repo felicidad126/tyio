@@ -5,6 +5,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import type { AuditActor } from '../../common/audit/audit-context.js';
 import type { User } from '../users/user.entity.js';
 import type { ClientInfo } from './sessions.service.js';
 
@@ -38,3 +39,14 @@ export function clientInfo(request: Request): ClientInfo {
     userAgent: request.get('user-agent'),
   };
 }
+
+/**
+ * Pelaku perubahan untuk `auditedTransaction`: pengguna yang sedang login beserta IP-nya.
+ * Dipakai di endpoint yang menulis data atas nama pengguna.
+ */
+export const CurrentActor = createParamDecorator((_data: unknown, ctx: ExecutionContext): AuditActor => {
+  const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+  if (!request.auth) throw new InternalServerErrorException();
+  const { user } = request.auth;
+  return { source: 'api', userId: user.id, label: user.email, clientIp: clientInfo(request).ip };
+});
