@@ -62,3 +62,24 @@ function errorMessage(status: number, data: unknown): string {
   const message = (data as { message?: unknown } | undefined)?.message;
   return typeof message === 'string' && message !== '' ? message : SERVER_MESSAGE;
 }
+
+/** Mengirim berkas sebagai isi permintaan (tanpa multipart), mis. impor .xlsx. */
+export async function apiUpload<T>(path: string, file: Blob, contentType: string): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`/${API_PREFIX}${path}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': contentType },
+      body: file,
+    });
+  } catch {
+    throw new ApiError(0, NETWORK_MESSAGE);
+  }
+  const data: unknown = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    if (response.status === 401) onUnauthorized?.();
+    throw new ApiError(response.status, errorMessage(response.status, data));
+  }
+  return data as T;
+}

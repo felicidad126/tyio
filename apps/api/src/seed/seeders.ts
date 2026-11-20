@@ -102,6 +102,26 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
       },
     },
     {
+      name: 'remote',
+      run: async (manager) => {
+        // Remote yang sudah ada tidak ditimpa: admin mungkin sudah mengubahnya di staging.
+        await manager.query(
+          `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, address, city, province,
+                                kanwil, kanca, ip_snmp, ip_lan, manager, online_since, contacts)
+           SELECT t.id, x.code, x.name, n.id, x.time_zone, x.address, x.city, x.province,
+                  x.kanwil, x.kanca, x.ip_snmp, x.ip_lan, x.manager, x.online_since, x.contacts
+           FROM jsonb_to_recordset($1::jsonb) AS x(
+                  tenant_code text, network_code text, code text, name text, time_zone text,
+                  address text, city text, province text, kanwil text, kanca text,
+                  ip_snmp inet, ip_lan inet, manager text, online_since date, contacts jsonb)
+           JOIN tenants t ON t.code = x.tenant_code
+           JOIN master_networks n ON n.tenant_id = t.id AND n.code = x.network_code
+           ON CONFLICT (tenant_id, code) DO NOTHING`,
+          [JSON.stringify(seedRemotes())],
+        );
+      },
+    },
+    {
       name: 'pengguna',
       run: async (manager) => {
         const password = options.userPassword();
@@ -111,4 +131,68 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
       },
     },
   ];
+}
+
+/** Kota contoh per wilayah, dengan zona waktunya (mockup: Sulawesi, Sumatera, Kalimantan, Papua). */
+const SEED_CITIES = [
+  { city: 'Makassar', province: 'Sulawesi Selatan', zone: 'WITA', kanwil: 'Kanwil Makassar' },
+  { city: 'Palu', province: 'Sulawesi Tengah', zone: 'WITA', kanwil: 'Kanwil Makassar' },
+  { city: 'Medan', province: 'Sumatera Utara', zone: 'WIB', kanwil: 'Kanwil Medan' },
+  { city: 'Padang', province: 'Sumatera Barat', zone: 'WIB', kanwil: 'Kanwil Padang' },
+  { city: 'Balikpapan', province: 'Kalimantan Timur', zone: 'WITA', kanwil: 'Kanwil Balikpapan' },
+  { city: 'Jayapura', province: 'Papua', zone: 'WIT', kanwil: 'Kanwil Jayapura' },
+] as const;
+
+/** Banyaknya remote dummy per customer seed. */
+export const SEED_REMOTES_PER_TENANT = 60;
+
+/**
+ * Remote dummy yang sama setiap kali seed dijalankan. BNA-MKS-0217 adalah remote contoh di
+ * mockup (DetailTiket); sisanya dibangkitkan berurutan.
+ */
+export function seedRemotes(): Array<Record<string, unknown>> {
+  const remotes: Array<Record<string, unknown>> = [];
+  SEED_TENANTS.forEach((tenant, tenantIndex) => {
+    for (let i = 1; i <= SEED_REMOTES_PER_TENANT; i++) {
+      const place = SEED_CITIES[(i + tenantIndex) % SEED_CITIES.length] ?? SEED_CITIES[0];
+      const number = String(i * 7).padStart(4, '0');
+      const cityCode = place.city.slice(0, 3).toUpperCase();
+      const kanca = `KCP ${place.city} ${i}`;
+      remotes.push({
+        tenant_code: tenant.code,
+        network_code: i % 4 === 0 ? 'VPN' : 'VSAT',
+        code: `${tenant.code}-${cityCode}-${number}`,
+        name: `ATM ${kanca}`,
+        time_zone: place.zone,
+        address: `Jl. Contoh No. ${i}, ${place.city}`,
+        city: place.city,
+        province: place.province,
+        kanwil: place.kanwil,
+        kanca,
+        ip_snmp: `10.${40 + tenantIndex}.${i}.22`,
+        ip_lan: `192.168.${i}.1`,
+        manager: `${tenant.name} ${kanca}`,
+        online_since: `20${String(18 + (i % 7)).padStart(2, '0')}-0${(i % 9) + 1}-1${i % 9}`,
+        contacts: [{ name: `PIC ${kanca}`, role: 'Kepala Unit', phone: `+62 811-0000-${number}` }],
+      });
+    }
+  });
+  remotes.push({
+    tenant_code: 'BNA',
+    network_code: 'VSAT',
+    code: 'BNA-MKS-0217',
+    name: 'ATM KCP Pasar Sentral',
+    time_zone: 'WITA',
+    address: 'Jl. Sulawesi No. 12, Makassar, Sulawesi Selatan',
+    city: 'Makassar',
+    province: 'Sulawesi Selatan',
+    kanwil: 'Kanwil Makassar',
+    kanca: 'KCP Pasar Sentral',
+    ip_snmp: '10.41.17.22',
+    ip_lan: '192.168.217.1',
+    manager: 'Bank Nusa KCP Pasar Sentral',
+    online_since: '2023-03-12',
+    contacts: [{ name: 'Hendra', role: 'Kepala Unit', phone: '+62 811-0000-0217' }],
+  });
+  return remotes;
 }

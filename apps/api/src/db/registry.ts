@@ -8,6 +8,7 @@ import { User } from '../modules/users/user.entity.js';
 import { TenantsUsersSessions1795092388634 } from './migrations/1795092388634-tenants-users-sessions.js';
 import { AuditLog1795094119322 } from './migrations/1795094119322-audit-log.js';
 import { MasterData1795154430192 } from './migrations/1795154430192-master-data.js';
+import { Remotes1795193901420 } from './migrations/1795193901420-remotes.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -32,4 +33,5 @@ export const migrations: Registrable = [
   TenantsUsersSessions1795092388634,
   AuditLog1795094119322,
   MasterData1795154430192,
+  Remotes1795193901420,
 ];

@@ -10,6 +10,9 @@ import MasterPage from '../pages/admin/master/MasterPage.vue';
 import ComingSoonPage from '../pages/coming-soon/ComingSoonPage.vue';
 import LoginPage from '../pages/login/LoginPage.vue';
 import NotFoundPage from '../pages/not-found/NotFoundPage.vue';
+import RemoteDetailPage from '../pages/remotes/RemoteDetailPage.vue';
+import RemoteImportPage from '../pages/remotes/RemoteImportPage.vue';
+import RemoteListPage from '../pages/remotes/RemoteListPage.vue';
 import { useSessionStore } from '../stores/session';
 import { safeNextPath } from './next-path';
 
@@ -29,6 +32,7 @@ declare module 'vue-router' {
 /** Modul yang halamannya sudah dibangun; sisanya memakai halaman "menyusul". */
 const BUILT_PAGES: Partial<Record<string, Component>> = {
   admin: AdminPage,
+  remote: RemoteListPage,
 };
 
 export const router = createRouter({
@@ -46,6 +50,13 @@ export const router = createRouter({
           component: BUILT_PAGES[page.name] ?? ComingSoonPage,
           meta: { title: page.label, roles: page.roles, page },
         })),
+        {
+          path: 'remote/impor',
+          name: 'remote-import',
+          component: RemoteImportPage,
+          meta: { title: 'Impor remote', roles: ['admin'] },
+        },
+        { path: 'remote/:id', name: 'remote-detail', component: RemoteDetailPage, meta: { title: 'Remote' } },
         { path: 'admin/master', redirect: { name: 'admin-master', params: { jenis: 'kategori' } } },
         {
           path: 'admin/master/:jenis(kategori|system|jarkom|customer)',
