@@ -16,8 +16,9 @@ Langkah teknis dan progres: [plans/pending/langkah-teknis.md](plans/pending/lang
 | `apps/api` | API NestJS 12 (ESM). Satu modul per domain di `src/modules/<nama>` |
 | `apps/web` | Antarmuka Vue 3 + Vite (kelak PWA) |
 | `packages/shared` | Tipe dan konstanta yang dipakai API dan web |
-| `deploy/` | Dockerfile (satu image API + web), compose dev dan staging |
-| `docs/operasi/` | Cara menjalankan dan mengoperasikan |
+| `deploy/` | Dockerfile (satu image API + web), compose dev dan staging, skrip backup/restore |
+| `docs/operasi/` | Cara menjalankan dan mengoperasikan, termasuk [backup dan restore](docs/operasi/backup.md) |
+| `docs/kepatuhan/` | [Checklist kepatuhan bank/OJK](docs/kepatuhan/checklist.md) dengan status tiap butir |
 | `docs/pengembangan/` | Aturan untuk kode baru, mis. [isolasi tenant dan audit](docs/pengembangan/tenant-dan-audit.md) |
 | `.github/workflows/ci.yml` | CI: lint, build, uji, dan uji asap image lewat compose staging di setiap push |
 

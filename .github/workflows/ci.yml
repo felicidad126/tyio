@@ -53,6 +53,10 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Skrip backup/restore dijalankan di server; ShellCheck sudah terpasang di runner.
+      - name: Lint skrip shell
+        run: shellcheck -x deploy/scripts/*.sh
+
       - name: Build
         run: pnpm build
 
@@ -86,10 +90,26 @@ jobs:
       - name: Bangun image
         run: docker build -f deploy/Dockerfile -t "$TYIO_IMAGE" .
 
+      # Pasangan kunci backup sekali pakai: staging hanya menerima kunci publik; kunci privat
+      # dipakai latihan restore di bawah. Service backup langsung membuat backup pertama, dan
+      # `up --wait` baru selesai setelah backup itu ada (healthcheck service backup).
       - name: Jalankan image dengan compose staging
         id: staging
         run: |
-          echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)" > "$GITHUB_WORKSPACE/../staging-ci.env"
+          KUNCI="$RUNNER_TEMP/kunci-backup"
+          export GNUPGHOME="$KUNCI/gnupg"
+          mkdir -p -m 700 "$GNUPGHOME"
+          gpg --batch --quiet --passphrase '' --quick-gen-key 'Tyio Backup CI <ci@tyio.invalid>' future-default default never
+          gpg --armor --export ci@tyio.invalid > "$KUNCI/backup-public.asc"
+          gpg --batch --pinentry-mode loopback --passphrase '' --armor --export-secret-keys ci@tyio.invalid > "$KUNCI/backup-private.asc"
+          gpgconf --kill gpg-agent
+          {
+            echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)"
+            echo "TYIO_BACKUP_PUBLIC_KEY=$KUNCI/backup-public.asc"
+            echo "TYIO_BACKUP_DIR=$RUNNER_TEMP/backup"
+          } > "$GITHUB_WORKSPACE/../staging-ci.env"
+          echo "BACKUP_PRIVATE_KEY=$KUNCI/backup-private.asc" >> "$GITHUB_ENV"
+          echo "BACKUP_DIR=$RUNNER_TEMP/backup" >> "$GITHUB_ENV"
           $STAGING up -d --wait
 
       # Akun dummy untuk uji login, dengan kata sandi acak per run (staging tidak punya
@@ -111,6 +131,19 @@ jobs:
         run: pnpm e2e smoke auth shell
         env:
           E2E_BASE_URL: http://localhost:8080
+
+      # Langkah 0.6: backup data staging yang sudah di-seed dan dipakai uji layar, lalu
+      # pulihkan ke container PostgreSQL baru dan buktikan isinya cocok. Berkas backup milik
+      # root (mode 600), jadi latihan berjalan dengan sudo. Terakhir, uji skrip backup sendiri
+      # (berkas rusak, kunci salah, isi tidak cocok, retensi) di container image yang sama.
+      - name: Backup, latihan restore, dan uji skrip backup
+        run: |
+          $STAGING exec -T backup /scripts/backup.sh
+          sudo -E deploy/scripts/latihan-restore.sh
+          DB_PASSWORD="$(grep '^TYIO_DB_PASSWORD=' "$GITHUB_WORKSPACE/../staging-ci.env" | cut -d= -f2)"
+          echo "::add-mask::$DB_PASSWORD"
+          export UJI_SERVER_URL="postgres://tyio:$DB_PASSWORD@db:5432/postgres"
+          $STAGING run --rm --no-deps -T --entrypoint /scripts/uji-backup.sh -e UJI_SERVER_URL backup
 
       # Dua langkah terakhir hanya bila stack sempat dinyalakan; bila build gagal atau run
       # dibatalkan lebih awal, tidak ada yang perlu dibaca atau dibersihkan.

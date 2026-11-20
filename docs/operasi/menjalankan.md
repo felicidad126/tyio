@@ -98,12 +98,15 @@ yang sama). Staging tidak membangun image sendiri.
 Langkah memasang, setelah image tersedia di server:
 
 ```bash
-cp deploy/staging.env.example deploy/staging.env    # isi TYIO_IMAGE dan TYIO_DB_PASSWORD
+cp deploy/staging.env.example deploy/staging.env    # isi TYIO_IMAGE, TYIO_DB_PASSWORD, TYIO_BACKUP_PUBLIC_KEY
 docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml up -d --wait
 curl -s http://127.0.0.1:8080/api/health
 ```
 
 - Kata sandi database: `openssl rand -hex 24` (heksadesimal aman di dalam URL).
+- Backup terenkripsi harian berjalan otomatis (service `backup`); butuh kunci publik backup
+  sebelum `up`. Cara membuat kunci, latihan restore, dan restore sungguhan:
+  [backup.md](backup.md).
 - Migrasi berjalan otomatis sebelum aplikasi. Membatalkan satu migrasi:
   `docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml run --rm app node dist/db/migrate.js down`
 - Data dummy untuk uji bersama pengguna (opsional). Staging tidak punya kata sandi bawaan
