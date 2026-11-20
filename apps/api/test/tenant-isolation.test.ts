@@ -1,14 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { DiscoveryModule } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { AuditPage, SessionUser, TenantSummary } from '@tyio/shared';
+import {
+  type AuditPage,
+  type CustomerRecord,
+  MASTER_KINDS,
+  type MasterKind,
+  type MasterValue,
+  type SessionUser,
+  type TenantSummary,
+} from '@tyio/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { scopeFor, scopeIncludes } from '../src/common/tenant/tenant-scope.js';
 import { TENANT_NOT_FOUND_MESSAGE } from '../src/modules/tenants/tenants.controller.js';
+import { CUSTOMER_ADMIN_ONLY_MESSAGE, notFoundMessage } from '../src/modules/master/master.service.js';
 import { createTestApp } from './create-test-app.js';
-import { insertTenant, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
+import { insertMasterValue, insertTenant, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
 import { type RegisteredRoute, registeredRoutes } from './routes.js';
 
 // Isolasi tenant (langkah 0.4): pengguna yang dibatasi ke customer A tidak bisa membaca
@@ -26,9 +35,126 @@ interface Fixture {
   operatorA: { email: string; agent: Agent };
   /** Admin yang hanya boleh melihat customer A. */
   adminA: { email: string; agent: Agent };
+  /** Admin semua customer, untuk kontrol pada endpoint yang ditolak bagi admin terbatas. */
+  adminAll: { email: string; agent: Agent };
+  dataSource: DataSource;
 }
 
 const ids = (items: Array<{ id: string }>) => items.map((item) => item.id);
+
+/** Uji lintas-tenant yang sama untuk kategori, system, dan jarkom (langkah 1.1). */
+function masterValueProbes(kind: MasterKind): Record<string, (fx: Fixture) => Promise<void>> {
+  const base = `/api/master/${kind}`;
+  const body = (tenantId: string) => ({
+    tenantId,
+    name: `Baru ${randomUUID().slice(0, 8)}`,
+    ...(kind === 'jarkom' ? { code: `J${randomUUID().slice(0, 6).toUpperCase().replace(/-/g, '')}` } : {}),
+  });
+
+  return {
+    [`GET ${base}`]: async (fx) => {
+      const ownValue = await insertMasterValue(fx.dataSource, kind, fx.tenantA.id);
+      const otherValue = await insertMasterValue(fx.dataSource, kind, fx.tenantB.id);
+
+      const all = (await fx.operatorA.agent.get(base).expect(200)).body as MasterValue[];
+      expect(new Set(all.map((value) => value.tenantId))).toEqual(new Set([fx.tenantA.id]));
+      expect(ids(all)).toContain(ownValue.id);
+      expect(ids(all)).not.toContain(otherValue.id);
+
+      const other = await fx.operatorA.agent.get(`${base}?tenantId=${fx.tenantB.id}`).expect(200);
+      expect(other.body).toEqual([]);
+    },
+
+    [`POST ${base}`]: async (fx) => {
+      const other = await fx.adminA.agent.post(base).send(body(fx.tenantB.id)).expect(404);
+      expect(other.body.message).toBe(TENANT_NOT_FOUND_MESSAGE);
+      const count = (await fx.dataSource.query(
+        `SELECT count(*)::int AS n FROM audit_log WHERE tenant_id = $1 AND actor_label = $2`,
+        [fx.tenantB.id, fx.adminA.email],
+      )) as Array<{ n: number }>;
+      expect(count[0]?.n).toBe(0);
+
+      const own = await fx.adminA.agent.post(base).send(body(fx.tenantA.id)).expect(201);
+      expect((own.body as MasterValue).tenantId).toBe(fx.tenantA.id);
+    },
+
+    [`PATCH ${base}/:id`]: async (fx) => {
+      const otherValue = await insertMasterValue(fx.dataSource, kind, fx.tenantB.id);
+      const other = await fx.adminA.agent.patch(`${base}/${otherValue.id}`).send({ active: false }).expect(404);
+      expect(other.body.message).toBe(notFoundMessage(kind));
+      const [stored] = (await fx.dataSource.query(
+        `SELECT active FROM ${TABLES[kind]} WHERE id = $1`,
+        [otherValue.id],
+      )) as Array<{ active: boolean }>;
+      expect(stored?.active).toBe(true);
+
+      const ownValue = await insertMasterValue(fx.dataSource, kind, fx.tenantA.id);
+      const own = await fx.adminA.agent.patch(`${base}/${ownValue.id}`).send({ active: false }).expect(200);
+      expect((own.body as MasterValue).active).toBe(false);
+    },
+
+    [`DELETE ${base}/:id`]: async (fx) => {
+      const otherValue = await insertMasterValue(fx.dataSource, kind, fx.tenantB.id);
+      const other = await fx.adminA.agent.delete(`${base}/${otherValue.id}`).expect(404);
+      expect(other.body.message).toBe(notFoundMessage(kind));
+      const remaining = (await fx.dataSource.query(`SELECT id FROM ${TABLES[kind]} WHERE id = $1`, [
+        otherValue.id,
+      ])) as unknown[];
+      expect(remaining).toHaveLength(1);
+
+      const ownValue = await insertMasterValue(fx.dataSource, kind, fx.tenantA.id);
+      await fx.adminA.agent.delete(`${base}/${ownValue.id}`).expect(204);
+    },
+  };
+}
+
+const TABLES: Record<MasterKind, string> = {
+  kategori: 'master_categories',
+  system: 'master_systems',
+  jarkom: 'master_networks',
+};
+
+/**
+ * Daftar customer untuk admin. Admin terbatas hanya melihat customer-nya dan tidak bisa
+ * mengubah daftar customer sama sekali: jawabannya 403 untuk customer A maupun B, jadi
+ * keberadaan B tidak terbaca. Admin semua customer menjadi kontrolnya.
+ */
+const CUSTOMER_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'GET /api/master/customer': async (fx) => {
+    const res = await fx.adminA.agent.get('/api/master/customer').expect(200);
+    expect(ids(res.body as CustomerRecord[])).toEqual([fx.tenantA.id]);
+  },
+
+  'POST /api/master/customer': async (fx) => {
+    const code = `C${randomUUID().slice(0, 6).replace(/-/g, '').toUpperCase()}`;
+    const denied = await fx.adminA.agent.post('/api/master/customer').send({ code, name: 'Bank Baru' }).expect(403);
+    expect(denied.body.message).toBe(CUSTOMER_ADMIN_ONLY_MESSAGE);
+
+    await fx.adminAll.agent.post('/api/master/customer').send({ code, name: 'Bank Baru' }).expect(201);
+  },
+
+  'PATCH /api/master/customer/:id': async (fx) => {
+    for (const tenant of [fx.tenantB, fx.tenantA]) {
+      const res = await fx.adminA.agent.patch(`/api/master/customer/${tenant.id}`).send({ name: 'Diubah' }).expect(403);
+      expect(res.body.message).toBe(CUSTOMER_ADMIN_ONLY_MESSAGE);
+    }
+    const names = (await fx.dataSource.query('SELECT name FROM tenants WHERE id = ANY($1) ORDER BY name', [
+      [fx.tenantA.id, fx.tenantB.id],
+    ])) as Array<{ name: string }>;
+    expect(names.map((row) => row.name)).toEqual([fx.tenantA.name, fx.tenantB.name]);
+
+    await fx.adminAll.agent.patch(`/api/master/customer/${fx.tenantB.id}`).send({ name: fx.tenantB.name }).expect(200);
+  },
+
+  'DELETE /api/master/customer/:id': async (fx) => {
+    const spare = await insertTenant(fx.dataSource, 'Bank Cadangan');
+    for (const tenant of [fx.tenantB, spare]) {
+      const res = await fx.adminA.agent.delete(`/api/master/customer/${tenant.id}`).expect(403);
+      expect(res.body.message).toBe(CUSTOMER_ADMIN_ONLY_MESSAGE);
+    }
+    await fx.adminAll.agent.delete(`/api/master/customer/${spare.id}`).expect(204);
+  },
+};
 
 /**
  * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
@@ -77,7 +203,11 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
     const tenants = new Set((all.body as AuditPage).entries.map((entry) => entry.tenantId));
     expect([...tenants]).toEqual([fx.tenantA.id]);
   },
+
+  ...Object.assign({}, ...MASTER_KINDS.map(masterValueProbes)),
+  ...CUSTOMER_PROBES,
 };
+
 
 describe('isolasi tenant di semua endpoint', () => {
   let app: NestExpressApplication;
@@ -100,6 +230,7 @@ describe('isolasi tenant di semua endpoint', () => {
       role: 'admin',
       tenantCodes: [tenantA.code],
     });
+    const adminAll = await insertUser(dataSource, { name: 'Admin Semua', role: 'admin' });
 
     const login = async (email: string) => {
       const agent = request.agent(app.getHttpServer());
@@ -112,6 +243,8 @@ describe('isolasi tenant di semua endpoint', () => {
       tenantB,
       operatorA: await login(operatorA.email),
       adminA: await login(adminA.email),
+      adminAll: await login(adminAll.email),
+      dataSource,
     };
   });
 
