@@ -44,12 +44,19 @@ async function setMode(row: MasterRow, mode: Mode, focusSelector?: string): Prom
   }
 }
 
+/**
+ * Menjalankan satu aksi baris. Selama berjalan, semua tombol baris itu nonaktif. Setelah
+ * selesai, baris kembali ke tampilan biasa hanya bila mode-nya belum diganti pengguna,
+ * agar konfirmasi yang baru dibuka tidak tertutup oleh aksi sebelumnya.
+ */
 async function run(row: MasterRow, work: () => Promise<void>, focusAfter = '.js-actions button'): Promise<void> {
   busy.value = row.id;
+  const startedIn = modes.value[row.id];
   delete errors.value[row.id];
   try {
     await work();
-    await setMode(row, { kind: 'idle' }, focusAfter);
+    busy.value = null;
+    if (modes.value[row.id] === startedIn) await setMode(row, { kind: 'idle' }, focusAfter);
   } catch (error) {
     errors.value = { ...errors.value, [row.id]: errorText(error) };
   } finally {
@@ -227,6 +234,7 @@ function toggleActive(row: MasterRow): void {
                 type="button"
                 class="btn btn-sm"
                 :aria-label="`Ganti nama ${row.name}`"
+                :disabled="busy === row.id"
                 @click="setMode(row, { kind: 'rename', name: row.name }, '.js-name')"
               >
                 Ganti nama
@@ -244,6 +252,7 @@ function toggleActive(row: MasterRow): void {
                 type="button"
                 class="btn btn-sm btn-ghost-danger"
                 :aria-label="`Hapus ${row.name}`"
+                :disabled="busy === row.id"
                 @click="setMode(row, { kind: 'confirm-delete' }, '.js-confirm')"
               >
                 Hapus

@@ -83,6 +83,34 @@ test.describe('data master', () => {
     await expect(row(page, renamed)).toHaveCount(0);
   });
 
+  test('selama aksi pada satu baris berjalan, aksi lain di baris itu menunggu', async ({ page }) => {
+    // Regresi CI run #87: konfirmasi hapus yang dibuka sebelum aksi sebelumnya selesai
+    // langsung ditutup lagi oleh aksi itu. Jawaban API diperlambat agar jendelanya pasti ada.
+    const name = `Uji Antre ${unique()}`;
+    await loginAs(page, ACCOUNTS.admin, '/masuk?next=/admin/master/system');
+    await page.getByLabel('Nama', { exact: true }).fill(name);
+    await page.getByRole('button', { name: 'Tambah system' }).click();
+    await expect(row(page, name)).toContainText('Aktif');
+
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/api/master/system/*', async (route) => {
+      if (route.request().method() === 'PATCH') await held;
+      await route.continue();
+    });
+    await page.getByRole('button', { name: `Nonaktifkan ${name}` }).click();
+
+    await expect(page.getByRole('button', { name: `Hapus ${name}` })).toBeDisabled();
+    await expect(page.getByRole('button', { name: `Ganti nama ${name}` })).toBeDisabled();
+    release();
+    await expect(row(page, name)).toContainText('Nonaktif');
+
+    await page.getByRole('button', { name: `Hapus ${name}` }).click();
+    const confirm = page.getByRole('group', { name: `Konfirmasi hapus ${name}` });
+    await confirm.getByRole('button', { name: `Hapus ${name}` }).click();
+    await expect(row(page, name)).toHaveCount(0);
+  });
+
   test('customer: kode wajib, nonaktifkan meminta konfirmasi yang menyebut akibatnya', async ({ page }) => {
     const code = `U${unique()}`;
     const name = `Bank Uji ${code}`;
