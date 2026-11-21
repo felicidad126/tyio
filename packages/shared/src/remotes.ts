@@ -8,6 +8,16 @@
 export const REMOTE_ZONES = ['WIB', 'WITA', 'WIT'] as const;
 export type RemoteZone = (typeof REMOTE_ZONES)[number];
 
+/** Nama zona IANA untuk setiap zona remote (dipakai Intl dan PostgreSQL). */
+export const REMOTE_ZONE_IANA: Record<RemoteZone, string> = {
+  WIB: 'Asia/Jakarta',
+  WITA: 'Asia/Makassar',
+  WIT: 'Asia/Jayapura',
+};
+
+/** Selisih dari UTC dalam jam. Indonesia tidak memakai waktu musim panas, jadi selisihnya tetap. */
+export const REMOTE_ZONE_UTC_OFFSET: Record<RemoteZone, number> = { WIB: 7, WITA: 8, WIT: 9 };
+
 export interface RemoteContact {
   name: string;
   role: string | null;

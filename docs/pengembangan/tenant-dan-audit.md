@@ -107,3 +107,24 @@ menjawab 409 "… Nonaktifkan saja" (T45). Jangan menambah `ON DELETE CASCADE` a
   nonaktif yang pernah dipilih.
 - Kode customer dan kode jarkom tidak bisa diubah (trigger `reject_immutable_change`, T46),
   jadi aman dipakai untuk nomor tiket.
+
+## 6. Nomor tiket (langkah 1.3)
+
+Nomor `NPR/JARKOM/CUSTOMER/TAHUN/BULAN/urut` dibuat **trigger database** `assign_number`
+saat baris tiket disisipkan (T55, T56, T58). Jangan membuat nomor di aplikasi:
+
+```sql
+INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description, started_at, created_by)
+VALUES (...) RETURNING id, number;  -- kolom number jangan diisi; database menolaknya
+```
+
+- TAHUN/BULAN dihitung dari `created_at` menurut zona remote (`ticket_zone_iana`), urut dari
+  `ticket_counters` per customer, jenis, jarkom, dan bulan. Penghitung dinaikkan di transaksi
+  yang sama, jadi penyimpanan serentak tidak bentrok dan penyimpanan yang gagal tidak
+  menghabiskan nomor. Tahan transaksi pembuat tiket sesingkat mungkin sesudah INSERT, karena
+  penghitung terkunci sampai transaksi selesai.
+- Jenis tiket lain (TT di 1.5b) memakai fungsi yang sama: `EXECUTE FUNCTION
+  assign_ticket_number('TT')` di tabelnya sendiri, ditambah `'TT'` ke `ticket_counters_kind_valid`.
+- Peringatan NPR terbuka dijaga di API dengan mengunci baris remote (`FOR NO KEY UPDATE`)
+  sebelum memeriksa; jalur pembuat tiket baru (alert R6, API R7) wajib memakai
+  `TicketsService.create`, bukan INSERT sendiri.

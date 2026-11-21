@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { IconPhone } from '@tabler/icons-vue';
-import { APP_NAME, type RemoteDetail, type RemoteZone } from '@tyio/shared';
+import { APP_NAME, type RemoteDetail, type RemoteZone, type TicketSummary } from '@tyio/shared';
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PageHeader from '../../components/PageHeader.vue';
 import { useSessionStore } from '../../stores/session';
+import { ticketApi } from '../tickets/ticket-api';
+import { formatZoned } from '../tickets/zoned-time';
 import { remoteApi } from './remote-api';
 
-// Halaman remote (langkah 1.2): "rekam medis" site. Riwayat tiket menyusul bersama tiket.
+// Halaman remote (langkah 1.2): "rekam medis" site. NPR terbuka tampil sejak 1.3; riwayat
+// lengkap (termasuk yang sudah ditutup) menyusul di 1.6.
 
 const route = useRoute();
 const session = useSessionStore();
 const remote = ref<RemoteDetail | null>(null);
+const openTickets = ref<TicketSummary[] | null>(null);
+const ticketsError = ref('');
 const error = ref('');
 const loading = ref(true);
 
@@ -24,9 +29,19 @@ watch(
     if (typeof id !== 'string') return;
     loading.value = true;
     error.value = '';
+    openTickets.value = null;
+    ticketsError.value = '';
     try {
       remote.value = await remoteApi.get(id);
       document.title = `${remote.value.code} · ${remote.value.name} · ${APP_NAME}`;
+      ticketApi
+        .openTicketsOf(id)
+        .then((tickets) => {
+          if (route.params.id === id) openTickets.value = tickets;
+        })
+        .catch((cause: unknown) => {
+          if (route.params.id === id) ticketsError.value = cause instanceof Error ? cause.message : 'NPR gagal dimuat.';
+        });
     } catch (cause) {
       remote.value = null;
       error.value = cause instanceof Error ? cause.message : 'Remote gagal dimuat.';
@@ -294,11 +309,57 @@ const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
                 id="judul-riwayat"
                 class="card-title"
               >
-                Riwayat tiket
+                NPR terbuka
               </h2>
+              <div
+                v-if="remote.active"
+                class="card-actions"
+              >
+                <RouterLink
+                  :to="{ name: 'ticket-new', query: { remote: remote.id } }"
+                  class="btn btn-sm"
+                >
+                  Buat NPR untuk remote ini
+                </RouterLink>
+              </div>
             </div>
-            <div class="card-body text-secondary">
-              Riwayat NPR dan TT remote ini tampil di sini setelah modul tiket tersedia (R1, langkah 1.3–1.6).
+            <ul
+              v-if="openTickets && openTickets.length > 0"
+              class="list-group list-group-flush"
+            >
+              <li
+                v-for="ticket in openTickets"
+                :key="ticket.id"
+                class="list-group-item"
+              >
+                <RouterLink
+                  :to="{ name: 'ticket-detail', params: { id: ticket.id } }"
+                  class="font-monospace"
+                >
+                  {{ ticket.number }}
+                </RouterLink>
+                <span class="d-block text-secondary">
+                  {{ ticket.categoryName }} · dibuat {{ formatZoned(ticket.createdAt, remote.zone) }} oleh
+                  {{ ticket.createdByName }}
+                </span>
+              </li>
+            </ul>
+            <div
+              v-else
+              class="card-body text-secondary"
+            >
+              <span
+                v-if="ticketsError"
+                class="text-danger"
+                role="alert"
+              >{{ ticketsError }}</span>
+              <template v-else-if="openTickets">
+                Tidak ada NPR terbuka.
+              </template>
+              <template v-else>
+                Memuat NPR…
+              </template>
+              <span class="d-block mt-1">Riwayat lengkap, termasuk NPR yang sudah ditutup, menyusul di langkah 1.6.</span>
             </div>
           </section>
         </div>
@@ -356,12 +417,14 @@ const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
   color: #454f5c;
 }
 
-.list-group-item .btn-sm {
+.list-group-item .btn-sm,
+.card-actions .btn-sm {
   min-height: 32px;
 }
 
 @media (max-width: 575.98px) {
-  .list-group-item .btn-sm {
+  .list-group-item .btn-sm,
+  .card-actions .btn-sm {
     min-height: 44px;
   }
 }

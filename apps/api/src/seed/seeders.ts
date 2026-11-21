@@ -130,7 +130,65 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
         }
       },
     },
+    {
+      name: 'npr',
+      run: async (manager) => {
+        // Hanya untuk customer yang belum punya NPR, agar seed aman diulang. Nomor dibuat
+        // trigger database seperti NPR dari API; yang lebih lama disisipkan lebih dulu.
+        await manager.query(
+          `INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description,
+                                started_at, created_by)
+           SELECT t.id, r.id, r.network_id, c.id, s.id, x.description,
+                  now() - make_interval(mins => x.minutes_ago), u.id
+           FROM jsonb_to_recordset($1::jsonb) AS x(
+                  tenant_code text, remote_code text, category text, system text, description text,
+                  minutes_ago int)
+           JOIN tenants t ON t.code = x.tenant_code
+           JOIN remotes r ON r.tenant_id = t.id AND r.code = x.remote_code
+           JOIN master_categories c ON c.tenant_id = t.id AND lower(c.name) = lower(x.category)
+           JOIN master_systems s ON s.tenant_id = t.id AND lower(s.name) = lower(x.system)
+           JOIN users u ON u.email = $2
+           WHERE NOT EXISTS (SELECT 1 FROM tickets tk WHERE tk.tenant_id = t.id)
+           ORDER BY x.minutes_ago DESC`,
+          [JSON.stringify(seedTickets()), SEED_TICKET_AUTHOR],
+        );
+      },
+    },
   ];
+}
+
+/** Pembuat NPR dummy (L1 di mockup). */
+export const SEED_TICKET_AUTHOR = 'dewi@noc.example';
+
+/** NPR terbuka dummy: dua per customer seed, ditambah NPR di remote contoh mockup. */
+export function seedTickets(): Array<Record<string, unknown>> {
+  const tickets: Array<Record<string, unknown>> = [];
+  const remotes = seedRemotes();
+  SEED_TENANTS.forEach((tenant, tenantIndex) => {
+    remotes
+      .filter((remote) => remote.tenant_code === tenant.code)
+      .slice(0, 2)
+      .forEach((remote, index) => {
+        tickets.push({
+          tenant_code: tenant.code,
+          remote_code: remote.code,
+          category: index === 0 ? 'Remote Down' : 'Corrective',
+          system: index === 0 ? 'SNMP NOC' : 'NMS VSAT',
+          description:
+            index === 0 ? 'Ping gagal 100% dari NOC, PIC cabang belum bisa dihubungi' : 'Modem sering putus sejak pagi',
+          minutes_ago: 30 + tenantIndex * 15 + index * 90,
+        });
+      });
+  });
+  tickets.push({
+    tenant_code: 'BNA',
+    remote_code: 'BNA-MKS-0217',
+    category: 'Remote Down',
+    system: 'SNMP NOC',
+    description: 'Ping gagal 100%, remote lain di hub normal',
+    minutes_ago: 46,
+  });
+  return tickets;
 }
 
 /** Kota contoh per wilayah, dengan zona waktunya (mockup: Sulawesi, Sumatera, Kalimantan, Papua). */
