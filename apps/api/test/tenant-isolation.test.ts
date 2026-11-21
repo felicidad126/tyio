@@ -12,6 +12,8 @@ import {
   type RemotePage,
   type SessionUser,
   type TenantSummary,
+  type TicketDetail,
+  type TicketSummary,
   XLSX_MIME,
 } from '@tyio/shared';
 import request from 'supertest';
@@ -21,12 +23,18 @@ import { scopeFor, scopeIncludes } from '../src/common/tenant/tenant-scope.js';
 import { TENANT_NOT_FOUND_MESSAGE } from '../src/modules/tenants/tenants.controller.js';
 import { CUSTOMER_ADMIN_ONLY_MESSAGE, notFoundMessage } from '../src/modules/master/master.service.js';
 import { REMOTE_NOT_FOUND_MESSAGE } from '../src/modules/remotes/remotes.service.js';
+import {
+  CATEGORY_NOT_FOUND_MESSAGE,
+  SYSTEM_NOT_FOUND_MESSAGE,
+  TICKET_NOT_FOUND_MESSAGE,
+} from '../src/modules/tickets/tickets.service.js';
 import { createTestApp } from './create-test-app.js';
 import {
   buildXlsx,
   insertMasterValue,
   insertRemote,
   insertTenant,
+  insertTicket,
   insertUser,
   operatorQuery,
   TEST_PASSWORD,
@@ -236,6 +244,72 @@ const REMOTE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** NPR (langkah 1.3): buat, halaman NPR, dan NPR terbuka per remote. */
+const TICKET_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'POST /api/tickets': async (fx) => {
+    const otherRemote = await insertRemote(fx.dataSource, fx.tenantB.id);
+    const otherCategory = await insertMasterValue(fx.dataSource, 'kategori', fx.tenantB.id);
+    const otherSystem = await insertMasterValue(fx.dataSource, 'system', fx.tenantB.id);
+    const body = (remoteId: string, categoryId: string, systemId: string) => ({
+      remoteId,
+      categoryId,
+      systemId,
+      description: 'Ping gagal 100%',
+    });
+
+    const other = await fx.operatorA.agent
+      .post('/api/tickets')
+      .send(body(otherRemote.id, otherCategory.id, otherSystem.id))
+      .expect(404);
+    expect(other.body.message).toBe(REMOTE_NOT_FOUND_MESSAGE);
+    const stored = (await fx.dataSource.query('SELECT id FROM tickets WHERE remote_id = $1', [
+      otherRemote.id,
+    ])) as unknown[];
+    expect(stored).toEqual([]);
+
+    // Kategori customer B di remote customer A: jawaban sama dengan id yang tidak ada.
+    const ownRemote = await insertRemote(fx.dataSource, fx.tenantA.id);
+    const ownCategory = await insertMasterValue(fx.dataSource, 'kategori', fx.tenantA.id);
+    const ownSystem = await insertMasterValue(fx.dataSource, 'system', fx.tenantA.id);
+    const crossCategory = await fx.operatorA.agent
+      .post('/api/tickets')
+      .send(body(ownRemote.id, otherCategory.id, ownSystem.id))
+      .expect(400);
+    expect(crossCategory.body.message).toBe(CATEGORY_NOT_FOUND_MESSAGE);
+    const crossSystem = await fx.operatorA.agent
+      .post('/api/tickets')
+      .send(body(ownRemote.id, ownCategory.id, otherSystem.id))
+      .expect(400);
+    expect(crossSystem.body.message).toBe(SYSTEM_NOT_FOUND_MESSAGE);
+
+    const own = await fx.operatorA.agent
+      .post('/api/tickets')
+      .send(body(ownRemote.id, ownCategory.id, ownSystem.id))
+      .expect(201);
+    expect((own.body as TicketDetail).tenantId).toBe(fx.tenantA.id);
+  },
+
+  'GET /api/tickets/:id': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const res = await fx.operatorA.agent.get(`/api/tickets/${other.id}`).expect(404);
+    expect(res.body.message).toBe(TICKET_NOT_FOUND_MESSAGE);
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const mine = await fx.operatorA.agent.get(`/api/tickets/${own.id}`).expect(200);
+    expect((mine.body as TicketDetail).number).toBe(own.number);
+  },
+
+  'GET /api/remotes/:remoteId/open-tickets': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const res = await fx.operatorA.agent.get(`/api/remotes/${other.remoteId}/open-tickets`).expect(404);
+    expect(res.body.message).toBe(REMOTE_NOT_FOUND_MESSAGE);
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const mine = await fx.operatorA.agent.get(`/api/remotes/${own.remoteId}/open-tickets`).expect(200);
+    expect(ids(mine.body as TicketSummary[])).toEqual([own.id]);
+  },
+};
+
 /**
  * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
  * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
@@ -287,6 +361,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...Object.assign({}, ...MASTER_KINDS.map(masterValueProbes)),
   ...CUSTOMER_PROBES,
   ...REMOTE_PROBES,
+  ...TICKET_PROBES,
 };
 
 

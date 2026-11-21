@@ -37,6 +37,8 @@ export {
   REMOTE_IMPORT_MAX_ROWS,
   REMOTE_PAGE_SIZE_DEFAULT,
   REMOTE_PAGE_SIZE_MAX,
+  REMOTE_ZONE_IANA,
+  REMOTE_ZONE_UTC_OFFSET,
   REMOTE_ZONES,
   XLSX_MIME,
 } from './remotes.js';
@@ -49,3 +51,13 @@ export type {
   RemoteSummary,
   RemoteZone,
 } from './remotes.js';
+export {
+  NPR_NUMBER_PATTERN,
+  OPEN_TICKET_STATUSES,
+  TICKET_DESCRIPTION_MAX_LENGTH,
+  TICKET_STARTED_CLOCK_SKEW_MINUTES,
+  TICKET_STARTED_MAX_AGE_DAYS,
+  TICKET_STATUS_LABELS,
+  TICKET_STATUSES,
+} from './tickets.js';
+export type { CreateTicket, OpenTicketsConflict, TicketDetail, TicketStatus, TicketSummary } from './tickets.js';

@@ -11,6 +11,8 @@ export class ApiError extends Error {
     /** Status HTTP; 0 bila server tidak bisa dihubungi. */
     readonly status: number,
     message: string,
+    /** Isi jawaban galat apa adanya, mis. daftar NPR terbuka pada 409 dari `POST /tickets`. */
+    readonly data?: unknown,
   ) {
     super(message);
   }
@@ -51,7 +53,7 @@ export async function apiRequest<T>(
   const data: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
     if (response.status === 401 && options.handleUnauthorized !== false) onUnauthorized?.();
-    throw new ApiError(response.status, errorMessage(response.status, data));
+    throw new ApiError(response.status, errorMessage(response.status, data), data);
   }
   return data as T;
 }
