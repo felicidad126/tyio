@@ -127,8 +127,8 @@ jobs:
 
       # Staging memakai cookie Secure; Chromium menerimanya di http://localhost.
       # Service worker PWA juga hanya jalan di HTTPS atau localhost.
-      - name: Uji asap, login, kerangka aplikasi, dan data master
-        run: pnpm e2e smoke auth shell master
+      - name: Uji asap, login, kerangka aplikasi, data master, dan remote
+        run: pnpm e2e smoke auth shell master remotes
         env:
           E2E_BASE_URL: http://localhost:8080
 

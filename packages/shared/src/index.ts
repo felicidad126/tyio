@@ -32,3 +32,20 @@ export type {
   UpdateCustomer,
   UpdateMasterValue,
 } from './master.js';
+export {
+  REMOTE_IMPORT_MAX_BYTES,
+  REMOTE_IMPORT_MAX_ROWS,
+  REMOTE_PAGE_SIZE_DEFAULT,
+  REMOTE_PAGE_SIZE_MAX,
+  REMOTE_ZONES,
+  XLSX_MIME,
+} from './remotes.js';
+export type {
+  RemoteContact,
+  RemoteDetail,
+  RemoteImportFailure,
+  RemoteImportReport,
+  RemotePage,
+  RemoteSummary,
+  RemoteZone,
+} from './remotes.js';

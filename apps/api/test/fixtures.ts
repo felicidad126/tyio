@@ -90,3 +90,29 @@ export async function insertMasterValue(
   if (!id) throw new Error('Nilai master uji gagal dibuat.');
   return { id, name, code };
 }
+
+/** Remote uji milik satu customer, dengan jarkom baru milik customer yang sama. */
+export async function insertRemote(
+  dataSource: DataSource,
+  tenantId: string,
+  overrides: { code?: string; name?: string; networkId?: string; city?: string; active?: boolean } = {},
+): Promise<{ id: string; code: string; name: string; networkId: string }> {
+  const networkId = overrides.networkId ?? (await insertMasterValue(dataSource, 'jarkom', tenantId)).id;
+  const code = overrides.code ?? `R-${randomBytes(4).toString('hex').toUpperCase()}`;
+  const name = overrides.name ?? `Remote ${code}`;
+  const rows = (await operatorQuery(
+    dataSource,
+    `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, city, active)
+     VALUES ($1, $2, $3, $4, 'WIB', $5, $6) RETURNING id`,
+    [tenantId, code, name, networkId, overrides.city ?? null, overrides.active ?? true],
+  )) as Array<{ id: string }>;
+  const id = rows[0]?.id;
+  if (!id) throw new Error('Remote uji gagal dibuat.');
+  return { id, code, name, networkId };
+}
+
+/** Berkas .xlsx dari baris-baris sel (baris pertama = judul kolom). */
+export async function buildXlsx(rows: Array<Array<string | number | Date | null>>): Promise<Buffer> {
+  const { default: writeXlsxFile } = await import('write-excel-file/node');
+  return writeXlsxFile(rows, { dateFormat: 'yyyy-mm-dd' }).toBuffer();
+}

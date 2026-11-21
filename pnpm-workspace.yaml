@@ -1,3 +1,8 @@
 packages:
   - apps/*
   - packages/*
+
+# Dependensi transitif yang versi terbarunya belum berumur 2 minggu (T23) dipin ke versi
+# terakhir yang sudah cukup lama. Hapus pin setelah versi barunya matang.
+overrides:
+  worker-f: 0.1.21
