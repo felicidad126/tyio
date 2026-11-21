@@ -10,6 +10,7 @@ import {
   SEED_REMOTES_PER_TENANT,
   SEED_TENANTS,
   SEED_USERS,
+  seedTickets,
   seedUserPassword,
 } from '../src/seed/seeders.js';
 import { seed } from '../src/seed/seed.js';
@@ -118,6 +119,25 @@ describe('seeder tenant dan pengguna', () => {
        WHERE r.code = 'BNA-MKS-0217'`,
     )) as Array<{ name: string; network: string; time_zone: string }>;
     expect(sample).toEqual({ name: 'ATM KCP Pasar Sentral', network: 'VSAT', time_zone: 'WITA' });
+
+    // NPR dummy: sekali saja walau seed diulang, bernomor dari trigger, dibuat Dewi (L1).
+    const tickets: Array<{ code: string; count: number }> = await dataSource.query(
+      `SELECT t.code, count(tk.id)::int AS count FROM tenants t LEFT JOIN tickets tk ON tk.tenant_id = t.id
+       WHERE t.code = ANY($1) GROUP BY t.code ORDER BY t.code`,
+      [SEED_TENANTS.map((tenant) => tenant.code)],
+    );
+    expect(tickets).toEqual(
+      SEED_TENANTS.map((tenant) => ({
+        code: tenant.code,
+        count: seedTickets().filter((ticket) => ticket.tenant_code === tenant.code).length,
+      })).sort((a, b) => a.code.localeCompare(b.code)),
+    );
+    const [ticket] = (await dataSource.query(
+      `SELECT tk.number, tk.status, u.email FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
+       JOIN users u ON u.id = tk.created_by WHERE r.code = 'BNA-MKS-0217'`,
+    )) as Array<{ number: string; status: string; email: string }>;
+    expect(ticket).toMatchObject({ status: 'terbuka', email: 'dewi@noc.example' });
+    expect(ticket?.number).toMatch(/^NPR\/VSAT\/BNA\/\d{4}\/\d{2}\/\d{4}$/);
   });
 
   it('tidak membaca kata sandi bila seeder pengguna tidak dijalankan', () => {

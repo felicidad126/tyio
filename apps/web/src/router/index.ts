@@ -13,6 +13,8 @@ import NotFoundPage from '../pages/not-found/NotFoundPage.vue';
 import RemoteDetailPage from '../pages/remotes/RemoteDetailPage.vue';
 import RemoteImportPage from '../pages/remotes/RemoteImportPage.vue';
 import RemoteListPage from '../pages/remotes/RemoteListPage.vue';
+import TicketDetailPage from '../pages/tickets/detail/TicketDetailPage.vue';
+import TicketNewPage from '../pages/tickets/new/TicketNewPage.vue';
 import { useSessionStore } from '../stores/session';
 import { safeNextPath } from './next-path';
 
@@ -57,6 +59,14 @@ export const router = createRouter({
           meta: { title: 'Impor remote', roles: ['admin'] },
         },
         { path: 'remote/:id', name: 'remote-detail', component: RemoteDetailPage, meta: { title: 'Remote' } },
+        { path: 'tiket/baru', name: 'ticket-new', component: TicketNewPage, meta: { title: 'Buat NPR' } },
+        {
+          // Id NPR selalu UUID; alamat lain di bawah /tiket jatuh ke "Halaman tidak ditemukan".
+          path: 'tiket/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
+          name: 'ticket-detail',
+          component: TicketDetailPage,
+          meta: { title: 'NPR' },
+        },
         { path: 'admin/master', redirect: { name: 'admin-master', params: { jenis: 'kategori' } } },
         {
           path: 'admin/master/:jenis(kategori|system|jarkom|customer)',
