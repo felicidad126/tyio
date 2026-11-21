@@ -7,8 +7,12 @@ import {
   MASTER_KINDS,
   type MasterKind,
   type MasterValue,
+  type RemoteDetail,
+  type RemoteImportReport,
+  type RemotePage,
   type SessionUser,
   type TenantSummary,
+  XLSX_MIME,
 } from '@tyio/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
@@ -16,8 +20,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { scopeFor, scopeIncludes } from '../src/common/tenant/tenant-scope.js';
 import { TENANT_NOT_FOUND_MESSAGE } from '../src/modules/tenants/tenants.controller.js';
 import { CUSTOMER_ADMIN_ONLY_MESSAGE, notFoundMessage } from '../src/modules/master/master.service.js';
+import { REMOTE_NOT_FOUND_MESSAGE } from '../src/modules/remotes/remotes.service.js';
 import { createTestApp } from './create-test-app.js';
-import { insertMasterValue, insertTenant, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
+import {
+  buildXlsx,
+  insertMasterValue,
+  insertRemote,
+  insertTenant,
+  insertUser,
+  operatorQuery,
+  TEST_PASSWORD,
+} from './fixtures.js';
 import { type RegisteredRoute, registeredRoutes } from './routes.js';
 
 // Isolasi tenant (langkah 0.4): pengguna yang dibatasi ke customer A tidak bisa membaca
@@ -156,6 +169,73 @@ const CUSTOMER_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** Remote (langkah 1.2): daftar, halaman remote, dan impor. */
+const REMOTE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'GET /api/remotes': async (fx) => {
+    const own = await insertRemote(fx.dataSource, fx.tenantA.id);
+    const other = await insertRemote(fx.dataSource, fx.tenantB.id, { name: own.name });
+
+    const all = (await fx.operatorA.agent.get('/api/remotes?pageSize=100').expect(200)).body as RemotePage;
+    expect(new Set(all.items.map((remote) => remote.tenantId))).toEqual(new Set([fx.tenantA.id]));
+    // Pencarian yang cocok dengan remote customer B pun tidak menampilkannya.
+    const search = (await fx.operatorA.agent.get(`/api/remotes?q=${encodeURIComponent(own.name)}`).expect(200))
+      .body as RemotePage;
+    expect(ids(search.items)).toEqual([own.id]);
+    expect(search.total).toBe(1);
+    const filtered = (await fx.operatorA.agent.get(`/api/remotes?tenantId=${fx.tenantB.id}`).expect(200))
+      .body as RemotePage;
+    expect(filtered).toMatchObject({ items: [], total: 0 });
+    expect(ids(all.items)).not.toContain(other.id);
+  },
+
+  'GET /api/remotes/:id': async (fx) => {
+    const own = await insertRemote(fx.dataSource, fx.tenantA.id);
+    const other = await insertRemote(fx.dataSource, fx.tenantB.id);
+
+    const res = await fx.operatorA.agent.get(`/api/remotes/${other.id}`).expect(404);
+    expect(res.body.message).toBe(REMOTE_NOT_FOUND_MESSAGE);
+    const mine = await fx.operatorA.agent.get(`/api/remotes/${own.id}`).expect(200);
+    expect((mine.body as RemoteDetail).code).toBe(own.code);
+  },
+
+  'POST /api/remote-import': async (fx) => {
+    const networkB = await insertMasterValue(fx.dataSource, 'jarkom', fx.tenantB.id);
+    const networkA = await insertMasterValue(fx.dataSource, 'jarkom', fx.tenantA.id);
+    const code = `IMP-${randomUUID().slice(0, 8).toUpperCase()}`;
+    const file = (network: string | null) =>
+      buildXlsx([
+        ['Kode remote', 'Nama remote', 'Jarkom', 'Zona waktu'],
+        [code, 'Remote impor', network, 'WIB'],
+      ]);
+
+    const other = await fx.adminA.agent
+      .post(`/api/remote-import?tenantId=${fx.tenantB.id}&mode=save`)
+      .set('Content-Type', XLSX_MIME)
+      .send(await file(networkB.code))
+      .expect(404);
+    expect(other.body.message).toBe(TENANT_NOT_FOUND_MESSAGE);
+    const stored = (await fx.dataSource.query('SELECT id FROM remotes WHERE code = $1', [code])) as unknown[];
+    expect(stored).toEqual([]);
+
+    // Kode jarkom customer B tidak dikenal saat impor ke customer A.
+    const crossNetwork = await fx.adminA.agent
+      .post(`/api/remote-import?tenantId=${fx.tenantA.id}`)
+      .set('Content-Type', XLSX_MIME)
+      .send(await file(networkB.code))
+      .expect(200);
+    expect((crossNetwork.body as RemoteImportReport).failed[0]?.errors).toEqual([
+      `Jarkom ${networkB.code} tidak ada di customer ini.`,
+    ]);
+
+    const own = await fx.adminA.agent
+      .post(`/api/remote-import?tenantId=${fx.tenantA.id}&mode=save`)
+      .set('Content-Type', XLSX_MIME)
+      .send(await file(networkA.code))
+      .expect(200);
+    expect((own.body as RemoteImportReport).created).toBe(1);
+  },
+};
+
 /**
  * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
  * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
@@ -206,6 +286,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
 
   ...Object.assign({}, ...MASTER_KINDS.map(masterValueProbes)),
   ...CUSTOMER_PROBES,
+  ...REMOTE_PROBES,
 };
 
 

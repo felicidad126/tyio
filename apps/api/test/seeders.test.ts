@@ -7,6 +7,7 @@ import {
   createSeeders,
   DEV_SEED_PASSWORD,
   SEED_MASTER,
+  SEED_REMOTES_PER_TENANT,
   SEED_TENANTS,
   SEED_USERS,
   seedUserPassword,
@@ -99,6 +100,24 @@ describe('seeder tenant dan pengguna', () => {
         jarkom: SEED_MASTER.jarkom.map((network) => `${network.code}:${network.name}`).sort(),
       });
     }
+
+    // Remote dummy: jumlahnya tetap walau seed diulang; remote contoh mockup ada.
+    const remotes: Array<{ code: string; count: number }> = await dataSource.query(
+      `SELECT t.code, count(r.id)::int AS count FROM tenants t LEFT JOIN remotes r ON r.tenant_id = t.id
+       WHERE t.code = ANY($1) GROUP BY t.code ORDER BY t.code`,
+      [SEED_TENANTS.map((tenant) => tenant.code)],
+    );
+    expect(remotes).toEqual(
+      SEED_TENANTS.map((tenant) => ({
+        code: tenant.code,
+        count: SEED_REMOTES_PER_TENANT + (tenant.code === 'BNA' ? 1 : 0),
+      })).sort((a, b) => a.code.localeCompare(b.code)),
+    );
+    const [sample] = (await dataSource.query(
+      `SELECT r.name, n.code AS network, r.time_zone FROM remotes r JOIN master_networks n ON n.id = r.network_id
+       WHERE r.code = 'BNA-MKS-0217'`,
+    )) as Array<{ name: string; network: string; time_zone: string }>;
+    expect(sample).toEqual({ name: 'ATM KCP Pasar Sentral', network: 'VSAT', time_zone: 'WITA' });
   });
 
   it('tidak membaca kata sandi bila seeder pengguna tidak dijalankan', () => {
