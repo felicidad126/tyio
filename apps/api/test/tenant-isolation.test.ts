@@ -18,6 +18,7 @@ import {
   type TicketQueuePage,
   type TicketSummary,
   type TicketTimeline,
+  type TroubleTicketPage,
   XLSX_MIME,
 } from '@tyio/shared';
 import request from 'supertest';
