@@ -144,6 +144,37 @@ export async function insertTicket(
   return { ...ticket, remoteId };
 }
 
+/**
+ * Tindakan "catatan" beserta satu lampiran teks, disisipkan langsung dalam satu transaksi
+ * (lampiran hanya bisa ditambahkan bersama entrinya). Pembuatnya pembuat NPR.
+ */
+export async function insertNoteWithAttachment(
+  dataSource: DataSource,
+  ticketId: string,
+  content = 'isi lampiran uji',
+): Promise<{ actionId: string; attachmentId: string }> {
+  return asOperator(dataSource, async (manager) => {
+    const [action] = (await manager.query(
+      `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, created_by)
+       SELECT tenant_id, id, 'catatan', 'Catatan uji', now(), created_by FROM tickets WHERE id = $1
+       RETURNING id`,
+      [ticketId],
+    )) as Array<{ id: string }>;
+    if (!action) throw new Error('Tindakan uji gagal dibuat.');
+    const bytes = Buffer.from(content);
+    const [attachment] = (await manager.query(
+      `INSERT INTO ticket_attachments (tenant_id, ticket_id, action_id, file_name, content_type, size_bytes,
+                                       sha256, content, created_by)
+       SELECT tenant_id, id, $2, 'uji.txt', 'text/plain', $3, encode(sha256($4), 'hex'), $4, created_by
+         FROM tickets WHERE id = $1
+       RETURNING id`,
+      [ticketId, action.id, bytes.length, bytes],
+    )) as Array<{ id: string }>;
+    if (!attachment) throw new Error('Lampiran uji gagal dibuat.');
+    return { actionId: action.id, attachmentId: attachment.id };
+  });
+}
+
 /** Berkas .xlsx dari baris-baris sel (baris pertama = judul kolom). */
 export async function buildXlsx(rows: Array<Array<string | number | Date | null>>): Promise<Buffer> {
   const { default: writeXlsxFile } = await import('write-excel-file/node');

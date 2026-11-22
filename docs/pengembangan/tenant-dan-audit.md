@@ -128,3 +128,28 @@ VALUES (...) RETURNING id, number;  -- kolom number jangan diisi; database menol
 - Peringatan NPR terbuka dijaga di API dengan mengunci baris remote (`FOR NO KEY UPDATE`)
   sebelum memeriksa; jalur pembuat tiket baru (alert R6, API R7) wajib memakai
   `TicketsService.create`, bukan INSERT sendiri.
+
+## 7. Linimasa NPR dan status (langkah 1.4)
+
+Status, mulai gangguan, dan nomor tiket customer NPR **hanya berubah lewat entri linimasa**
+(T71). Jangan `UPDATE tickets SET status = …`: database menolaknya. Tambahkan entri:
+
+```sql
+INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                            pending_reason, created_by)
+VALUES (...);  -- trigger apply_ticket_action memeriksa status_from = status sekarang dan
+               -- perpindahannya sah, lalu memperbarui tickets
+```
+
+- `ticket_actions` dan `ticket_attachments` hanya bisa ditambah: UPDATE dan DELETE ditolak,
+  TRUNCATE ditolak trigger audit. Perbaikan = entri baru jenis `koreksi` dengan `corrects_id`
+  ke entri lama di NPR yang sama.
+- Entri `dibuat` ditulis trigger saat NPR disisipkan; jangan menulisnya sendiri.
+- Perpindahan yang sah ada di dua tempat yang diuji sama: `isTicketTransitionAllowed`
+  (`@tyio/shared`) dan `ticket_status_transition_allowed` (database). Ubah keduanya bersama.
+- Aturan yang bergantung peran (buka kembali hanya L2/admin) dan penutupan (1.6) dijaga di
+  `TicketActionsService`; jalur penulis baru (alert R6, API R7) wajib memakainya.
+- Lampiran disimpan di database (T70) bersama entrinya dalam satu transaksi; isinya
+  disembunyikan dari audit_log (`audit_enable(..., ARRAY['content'])`).
+- Perbaikan manual oleh operator juga lewat entri, dengan konteks audit `manual`
+  (contoh di `docs/operasi/menjalankan.md`), bukan UPDATE.

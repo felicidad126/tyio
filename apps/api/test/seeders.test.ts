@@ -133,10 +133,18 @@ describe('seeder tenant dan pengguna', () => {
       })).sort((a, b) => a.code.localeCompare(b.code)),
     );
     const [ticket] = (await dataSource.query(
-      `SELECT tk.number, tk.status, u.email FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
-       JOIN users u ON u.id = tk.created_by WHERE r.code = 'BNA-MKS-0217'`,
+      `SELECT tk.number, tk.status, tk.customer_ticket_number, u.email,
+              (SELECT array_agg(a.kind ORDER BY a.seq) FROM ticket_actions a WHERE a.ticket_id = tk.id) AS kinds
+         FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
+         JOIN users u ON u.id = tk.created_by WHERE r.code = 'BNA-MKS-0217'`,
     )) as Array<{ number: string; status: string; email: string }>;
-    expect(ticket).toMatchObject({ status: 'terbuka', email: 'dewi@noc.example' });
+    // Contoh linimasa mockup (1.4): sekali saja walau seed diulang.
+    expect(ticket).toMatchObject({
+      status: 'dikerjakan',
+      customer_ticket_number: 'INC-88213',
+      email: 'dewi@noc.example',
+      kinds: ['dibuat', 'catatan', 'cek_lokasi'],
+    });
     expect(ticket?.number).toMatch(/^NPR\/VSAT\/BNA\/\d{4}\/\d{2}\/\d{4}$/);
   });
 
