@@ -155,3 +155,15 @@ VALUES (...);  -- trigger apply_ticket_action memeriksa status_from = status sek
   disembunyikan dari audit_log (`audit_enable(..., ARRAY['content'])`).
 - Perbaikan manual oleh operator juga lewat entri, dengan konteks audit `manual`
   (contoh di `docs/operasi/menjalankan.md`), bukan UPDATE.
+
+## 8. TT ke Service Delivery (langkah 1.5b)
+
+TT disisipkan ke `trouble_tickets` lewat `TroubleTicketsService.create`. Database mengisi
+nomor (`assign_ticket_number('TT')`), remote dan jarkom (dari NPR), dan entri `tt_dibuat` di
+linimasa NPR. Jangan mengisi `number`, `remote_id`, atau `network_id` sendiri.
+
+- TT hanya untuk NPR yang belum ditutup; nomor, problem, dan kontak TT tidak bisa diubah.
+- Setiap "Salin ringkasan TT" menambah entri `tt_disalin` (K25) lewat
+  `TroubleTicketsService.markCopied`; jumlah salin dihitung dari entri itu.
+- Status TT baru (Hasil masuk di R3, Ditutup di 1.6) ditambahkan lewat migrasi baru pada
+  `trouble_tickets_status_valid` dan `TROUBLE_TICKET_STATUSES` di `@tyio/shared`.

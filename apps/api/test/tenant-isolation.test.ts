@@ -427,6 +427,16 @@ const QUEUE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
     const res = (await fx.operatorA.agent.get(`/api/search?q=${marker}`).expect(200)).body as GlobalSearchResult;
     expect(ids(res.tickets)).toEqual([own.id]);
     expect(ids(res.remotes)).toEqual([ownRemote.id]);
+
+    // TT (1.5b): nomor TT customer B tidak ditemukan; TT sendiri ditemukan.
+    const otherTt = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantB.id)).id);
+    const byOther = (await fx.operatorA.agent.get(`/api/search?q=${encodeURIComponent(otherTt.number)}`).expect(200))
+      .body as GlobalSearchResult;
+    expect(byOther.troubleTickets).toEqual([]);
+    const ownTt = await insertTroubleTicket(fx.dataSource, own.id);
+    const byOwn = (await fx.operatorA.agent.get(`/api/search?q=${encodeURIComponent(ownTt.number)}`).expect(200))
+      .body as GlobalSearchResult;
+    expect(ids(byOwn.troubleTickets)).toEqual([ownTt.id]);
   },
 };
 

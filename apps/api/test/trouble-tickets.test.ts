@@ -204,7 +204,7 @@ describe('TT ke SD', () => {
       await close(ticket.id);
       const res = await create(l2, ticket.id, { problem: 'Terlambat' }).expect(400);
       expect(res.body.message).toBe(TICKET_CLOSED_FOR_TT_MESSAGE);
-      await expect(insertTroubleTicket(dataSource, ticket.id)).rejects.toThrow(/sudah ditutup/);
+      await expect(insertTroubleTicket(dataSource, ticket.id)).rejects.toThrow(/TT tidak bisa dibuat/);
     });
   });
 
