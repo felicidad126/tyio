@@ -86,7 +86,7 @@ export function checkAttachment(part: UploadedPart): CheckedAttachment {
 export function cleanFileName(raw: string): string {
   const base = raw.split(/[\\/]/).pop() ?? '';
   // eslint-disable-next-line no-control-regex -- membuang karakter kontrol memang tujuannya
-  let name = base.replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  let name = base.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
   if (name === '' || name === '.' || name === '..') name = 'lampiran';
   if (name.length > TICKET_ATTACHMENT_NAME_MAX_LENGTH) {
     const extension = /\.[a-z0-9]{1,5}$/i.exec(name)?.[0] ?? '';

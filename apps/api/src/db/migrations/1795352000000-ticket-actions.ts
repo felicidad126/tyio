@@ -241,9 +241,11 @@ export class TicketActions1795352000000 implements MigrationInterface {
           REFERENCES tickets (tenant_id, id),
         CONSTRAINT ticket_attachments_action_same_ticket FOREIGN KEY (ticket_id, action_id)
           REFERENCES ticket_actions (ticket_id, id),
+        -- Tanpa garis miring dan karakter kontrol. Rentang eksplisit, bukan [:cntrl:], karena
+        -- kelas itu bergantung locale (di locale C huruf non-ASCII ikut dianggap kontrol).
         CONSTRAINT ticket_attachments_name_valid
           CHECK (file_name = btrim(file_name) AND file_name <> '' AND length(file_name) <= 200
-                 AND file_name !~ '[/\\\\[:cntrl:]]'),
+                 AND file_name !~ '[/\\\\\\x01-\\x1f\\x7f-\\x9f]'),
         CONSTRAINT ticket_attachments_size_valid
           CHECK (size_bytes > 0 AND size_bytes <= 10485760 AND size_bytes = octet_length(content)),
         CONSTRAINT ticket_attachments_sha256_format CHECK (sha256 ~ '^[0-9a-f]{64}$')

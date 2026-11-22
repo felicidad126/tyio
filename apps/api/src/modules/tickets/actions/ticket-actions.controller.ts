@@ -56,6 +56,8 @@ const UPLOAD_FIELD = 'lampiran';
 @Injectable()
 class AttachmentUploadInterceptor implements NestInterceptor {
   private readonly upload = new (FilesInterceptor(UPLOAD_FIELD, TICKET_ATTACHMENTS_PER_ACTION, {
+    // Peramban mengirim nama berkas sebagai UTF-8 tanpa charset; bawaan multer latin1.
+    defParamCharset: 'utf8',
     limits: {
       fileSize: TICKET_ATTACHMENT_MAX_BYTES,
       files: TICKET_ATTACHMENTS_PER_ACTION,
