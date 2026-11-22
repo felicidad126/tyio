@@ -264,6 +264,10 @@ const range = computed(() => {
   max-width: 820px;
 }
 
+.tt-table__remote {
+  min-width: 170px;
+}
+
 .tt-table__problem {
   min-width: 220px;
   max-width: 360px;

@@ -231,7 +231,7 @@ function open(id: string): void {
   <div>
     <PageHeader
       title="Tiket"
-      subtitle="Antrean NPR. Yang paling lama gangguannya di atas."
+      :subtitle="showTt ? 'TT yang menunggu Service Delivery. Yang paling lama di atas.' : 'Antrean NPR. Yang paling lama gangguannya di atas.'"
     >
       <template #actions>
         <RouterLink
