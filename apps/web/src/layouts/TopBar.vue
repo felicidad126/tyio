@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { IconPlus } from '@tabler/icons-vue';
+import GlobalSearch from './GlobalSearch.vue';
 import UserMenu from './UserMenu.vue';
 import ZoneClock from './ZoneClock.vue';
 
-// "Buat NPR" berfungsi sejak langkah 1.3. Pencarian global, pilihan customer, dan
-// notifikasi (mockup) menyusul bersama fitur yang mengisinya (1.5, R5), agar tidak ada
-// tombol yang belum berfungsi (T36).
+// "Buat NPR" berfungsi sejak langkah 1.3, pencarian global sejak 1.5. Pilihan customer dan
+// notifikasi (mockup) menyusul bersama fitur yang mengisinya (R5), agar tidak ada tombol
+// yang belum berfungsi (T36).
 </script>
 
 <template>
   <header class="top">
+    <GlobalSearch />
     <ZoneClock class="top__clock" />
     <!-- Tombol global bergaya sekunder; tombol utama milik halaman (ATURAN.md §5). -->
     <RouterLink
@@ -44,6 +46,11 @@ import ZoneClock from './ZoneClock.vue';
   min-height: 36px;
 }
 
+/* Jam, Buat NPR, dan menu akun tidak menyusut; kotak cari yang mengalah. */
+.top > :not(.global-search) {
+  flex-shrink: 0;
+}
+
 @media (max-width: 900px) {
   .top {
     min-height: 0;
@@ -53,6 +60,7 @@ import ZoneClock from './ZoneClock.vue';
 
 @media (max-width: 640px) {
   .top {
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 8px;
   }

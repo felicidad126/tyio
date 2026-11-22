@@ -13,6 +13,7 @@ import NotFoundPage from '../pages/not-found/NotFoundPage.vue';
 import RemoteDetailPage from '../pages/remotes/RemoteDetailPage.vue';
 import RemoteImportPage from '../pages/remotes/RemoteImportPage.vue';
 import RemoteListPage from '../pages/remotes/RemoteListPage.vue';
+import TicketListPage from '../pages/tickets/list/TicketListPage.vue';
 import TicketDetailPage from '../pages/tickets/detail/TicketDetailPage.vue';
 import TicketNewPage from '../pages/tickets/new/TicketNewPage.vue';
 import { useSessionStore } from '../stores/session';
@@ -35,6 +36,7 @@ declare module 'vue-router' {
 const BUILT_PAGES: Partial<Record<string, Component>> = {
   admin: AdminPage,
   remote: RemoteListPage,
+  tiket: TicketListPage,
 };
 
 export const router = createRouter({

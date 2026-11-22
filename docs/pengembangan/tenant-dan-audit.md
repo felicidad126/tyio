@@ -131,8 +131,8 @@ VALUES (...) RETURNING id, number;  -- kolom number jangan diisi; database menol
 
 ## 7. Linimasa NPR dan status (langkah 1.4)
 
-Status, mulai gangguan, dan nomor tiket customer NPR **hanya berubah lewat entri linimasa**
-(T71). Jangan `UPDATE tickets SET status = …`: database menolaknya. Tambahkan entri:
+Status, mulai gangguan, nomor tiket customer, dan penanggung NPR **hanya berubah lewat entri
+linimasa** (T71, T86). Jangan `UPDATE tickets SET status = …`: database menolaknya. Tambahkan entri:
 
 ```sql
 INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
@@ -145,6 +145,8 @@ VALUES (...);  -- trigger apply_ticket_action memeriksa status_from = status sek
   TRUNCATE ditolak trigger audit. Perbaikan = entri baru jenis `koreksi` dengan `corrects_id`
   ke entri lama di NPR yang sama.
 - Entri `dibuat` ditulis trigger saat NPR disisipkan; jangan menulisnya sendiri.
+- Penanggung berganti lewat entri `ambil` (`assignee_id` = penanggung baru); trigger mengisi
+  `assignee_from_id` dengan penanggung sebelumnya. Lewat API: `TicketActionsService.take`.
 - Perpindahan yang sah ada di dua tempat yang diuji sama: `isTicketTransitionAllowed`
   (`@tyio/shared`) dan `ticket_status_transition_allowed` (database). Ubah keduanya bersama.
 - Aturan yang bergantung peran (buka kembali hanya L2/admin) dan penutupan (1.6) dijaga di

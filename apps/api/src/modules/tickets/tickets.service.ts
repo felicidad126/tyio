@@ -62,6 +62,9 @@ interface DetailRow extends SummaryRow {
   network_name: string;
   created_by: string;
   customer_ticket_number: string | null;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  assignee_role: string | null;
 }
 
 const MINUTE = 60_000;
@@ -170,8 +173,12 @@ export class TicketsService {
         .innerJoin('master_systems', 's', 's.id = tk.system_id')
         .innerJoin('master_networks', 'n', 'n.id = tk.network_id')
         .innerJoin('users', 'u', 'u.id = tk.created_by')
+        .leftJoin('users', 'asg', 'asg.id = tk.assignee_id')
         .select([
           ...SUMMARY_COLUMNS,
+          'tk.assignee_id AS assignee_id',
+          'asg.name AS assignee_name',
+          'asg.role AS assignee_role',
           'tk.tenant_id AS tenant_id',
           'tk.remote_id AS remote_id',
           'tk.category_id AS category_id',
@@ -194,6 +201,10 @@ export class TicketsService {
       ...toSummary(row),
       tenantId: row.tenant_id,
       customerTicketNumber: row.customer_ticket_number,
+      assignee:
+        row.assignee_id && row.assignee_name && row.assignee_role
+          ? { id: row.assignee_id, name: row.assignee_name, role: row.assignee_role }
+          : null,
       category: { id: row.category_id, name: row.category_name },
       system: { id: row.system_id, name: row.system_name },
       network: { id: row.network_id, code: row.network_code, name: row.network_name },

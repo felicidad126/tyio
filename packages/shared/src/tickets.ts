@@ -1,4 +1,4 @@
-import type { RemoteDetail } from './remotes.js';
+import type { RemoteDetail, RemoteZone } from './remotes.js';
 
 /**
  * Tiket (langkah 1.3). NPR = catatan downtime satu remote beserta penyebabnya (K16).
@@ -75,6 +75,7 @@ export const TICKET_ACTION_KINDS = [
   'hubungi_customer',
   'catatan',
   'koreksi',
+  'ambil',
 ] as const;
 export type TicketActionKind = (typeof TICKET_ACTION_KINDS)[number];
 
@@ -88,6 +89,7 @@ export const TICKET_ACTION_KIND_LABELS: Record<TicketActionKind, string> = {
   hubungi_customer: 'Hubungi customer',
   catatan: 'Catatan',
   koreksi: 'Koreksi',
+  ambil: 'Ambil',
 };
 
 export function isTicketActionKind(value: unknown): value is TicketActionKind {
@@ -167,6 +169,8 @@ export interface TicketDetail extends TicketSummary {
   tenantId: string;
   /** Nomor tiket di sistem customer (mis. `INC-88213`), dicatat lewat linimasa. */
   customerTicketNumber: string | null;
+  /** Penanggung sekarang (T81), diganti lewat "Ambil". */
+  assignee: TicketPerson | null;
   category: { id: string; name: string };
   system: { id: string; name: string };
   /** Jarkom saat NPR dibuat; kodenya ada di nomor NPR. */
@@ -214,6 +218,9 @@ export interface TicketAction {
   startedAtCorrection: string | null;
   /** Nomor tiket customer yang dicatat entri ini; `''` berarti dikosongkan. */
   customerTicketNumber: string | null;
+  /** Entri `ambil`: penanggung baru dan penanggung sebelumnya (diisi database). */
+  assignee: { id: string; name: string } | null;
+  assigneeFrom: { id: string; name: string } | null;
   attachments: TicketAttachment[];
 }
 
@@ -222,7 +229,7 @@ export interface TicketAction {
  * ini dan berkas di bagian `lampiran`).
  */
 export interface CreateTicketAction {
-  kind: Exclude<TicketActionKind, 'dibuat'>;
+  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil'>;
   note: string;
   /** ISO 8601 dengan zona. Tidak diisi = saat disimpan. */
   occurredAt?: string;
@@ -244,4 +251,97 @@ export interface CreateTicketAction {
 export interface TicketTimeline {
   ticket: TicketDetail;
   actions: TicketAction[];
+}
+
+/** Pengguna yang terlihat di NPR (pembuat, penanggung). `role`: l1, l2, admin. */
+export interface TicketPerson {
+  id: string;
+  name: string;
+  role: string;
+}
+
+/**
+ * Isi `POST /api/tickets/:id/take` ("Ambil", T81): penanggung yang terlihat operator saat
+ * menekan tombol (`null` = belum ada). Bila sudah berganti, jawabannya 409.
+ */
+export interface TakeTicket {
+  expectedAssigneeId: string | null;
+}
+
+/** Tampilan bawaan antrean NPR (T82, mockup Tiket). */
+export const TICKET_QUEUE_VIEWS = ['semua', 'saya', 'pending', 'eskalasi', 'siap'] as const;
+export type TicketQueueView = (typeof TICKET_QUEUE_VIEWS)[number];
+
+export const TICKET_QUEUE_VIEW_LABELS: Record<TicketQueueView, string> = {
+  semua: 'Semua terbuka',
+  saya: 'Milik saya',
+  pending: 'Pending',
+  eskalasi: 'Eskalasi',
+  siap: 'Siap ditutup',
+};
+
+/** Urutan antrean (T83): mulai gangguan terlama dulu (bawaan), atau NPR terbaru dulu. */
+export const TICKET_QUEUE_SORTS = ['mulai', 'terbaru'] as const;
+export type TicketQueueSort = (typeof TICKET_QUEUE_SORTS)[number];
+
+export const TICKET_PAGE_SIZE_DEFAULT = 25;
+export const TICKET_PAGE_SIZE_MAX = 100;
+
+/** Satu baris antrean NPR. Waktu dalam ISO 8601 UTC. */
+export interface TicketQueueItem {
+  id: string;
+  number: string;
+  status: TicketStatus;
+  tenantId: string;
+  customerName: string;
+  categoryName: string;
+  systemName: string;
+  customerTicketNumber: string | null;
+  remote: { id: string; code: string; name: string; city: string | null; zone: RemoteZone };
+  startedAt: string;
+  createdAt: string;
+  assignee: TicketPerson | null;
+  /** Alasan pending terakhir, bila status sekarang pending. */
+  pendingReason: string | null;
+  /** Entri linimasa terakhir. */
+  lastAction: { kind: TicketActionKind; at: string; byName: string };
+}
+
+/**
+ * `GET /api/tickets`: satu halaman antrean. `counts` = jumlah NPR tiap tampilan bawaan
+ * dengan saringan lain yang sama (customer, kategori, system, status, kata kunci).
+ */
+export interface TicketQueuePage {
+  items: TicketQueueItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<TicketQueueView, number>;
+}
+
+/** Pencarian global (T84): paling sedikit 2 huruf. */
+export const SEARCH_MIN_LENGTH = 2;
+export const SEARCH_MAX_LENGTH = 100;
+
+export interface SearchTicketHit {
+  id: string;
+  number: string;
+  status: TicketStatus;
+  customerTicketNumber: string | null;
+  customerName: string;
+  remote: { code: string; name: string };
+}
+
+export interface SearchRemoteHit {
+  id: string;
+  code: string;
+  name: string;
+  city: string | null;
+  customerName: string;
+}
+
+/** Jawaban `GET /api/search?q=`: NPR (termasuk yang ditutup) dan remote, masing-masing terbatas. */
+export interface GlobalSearchResult {
+  tickets: SearchTicketHit[];
+  remotes: SearchRemoteHit[];
 }

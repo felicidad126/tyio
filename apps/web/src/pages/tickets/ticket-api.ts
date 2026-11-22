@@ -1,12 +1,14 @@
 import type {
   CreateTicket,
   CreateTicketAction,
+  GlobalSearchResult,
   MasterValue,
   OpenTicketsConflict,
   RemoteDetail,
   RemotePage,
   TicketAction,
   TicketDetail,
+  TicketQueuePage,
   TicketSummary,
   TicketTimeline,
 } from '@tyio/shared';
@@ -16,7 +18,22 @@ import { ApiError, apiMultipart, apiRequest } from '../../api';
 
 const enc = encodeURIComponent;
 
+/** Saringan antrean seperti di alamat halaman; yang kosong tidak dikirim. */
+export type TicketQueueQuery = Partial<
+  Record<'view' | 'tenantId' | 'categoryId' | 'systemId' | 'status' | 'q' | 'sort' | 'page' | 'pageSize', string>
+>;
+
 export const ticketApi = {
+  list: (query: TicketQueueQuery) => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) if (value) params.set(key, value);
+    return apiRequest<TicketQueuePage>('GET', `/tickets?${params.toString()}`);
+  },
+  /** "Ambil": `expectedAssigneeId` = penanggung yang terlihat di layar. */
+  take: (id: string, expectedAssigneeId: string | null) =>
+    apiRequest<TicketTimeline>('POST', `/tickets/${enc(id)}/take`, { expectedAssigneeId }),
+  search: (q: string) => apiRequest<GlobalSearchResult>('GET', `/search?q=${enc(q)}`),
+  customers: () => apiRequest<Array<{ id: string; name: string; code: string }>>('GET', '/tenants'),
   create: (input: CreateTicket) => apiRequest<TicketDetail>('POST', '/tickets', input),
   get: (id: string) => apiRequest<TicketDetail>('GET', `/tickets/${enc(id)}`),
   actions: (id: string) => apiRequest<TicketAction[]>('GET', `/tickets/${enc(id)}/actions`),

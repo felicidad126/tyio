@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { IconLockOpen, IconPlus } from '@tabler/icons-vue';
-import { APP_NAME, type TicketAction, type TicketDetail, type TicketStatus, type TicketTimeline } from '@tyio/shared';
+import { IconHandGrab, IconLockOpen, IconPlus } from '@tabler/icons-vue';
+import { APP_NAME, isRole, ROLE_LABELS, type TicketAction, type TicketDetail, type TicketStatus, type TicketTimeline } from '@tyio/shared';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PageHeader from '../../../components/PageHeader.vue';
@@ -55,6 +55,32 @@ const customerName = computed(
 );
 const closed = computed(() => ticket.value?.status === 'ditutup');
 const canReopen = computed(() => session.user?.role === 'l2' || session.user?.role === 'admin');
+const isAssignee = computed(() => !!ticket.value?.assignee && ticket.value.assignee.id === session.user?.id);
+const taking = ref(false);
+const takeError = ref('');
+const roleLabel = (role: string) => (isRole(role) ? ROLE_LABELS[role] : role);
+
+/** "Ambil" (T81): penanggung yang terlihat dikirim, agar pergantian oleh orang lain ketahuan (409). */
+async function take(): Promise<void> {
+  if (!ticket.value) return;
+  taking.value = true;
+  takeError.value = '';
+  saved.value = '';
+  try {
+    const timeline = await ticketApi.take(ticket.value.id, ticket.value.assignee?.id ?? null);
+    ticket.value = timeline.ticket;
+    actions.value = timeline.actions;
+    saved.value = 'Anda sekarang penanggung NPR ini.';
+    await nextTick();
+    savedNotice.value?.focus();
+  } catch (cause) {
+    takeError.value = cause instanceof Error ? cause.message : 'NPR gagal diambil.';
+    await reload().catch(() => undefined);
+  } finally {
+    taking.value = false;
+  }
+}
+
 const startCorrected = computed(() => actions.value.some((action) => action.startedAtCorrection !== null));
 
 function openPanel(correcting: TicketAction | null = null, initialStatus: TicketStatus | null = null): void {
@@ -117,6 +143,19 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
         <template #actions>
           <TicketStatusPill :status="ticket.status" />
           <button
+            v-if="!closed && !isAssignee"
+            type="button"
+            class="btn header-action"
+            :disabled="taking"
+            @click="take"
+          >
+            <IconHandGrab
+              size="18"
+              aria-hidden="true"
+            />
+            {{ taking ? 'Mengambil…' : ticket.assignee ? 'Ambil alih' : 'Ambil' }}
+          </button>
+          <button
             v-if="!closed"
             type="button"
             class="btn btn-primary header-action"
@@ -158,6 +197,13 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
         tabindex="-1"
       >
         {{ saved }}
+      </div>
+      <div
+        v-if="takeError"
+        class="alert alert-danger"
+        role="alert"
+      >
+        {{ takeError }}
       </div>
       <p
         v-if="closed && !canReopen"
@@ -209,6 +255,21 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
                   v-if="startCorrected"
                   class="d-block text-secondary"
                 >dikoreksi, lihat linimasa</span>
+              </dd>
+            </div>
+            <div class="datagrid-item">
+              <dt class="datagrid-title">
+                Penanggung
+              </dt>
+              <dd class="datagrid-content">
+                <template v-if="ticket.assignee">
+                  {{ ticket.assignee.name }}
+                  <span class="text-secondary">· {{ roleLabel(ticket.assignee.role) }}</span>
+                </template>
+                <span
+                  v-else
+                  class="text-secondary"
+                >Belum ada</span>
               </dd>
             </div>
             <div class="datagrid-item">

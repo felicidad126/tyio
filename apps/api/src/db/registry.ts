@@ -11,6 +11,7 @@ import { MasterData1795154430192 } from './migrations/1795154430192-master-data.
 import { Remotes1795193901420 } from './migrations/1795193901420-remotes.js';
 import { Tickets1795244806675 } from './migrations/1795244806675-tickets.js';
 import { TicketActions1795352000000 } from './migrations/1795352000000-ticket-actions.js';
+import { TicketAssignee1795420000000 } from './migrations/1795420000000-ticket-assignee.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -38,4 +39,5 @@ export const migrations: Registrable = [
   Remotes1795193901420,
   Tickets1795244806675,
   TicketActions1795352000000,
+  TicketAssignee1795420000000,
 ];

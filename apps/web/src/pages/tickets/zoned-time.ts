@@ -28,6 +28,13 @@ export function formatZoned(iso: string, zone: RemoteZone): string {
   return `${part('day')} ${part('month')} ${part('year')} ${part('hour')}:${part('minute')} ${zone}`;
 }
 
+/** "22 Nov 14:05 WITA": tanpa tahun, untuk kolom sempit di daftar. */
+export function formatZonedShort(iso: string, zone: RemoteZone): string {
+  const parts = formatter(zone).formatToParts(new Date(iso));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('day')} ${part('month')} ${part('hour')}:${part('minute')} ${zone}`;
+}
+
 /** Nilai `<input type="datetime-local">` (YYYY-MM-DDTHH:mm) untuk waktu `date` di zona remote. */
 export function toZonedInput(date: Date, zone: RemoteZone): string {
   const shifted = new Date(date.getTime() + REMOTE_ZONE_UTC_OFFSET[zone] * 3_600_000);

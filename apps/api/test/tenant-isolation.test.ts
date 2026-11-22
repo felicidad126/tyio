@@ -3,6 +3,7 @@ import { DiscoveryModule } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import {
   type AuditPage,
+  type GlobalSearchResult,
   type CustomerRecord,
   MASTER_KINDS,
   type MasterKind,
@@ -14,6 +15,7 @@ import {
   type TenantSummary,
   type TicketAction,
   type TicketDetail,
+  type TicketQueuePage,
   type TicketSummary,
   type TicketTimeline,
   XLSX_MIME,
@@ -376,6 +378,55 @@ const TICKET_ACTION_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** Antrean, penanggung, dan pencarian global (langkah 1.5). */
+const QUEUE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'GET /api/tickets': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const all = (await fx.operatorA.agent.get('/api/tickets?pageSize=100&sort=terbaru').expect(200)).body as TicketQueuePage;
+    expect(new Set(all.items.map((item) => item.tenantId))).toEqual(new Set([fx.tenantA.id]));
+    expect(ids(all.items)).toContain(own.id);
+    expect(ids(all.items)).not.toContain(other.id);
+    // Saringan customer B atau kata kunci nomor NPR B: kosong, jumlah tiap tampilan nol.
+    const byTenant = (await fx.operatorA.agent.get(`/api/tickets?tenantId=${fx.tenantB.id}`).expect(200))
+      .body as TicketQueuePage;
+    expect(byTenant.items).toEqual([]);
+    expect(Object.values(byTenant.counts).every((count) => count === 0)).toBe(true);
+    const byNumber = (await fx.operatorA.agent.get(`/api/tickets?q=${encodeURIComponent(other.number)}`).expect(200))
+      .body as TicketQueuePage;
+    expect(byNumber.total).toBe(0);
+  },
+
+  'POST /api/tickets/:ticketId/take': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const res = await fx.operatorA.agent
+      .post(`/api/tickets/${other.id}/take`)
+      .send({ expectedAssigneeId: null })
+      .expect(404);
+    expect(res.body.message).toBe(TICKET_NOT_FOUND_MESSAGE);
+    const [stored] = (await fx.dataSource.query('SELECT assignee_id, status FROM tickets WHERE id = $1', [
+      other.id,
+    ])) as Array<{ assignee_id: string | null; status: string }>;
+    expect(stored).toEqual({ assignee_id: null, status: 'terbuka' });
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const mine = await fx.operatorA.agent.post(`/api/tickets/${own.id}/take`).send({ expectedAssigneeId: null }).expect(201);
+    expect((mine.body as TicketTimeline).ticket.assignee?.name).toBeTruthy();
+  },
+
+  'GET /api/search': async (fx) => {
+    const marker = `ISO${randomUUID().slice(0, 6)}`;
+    const otherRemote = await insertRemote(fx.dataSource, fx.tenantB.id, { name: `Remote ${marker} B` });
+    await insertTicket(fx.dataSource, fx.tenantB.id, { remoteId: otherRemote.id });
+    const ownRemote = await insertRemote(fx.dataSource, fx.tenantA.id, { name: `Remote ${marker} A` });
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id, { remoteId: ownRemote.id });
+
+    const res = (await fx.operatorA.agent.get(`/api/search?q=${marker}`).expect(200)).body as GlobalSearchResult;
+    expect(ids(res.tickets)).toEqual([own.id]);
+    expect(ids(res.remotes)).toEqual([ownRemote.id]);
+  },
+};
+
 /**
  * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
  * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
@@ -429,6 +480,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...REMOTE_PROBES,
   ...TICKET_PROBES,
   ...TICKET_ACTION_PROBES,
+  ...QUEUE_PROBES,
 };
 
 
