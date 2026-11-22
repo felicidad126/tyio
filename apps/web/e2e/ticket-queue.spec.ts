@@ -16,7 +16,12 @@ interface Created {
 }
 
 /** NPR baru di remote uji baru (Bank Nusa), dibuat admin lewat API. */
-async function newTicket(browser: Browser, suffix: string, pendingReason?: string): Promise<Created> {
+async function newTicket(
+  browser: Browser,
+  suffix: string,
+  pendingReason?: string,
+  takenByAdmin = false,
+): Promise<Created> {
   const context = await browser.newContext();
   const page = await context.newPage();
   await loginAs(page, ACCOUNTS.admin);
@@ -55,6 +60,10 @@ async function newTicket(browser: Browser, suffix: string, pendingReason?: strin
     const res = await page.request.post(`/api/tickets/${ticket.id}/actions`, {
       data: { kind: 'hubungi_customer', note: 'Minta cek', statusFrom: 'terbuka', statusTo: 'pending_customer', pendingReason },
     });
+    expect(res.status()).toBe(201);
+  }
+  if (takenByAdmin) {
+    const res = await page.request.post(`/api/tickets/${ticket.id}/take`, { data: { expectedAssigneeId: null } });
     expect(res.status()).toBe(201);
   }
   await context.close();
@@ -181,6 +190,12 @@ test('ponsel 375px: antrean dan pencarian tanpa geser mendatar; Ambil bisa diket
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
   await page.getByRole('combobox', { name: 'Cari di seluruh portal' }).fill(ticket.code);
   await expect(page.getByRole('listbox', { name: 'Hasil pencarian' }).getByRole('option').first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+
+  // Halaman NPR milik orang lain: label status, Ambil alih, dan Tambah tindakan terlipat.
+  const taken = await newTicket(browser, 'G', undefined, true);
+  await page.goto(`/tiket/${taken.id}`);
+  await expect(page.getByRole('button', { name: 'Ambil alih' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 

@@ -22,7 +22,7 @@ defineProps<{ title: string; subtitle?: string }>();
       <!-- Satu aksi utama halaman (ATURAN.md §5), mis. "Impor dari Excel". -->
       <div
         v-if="$slots.actions"
-        class="d-flex gap-2"
+        class="d-flex flex-wrap align-items-center gap-2"
       >
         <slot name="actions" />
       </div>
