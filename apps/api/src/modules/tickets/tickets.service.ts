@@ -61,6 +61,7 @@ interface DetailRow extends SummaryRow {
   network_code: string;
   network_name: string;
   created_by: string;
+  customer_ticket_number: string | null;
 }
 
 const MINUTE = 60_000;
@@ -180,6 +181,7 @@ export class TicketsService {
           'n.code AS network_code',
           'n.name AS network_name',
           'tk.created_by AS created_by',
+          'tk.customer_ticket_number AS customer_ticket_number',
         ])
         .where('tk.id = :id', { id }),
       scope,
@@ -191,6 +193,7 @@ export class TicketsService {
     return {
       ...toSummary(row),
       tenantId: row.tenant_id,
+      customerTicketNumber: row.customer_ticket_number,
       category: { id: row.category_id, name: row.category_name },
       system: { id: row.system_id, name: row.system_name },
       network: { id: row.network_id, code: row.network_code, name: row.network_name },

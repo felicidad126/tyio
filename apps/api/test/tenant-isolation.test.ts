@@ -12,8 +12,10 @@ import {
   type RemotePage,
   type SessionUser,
   type TenantSummary,
+  type TicketAction,
   type TicketDetail,
   type TicketSummary,
+  type TicketTimeline,
   XLSX_MIME,
 } from '@tyio/shared';
 import request from 'supertest';
@@ -24,6 +26,10 @@ import { TENANT_NOT_FOUND_MESSAGE } from '../src/modules/tenants/tenants.control
 import { CUSTOMER_ADMIN_ONLY_MESSAGE, notFoundMessage } from '../src/modules/master/master.service.js';
 import { REMOTE_NOT_FOUND_MESSAGE } from '../src/modules/remotes/remotes.service.js';
 import {
+  ATTACHMENT_NOT_FOUND_MESSAGE,
+  CORRECTED_NOT_FOUND_MESSAGE,
+} from '../src/modules/tickets/actions/ticket-actions.service.js';
+import {
   CATEGORY_NOT_FOUND_MESSAGE,
   SYSTEM_NOT_FOUND_MESSAGE,
   TICKET_NOT_FOUND_MESSAGE,
@@ -32,6 +38,7 @@ import { createTestApp } from './create-test-app.js';
 import {
   buildXlsx,
   insertMasterValue,
+  insertNoteWithAttachment,
   insertRemote,
   insertTenant,
   insertTicket,
@@ -310,6 +317,65 @@ const TICKET_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** Linimasa NPR dan lampiran (langkah 1.4). */
+const TICKET_ACTION_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'GET /api/tickets/:ticketId/actions': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const res = await fx.operatorA.agent.get(`/api/tickets/${other.id}/actions`).expect(404);
+    expect(res.body.message).toBe(TICKET_NOT_FOUND_MESSAGE);
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const mine = await fx.operatorA.agent.get(`/api/tickets/${own.id}/actions`).expect(200);
+    expect((mine.body as TicketAction[]).map((action) => action.kind)).toEqual(['dibuat']);
+  },
+
+  'POST /api/tickets/:ticketId/actions': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const body = { kind: 'catatan', note: 'Catatan lintas customer', statusFrom: 'terbuka', statusTo: 'dikerjakan' };
+    const res = await fx.operatorA.agent.post(`/api/tickets/${other.id}/actions`).send(body).expect(404);
+    expect(res.body.message).toBe(TICKET_NOT_FOUND_MESSAGE);
+    const [stored] = (await fx.dataSource.query(
+      `SELECT t.status, (SELECT count(*)::int FROM ticket_actions a WHERE a.ticket_id = t.id) AS actions
+         FROM tickets t WHERE t.id = $1`,
+      [other.id],
+    )) as Array<{ status: string; actions: number }>;
+    expect(stored).toEqual({ status: 'terbuka', actions: 1 });
+
+    // Koreksi yang merujuk entri NPR customer B dari NPR sendiri: seperti entri yang tidak ada.
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const [otherEntry] = (await fx.dataSource.query('SELECT id FROM ticket_actions WHERE ticket_id = $1', [
+      other.id,
+    ])) as Array<{ id: string }>;
+    const cross = await fx.operatorA.agent
+      .post(`/api/tickets/${own.id}/actions`)
+      .send({ kind: 'koreksi', note: 'Koreksi lintas', correctsId: otherEntry?.id })
+      .expect(400);
+    expect(cross.body.message).toBe(CORRECTED_NOT_FOUND_MESSAGE);
+
+    const mine = await fx.operatorA.agent.post(`/api/tickets/${own.id}/actions`).send(body).expect(201);
+    expect((mine.body as TicketTimeline).ticket.status).toBe('dikerjakan');
+  },
+
+  'GET /api/tickets/:ticketId/attachments/:attachmentId': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const otherFile = await insertNoteWithAttachment(fx.dataSource, other.id, 'rahasia customer B');
+    const res = await fx.operatorA.agent
+      .get(`/api/tickets/${other.id}/attachments/${otherFile.attachmentId}`)
+      .expect(404);
+    expect(res.body.message).toBe(ATTACHMENT_NOT_FOUND_MESSAGE);
+    // Lampiran customer B lewat id NPR sendiri juga tidak terbaca.
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    await fx.operatorA.agent.get(`/api/tickets/${own.id}/attachments/${otherFile.attachmentId}`).expect(404);
+
+    const ownFile = await insertNoteWithAttachment(fx.dataSource, own.id, 'milik customer A');
+    const mine = await fx.operatorA.agent
+      .get(`/api/tickets/${own.id}/attachments/${ownFile.attachmentId}`)
+      .buffer(true)
+      .expect(200);
+    expect(mine.text).toBe('milik customer A');
+  },
+};
+
 /**
  * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
  * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
@@ -362,6 +428,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...CUSTOMER_PROBES,
   ...REMOTE_PROBES,
   ...TICKET_PROBES,
+  ...TICKET_ACTION_PROBES,
 };
 
 

@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { RemotesModule } from '../remotes/remotes.module.js';
+import { TicketActionsController } from './actions/ticket-actions.controller.js';
+import { TicketActionsService } from './actions/ticket-actions.service.js';
 import { RemoteOpenTicketsController, TicketsController } from './tickets.controller.js';
 import { TicketsService } from './tickets.service.js';
 
-/** NPR (langkah 1.3): buat NPR bernomor, halaman NPR, dan NPR terbuka per remote. */
+/** NPR: buat NPR bernomor dan NPR terbuka per remote (1.3); linimasa, status, lampiran (1.4). */
 @Module({
   imports: [RemotesModule],
-  controllers: [TicketsController, RemoteOpenTicketsController],
-  providers: [TicketsService],
+  controllers: [TicketsController, RemoteOpenTicketsController, TicketActionsController],
+  providers: [TicketsService, TicketActionsService],
   exports: [TicketsService],
 })
 export class TicketsModule {}
