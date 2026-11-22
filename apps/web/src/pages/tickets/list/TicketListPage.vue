@@ -73,21 +73,38 @@ try {
 
 const search = ref(filters.value.q);
 let debounce: ReturnType<typeof setTimeout> | undefined;
+/** Ketikan yang belum dikirim ke alamat; jangan ditimpa saat saringan lain berubah. */
+let typing = false;
 watch(search, (value) => {
   clearTimeout(debounce);
-  debounce = setTimeout(() => setQuery({ q: value.trim() }), 300);
+  typing = true;
+  debounce = setTimeout(() => {
+    typing = false;
+    setQuery({ q: value.trim() });
+  }, 300);
 });
 watch(
   () => filters.value.q,
   (value) => {
-    if (value !== search.value.trim()) search.value = value;
+    if (!typing && value !== search.value.trim()) search.value = value;
   },
 );
 const clock = setInterval(() => (now.value = Date.now()), 60_000);
 onBeforeUnmount(() => {
   clearTimeout(debounce);
   clearInterval(clock);
+  // Halaman ditinggalkan sebelum ketikan terakhir masuk alamat: tetap diingat.
+  if (typing) remember({ ...(route.query as Record<string, string>), q: search.value.trim() });
 });
+
+function remember(query: Record<string, unknown>): void {
+  try {
+    const kept = Object.fromEntries(Object.entries(query).filter(([key, value]) => key !== 'page' && value));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
+  } catch {
+    // Penyimpanan peramban tidak tersedia: saringan tetap di alamat halaman.
+  }
+}
 
 /** Mengganti saringan; halaman kembali ke 1 kecuali yang diganti nomor halaman. */
 function setQuery(change: Partial<Record<Key, string>>): void {
@@ -107,16 +124,21 @@ function setQuery(change: Partial<Record<Key, string>>): void {
 function clearFilters(): void {
   search.value = '';
   clearTimeout(debounce);
+  typing = false;
   const view = filters.value.view;
   void router.replace({ query: view === 'semua' ? {} : { view } });
 }
 
+/** Nomor permintaan terakhir: jawaban permintaan yang lebih lama (saringan usang) diabaikan. */
+let latest = 0;
+
 async function load(): Promise<void> {
+  const mine = ++latest;
   loading.value = true;
   error.value = '';
   try {
     const f = filters.value;
-    page.value = await ticketApi.list({
+    const result = await ticketApi.list({
       view: f.view,
       tenantId: f.customer,
       categoryId: f.kategori,
@@ -126,10 +148,11 @@ async function load(): Promise<void> {
       sort: f.sort,
       page: String(f.page),
     });
+    if (mine === latest) page.value = result;
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Antrean NPR gagal dimuat.';
+    if (mine === latest) error.value = cause instanceof Error ? cause.message : 'Antrean NPR gagal dimuat.';
   } finally {
-    loading.value = false;
+    if (mine === latest) loading.value = false;
   }
 }
 
@@ -137,12 +160,7 @@ watch(
   filters,
   () => {
     void load();
-    try {
-      const query = Object.fromEntries(Object.entries(route.query).filter(([key]) => key !== 'page'));
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(query));
-    } catch {
-      // Penyimpanan peramban tidak tersedia: saringan tetap di alamat halaman.
-    }
+    remember(route.query);
   },
   { immediate: true, deep: true },
 );
