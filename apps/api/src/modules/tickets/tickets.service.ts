@@ -13,6 +13,7 @@ import type { DataSource, EntityManager, ObjectLiteral, SelectQueryBuilder } fro
 import { type AuditActor, auditedTransaction } from '../../common/audit/audit-context.js';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';
 import { REMOTE_NOT_FOUND_MESSAGE, RemotesService } from '../remotes/remotes.service.js';
+import { TroubleTicketsService } from '../trouble-tickets/trouble-tickets.service.js';
 
 export const TICKET_NOT_FOUND_MESSAGE = 'NPR tidak ditemukan.';
 export const CATEGORY_NOT_FOUND_MESSAGE = 'Kategori tidak ditemukan di customer remote ini.';
@@ -65,6 +66,7 @@ interface DetailRow extends SummaryRow {
   assignee_id: string | null;
   assignee_name: string | null;
   assignee_role: string | null;
+  customer_name: string;
 }
 
 const MINUTE = 60_000;
@@ -80,6 +82,7 @@ export class TicketsService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly remotes: RemotesService,
+    private readonly troubleTickets: TroubleTicketsService,
   ) {}
 
   async create(scope: TenantScope, actor: AuditActor, input: CreateTicketInput): Promise<TicketDetail> {
@@ -174,7 +177,9 @@ export class TicketsService {
         .innerJoin('master_networks', 'n', 'n.id = tk.network_id')
         .innerJoin('users', 'u', 'u.id = tk.created_by')
         .leftJoin('users', 'asg', 'asg.id = tk.assignee_id')
+        .innerJoin('tenants', 'cust', 'cust.id = tk.tenant_id')
         .select([
+          'cust.name AS customer_name',
           ...SUMMARY_COLUMNS,
           'tk.assignee_id AS assignee_id',
           'asg.name AS assignee_name',
@@ -197,6 +202,12 @@ export class TicketsService {
     if (!row) return null;
     const remote = await this.remotes.get(scope, row.remote_id);
     if (!remote) return null;
+    const troubleTickets = await this.troubleTickets.forTicket({
+      id: row.id,
+      number: row.number,
+      customerName: row.customer_name,
+      remote,
+    });
     return {
       ...toSummary(row),
       tenantId: row.tenant_id,
@@ -210,6 +221,7 @@ export class TicketsService {
       network: { id: row.network_id, code: row.network_code, name: row.network_name },
       createdBy: { id: row.created_by, name: row.created_by_name },
       remote,
+      troubleTickets,
     };
   }
 

@@ -1,15 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import type { GlobalSearchResult, SearchRemoteHit, SearchTicketHit, TicketStatus } from '@tyio/shared';
+import type {
+  GlobalSearchResult,
+  SearchRemoteHit,
+  SearchTicketHit,
+  SearchTroubleTicketHit,
+  TicketStatus,
+  TroubleTicketStatus,
+} from '@tyio/shared';
 import type { DataSource } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';
 
 export const SEARCH_TICKET_LIMIT = 8;
 export const SEARCH_REMOTE_LIMIT = 5;
+export const SEARCH_TROUBLE_TICKET_LIMIT = 5;
 
 /**
- * Pencarian global (langkah 1.5, T84): no. NPR, no. tiket customer, dan kode/nama remote,
- * termasuk NPR yang sudah ditutup. No. TT menyusul di 1.5b. Lewat cakupan customer (T9).
+ * Pencarian global (langkah 1.5, T84): no. NPR, no. tiket customer, no. TT (1.5b), dan
+ * kode/nama remote, termasuk NPR yang sudah ditutup. Lewat cakupan customer (T9).
  * Urutan: cocok persis dulu, lalu NPR yang masih berjalan, lalu yang terbaru.
  */
 @Injectable()
@@ -59,6 +67,42 @@ export class SearchService {
         remote_name: string;
       }>();
 
+    const troubleTickets = await applyTenantScope(
+      this.dataSource
+        .createQueryBuilder()
+        .from('trouble_tickets', 'tt')
+        .innerJoin('tickets', 'tk', 'tk.id = tt.ticket_id')
+        .innerJoin('remotes', 'r', 'r.id = tt.remote_id')
+        .innerJoin('tenants', 't', 't.id = tt.tenant_id')
+        .select([
+          'tt.id AS id',
+          'tt.number AS number',
+          'tt.status AS status',
+          'tk.id AS ticket_id',
+          'tk.number AS ticket_number',
+          't.name AS customer_name',
+          'r.code AS remote_code',
+          'r.name AS remote_name',
+        ])
+        .where('tt.number ILIKE :pattern', { pattern }),
+      scope,
+      'tt.tenant_id',
+    )
+      .orderBy('(lower(tt.number) = :exact)', 'DESC')
+      .addOrderBy('tt.created_at', 'DESC')
+      .setParameter('exact', exact)
+      .limit(SEARCH_TROUBLE_TICKET_LIMIT)
+      .getRawMany<{
+        id: string;
+        number: string;
+        status: TroubleTicketStatus;
+        ticket_id: string;
+        ticket_number: string;
+        customer_name: string;
+        remote_code: string;
+        remote_name: string;
+      }>();
+
     const remotes = await applyTenantScope(
       this.dataSource
         .createQueryBuilder()
@@ -82,6 +126,17 @@ export class SearchService {
           number: row.number,
           status: row.status,
           customerTicketNumber: row.customer_ticket_number,
+          customerName: row.customer_name,
+          remote: { code: row.remote_code, name: row.remote_name },
+        }),
+      ),
+      troubleTickets: troubleTickets.map(
+        (row): SearchTroubleTicketHit => ({
+          id: row.id,
+          number: row.number,
+          status: row.status,
+          ticketId: row.ticket_id,
+          ticketNumber: row.ticket_number,
           customerName: row.customer_name,
           remote: { code: row.remote_code, name: row.remote_name },
         }),

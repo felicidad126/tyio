@@ -33,7 +33,7 @@ export const CORRECTED_NOT_FOUND_MESSAGE = 'Entri yang dikoreksi tidak ditemukan
 
 /** Masukan yang sudah dibaca controller. */
 export interface AddActionInput {
-  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil'>;
+  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil' | 'tt_dibuat' | 'tt_disalin'>;
   note: string;
   occurredAt: Date | null;
   statusTo: TicketStatus | null;
@@ -65,6 +65,8 @@ interface ActionRow {
   assignee_name: string | null;
   assignee_from_id: string | null;
   assignee_from_name: string | null;
+  trouble_ticket_id: string | null;
+  trouble_ticket_number: string | null;
 }
 
 interface AttachmentRow {
@@ -266,11 +268,13 @@ export class TicketActionsService {
               u.role AS created_by_role, a.status_from, a.status_to, a.pending_reason, a.corrects_id,
               a.started_at_correction, a.customer_ticket_number,
               a.assignee_id, asg.name AS assignee_name, a.assignee_from_id, prev.name AS assignee_from_name,
+              a.trouble_ticket_id, tt.number AS trouble_ticket_number,
               coalesce((SELECT array_agg(c.id ORDER BY c.created_at, c.seq) FROM ticket_actions c
                          WHERE c.corrects_id = a.id), '{}') AS corrected_by_ids
          FROM ticket_actions a JOIN users u ON u.id = a.created_by
          LEFT JOIN users asg ON asg.id = a.assignee_id
          LEFT JOIN users prev ON prev.id = a.assignee_from_id
+         LEFT JOIN trouble_tickets tt ON tt.id = a.trouble_ticket_id
         WHERE a.ticket_id = $1
         ORDER BY a.created_at DESC, a.seq DESC`,
       [ticket.id],
@@ -309,6 +313,9 @@ export class TicketActionsService {
       customerTicketNumber: row.customer_ticket_number,
       assignee: row.assignee_id ? { id: row.assignee_id, name: row.assignee_name ?? '' } : null,
       assigneeFrom: row.assignee_from_id ? { id: row.assignee_from_id, name: row.assignee_from_name ?? '' } : null,
+      troubleTicket: row.trouble_ticket_id
+        ? { id: row.trouble_ticket_id, number: row.trouble_ticket_number ?? '' }
+        : null,
       attachments: byAction.get(row.id) ?? [],
     }));
   }

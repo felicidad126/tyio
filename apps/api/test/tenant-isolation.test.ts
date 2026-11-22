@@ -27,6 +27,7 @@ import { scopeFor, scopeIncludes } from '../src/common/tenant/tenant-scope.js';
 import { TENANT_NOT_FOUND_MESSAGE } from '../src/modules/tenants/tenants.controller.js';
 import { CUSTOMER_ADMIN_ONLY_MESSAGE, notFoundMessage } from '../src/modules/master/master.service.js';
 import { REMOTE_NOT_FOUND_MESSAGE } from '../src/modules/remotes/remotes.service.js';
+import { TROUBLE_TICKET_NOT_FOUND_MESSAGE } from '../src/modules/trouble-tickets/trouble-tickets.service.js';
 import {
   ATTACHMENT_NOT_FOUND_MESSAGE,
   CORRECTED_NOT_FOUND_MESSAGE,
@@ -44,6 +45,7 @@ import {
   insertRemote,
   insertTenant,
   insertTicket,
+  insertTroubleTicket,
   insertUser,
   operatorQuery,
   TEST_PASSWORD,
@@ -427,6 +429,58 @@ const QUEUE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** TT ke SD (langkah 1.5b). */
+const TROUBLE_TICKET_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'POST /api/tickets/:ticketId/trouble-tickets': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const res = await fx.operatorA.agent
+      .post(`/api/tickets/${other.id}/trouble-tickets`)
+      .send({ problem: 'Modem mati' })
+      .expect(404);
+    expect(res.body.message).toBe(TICKET_NOT_FOUND_MESSAGE);
+    const stored = (await fx.dataSource.query('SELECT id FROM trouble_tickets WHERE ticket_id = $1', [
+      other.id,
+    ])) as unknown[];
+    expect(stored).toEqual([]);
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const mine = await fx.operatorA.agent
+      .post(`/api/tickets/${own.id}/trouble-tickets`)
+      .send({ problem: 'Modem mati' })
+      .expect(201);
+    expect((mine.body as TicketTimeline).ticket.troubleTickets).toHaveLength(1);
+  },
+
+  'GET /api/trouble-tickets': async (fx) => {
+    const other = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantB.id)).id);
+    const own = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantA.id)).id);
+    const page = (await fx.operatorA.agent.get('/api/trouble-tickets?pageSize=100').expect(200)).body as TroubleTicketPage;
+    expect(new Set(page.items.map((item) => item.tenantId))).toEqual(new Set([fx.tenantA.id]));
+    expect(ids(page.items)).not.toContain(other.id);
+    const byNumber = (await fx.operatorA.agent.get(`/api/trouble-tickets?q=${encodeURIComponent(own.number)}`).expect(200))
+      .body as TroubleTicketPage;
+    expect(ids(byNumber.items)).toEqual([own.id]);
+    const byOtherTenant = (await fx.operatorA.agent.get(`/api/trouble-tickets?tenantId=${fx.tenantB.id}`).expect(200))
+      .body as TroubleTicketPage;
+    expect(byOtherTenant.items).toEqual([]);
+  },
+
+  'POST /api/trouble-tickets/:id/copied': async (fx) => {
+    const other = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantB.id)).id);
+    const res = await fx.operatorA.agent.post(`/api/trouble-tickets/${other.id}/copied`).expect(404);
+    expect(res.body.message).toBe(TROUBLE_TICKET_NOT_FOUND_MESSAGE);
+    const [count] = (await fx.dataSource.query(
+      `SELECT count(*)::int AS n FROM ticket_actions WHERE trouble_ticket_id = $1 AND kind = 'tt_disalin'`,
+      [other.id],
+    )) as Array<{ n: number }>;
+    expect(count?.n).toBe(0);
+
+    const own = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantA.id)).id);
+    const mine = await fx.operatorA.agent.post(`/api/trouble-tickets/${own.id}/copied`).expect(200);
+    expect(mine.body).toMatchObject({ copiedCount: 1 });
+  },
+};
+
 /**
  * Satu uji lintas-tenant per endpoint yang ditandai `@TenantScoped()`, dengan kunci
  * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
@@ -481,6 +535,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...TICKET_PROBES,
   ...TICKET_ACTION_PROBES,
   ...QUEUE_PROBES,
+  ...TROUBLE_TICKET_PROBES,
 };
 
 
