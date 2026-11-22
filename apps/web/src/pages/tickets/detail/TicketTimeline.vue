@@ -86,6 +86,13 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
           </template>
           <strong>{{ TICKET_STATUS_LABELS[action.statusChange.to] }}</strong>
         </li>
+        <li v-if="action.assignee">
+          Penanggung:
+          <template v-if="action.assigneeFrom">
+            {{ action.assigneeFrom.name }} →
+          </template>
+          <strong>{{ action.assignee.name }}</strong>
+        </li>
         <li v-if="action.pendingReason">
           Alasan pending: {{ action.pendingReason }}
         </li>
@@ -278,7 +285,12 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
   color: #0b4f99;
 }
 
-/* Warna tag mengikuti mockup DetailTiket: sistem abu, koreksi ungu. */
+/* Warna tag mengikuti mockup DetailTiket: sistem abu, koreksi ungu, ambil hijau toska. */
+.kind-tag--ambil {
+  background: #d5f0ec;
+  color: #0d5c55;
+}
+
 .kind-tag--dibuat {
   background: #eaedf1;
   color: #454f5c;
