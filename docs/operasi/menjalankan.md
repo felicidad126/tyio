@@ -184,6 +184,19 @@ Login, login gagal, dan logout juga tercatat. Hash kata sandi tidak pernah ikut 
   COMMIT;
   ```
 
+- Status, mulai gangguan, dan nomor tiket customer NPR tidak bisa diubah dengan UPDATE
+  (langkah 1.4). Perbaikan manual ditambahkan sebagai entri linimasa, dengan konteks yang sama:
+
+  ```sql
+  BEGIN;
+  SELECT set_config('tyio.source', 'manual', true), set_config('tyio.actor_label', 'Nama Operator: alasan', true);
+  INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, created_by)
+  SELECT tenant_id, id, 'catatan', 'Perbaikan manual: alasan', now(), status, 'dikerjakan',
+         (SELECT id FROM users WHERE email = 'operator@contoh')
+    FROM tickets WHERE number = 'NPR/VSAT/BNA/2026/11/0418';
+  COMMIT;
+  ```
+
 - Belum diatur: lama penyimpanan audit (bersama checklist kepatuhan, langkah 0.6) dan
   pencatatan siapa *melihat* data (R-I, sebelum produksi).
 
