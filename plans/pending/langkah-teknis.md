@@ -18,7 +18,7 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T5 | Login sesi dengan cookie httpOnly; kata sandi di-hash argon2; SSO menyusul di R8 | Lebih sederhana dan lebih aman daripada token di browser |
 | T6 | Data langsung ke layar memakai SSE (server-sent events) | Cukup untuk layar 24/7; lebih sederhana daripada WebSocket |
 | T7 | Pekerjaan latar (notifikasi, SLA, laporan) memakai antrean berbasis PostgreSQL | Tidak menambah komponen baru (R-B) |
-| T8 | Lampiran disimpan di volume disk yang ikut backup; nama berkas diacak | Paling sederhana; bisa dipindah ke penyimpanan objek kelak |
+| T8 | ~~Lampiran disimpan di volume disk yang ikut backup; nama berkas diacak~~ **Diganti T70 (2026-11-22): lampiran di database.** | Paling sederhana; bisa dipindah ke penyimpanan objek kelak |
 | T9 | Setiap tabel domain punya `tenant_id`; penyaringan tenant dipasang di satu tempat (lapisan repositori), bukan di tiap query | Satu titik kebocoran yang dijaga dan diuji |
 | T10 | Linimasa tiket hanya-tambah: tidak ada UPDATE/DELETE pada tabel tindakan | R-F |
 | T11 | Uji: Vitest + database PostgreSQL asli untuk API; Playwright untuk alur layar | Uji di jahitan tinggi, bukan mock |
@@ -126,7 +126,7 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T61 | NPR menyimpan **jarkom saat dibuat** (kodenya ada di nomor; jarkom remote bisa berubah lewat impor), tetapi **tidak menyalin lokasi dan jaringan**: halaman NPR menampilkan data remote terkini. Remote, jarkom, kategori, dan system ditautkan dengan foreign key gabungan satu customer (T45), jadi yang sudah dipakai NPR hanya bisa dinonaktifkan | Satu sumber data remote; nomor tetap konsisten dengan jarkom di dalamnya |
 | T62 | Layar: tombol global **"Buat NPR"** di bilah atas (gaya sekunder; di ponsel tinggal ikon), halaman `/tiket/baru` (cari remote → data remote hanya-baca → kategori, system, mulai gangguan, keterangan), halaman NPR minimal `/tiket/:id` (linimasa menyusul di 1.4), dan kartu "NPR terbuka" + "Buat NPR untuk remote ini" di halaman remote. Antrean `/tiket` tetap "menyusul" sampai 1.5. Semua waktu NPR ditulis dengan zona remote ("15:22 WITA") | ATURAN.md §2, §4, §5; T36 sebagian dicabut karena tombol "Buat NPR" kini berfungsi |
 
-**Keputusan yang diambil saat 1.4** (T63–T69 jawaban user 2026-11-22; keputusan teknis turunan menyusul di tabel ini):
+**Keputusan yang diambil saat 1.4** (T63–T70 jawaban user 2026-11-22; keputusan teknis turunan menyusul di tabel ini):
 
 | # | Keputusan | Alasan |
 | --- | --- | --- |
@@ -137,6 +137,7 @@ Langkah yang semua pendahulunya selesai boleh dikerjakan paralel.
 | T67 | **Jenis tindakan = daftar mockup:** Cek jaringan, Cek lokasi / hubungi PIC, Hubungi customer, Catatan; Koreksi adalah jenis khusus yang merujuk entri lama. "Hasil kunjungan SD" ditambahkan di 1.5b. Eskalasi dan tutup bukan jenis tindakan, melainkan pilihan status | Jawaban user 2026-11-22 (sebelum sesi Take Action) |
 | T68 | **Pending: pihak (Customer/TM) wajib dipilih, alasan teks bebas wajib.** Daftar kategori pending bisa ditambahkan saat sesi SLA (4.1) | Jawaban user 2026-11-22 |
 | T69 | **Mesin status 1.4 sudah memuat Ditutup dan buka ulang, tetapi penutupan (tombol "Tutup NPR" dan jalur API-nya) baru dibuka di 1.6** bersama isian wajib penyebab/penyelesaian dan aturan K21 | Jawaban user 2026-11-22 |
+| T70 | **Lampiran disimpan di database** (tabel PostgreSQL tersendiri, ber-`tenant_id`, hanya-tambah), **menggantikan T8** (volume disk). Paling besar **10 MB per berkas, 5 berkas per tindakan**; jenis: PNG, JPEG, WebP, PDF, teks/log (.txt, .log, .csv), Excel dan Word | Jawaban user 2026-11-22: lampiran otomatis ikut backup terenkripsi dan latihan restore yang sudah ada, tanpa memperluas skrip backup ke folder berkas. Bisa dipindah ke penyimpanan objek kelak |
 
 Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 2026-11-22).
 
