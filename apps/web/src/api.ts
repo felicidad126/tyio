@@ -85,3 +85,27 @@ export async function apiUpload<T>(path: string, file: Blob, contentType: string
   }
   return data as T;
 }
+
+/**
+ * Mengirim formulir multipart (mis. tindakan NPR beserta lampiran). Content-Type dan batasnya
+ * diisi peramban dari FormData.
+ */
+export async function apiMultipart<T>(path: string, form: FormData): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`/${API_PREFIX}${path}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      body: form,
+    });
+  } catch {
+    throw new ApiError(0, NETWORK_MESSAGE);
+  }
+  const data: unknown = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    if (response.status === 401) onUnauthorized?.();
+    throw new ApiError(response.status, errorMessage(response.status, data), data);
+  }
+  return data as T;
+}

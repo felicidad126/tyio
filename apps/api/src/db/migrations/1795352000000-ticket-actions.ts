@@ -60,6 +60,8 @@ export class TicketActions1795352000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE ticket_actions (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        -- Urutan penyisipan: entri dalam satu transaksi punya created_at yang sama.
+        seq bigint GENERATED ALWAYS AS IDENTITY,
         tenant_id uuid NOT NULL REFERENCES tenants (id),
         ticket_id uuid NOT NULL,
         kind text NOT NULL,
@@ -101,7 +103,7 @@ export class TicketActions1795352000000 implements MigrationInterface {
           OR (customer_ticket_number = btrim(customer_ticket_number) AND length(customer_ticket_number) <= 100))
       )
     `);
-    await queryRunner.query('CREATE INDEX ticket_actions_ticket_idx ON ticket_actions (ticket_id, created_at DESC)');
+    await queryRunner.query('CREATE INDEX ticket_actions_ticket_idx ON ticket_actions (ticket_id, created_at DESC, seq DESC)');
     await queryRunner.query('CREATE INDEX ticket_actions_corrects_idx ON ticket_actions (corrects_id) WHERE corrects_id IS NOT NULL');
 
     // Penolak UPDATE/DELETE untuk tabel hanya-tambah (linimasa dan lampiran).

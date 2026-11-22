@@ -206,11 +206,11 @@ export class TicketActionsService {
       `SELECT a.id, a.kind, a.note, a.occurred_at, a.created_at, a.created_by, u.name AS created_by_name,
               u.role AS created_by_role, a.status_from, a.status_to, a.pending_reason, a.corrects_id,
               a.started_at_correction, a.customer_ticket_number,
-              coalesce((SELECT array_agg(c.id ORDER BY c.created_at, c.id) FROM ticket_actions c
+              coalesce((SELECT array_agg(c.id ORDER BY c.created_at, c.seq) FROM ticket_actions c
                          WHERE c.corrects_id = a.id), '{}') AS corrected_by_ids
          FROM ticket_actions a JOIN users u ON u.id = a.created_by
         WHERE a.ticket_id = $1
-        ORDER BY a.created_at DESC, (a.kind = 'dibuat'), a.id DESC`,
+        ORDER BY a.created_at DESC, a.seq DESC`,
       [ticket.id],
     )) as ActionRow[];
     const attachments = (await this.dataSource.query(

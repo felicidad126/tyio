@@ -1,21 +1,33 @@
 import type {
   CreateTicket,
+  CreateTicketAction,
   MasterValue,
   OpenTicketsConflict,
   RemoteDetail,
   RemotePage,
+  TicketAction,
   TicketDetail,
   TicketSummary,
+  TicketTimeline,
 } from '@tyio/shared';
-import { ApiError, apiRequest } from '../../api';
+import { ApiError, apiMultipart, apiRequest } from '../../api';
 
-// Panggilan API NPR (langkah 1.3). Cakupan customer diperiksa server.
+// Panggilan API NPR (langkah 1.3) dan linimasanya (1.4). Cakupan customer diperiksa server.
 
 const enc = encodeURIComponent;
 
 export const ticketApi = {
   create: (input: CreateTicket) => apiRequest<TicketDetail>('POST', '/tickets', input),
   get: (id: string) => apiRequest<TicketDetail>('GET', `/tickets/${enc(id)}`),
+  actions: (id: string) => apiRequest<TicketAction[]>('GET', `/tickets/${enc(id)}/actions`),
+  /** Tambah tindakan; dengan lampiran dikirim multipart (bagian `data` + `lampiran`). */
+  addAction: (id: string, input: CreateTicketAction, files: File[] = []) => {
+    if (files.length === 0) return apiRequest<TicketTimeline>('POST', `/tickets/${enc(id)}/actions`, input);
+    const form = new FormData();
+    form.append('data', JSON.stringify(input));
+    for (const file of files) form.append('lampiran', file, file.name);
+    return apiMultipart<TicketTimeline>(`/tickets/${enc(id)}/actions`, form);
+  },
   openTicketsOf: (remoteId: string) => apiRequest<TicketSummary[]>('GET', `/remotes/${enc(remoteId)}/open-tickets`),
   /** Remote aktif yang cocok dengan kata kunci, untuk dipilih di formulir. */
   searchRemotes: (q: string) =>

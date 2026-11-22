@@ -337,7 +337,7 @@ describe('linimasa NPR', () => {
       ]);
 
       const png = entry?.attachments.find((file) => file.fileName.endsWith('.png'));
-      const image = await l1.get(png?.url ?? '').buffer(true).parse(binary).expect(200);
+      const image = await l1.get(png?.url ?? '').buffer(true).responseType('blob').expect(200);
       expect(Buffer.compare(image.body as Buffer, PNG)).toBe(0);
       expect(image.headers['content-type']).toBe('image/png');
       expect(image.headers['content-disposition']).toMatch(/^inline; filename="ping-1752.png"/);
@@ -357,7 +357,7 @@ describe('linimasa NPR', () => {
       const res = await upload(ticket.id, { kind: 'catatan', note: 'Foto' }, [[PNG, 'C:\\foto\\Lokasi Pasar – ATM.png']]).expect(201);
       const [file] = (res.body as TicketTimeline).actions[0]?.attachments ?? [];
       expect(file?.fileName).toBe('Lokasi Pasar – ATM.png');
-      const download = await l1.get(file?.url ?? '').buffer(true).parse(binary).expect(200);
+      const download = await l1.get(file?.url ?? '').buffer(true).responseType('blob').expect(200);
       expect(download.headers['content-disposition']).toContain(`filename*=UTF-8''${encodeURIComponent('Lokasi Pasar – ATM.png')}`);
     });
 
@@ -477,9 +477,3 @@ describe('linimasa NPR', () => {
   });
 });
 
-/** Pengurai supertest untuk isi biner. */
-function binary(res: NodeJS.ReadableStream, callback: (error: Error | null, body: Buffer) => void): void {
-  const chunks: Buffer[] = [];
-  res.on('data', (chunk: Buffer) => chunks.push(chunk));
-  res.on('end', () => callback(null, Buffer.concat(chunks)));
-}
