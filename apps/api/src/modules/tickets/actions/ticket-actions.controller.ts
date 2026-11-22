@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   type CallHandler,
   Controller,
   type ExecutionContext,
@@ -137,6 +138,28 @@ export class TicketActionsController {
     return { ticket, actions };
   }
 
+  /** "Ambil" (T81): pengguna menjadi penanggung NPR. Isi: `{ expectedAssigneeId }`. */
+  @Post('take')
+  @Header('Cache-Control', 'no-store')
+  async take(
+    @CurrentScope() scope: TenantScope,
+    @CurrentActor() actor: AuditActor,
+    @Param('ticketId') ticketId: string,
+    @Body() body: unknown,
+  ): Promise<TicketTimeline> {
+    if (!isUuid(ticketId)) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
+    const record = readBody(body, ['expectedAssigneeId']);
+    const expected = record.expectedAssigneeId;
+    if (expected !== null && !isUuid(expected)) {
+      throw new BadRequestException('expectedAssigneeId wajib: id penanggung yang terlihat, atau null.');
+    }
+    const id = ticketId.toLowerCase();
+    await this.actions.take(scope, actor, id, expected === null ? null : expected.toLowerCase());
+    const [ticket, actions] = await Promise.all([this.tickets.get(scope, id), this.actions.list(scope, id)]);
+    if (!ticket || !actions) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
+    return { ticket, actions };
+  }
+
   /** Unduh lampiran. Gambar ditampilkan di peramban, jenis lain selalu diunduh. */
   @Get('attachments/:attachmentId')
   async attachment(
@@ -199,7 +222,7 @@ function readAction(request: Request & { files?: UploadedPart[] }): AddActionInp
   const record = readBody(body, ACTION_FIELDS);
 
   const kind = record.kind;
-  if (!isTicketActionKind(kind) || kind === 'dibuat') {
+  if (!isTicketActionKind(kind) || kind === 'dibuat' || kind === 'ambil') {
     throw new BadRequestException('Pilih jenis tindakan: cek jaringan, cek lokasi, hubungi customer, catatan, atau koreksi.');
   }
   const note = readText(record.note, 'Catatan', TICKET_ACTION_NOTE_MAX_LENGTH);

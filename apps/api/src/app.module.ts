@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MasterModule } from './modules/master/master.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
+import { SearchModule } from './modules/search/search.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 import { TicketsModule } from './modules/tickets/tickets.module.js';
 import { UsersModule } from './modules/users/users.module.js';
@@ -29,6 +30,7 @@ export class AppModule {
         MasterModule,
         RemotesModule,
         TicketsModule,
+        SearchModule,
       ],
     };
   }
