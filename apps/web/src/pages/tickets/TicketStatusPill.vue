@@ -16,6 +16,7 @@ defineProps<{ status: TicketStatus }>();
 <style scoped>
 .status-pill {
   display: inline-flex;
+  align-self: center;
   align-items: center;
   min-height: 26px;
   padding: 2px 10px;

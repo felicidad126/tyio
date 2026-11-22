@@ -62,6 +62,14 @@ function openPanel(correcting: TicketAction | null = null, initialStatus: Ticket
   panel.value = { correcting, initialStatus };
 }
 
+/** Muat ulang NPR dan linimasa tanpa menutup panel (status diubah pengguna lain). */
+async function reload(): Promise<void> {
+  if (!ticket.value) return;
+  const [detail, timeline] = await Promise.all([ticketApi.get(ticket.value.id), ticketApi.actions(ticket.value.id)]);
+  ticket.value = detail;
+  actions.value = timeline;
+}
+
 async function onSaved(timeline: TicketTimeline): Promise<void> {
   ticket.value = timeline.ticket;
   actions.value = timeline.actions;
@@ -284,6 +292,7 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
         :correcting="panel.correcting"
         :initial-status="panel.initialStatus"
         @saved="onSaved"
+        @stale="reload"
         @close="panel = null"
       />
     </template>
@@ -322,6 +331,7 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
 }
 
 .header-action {
+  gap: 6px;
   min-height: 44px;
 }
 

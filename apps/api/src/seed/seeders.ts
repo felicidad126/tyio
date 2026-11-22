@@ -156,10 +156,10 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
         await manager.query(
           `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
                                        customer_ticket_number, created_by)
-           SELECT tk.tenant_id, tk.id, x.kind, x.note, now() - make_interval(mins => x.minutes_ago),
+           SELECT tk.tenant_id, tk.id, x.kind, x.note, now(),
                   x.status_from, x.status_to, x.customer_ticket_number, tk.created_by
            FROM jsonb_to_recordset($1::jsonb) AS x(
-                  kind text, note text, minutes_ago int, status_from text, status_to text,
+                  kind text, note text, status_from text, status_to text,
                   customer_ticket_number text, ord int)
            CROSS JOIN tickets tk JOIN remotes r ON r.id = tk.remote_id
            WHERE r.code = 'BNA-MKS-0217'
@@ -177,7 +177,6 @@ const SEED_TIMELINE = [
   {
     kind: 'catatan',
     note: 'Alert benar gangguan, NPR diambil.',
-    minutes_ago: 40,
     status_from: 'terbuka',
     status_to: 'dikerjakan',
     customer_ticket_number: null,
@@ -185,7 +184,6 @@ const SEED_TIMELINE = [
   {
     kind: 'cek_lokasi',
     note: 'Menghubungi PIC cabang, Hendra (Kepala Unit). Listrik di lokasi menyala; petugas akan menyalakan ulang modem.',
-    minutes_ago: 25,
     status_from: null,
     status_to: null,
     customer_ticket_number: 'INC-88213',

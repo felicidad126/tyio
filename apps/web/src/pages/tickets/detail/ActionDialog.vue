@@ -37,7 +37,7 @@ const props = defineProps<{
   initialStatus: TicketStatus | null;
 }>();
 
-const emit = defineEmits<{ saved: [timeline: TicketTimeline]; close: [] }>();
+const emit = defineEmits<{ saved: [timeline: TicketTimeline]; close: []; stale: [] }>();
 
 const dialog = useTemplateRef<HTMLDialogElement>('dialog');
 const noteField = useTemplateRef<HTMLTextAreaElement>('noteField');
@@ -165,7 +165,10 @@ async function submit(): Promise<void> {
   } catch (cause) {
     formError.value = cause instanceof Error ? cause.message : 'Tindakan gagal disimpan.';
     // Status berubah oleh orang lain: pilihan status dikembalikan agar diperiksa ulang.
-    if (cause instanceof ApiError && cause.status === 409) statusTo.value = '';
+    if (cause instanceof ApiError && cause.status === 409) {
+      statusTo.value = '';
+      emit('stale');
+    }
   } finally {
     saving.value = false;
   }

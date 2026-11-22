@@ -113,7 +113,7 @@ test.describe('buat NPR', () => {
     await expect(page.getByRole('status').filter({ hasText: 'tersimpan' })).toHaveText(
       `NPR tersimpan dengan nomor ${number}.`,
     );
-    await expect(page.getByText('Terbuka', { exact: true })).toBeVisible();
+    await expect(page.locator('.page-header .status-pill')).toHaveText('Terbuka');
     const incident = page.getByRole('region', { name: 'Gangguan' });
     await expect(incident).toContainText('Remote Down / SNMP NOC');
     await expect(incident).toContainText(/\d{2}:\d{2} WITA · Dewi A\./);

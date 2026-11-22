@@ -261,6 +261,7 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
 }
 
 .timeline-entry__correct {
+  gap: 4px;
   margin-top: 6px;
   min-height: 32px;
 }
