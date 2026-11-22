@@ -1,6 +1,7 @@
 import type {
   CreateTicket,
   CreateTicketAction,
+  CreateTroubleTicket,
   GlobalSearchResult,
   MasterValue,
   OpenTicketsConflict,
@@ -11,6 +12,8 @@ import type {
   TicketQueuePage,
   TicketSummary,
   TicketTimeline,
+  TroubleTicketCopied,
+  TroubleTicketPage,
 } from '@tyio/shared';
 import { ApiError, apiMultipart, apiRequest } from '../../api';
 
@@ -32,6 +35,15 @@ export const ticketApi = {
   /** "Ambil": `expectedAssigneeId` = penanggung yang terlihat di layar. */
   take: (id: string, expectedAssigneeId: string | null) =>
     apiRequest<TicketTimeline>('POST', `/tickets/${enc(id)}/take`, { expectedAssigneeId }),
+  createTroubleTicket: (ticketId: string, input: CreateTroubleTicket) =>
+    apiRequest<TicketTimeline>('POST', `/tickets/${enc(ticketId)}/trouble-tickets`, input),
+  troubleTickets: (query: Partial<Record<'tenantId' | 'q' | 'page', string>>) => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) if (value) params.set(key, value);
+    return apiRequest<TroubleTicketPage>('GET', `/trouble-tickets?${params.toString()}`);
+  },
+  /** Dicatat setelah ringkasan TT berhasil disalin ke clipboard (K25). */
+  troubleTicketCopied: (id: string) => apiRequest<TroubleTicketCopied>('POST', `/trouble-tickets/${enc(id)}/copied`),
   search: (q: string) => apiRequest<GlobalSearchResult>('GET', `/search?q=${enc(q)}`),
   customers: () => apiRequest<Array<{ id: string; name: string; code: string }>>('GET', '/tenants'),
   create: (input: CreateTicket) => apiRequest<TicketDetail>('POST', '/tickets', input),

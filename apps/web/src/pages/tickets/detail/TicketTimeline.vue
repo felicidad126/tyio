@@ -93,6 +93,12 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
           </template>
           <strong>{{ action.assignee.name }}</strong>
         </li>
+        <li v-if="action.troubleTicket">
+          TT: <a
+            :href="`#tt-${action.troubleTicket.id}`"
+            class="font-monospace"
+          >{{ action.troubleTicket.number }}</a>
+        </li>
         <li v-if="action.pendingReason">
           Alasan pending: {{ action.pendingReason }}
         </li>
@@ -285,7 +291,18 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
   color: #0b4f99;
 }
 
-/* Warna tag mengikuti mockup DetailTiket: sistem abu, koreksi ungu, ambil hijau toska. */
+/* Warna tag mengikuti mockup DetailTiket: sistem abu, koreksi ungu, ambil hijau toska,
+   TT dibuat oranye (eskalasi), salin ringkasan abu. */
+.kind-tag--tt_dibuat {
+  background: #fde4d5;
+  color: #9a3d0d;
+}
+
+.kind-tag--tt_disalin {
+  background: #eaedf1;
+  color: #454f5c;
+}
+
 .kind-tag--ambil {
   background: #d5f0ec;
   color: #0d5c55;
