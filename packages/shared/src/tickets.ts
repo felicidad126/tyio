@@ -76,6 +76,8 @@ export const TICKET_ACTION_KINDS = [
   'catatan',
   'koreksi',
   'ambil',
+  'tt_dibuat',
+  'tt_disalin',
 ] as const;
 export type TicketActionKind = (typeof TICKET_ACTION_KINDS)[number];
 
@@ -90,6 +92,8 @@ export const TICKET_ACTION_KIND_LABELS: Record<TicketActionKind, string> = {
   catatan: 'Catatan',
   koreksi: 'Koreksi',
   ambil: 'Ambil',
+  tt_dibuat: 'TT dibuat',
+  tt_disalin: 'Salin ringkasan TT',
 };
 
 export function isTicketActionKind(value: unknown): value is TicketActionKind {
@@ -171,6 +175,8 @@ export interface TicketDetail extends TicketSummary {
   customerTicketNumber: string | null;
   /** Penanggung sekarang (T81), diganti lewat "Ambil". */
   assignee: TicketPerson | null;
+  /** TT ke SD dari NPR ini (1.5b), terlama dulu. */
+  troubleTickets: TroubleTicket[];
   category: { id: string; name: string };
   system: { id: string; name: string };
   /** Jarkom saat NPR dibuat; kodenya ada di nomor NPR. */
@@ -221,6 +227,8 @@ export interface TicketAction {
   /** Entri `ambil`: penanggung baru dan penanggung sebelumnya (diisi database). */
   assignee: { id: string; name: string } | null;
   assigneeFrom: { id: string; name: string } | null;
+  /** Entri `tt_dibuat` dan `tt_disalin`: TT yang dirujuk. */
+  troubleTicket: { id: string; number: string } | null;
   attachments: TicketAttachment[];
 }
 
@@ -229,7 +237,7 @@ export interface TicketAction {
  * ini dan berkas di bagian `lampiran`).
  */
 export interface CreateTicketAction {
-  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil'>;
+  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil' | 'tt_dibuat' | 'tt_disalin'>;
   note: string;
   /** ISO 8601 dengan zona. Tidak diisi = saat disimpan. */
   occurredAt?: string;
@@ -332,6 +340,16 @@ export interface SearchTicketHit {
   remote: { code: string; name: string };
 }
 
+export interface SearchTroubleTicketHit {
+  id: string;
+  number: string;
+  status: TroubleTicketStatus;
+  ticketId: string;
+  ticketNumber: string;
+  customerName: string;
+  remote: { code: string; name: string };
+}
+
 export interface SearchRemoteHit {
   id: string;
   code: string;
@@ -343,5 +361,76 @@ export interface SearchRemoteHit {
 /** Jawaban `GET /api/search?q=`: NPR (termasuk yang ditutup) dan remote, masing-masing terbatas. */
 export interface GlobalSearchResult {
   tickets: SearchTicketHit[];
+  troubleTickets: SearchTroubleTicketHit[];
   remotes: SearchRemoteHit[];
+}
+
+/**
+ * Status TT (ATURAN.md §3). Di langkah 1.5b hanya "Menunggu SD"; "Hasil masuk" di R3 dan
+ * "Ditutup" di 1.6 (T93).
+ */
+export const TROUBLE_TICKET_STATUSES = ['menunggu_sd'] as const;
+export type TroubleTicketStatus = (typeof TROUBLE_TICKET_STATUSES)[number];
+
+export const TROUBLE_TICKET_STATUS_LABELS: Record<TroubleTicketStatus, string> = {
+  menunggu_sd: 'Menunggu SD',
+};
+
+export const TROUBLE_TICKET_PROBLEM_MAX_LENGTH = 2000;
+export const TROUBLE_TICKET_CONTACT_MAX_LENGTH = 300;
+
+/** Bentuk nomor TT, mis. `TT/VSAT/BNA/2026/11/0093`. */
+export const TT_NUMBER_PATTERN = /^TT\/[A-Z0-9]{2,10}\/[A-Z0-9]{2,10}\/\d{4}\/(0[1-9]|1[0-2])\/\d{4,}$/;
+
+/** Isi `POST /api/tickets/:ticketId/trouble-tickets`. */
+export interface CreateTroubleTicket {
+  problem: string;
+  /** Kontak di lokasi (T92); kosong = tanpa kontak. */
+  contact?: string;
+}
+
+/** TT seperti tampil di halaman NPR. Waktu dalam ISO 8601 UTC. */
+export interface TroubleTicket {
+  id: string;
+  number: string;
+  status: TroubleTicketStatus;
+  problem: string;
+  contact: string | null;
+  createdAt: string;
+  createdBy: { id: string; name: string };
+  /** Berapa kali ringkasan disalin untuk SD, dan kapan terakhir (K25). */
+  copiedCount: number;
+  lastCopiedAt: string | null;
+  /** Teks siap tempel ke chat SD: no. TT, remote, lokasi, problem, kontak. */
+  summary: string;
+}
+
+/** Satu baris daftar TT aktif. */
+export interface TroubleTicketQueueItem {
+  id: string;
+  number: string;
+  status: TroubleTicketStatus;
+  ticket: { id: string; number: string };
+  tenantId: string;
+  customerName: string;
+  remote: { id: string; code: string; name: string; city: string | null; zone: RemoteZone };
+  problem: string;
+  createdAt: string;
+  createdByName: string;
+  copiedCount: number;
+  lastCopiedAt: string | null;
+}
+
+/** `GET /api/trouble-tickets`: satu halaman TT aktif, terlama dulu. */
+export interface TroubleTicketPage {
+  items: TroubleTicketQueueItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/** Jawaban `POST /api/trouble-tickets/:id/copied`. */
+export interface TroubleTicketCopied {
+  copiedCount: number;
+  lastCopiedAt: string;
 }

@@ -107,12 +107,12 @@ describe('pencarian global', () => {
   });
 
   it('kurang dari 2 huruf: kosong; lebih dari 100: ditolak; % dan _ bukan pola', async () => {
-    expect(await search('A')).toEqual({ tickets: [], remotes: [] });
-    expect(await search('   ')).toEqual({ tickets: [], remotes: [] });
+    expect(await search('A')).toEqual({ tickets: [], troubleTickets: [], remotes: [] });
+    expect(await search('   ')).toEqual({ tickets: [], troubleTickets: [], remotes: [] });
     await l1.get(`/api/search`).expect(200);
     const long = await l1.get(`/api/search?q=${'x'.repeat(101)}`).expect(400);
     expect(long.body.message).toBe('Kata kunci paling panjang 100 karakter.');
-    expect(await search('%%')).toEqual({ tickets: [], remotes: [] });
-    expect(await search('__')).toEqual({ tickets: [], remotes: [] });
+    expect(await search('%%')).toEqual({ tickets: [], troubleTickets: [], remotes: [] });
+    expect(await search('__')).toEqual({ tickets: [], troubleTickets: [], remotes: [] });
   });
 });

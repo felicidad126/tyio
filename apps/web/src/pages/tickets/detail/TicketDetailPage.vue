@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconHandGrab, IconLockOpen, IconPlus } from '@tabler/icons-vue';
+import { IconHandGrab, IconLockOpen, IconPlus, IconSend } from '@tabler/icons-vue';
 import { APP_NAME, isRole, ROLE_LABELS, type TicketAction, type TicketDetail, type TicketStatus, type TicketTimeline } from '@tyio/shared';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -9,6 +9,8 @@ import RemoteFacts from '../RemoteFacts.vue';
 import TicketStatusPill from '../TicketStatusPill.vue';
 import { ticketApi } from '../ticket-api';
 import { formatZoned } from '../zoned-time';
+import TroubleTicketCard from '../tt/TroubleTicketCard.vue';
+import TroubleTicketDialog from '../tt/TroubleTicketDialog.vue';
 import ActionDialog from './ActionDialog.vue';
 import TicketTimelineList from './TicketTimeline.vue';
 
@@ -22,6 +24,9 @@ const actions = ref<TicketAction[]>([]);
 const error = ref('');
 const loading = ref(true);
 const saved = ref('');
+
+/** Panel "Buat TT ke SD" (1.5b). */
+const ttPanel = ref(false);
 
 /** Panel tindakan yang sedang terbuka, beserta isian awalnya. */
 const panel = ref<{ correcting: TicketAction | null; initialStatus: TicketStatus | null } | null>(null);
@@ -39,6 +44,11 @@ watch(
       ticket.value = detail;
       actions.value = timeline;
       document.title = `${detail.number} · ${APP_NAME}`;
+      // Dari pencarian global: alamat #tt-<id> menunjuk satu TT di halaman ini.
+      if (route.hash.startsWith('#tt-')) {
+        await nextTick();
+        document.getElementById(route.hash.slice(1))?.focus();
+      }
     } catch (cause) {
       ticket.value = null;
       error.value = cause instanceof Error ? cause.message : 'NPR gagal dimuat.';
@@ -94,6 +104,15 @@ async function reload(): Promise<void> {
   const [detail, timeline] = await Promise.all([ticketApi.get(ticket.value.id), ticketApi.actions(ticket.value.id)]);
   ticket.value = detail;
   actions.value = timeline;
+}
+
+async function onTroubleTicketSaved(timeline: TicketTimeline): Promise<void> {
+  ticket.value = timeline.ticket;
+  actions.value = timeline.actions;
+  const created = timeline.ticket.troubleTickets.at(-1);
+  saved.value = created ? `${created.number} tersimpan. Teruskan ke SD dengan "Salin ringkasan TT".` : 'TT tersimpan.';
+  await nextTick();
+  savedNotice.value?.focus();
 }
 
 async function onSaved(timeline: TicketTimeline): Promise<void> {
@@ -154,6 +173,18 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
               aria-hidden="true"
             />
             {{ taking ? 'Mengambil…' : ticket.assignee ? 'Ambil alih' : 'Ambil' }}
+          </button>
+          <button
+            v-if="!closed"
+            type="button"
+            class="btn header-action"
+            @click="saved = ''; ttPanel = true"
+          >
+            <IconSend
+              size="18"
+              aria-hidden="true"
+            />
+            Buat TT ke SD
           </button>
           <button
             v-if="!closed"
@@ -306,6 +337,31 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
       </section>
 
       <section
+        v-if="ticket.troubleTickets.length > 0"
+        class="card mb-3"
+        aria-labelledby="judul-tt"
+      >
+        <div class="card-header">
+          <h2
+            id="judul-tt"
+            class="card-title"
+          >
+            TT ke SD ({{ ticket.troubleTickets.length }})
+          </h2>
+        </div>
+        <div class="card-body tt-list">
+          <TroubleTicketCard
+            v-for="tt in ticket.troubleTickets"
+            :key="tt.id"
+            :tt="tt"
+            :zone="ticket.remote.zone"
+            :can-copy="!closed"
+            @copied="reload"
+          />
+        </div>
+      </section>
+
+      <section
         class="card mb-3"
         aria-labelledby="judul-linimasa"
       >
@@ -347,6 +403,12 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
         </div>
       </section>
 
+      <TroubleTicketDialog
+        v-if="ttPanel"
+        :ticket="ticket"
+        @saved="onTroubleTicketSaved"
+        @close="ttPanel = false"
+      />
       <ActionDialog
         v-if="panel"
         :ticket="ticket"
@@ -394,6 +456,12 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
 .header-action {
   gap: 6px;
   min-height: 44px;
+}
+
+.tt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .timeline-hint {

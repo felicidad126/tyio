@@ -175,6 +175,24 @@ export async function insertNoteWithAttachment(
   });
 }
 
+/** TT uji untuk NPR yang ada, disisipkan langsung; nomor dibuat trigger database. */
+export async function insertTroubleTicket(
+  dataSource: DataSource,
+  ticketId: string,
+  problem = 'Modem VSAT tidak sinkron',
+): Promise<{ id: string; number: string }> {
+  const rows = (await operatorQuery(
+    dataSource,
+    `INSERT INTO trouble_tickets (tenant_id, ticket_id, remote_id, network_id, problem, created_by)
+     SELECT tenant_id, id, remote_id, network_id, $2, created_by FROM tickets WHERE id = $1
+     RETURNING id, number`,
+    [ticketId, problem],
+  )) as Array<{ id: string; number: string }>;
+  const tt = rows[0];
+  if (!tt) throw new Error('TT uji gagal dibuat.');
+  return tt;
+}
+
 /** Berkas .xlsx dari baris-baris sel (baris pertama = judul kolom). */
 export async function buildXlsx(rows: Array<Array<string | number | Date | null>>): Promise<Buffer> {
   const { default: writeXlsxFile } = await import('write-excel-file/node');

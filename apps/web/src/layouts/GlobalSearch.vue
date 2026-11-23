@@ -5,6 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import TicketStatusPill from '../pages/tickets/TicketStatusPill.vue';
 import { ticketApi } from '../pages/tickets/ticket-api';
+import TroubleTicketStatusPill from '../pages/tickets/tt/TroubleTicketStatusPill.vue';
 
 // Pencarian global (langkah 1.5, T84): daftar langsung di bawah kotak cari saat mengetik,
 // dikelompokkan NPR dan Remote. Pola combobox ARIA: panah atas/bawah memilih, Enter membuka
@@ -12,8 +13,8 @@ import { ticketApi } from '../pages/tickets/ticket-api';
 
 interface Option {
   id: string;
-  kind: 'npr' | 'remote';
-  to: { name: string; params: { id: string } };
+  kind: 'npr' | 'tt' | 'remote';
+  to: { name: string; params: { id: string }; hash?: string };
 }
 
 const router = useRouter();
@@ -32,6 +33,11 @@ const options = computed<Option[]>(() => [
     id: hit.id,
     kind: 'npr' as const,
     to: { name: 'ticket-detail', params: { id: hit.id } },
+  })),
+  ...(result.value?.troubleTickets ?? []).map((hit) => ({
+    id: hit.id,
+    kind: 'tt' as const,
+    to: { name: 'ticket-detail', params: { id: hit.ticketId }, hash: `#tt-${hit.id}` },
   })),
   ...(result.value?.remotes ?? []).map((hit) => ({
     id: hit.id,
@@ -151,7 +157,7 @@ function onFocusOut(event: FocusEvent): void {
         v-model="query"
         type="search"
         class="form-control global-search__input"
-        placeholder="Cari NPR, no. tiket customer, remote"
+        placeholder="Cari NPR, TT, no. tiket customer, remote"
         autocomplete="off"
         role="combobox"
         aria-autocomplete="list"
@@ -213,6 +219,38 @@ function onFocusOut(event: FocusEvent): void {
           </div>
         </div>
         <div
+          v-if="result && result.troubleTickets.length > 0"
+          role="group"
+          aria-labelledby="cari-global-tt"
+        >
+          <div
+            id="cari-global-tt"
+            class="global-search__group"
+            role="presentation"
+          >
+            TT
+          </div>
+          <div
+            v-for="hit in result.troubleTickets"
+            :id="optionId(indexOf('tt', hit.id))"
+            :key="hit.id"
+            role="option"
+            class="global-search__option"
+            :aria-selected="active === indexOf('tt', hit.id) ? 'true' : 'false'"
+            @mousedown.prevent
+            @click="go(indexOf('tt', hit.id))"
+            @mousemove="active = indexOf('tt', hit.id)"
+          >
+            <span class="global-search__main">
+              <span class="font-monospace">{{ hit.number }}</span>
+              <span class="text-secondary small">
+                {{ hit.ticketNumber }} · {{ hit.remote.name }} · {{ hit.customerName }}
+              </span>
+            </span>
+            <TroubleTicketStatusPill :status="hit.status" />
+          </div>
+        </div>
+        <div
           v-if="result && result.remotes.length > 0"
           role="group"
           aria-labelledby="cari-global-remote"
@@ -256,10 +294,12 @@ function onFocusOut(event: FocusEvent): void {
           Mencari…
         </template>
         <template v-else-if="result && options.length === 0">
-          Tidak ada NPR atau remote yang cocok dengan "{{ query.trim() }}".
+          Tidak ada NPR, TT, atau remote yang cocok dengan "{{ query.trim() }}".
         </template>
         <template v-else-if="result">
-          {{ result.tickets.length }} NPR, {{ result.remotes.length }} remote. Enter membuka yang pertama.
+          {{ result.tickets.length }} NPR,<template v-if="result.troubleTickets.length > 0">
+            {{ result.troubleTickets.length }} TT,
+          </template> {{ result.remotes.length }} remote. Enter membuka yang pertama.
         </template>
       </p>
     </div>

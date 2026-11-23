@@ -22,6 +22,7 @@ import {
   CUSTOMER_TICKET_NUMBER_MAX_LENGTH,
   isTicketActionKind,
   isTicketStatus,
+  TICKET_ACTION_KINDS_SELECTABLE,
   TICKET_ACTION_NOTE_MAX_LENGTH,
   TICKET_ATTACHMENT_MAX_BYTES,
   TICKET_ATTACHMENTS_PER_ACTION,
@@ -222,7 +223,7 @@ function readAction(request: Request & { files?: UploadedPart[] }): AddActionInp
   const record = readBody(body, ACTION_FIELDS);
 
   const kind = record.kind;
-  if (!isTicketActionKind(kind) || kind === 'dibuat' || kind === 'ambil') {
+  if (!isWritableKind(kind)) {
     throw new BadRequestException('Pilih jenis tindakan: cek jaringan, cek lokasi, hubungi customer, catatan, atau koreksi.');
   }
   const note = readText(record.note, 'Catatan', TICKET_ACTION_NOTE_MAX_LENGTH);
@@ -279,6 +280,14 @@ function readAction(request: Request & { files?: UploadedPart[] }): AddActionInp
     customerTicketNumber,
     attachments: files.map(checkAttachment),
   };
+}
+
+/** Jenis yang boleh dikirim operator: jenis pilihan formulir dan koreksi (bukan entri sistem). */
+function isWritableKind(value: unknown): value is AddActionInput['kind'] {
+  return (
+    isTicketActionKind(value) &&
+    (value === 'koreksi' || (TICKET_ACTION_KINDS_SELECTABLE as readonly string[]).includes(value))
+  );
 }
 
 function readText(value: unknown, label: string, max: number): string | null {

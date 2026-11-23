@@ -138,12 +138,12 @@ describe('seeder tenant dan pengguna', () => {
          FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
          JOIN users u ON u.id = tk.created_by WHERE r.code = 'BNA-MKS-0217'`,
     )) as Array<{ number: string; status: string; email: string }>;
-    // Contoh linimasa mockup (1.4): sekali saja walau seed diulang.
+    // Contoh linimasa mockup (1.4) dan TT (1.5b): sekali saja walau seed diulang.
     expect(ticket).toMatchObject({
       status: 'dikerjakan',
       customer_ticket_number: 'INC-88213',
       email: 'dewi@noc.example',
-      kinds: ['dibuat', 'catatan', 'cek_lokasi'],
+      kinds: ['dibuat', 'catatan', 'cek_lokasi', 'tt_dibuat'],
     });
     expect(ticket?.number).toMatch(/^NPR\/VSAT\/BNA\/\d{4}\/\d{2}\/\d{4}$/);
   });

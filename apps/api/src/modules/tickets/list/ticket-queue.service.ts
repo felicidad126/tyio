@@ -137,7 +137,8 @@ export class TicketQueueService {
       const pattern = `%${filters.q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
       query.andWhere(
         `(tk.number ILIKE :pattern OR tk.customer_ticket_number ILIKE :pattern
-          OR r.code ILIKE :pattern OR r.name ILIKE :pattern OR r.city ILIKE :pattern)`,
+          OR r.code ILIKE :pattern OR r.name ILIKE :pattern OR r.city ILIKE :pattern
+          OR EXISTS (SELECT 1 FROM trouble_tickets tt WHERE tt.ticket_id = tk.id AND tt.number ILIKE :pattern))`,
         { pattern },
       );
     }

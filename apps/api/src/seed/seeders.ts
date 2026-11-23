@@ -167,6 +167,18 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
            ORDER BY x.ord`,
           [JSON.stringify(SEED_TIMELINE.map((action, ord) => ({ ...action, ord })))],
         );
+        // Contoh TT ke SD di NPR yang sama (mockup DetailTiket), hanya bila belum ada TT.
+        await manager.query(
+          `INSERT INTO trouble_tickets (tenant_id, ticket_id, remote_id, network_id, problem, contact, created_by)
+           SELECT tk.tenant_id, tk.id, tk.remote_id, tk.network_id, $1, $2, tk.created_by
+             FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
+            WHERE r.code = 'BNA-MKS-0217' AND tk.status <> 'ditutup'
+              AND NOT EXISTS (SELECT 1 FROM trouble_tickets tt WHERE tt.ticket_id = tk.id)`,
+          [
+            'Modem VSAT tidak sinkron setelah dinyalakan ulang (Rx lock hilang). Perlu cek BUC/LNB dan kabel IFL di lokasi.',
+            'Hendra, Kepala Unit · +62 811-0000-0217',
+          ],
+        );
       },
     },
   ];

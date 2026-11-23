@@ -173,7 +173,7 @@ test('pencarian global: "/" memfokuskan, nomor NPR dan kode remote ditemukan, En
   await expect(page).toHaveURL(/\/remote\/[0-9a-f-]{36}$/);
 
   await box.fill('zz-tidak-ada-' + run);
-  await expect(page.getByRole('status').filter({ hasText: 'Tidak ada NPR atau remote yang cocok' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Tidak ada NPR, TT, atau remote yang cocok' })).toBeVisible();
   await box.press('Escape');
   await expect(box).toHaveAttribute('aria-expanded', 'false');
 });

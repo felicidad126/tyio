@@ -17,6 +17,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router';
 import PageHeader from '../../../components/PageHeader.vue';
 import TicketStatusPill from '../TicketStatusPill.vue';
+import TroubleTicketList from '../tt/TroubleTicketList.vue';
 import { ticketApi } from '../ticket-api';
 import { formatZoned, formatZonedShort } from '../zoned-time';
 import { durationLabel, sinceLabel } from './relative-time';
@@ -56,6 +57,8 @@ const filters = computed(() => {
     page: Math.max(1, Number(one(route.query.page)) || 1),
   };
 });
+/** Daftar TT aktif (1.5b) di halaman yang sama: `?daftar=tt`. */
+const showTt = computed(() => route.query.daftar === 'tt');
 const filtered = computed(
   () => !!(filters.value.customer || filters.value.kategori || filters.value.system || filters.value.status || filters.value.q),
 );
@@ -159,11 +162,15 @@ async function load(): Promise<void> {
 watch(
   filters,
   () => {
-    void load();
+    if (!showTt.value) void load();
     remember(route.query);
   },
   { immediate: true, deep: true },
 );
+watch(showTt, (tt) => {
+  if (!tt) void load();
+});
+
 /** Customer untuk pilihan kategori/system: yang disaring, atau satu-satunya customer pengguna. */
 const masterCustomer = computed(
   () => filters.value.customer || (customers.value.length === 1 ? (customers.value[0]?.id ?? '') : ''),
@@ -224,7 +231,7 @@ function open(id: string): void {
   <div>
     <PageHeader
       title="Tiket"
-      subtitle="Antrean NPR. Yang paling lama gangguannya di atas."
+      :subtitle="showTt ? 'TT yang menunggu Service Delivery. Yang paling lama di atas.' : 'Antrean NPR. Yang paling lama gangguannya di atas.'"
     >
       <template #actions>
         <RouterLink
@@ -241,345 +248,372 @@ function open(id: string): void {
     </PageHeader>
 
     <nav
-      class="views"
-      aria-label="Tampilan antrean"
+      class="lists"
+      aria-label="Daftar tiket"
     >
       <RouterLink
-        v-for="view in TICKET_QUEUE_VIEWS"
-        :key="view"
-        :to="{ query: { ...route.query, view: view === 'semua' ? undefined : view, page: undefined } }"
-        replace
-        class="views__item"
-        :aria-current="filters.view === view ? 'page' : undefined"
+        :to="{ query: {} }"
+        class="lists__item"
+        :aria-current="showTt ? undefined : 'page'"
       >
-        {{ TICKET_QUEUE_VIEW_LABELS[view] }}
-        <span
-          class="views__count"
-          :aria-label="`${page?.counts[view] ?? 0} NPR`"
-        >{{ page ? number.format(page.counts[view]) : '–' }}</span>
+        NPR
+      </RouterLink>
+      <RouterLink
+        :to="{ query: { daftar: 'tt' } }"
+        class="lists__item"
+        :aria-current="showTt ? 'page' : undefined"
+      >
+        TT aktif
       </RouterLink>
     </nav>
 
-    <div class="card">
-      <div class="card-body border-bottom filters">
-        <div class="filters__search">
-          <label
-            class="form-label"
-            for="cari-npr"
-          >Cari di antrean</label>
-          <div class="input-icon">
-            <span
-              class="input-icon-addon"
-              aria-hidden="true"
-            ><IconSearch size="16" /></span>
-            <input
-              id="cari-npr"
-              v-model="search"
-              type="search"
-              class="form-control"
-              maxlength="100"
-              autocomplete="off"
-              aria-describedby="cari-npr-bantuan"
-            >
-          </div>
-          <div
-            id="cari-npr-bantuan"
-            class="form-hint"
-          >
-            No. NPR, no. tiket customer, kode, nama, atau kota remote
-          </div>
-        </div>
-        <div v-if="customers.length > 1">
-          <label
-            class="form-label"
-            for="saring-customer"
-          >Customer</label>
-          <select
-            id="saring-customer"
-            class="form-select"
-            :value="filters.customer"
-            @change="setQuery({ customer: ($event.target as HTMLSelectElement).value })"
-          >
-            <option value="">
-              Semua customer
-            </option>
-            <option
-              v-for="customer in customers"
-              :key="customer.id"
-              :value="customer.id"
-            >
-              {{ customer.name }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label
-            class="form-label"
-            for="saring-kategori"
-          >Kategori</label>
-          <select
-            id="saring-kategori"
-            class="form-select"
-            :value="filters.kategori"
-            :disabled="!masterCustomer"
-            @change="setQuery({ kategori: ($event.target as HTMLSelectElement).value })"
-          >
-            <option value="">
-              {{ masterCustomer ? 'Semua kategori' : 'Pilih customer' }}
-            </option>
-            <option
-              v-for="value in categories"
-              :key="value.id"
-              :value="value.id"
-            >
-              {{ value.name }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label
-            class="form-label"
-            for="saring-system"
-          >System</label>
-          <select
-            id="saring-system"
-            class="form-select"
-            :value="filters.system"
-            :disabled="!masterCustomer"
-            @change="setQuery({ system: ($event.target as HTMLSelectElement).value })"
-          >
-            <option value="">
-              {{ masterCustomer ? 'Semua system' : 'Pilih customer' }}
-            </option>
-            <option
-              v-for="value in systems"
-              :key="value.id"
-              :value="value.id"
-            >
-              {{ value.name }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label
-            class="form-label"
-            for="saring-status"
-          >Status</label>
-          <select
-            id="saring-status"
-            class="form-select"
-            :value="filters.status"
-            @change="setQuery({ status: ($event.target as HTMLSelectElement).value })"
-          >
-            <option value="">
-              Sesuai tampilan
-            </option>
-            <option
-              v-for="status in TICKET_STATUSES"
-              :key="status"
-              :value="status"
-            >
-              {{ TICKET_STATUS_LABELS[status] }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label
-            class="form-label"
-            for="urutan"
-          >Urutan</label>
-          <select
-            id="urutan"
-            class="form-select"
-            :value="filters.sort"
-            @change="setQuery({ sort: ($event.target as HTMLSelectElement).value })"
-          >
-            <option value="mulai">
-              Gangguan terlama dulu
-            </option>
-            <option value="terbaru">
-              NPR terbaru dulu
-            </option>
-          </select>
-        </div>
-      </div>
+    <TroubleTicketList
+      v-if="showTt"
+      :customers="customers"
+    />
 
-      <div
-        v-if="notice"
-        class="alert alert-success m-3 mb-0"
-        role="status"
+    <template v-else>
+      <nav
+        class="views"
+        aria-label="Tampilan antrean"
       >
-        {{ notice }}
-      </div>
-      <div
-        v-if="error"
-        class="card-body text-danger"
-        role="alert"
-      >
-        {{ error }}
-      </div>
-      <div
-        v-if="page && page.total === 0 && !loading"
-        class="empty"
-      >
-        <p class="empty-title">
-          {{ emptyTitle }}
-        </p>
-        <p class="empty-subtitle text-secondary">
-          {{ filtered ? 'Ubah kata kunci atau saringan.' : filters.view === 'saya' ? 'Tekan "Ambil" di NPR yang belum punya penanggung.' : 'NPR baru muncul di sini begitu dibuat.' }}
-        </p>
-        <div class="empty-action">
-          <button
-            v-if="filtered"
-            type="button"
-            class="btn"
-            @click="clearFilters"
-          >
-            Hapus saringan
-          </button>
-        </div>
-      </div>
-      <div
-        v-else-if="page && page.total > 0"
-        class="table-responsive"
-        :aria-busy="loading"
-      >
-        <table class="table table-vcenter card-table queue-table">
-          <thead>
-            <tr>
-              <th>No. NPR</th>
-              <th>Remote</th>
-              <th>{{ showCustomer ? 'Customer · Kategori' : 'Kategori' }}</th>
-              <th>Status</th>
-              <th>Gangguan</th>
-              <th>Penanggung</th>
-              <th class="d-none d-xxl-table-cell">
-                Aksi terakhir
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="item in page.items"
-              :key="item.id"
-              class="queue-row"
-              @click="open(item.id)"
-            >
-              <td class="queue-row__number">
-                <RouterLink
-                  :to="{ name: 'ticket-detail', params: { id: item.id } }"
-                  class="font-monospace"
-                  @click.stop
-                >
-                  {{ item.number }}
-                </RouterLink>
-                <span
-                  v-if="item.customerTicketNumber"
-                  class="d-block text-secondary font-monospace small"
-                >{{ item.customerTicketNumber }}</span>
-              </td>
-              <td class="queue-row__remote">
-                {{ item.remote.name }}
-                <span class="d-block text-secondary small">
-                  <span class="font-monospace">{{ item.remote.code }}</span>
-                  <template v-if="item.remote.city"> · {{ item.remote.city }}</template>
-                </span>
-              </td>
-              <td>
-                <template v-if="showCustomer">
-                  {{ item.customerName }}
-                  <span class="d-block text-secondary small">{{ item.categoryName }}</span>
-                </template>
-                <template v-else>
-                  {{ item.categoryName }}
-                </template>
-              </td>
-              <td class="queue-row__status">
-                <TicketStatusPill :status="item.status" />
-                <span
-                  v-if="item.pendingReason"
-                  class="d-block small pending-reason"
-                >{{ item.pendingReason }}</span>
-              </td>
-              <td class="queue-row__duration">
-                {{ durationLabel(item.startedAt, now) }}
-                <span
-                  class="d-block text-secondary small"
-                  :title="`Mulai ${formatZoned(item.startedAt, item.remote.zone)}`"
-                >sejak {{ formatZonedShort(item.startedAt, item.remote.zone) }}</span>
-              </td>
-              <td
-                class="queue-row__owner"
-                @click.stop
+        <RouterLink
+          v-for="view in TICKET_QUEUE_VIEWS"
+          :key="view"
+          :to="{ query: { ...route.query, view: view === 'semua' ? undefined : view, page: undefined } }"
+          replace
+          class="views__item"
+          :aria-current="filters.view === view ? 'page' : undefined"
+        >
+          {{ TICKET_QUEUE_VIEW_LABELS[view] }}
+          <span
+            class="views__count"
+            :aria-label="`${page?.counts[view] ?? 0} NPR`"
+          >{{ page ? number.format(page.counts[view]) : '–' }}</span>
+        </RouterLink>
+      </nav>
+
+      <div class="card">
+        <div class="card-body border-bottom filters">
+          <div class="filters__search">
+            <label
+              class="form-label"
+              for="cari-npr"
+            >Cari di antrean</label>
+            <div class="input-icon">
+              <span
+                class="input-icon-addon"
+                aria-hidden="true"
+              ><IconSearch size="16" /></span>
+              <input
+                id="cari-npr"
+                v-model="search"
+                type="search"
+                class="form-control"
+                maxlength="100"
+                autocomplete="off"
+                aria-describedby="cari-npr-bantuan"
               >
-                <template v-if="item.assignee">
-                  {{ item.assignee.name }}
-                  <span class="text-secondary">· {{ roleLabel(item.assignee.role) }}</span>
-                </template>
-                <button
-                  v-else-if="item.status !== 'ditutup'"
-                  type="button"
-                  class="btn btn-sm take-button"
-                  :disabled="taking !== null"
-                  :aria-label="`Ambil ${item.number}`"
-                  @click="take(item)"
-                >
-                  {{ taking === item.id ? 'Mengambil…' : 'Ambil' }}
-                </button>
-                <span
-                  v-else
-                  class="text-secondary"
-                >—</span>
-              </td>
-              <td class="d-none d-xxl-table-cell">
-                {{ TICKET_ACTION_KIND_LABELS[item.lastAction.kind] }}
-                <span class="d-block text-secondary small">{{ sinceLabel(item.lastAction.at, now) }} · {{ item.lastAction.byName }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p
-        v-else-if="loading"
-        class="card-body text-secondary m-0"
-        role="status"
-      >
-        Memuat antrean…
-      </p>
+            </div>
+            <div
+              id="cari-npr-bantuan"
+              class="form-hint"
+            >
+              No. NPR, no. tiket customer, kode, nama, atau kota remote
+            </div>
+          </div>
+          <div v-if="customers.length > 1">
+            <label
+              class="form-label"
+              for="saring-customer"
+            >Customer</label>
+            <select
+              id="saring-customer"
+              class="form-select"
+              :value="filters.customer"
+              @change="setQuery({ customer: ($event.target as HTMLSelectElement).value })"
+            >
+              <option value="">
+                Semua customer
+              </option>
+              <option
+                v-for="customer in customers"
+                :key="customer.id"
+                :value="customer.id"
+              >
+                {{ customer.name }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="form-label"
+              for="saring-kategori"
+            >Kategori</label>
+            <select
+              id="saring-kategori"
+              class="form-select"
+              :value="filters.kategori"
+              :disabled="!masterCustomer"
+              @change="setQuery({ kategori: ($event.target as HTMLSelectElement).value })"
+            >
+              <option value="">
+                {{ masterCustomer ? 'Semua kategori' : 'Pilih customer' }}
+              </option>
+              <option
+                v-for="value in categories"
+                :key="value.id"
+                :value="value.id"
+              >
+                {{ value.name }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="form-label"
+              for="saring-system"
+            >System</label>
+            <select
+              id="saring-system"
+              class="form-select"
+              :value="filters.system"
+              :disabled="!masterCustomer"
+              @change="setQuery({ system: ($event.target as HTMLSelectElement).value })"
+            >
+              <option value="">
+                {{ masterCustomer ? 'Semua system' : 'Pilih customer' }}
+              </option>
+              <option
+                v-for="value in systems"
+                :key="value.id"
+                :value="value.id"
+              >
+                {{ value.name }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="form-label"
+              for="saring-status"
+            >Status</label>
+            <select
+              id="saring-status"
+              class="form-select"
+              :value="filters.status"
+              @change="setQuery({ status: ($event.target as HTMLSelectElement).value })"
+            >
+              <option value="">
+                Sesuai tampilan
+              </option>
+              <option
+                v-for="status in TICKET_STATUSES"
+                :key="status"
+                :value="status"
+              >
+                {{ TICKET_STATUS_LABELS[status] }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="form-label"
+              for="urutan"
+            >Urutan</label>
+            <select
+              id="urutan"
+              class="form-select"
+              :value="filters.sort"
+              @change="setQuery({ sort: ($event.target as HTMLSelectElement).value })"
+            >
+              <option value="mulai">
+                Gangguan terlama dulu
+              </option>
+              <option value="terbaru">
+                NPR terbaru dulu
+              </option>
+            </select>
+          </div>
+        </div>
 
-      <div
-        v-if="page && page.total > 0"
-        class="card-footer d-flex flex-wrap gap-2 align-items-center"
-      >
-        <p
-          class="m-0 text-secondary me-auto"
+        <div
+          v-if="notice"
+          class="alert alert-success m-3 mb-0"
           role="status"
         >
-          {{ range }}
-        </p>
-        <nav
-          class="d-flex gap-2"
-          aria-label="Halaman antrean"
+          {{ notice }}
+        </div>
+        <div
+          v-if="error"
+          class="card-body text-danger"
+          role="alert"
         >
-          <button
-            type="button"
-            class="btn"
-            :disabled="filters.page <= 1 || loading"
-            @click="setQuery({ page: String(filters.page - 1) })"
+          {{ error }}
+        </div>
+        <div
+          v-if="page && page.total === 0 && !loading"
+          class="empty"
+        >
+          <p class="empty-title">
+            {{ emptyTitle }}
+          </p>
+          <p class="empty-subtitle text-secondary">
+            {{ filtered ? 'Ubah kata kunci atau saringan.' : filters.view === 'saya' ? 'Tekan "Ambil" di NPR yang belum punya penanggung.' : 'NPR baru muncul di sini begitu dibuat.' }}
+          </p>
+          <div class="empty-action">
+            <button
+              v-if="filtered"
+              type="button"
+              class="btn"
+              @click="clearFilters"
+            >
+              Hapus saringan
+            </button>
+          </div>
+        </div>
+        <div
+          v-else-if="page && page.total > 0"
+          class="table-responsive"
+          :aria-busy="loading"
+        >
+          <table class="table table-vcenter card-table queue-table">
+            <thead>
+              <tr>
+                <th>No. NPR</th>
+                <th>Remote</th>
+                <th>{{ showCustomer ? 'Customer · Kategori' : 'Kategori' }}</th>
+                <th>Status</th>
+                <th>Gangguan</th>
+                <th>Penanggung</th>
+                <th class="d-none d-xxl-table-cell">
+                  Aksi terakhir
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in page.items"
+                :key="item.id"
+                class="queue-row"
+                @click="open(item.id)"
+              >
+                <td class="queue-row__number">
+                  <RouterLink
+                    :to="{ name: 'ticket-detail', params: { id: item.id } }"
+                    class="font-monospace"
+                    @click.stop
+                  >
+                    {{ item.number }}
+                  </RouterLink>
+                  <span
+                    v-if="item.customerTicketNumber"
+                    class="d-block text-secondary font-monospace small"
+                  >{{ item.customerTicketNumber }}</span>
+                </td>
+                <td class="queue-row__remote">
+                  {{ item.remote.name }}
+                  <span class="d-block text-secondary small">
+                    <span class="font-monospace">{{ item.remote.code }}</span>
+                    <template v-if="item.remote.city"> · {{ item.remote.city }}</template>
+                  </span>
+                </td>
+                <td>
+                  <template v-if="showCustomer">
+                    {{ item.customerName }}
+                    <span class="d-block text-secondary small">{{ item.categoryName }}</span>
+                  </template>
+                  <template v-else>
+                    {{ item.categoryName }}
+                  </template>
+                </td>
+                <td class="queue-row__status">
+                  <TicketStatusPill :status="item.status" />
+                  <span
+                    v-if="item.pendingReason"
+                    class="d-block small pending-reason"
+                  >{{ item.pendingReason }}</span>
+                </td>
+                <td class="queue-row__duration">
+                  {{ durationLabel(item.startedAt, now) }}
+                  <span
+                    class="d-block text-secondary small"
+                    :title="`Mulai ${formatZoned(item.startedAt, item.remote.zone)}`"
+                  >sejak {{ formatZonedShort(item.startedAt, item.remote.zone) }}</span>
+                </td>
+                <td
+                  class="queue-row__owner"
+                  @click.stop
+                >
+                  <template v-if="item.assignee">
+                    {{ item.assignee.name }}
+                    <span class="text-secondary">· {{ roleLabel(item.assignee.role) }}</span>
+                  </template>
+                  <button
+                    v-else-if="item.status !== 'ditutup'"
+                    type="button"
+                    class="btn btn-sm take-button"
+                    :disabled="taking !== null"
+                    :aria-label="`Ambil ${item.number}`"
+                    @click="take(item)"
+                  >
+                    {{ taking === item.id ? 'Mengambil…' : 'Ambil' }}
+                  </button>
+                  <span
+                    v-else
+                    class="text-secondary"
+                  >—</span>
+                </td>
+                <td class="d-none d-xxl-table-cell">
+                  {{ TICKET_ACTION_KIND_LABELS[item.lastAction.kind] }}
+                  <span class="d-block text-secondary small">{{ sinceLabel(item.lastAction.at, now) }} · {{ item.lastAction.byName }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p
+          v-else-if="loading"
+          class="card-body text-secondary m-0"
+          role="status"
+        >
+          Memuat antrean…
+        </p>
+
+        <div
+          v-if="page && page.total > 0"
+          class="card-footer d-flex flex-wrap gap-2 align-items-center"
+        >
+          <p
+            class="m-0 text-secondary me-auto"
+            role="status"
           >
-            Sebelumnya
-          </button>
-          <button
-            type="button"
-            class="btn"
-            :disabled="filters.page >= lastPage || loading"
-            @click="setQuery({ page: String(filters.page + 1) })"
+            {{ range }}
+          </p>
+          <nav
+            class="d-flex gap-2"
+            aria-label="Halaman antrean"
           >
-            Berikutnya
-          </button>
-        </nav>
+            <button
+              type="button"
+              class="btn"
+              :disabled="filters.page <= 1 || loading"
+              @click="setQuery({ page: String(filters.page - 1) })"
+            >
+              Sebelumnya
+            </button>
+            <button
+              type="button"
+              class="btn"
+              :disabled="filters.page >= lastPage || loading"
+              @click="setQuery({ page: String(filters.page + 1) })"
+            >
+              Berikutnya
+            </button>
+          </nav>
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -587,6 +621,33 @@ function open(id: string): void {
 .header-action {
   gap: 6px;
   min-height: 44px;
+}
+
+.lists {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--tblr-bg-surface-secondary);
+}
+
+.lists__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  color: var(--tblr-secondary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.lists__item[aria-current='page'] {
+  background: var(--tblr-bg-surface);
+  color: var(--tblr-body-color);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(24, 36, 51, 0.12);
 }
 
 .views {

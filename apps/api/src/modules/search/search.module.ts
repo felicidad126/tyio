@@ -19,7 +19,7 @@ export class SearchController {
     if (text.length > SEARCH_MAX_LENGTH) {
       throw new BadRequestException(`Kata kunci paling panjang ${SEARCH_MAX_LENGTH} karakter.`);
     }
-    if (text.length < SEARCH_MIN_LENGTH) return { tickets: [], remotes: [] };
+    if (text.length < SEARCH_MIN_LENGTH) return { tickets: [], troubleTickets: [], remotes: [] };
     return this.search.search(scope, text);
   }
 }
