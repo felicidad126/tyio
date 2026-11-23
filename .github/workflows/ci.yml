@@ -127,8 +127,10 @@ jobs:
 
       # Staging memakai cookie Secure; Chromium menerimanya di http://localhost.
       # Service worker PWA juga hanya jalan di HTTPS atau localhost.
-      - name: Uji asap, login, kerangka aplikasi, data master, remote, dan buat NPR
-        run: pnpm e2e smoke auth shell master remotes ticket-create
+      # Semua berkas uji layar, tanpa daftar nama: daftar lama berhenti di ticket-create (1.3),
+      # sehingga ticket-detail, ticket-queue, dan tt tidak pernah berjalan di CI.
+      - name: Uji layar (semua berkas apps/web/e2e)
+        run: pnpm e2e
         env:
           E2E_BASE_URL: http://localhost:8080
 
