@@ -178,6 +178,15 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T96 | **"Salin ringkasan TT" dicatat hanya setelah clipboard berhasil.** Bila peramban menolak clipboard, ringkasan ditampilkan untuk disalin manual dan tidak dicatat. Ringkasan lima baris: no. TT (no. NPR), remote + customer + kode, lokasi + zona, problem, kontak | K25: setiap salin tercatat; jejak tidak boleh mengaku TT sudah diteruskan bila belum |
 | T97 | **Daftar TT aktif di halaman Tiket** (sakelar "NPR / TT aktif", `?daftar=tt`), terlama dulu, "Belum disalin" ditonjolkan; nomor TT membuka halaman NPR pada kartu TT-nya. Pencarian global punya kelompok TT; kata kunci antrean NPR juga mencari no. TT. Tombol "Buat TT ke SD" ada di judul halaman NPR (bukan di panel tindakan seperti mockup) karena status NPR tidak ikut berubah (T90) | Spesifikasi 1.5b "daftar TT aktif terpisah"; T84 menjanjikan no. TT di pencarian |
 
+**Keputusan yang diambil saat 1.6** (T98–T101 jawaban user 2026-11-23):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T98 | **Penutupan NPR: penyebab dipilih dari daftar tetap** yang sama dengan dialog tutup Gamas (Link/jarkom, Listrik, Cuaca, Perangkat, Lainnya), **penyelesaian teks bebas wajib** | Jawaban user 2026-11-23; laporan R4 dan Overview bisa dikelompokkan per penyebab di semua customer |
+| T99 | **NPR yang masih punya TT belum Ditutup tidak bisa ditutup**; API menolak dengan pesan yang menyebut nomor TT itu. Urutan: SD selesai → TT ditutup → NPR ditutup. Peran tetap mengikuti K21 (NPR dengan TT dan TT itu sendiri hanya L2/admin) | Jawaban user 2026-11-23 |
+| T100 | **TT ditutup L2/admin dengan isian wajib "hasil kunjungan / penyelesaian" teks bebas.** Di R3 hasil kunjungan terstruktur (waktu tiba, temuan, perangkat diganti, foto) menjadi syarat tambahan sebelum TT ditutup | Jawaban user 2026-11-23; ATURAN.md mockup meminta hasil kunjungan sebelum TT ditutup, padahal hasil kunjungan baru dibangun di R3 (T93) |
+| T101 | **Riwayat di halaman remote = semua NPR remote itu** (berjalan dan ditutup), terbaru dulu, berhalaman. Kolom: No. NPR + no. TT, status, mulai gangguan, lama gangguan (sampai pulih), kategori, penyebab, penyelesaian; klik membuka NPR | Jawaban user 2026-11-23 |
+
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
 
