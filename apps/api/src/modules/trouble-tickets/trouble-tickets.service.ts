@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import type {
   RemoteDetail,
+  Role,
   RemoteZone,
   TroubleTicket,
   TroubleTicketCopied,
@@ -9,12 +10,15 @@ import type {
   TroubleTicketQueueItem,
   TroubleTicketStatus,
 } from '@tyio/shared';
-import type { DataSource } from 'typeorm';
+import type { DataSource, EntityManager } from 'typeorm';
 import { type AuditActor, auditedTransaction } from '../../common/audit/audit-context.js';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';
 
 export const TROUBLE_TICKET_NOT_FOUND_MESSAGE = 'TT tidak ditemukan.';
 export const TICKET_CLOSED_FOR_TT_MESSAGE = 'NPR ini sudah ditutup; TT tidak bisa dibuat atau dicatat.';
+export const TT_CLOSE_ROLE_MESSAGE = 'TT hanya bisa ditutup L2 atau admin.';
+export const TT_CLOSED_MESSAGE = 'TT ini sudah ditutup.';
+export const TT_CLOSED_FOR_COPY_MESSAGE = 'TT ini sudah ditutup; ringkasannya tidak perlu diteruskan lagi ke SD.';
 /** Sama dengan pesan NPR tidak ditemukan (T29): NPR di luar cakupan diperlakukan tidak ada. */
 const TICKET_NOT_FOUND_MESSAGE = 'NPR tidak ditemukan.';
 
@@ -146,23 +150,13 @@ export class TroubleTicketsService {
 
   /**
    * Ringkasan TT disalin untuk SD (K25): dicatat di linimasa NPR setiap kali. NPR yang sudah
-   * ditutup tidak menerima entri (T74).
+   * ditutup (T74) dan TT yang sudah ditutup tidak menerima entri.
    */
   async markCopied(scope: TenantScope, actor: AuditActor, id: string): Promise<TroubleTicketCopied> {
     return auditedTransaction(this.dataSource, actor, async (manager) => {
-      const tt = await applyTenantScope(
-        manager
-          .createQueryBuilder()
-          .from('trouble_tickets', 'tt')
-          .innerJoin('tickets', 'tk', 'tk.id = tt.ticket_id')
-          .select(['tt.id AS id', 'tt.number AS number', 'tt.ticket_id AS ticket_id', 'tt.tenant_id AS tenant_id',
-            'tk.status AS ticket_status'])
-          .where('tt.id = :id', { id }),
-        scope,
-        'tt.tenant_id',
-      ).getRawOne<{ id: string; number: string; ticket_id: string; tenant_id: string; ticket_status: string }>();
-      if (!tt) throw new NotFoundException(TROUBLE_TICKET_NOT_FOUND_MESSAGE);
+      const tt = await lockedTroubleTicket(manager, scope, id);
       if (tt.ticket_status === 'ditutup') throw new BadRequestException(TICKET_CLOSED_FOR_TT_MESSAGE);
+      if (tt.status === 'ditutup') throw new BadRequestException(TT_CLOSED_FOR_COPY_MESSAGE);
 
       await manager.query(
         `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, trouble_ticket_id, created_by)
@@ -175,6 +169,27 @@ export class TroubleTicketsService {
         [tt.id],
       )) as Array<{ copied_count: number; last_copied_at: Date }>;
       return { copiedCount: stats?.copied_count ?? 0, lastCopiedAt: (stats?.last_copied_at ?? new Date()).toISOString() };
+    });
+  }
+
+  /**
+   * Tutup TT (langkah 1.6): hanya L2/admin (K21), dengan hasil kunjungan / penyelesaian wajib
+   * (T100). Dicatat sebagai entri `tt_ditutup` di linimasa NPR-nya; database mengisi status
+   * dan isian penutupan TT dari entri itu. Mengembalikan id NPR.
+   */
+  async close(scope: TenantScope, actor: AuditActor, role: Role, id: string, resolution: string): Promise<string> {
+    return auditedTransaction(this.dataSource, actor, async (manager) => {
+      const tt = await lockedTroubleTicket(manager, scope, id);
+      if (role === 'l1') throw new ForbiddenException(TT_CLOSE_ROLE_MESSAGE);
+      if (tt.status === 'ditutup') throw new BadRequestException(TT_CLOSED_MESSAGE);
+      if (tt.ticket_status === 'ditutup') throw new BadRequestException(TICKET_CLOSED_FOR_TT_MESSAGE);
+
+      await manager.query(
+        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, trouble_ticket_id, created_by)
+         VALUES ($1, $2, 'tt_ditutup', $3, now(), $4, $5)`,
+        [tt.tenant_id, tt.ticket_id, resolution, tt.id, actor.userId],
+      );
+      return tt.ticket_id;
     });
   }
 
@@ -231,6 +246,37 @@ export class TroubleTicketsService {
     }
     return { items, total: total?.total ?? 0, page: filters.page, pageSize: filters.pageSize };
   }
+}
+
+interface LockedTroubleTicket {
+  id: string;
+  number: string;
+  status: TroubleTicketStatus;
+  ticket_id: string;
+  tenant_id: string;
+  ticket_status: string;
+}
+
+/**
+ * TT dalam cakupan beserta status NPR-nya, dibaca setelah baris NPR lalu baris TT dikunci
+ * (urutan kunci sama dengan trigger linimasa, jadi tidak saling menunggu).
+ */
+async function lockedTroubleTicket(manager: EntityManager, scope: TenantScope, id: string): Promise<LockedTroubleTicket> {
+  const found = await applyTenantScope(
+    manager.createQueryBuilder().from('trouble_tickets', 'tt').select('tt.ticket_id AS ticket_id').where('tt.id = :id', { id }),
+    scope,
+    'tt.tenant_id',
+  ).getRawOne<{ ticket_id: string }>();
+  if (!found) throw new NotFoundException(TROUBLE_TICKET_NOT_FOUND_MESSAGE);
+  const [ticket] = (await manager.query('SELECT status FROM tickets WHERE id = $1 FOR UPDATE', [found.ticket_id])) as Array<{
+    status: string;
+  }>;
+  const [tt] = (await manager.query(
+    'SELECT id, number, status, ticket_id, tenant_id FROM trouble_tickets WHERE id = $1 FOR UPDATE',
+    [id],
+  )) as Array<Omit<LockedTroubleTicket, 'ticket_status'>>;
+  if (!ticket || !tt) throw new NotFoundException(TROUBLE_TICKET_NOT_FOUND_MESSAGE);
+  return { ...tt, ticket_status: ticket.status };
 }
 
 function toQueueItem(row: QueueRow): TroubleTicketQueueItem {

@@ -27,11 +27,21 @@ import { TICKET_NOT_FOUND_MESSAGE } from '../tickets.service.js';
 import type { CheckedAttachment } from './attachment-file.js';
 
 export const ATTACHMENT_NOT_FOUND_MESSAGE = 'Lampiran tidak ditemukan.';
-export const CLOSE_NOT_YET_MESSAGE = 'Penutupan NPR belum tersedia; menyusul bersama aturan penutupan (langkah 1.6).';
+export const CLOSE_VIA_BUTTON_MESSAGE = 'NPR ditutup lewat tombol "Tutup NPR", dengan penyebab dan penyelesaian.';
+export const CLOSE_FROM_PULIH_MESSAGE =
+  'NPR hanya bisa ditutup dari Pulih · siap ditutup. Pindahkan statusnya ke Pulih lebih dulu.';
+export const CLOSE_WITH_TT_ROLE_MESSAGE = 'NPR yang punya TT hanya bisa ditutup L2 atau admin.';
+export const CLOSE_OPEN_TT_MESSAGE = 'Tutup dulu TT yang masih berjalan:';
 export const REOPEN_ROLE_MESSAGE = 'Hanya L2 atau admin yang bisa membuka kembali NPR yang sudah ditutup.';
 export const TICKET_CLOSED_MESSAGE = 'NPR ini sudah ditutup. L2 atau admin bisa membukanya kembali.';
 export const ALREADY_ASSIGNEE_MESSAGE = 'Anda sudah penanggung NPR ini.';
 export const CORRECTED_NOT_FOUND_MESSAGE = 'Entri yang dikoreksi tidak ditemukan di NPR ini.';
+
+/** Isian penutupan NPR yang sudah dibaca controller (T98). */
+export interface CloseTicketInput {
+  cause: TicketCloseCause;
+  resolution: string;
+}
 
 /** Masukan yang sudah dibaca controller. */
 export interface AddActionInput {
@@ -92,8 +102,8 @@ const DAY = 24 * 60 * MINUTE;
 /**
  * Linimasa NPR dan mesin status (langkah 1.4). Entri hanya ditambah (T10); status, mulai
  * gangguan, dan nomor tiket customer berubah lewat entri (trigger `apply_ticket_action`).
- * Aturan yang bergantung pada peran (buka kembali hanya L2/admin, T66) dan penutupan yang
- * menyusul di 1.6 (T69) dijaga di sini; perpindahan yang sah dijaga juga oleh database.
+ * Aturan yang bergantung pada peran (buka kembali hanya L2/admin, T66; penutupan K21) dijaga
+ * di sini; perpindahan yang sah dan aturan penutupan dijaga juga oleh database.
  */
 @Injectable()
 export class TicketActionsService {
@@ -114,7 +124,7 @@ export class TicketActionsService {
       if (!ticket) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
 
       if (input.statusTo) {
-        if (input.statusTo === 'ditutup') throw new BadRequestException(CLOSE_NOT_YET_MESSAGE);
+        if (input.statusTo === 'ditutup') throw new BadRequestException(CLOSE_VIA_BUTTON_MESSAGE);
         if (input.statusFrom !== ticket.status) {
           throw new ConflictException(
             `Status NPR sudah berubah menjadi ${TICKET_STATUS_LABELS[ticket.status]}. Muat ulang, lalu periksa lagi tindakan Anda.`,
@@ -198,6 +208,47 @@ export class TicketActionsService {
           ],
         );
       }
+    });
+  }
+
+  /**
+   * "Tutup NPR" (langkah 1.6): hanya dari Pulih · siap ditutup; penyebab dan penyelesaian wajib
+   * (T98). NPR yang punya TT hanya ditutup L2/admin (K21), dan semua TT-nya harus sudah
+   * ditutup (T99). Baris NPR dikunci dulu, sehingga TT yang dibuat atau ditutup bersamaan
+   * (keduanya juga mengunci NPR) terlihat dalam keadaan terakhirnya.
+   */
+  async close(scope: TenantScope, actor: AuditActor, role: Role, ticketId: string, input: CloseTicketInput): Promise<void> {
+    await auditedTransaction(this.dataSource, actor, async (manager) => {
+      const ticket = await applyTenantScope(
+        manager
+          .createQueryBuilder()
+          .from('tickets', 'tk')
+          .select(['tk.id AS id', 'tk.tenant_id AS tenant_id', 'tk.status AS status'])
+          .where('tk.id = :ticketId', { ticketId })
+          .setLock('pessimistic_write', undefined, ['tk']),
+        scope,
+        'tk.tenant_id',
+      ).getRawOne<{ id: string; tenant_id: string; status: TicketStatus }>();
+      if (!ticket) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
+      if (ticket.status === 'ditutup') throw new BadRequestException(TICKET_CLOSED_MESSAGE);
+      if (ticket.status !== 'pulih') throw new BadRequestException(CLOSE_FROM_PULIH_MESSAGE);
+
+      const troubleTickets = (await manager.query(
+        'SELECT number, status FROM trouble_tickets WHERE ticket_id = $1 ORDER BY created_at, number',
+        [ticket.id],
+      )) as Array<{ number: string; status: string }>;
+      if (troubleTickets.length > 0) {
+        if (role === 'l1') throw new ForbiddenException(CLOSE_WITH_TT_ROLE_MESSAGE);
+        const open = troubleTickets.filter((tt) => tt.status !== 'ditutup').map((tt) => tt.number);
+        if (open.length > 0) throw new BadRequestException(`${CLOSE_OPEN_TT_MESSAGE} ${open.join(', ')}.`);
+      }
+
+      await manager.query(
+        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                                     close_cause, created_by)
+         VALUES ($1, $2, 'tutup', $3, now(), 'pulih', 'ditutup', $4, $5)`,
+        [ticket.tenant_id, ticket.id, input.resolution, input.cause, actor.userId],
+      );
     });
   }
 

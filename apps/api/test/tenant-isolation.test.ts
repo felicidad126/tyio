@@ -18,6 +18,7 @@ import {
   type TicketQueuePage,
   type TicketSummary,
   type TicketTimeline,
+  type RemoteTicketHistoryPage,
   type TroubleTicketPage,
   XLSX_MIME,
 } from '@tyio/shared';
@@ -48,6 +49,7 @@ import {
   insertTicket,
   insertTroubleTicket,
   insertUser,
+  moveTicketDirect,
   operatorQuery,
   TEST_PASSWORD,
 } from './fixtures.js';
@@ -497,6 +499,52 @@ const TROUBLE_TICKET_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
  * `METHOD /api/path`. Setiap uji memastikan data customer B tidak terlihat oleh pengguna A,
  * dan (sebagai kontrol) data customer A tetap terlihat.
  */
+/** Penutupan NPR dan TT, riwayat remote (langkah 1.6). */
+const CLOSE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'POST /api/tickets/:ticketId/close': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    await moveTicketDirect(fx.dataSource, other.id, 'pulih');
+    const body = { cause: 'listrik', resolution: 'Listrik kembali menyala' };
+    const res = await fx.operatorA.agent.post(`/api/tickets/${other.id}/close`).send(body).expect(404);
+    expect(res.body.message).toBe(TICKET_NOT_FOUND_MESSAGE);
+    const [stored] = (await fx.dataSource.query('SELECT status FROM tickets WHERE id = $1', [other.id])) as Array<{
+      status: string;
+    }>;
+    expect(stored?.status).toBe('pulih');
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    await moveTicketDirect(fx.dataSource, own.id, 'pulih');
+    const mine = await fx.operatorA.agent.post(`/api/tickets/${own.id}/close`).send(body).expect(201);
+    expect((mine.body as TicketTimeline).ticket.status).toBe('ditutup');
+  },
+
+  'POST /api/trouble-tickets/:id/close': async (fx) => {
+    const other = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantB.id)).id);
+    const body = { resolution: 'Modem diganti teknisi SD' };
+    const res = await fx.adminA.agent.post(`/api/trouble-tickets/${other.id}/close`).send(body).expect(404);
+    expect(res.body.message).toBe(TROUBLE_TICKET_NOT_FOUND_MESSAGE);
+    const [stored] = (await fx.dataSource.query('SELECT status FROM trouble_tickets WHERE id = $1', [other.id])) as Array<{
+      status: string;
+    }>;
+    expect(stored?.status).toBe('menunggu_sd');
+
+    const own = await insertTroubleTicket(fx.dataSource, (await insertTicket(fx.dataSource, fx.tenantA.id)).id);
+    const mine = await fx.adminA.agent.post(`/api/trouble-tickets/${own.id}/close`).send(body).expect(201);
+    expect((mine.body as TicketTimeline).ticket.troubleTickets[0]).toMatchObject({ id: own.id, status: 'ditutup' });
+  },
+
+  'GET /api/remotes/:remoteId/tickets': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    const res = await fx.operatorA.agent.get(`/api/remotes/${other.remoteId}/tickets`).expect(404);
+    expect(res.body.message).toBe(REMOTE_NOT_FOUND_MESSAGE);
+
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const page = (await fx.operatorA.agent.get(`/api/remotes/${own.remoteId}/tickets`).expect(200))
+      .body as RemoteTicketHistoryPage;
+    expect(ids(page.items)).toEqual([own.id]);
+  },
+};
+
 const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   'POST /api/auth/login': async (fx) => {
     const res = await request(fx.server)
@@ -547,6 +595,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...TICKET_ACTION_PROBES,
   ...QUEUE_PROBES,
   ...TROUBLE_TICKET_PROBES,
+  ...CLOSE_PROBES,
 };
 
 

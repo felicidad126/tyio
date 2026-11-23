@@ -200,6 +200,16 @@ export async function insertTroubleTicket(
   return tt;
 }
 
+/** Pindahkan NPR (selain ke Ditutup) lewat entri `catatan` yang disisipkan langsung oleh pembuatnya. */
+export async function moveTicketDirect(dataSource: DataSource, ticketId: string, to: string): Promise<void> {
+  await operatorQuery(
+    dataSource,
+    `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, created_by)
+     SELECT tenant_id, id, 'catatan', 'Pindah status', now(), status, $2, created_by FROM tickets WHERE id = $1`,
+    [ticketId, to],
+  );
+}
+
 /**
  * Tutup TT langsung lewat entri `tt_ditutup` (langkah 1.6), seperti perbaikan manual.
  * Penutupnya harus L2/admin (K21); bila tidak diberikan, dibuat pengguna L2 baru.

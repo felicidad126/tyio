@@ -12,7 +12,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
-  CLOSE_NOT_YET_MESSAGE,
+  CLOSE_VIA_BUTTON_MESSAGE,
   REOPEN_ROLE_MESSAGE,
   TICKET_CLOSED_MESSAGE,
 } from '../src/modules/tickets/actions/ticket-actions.service.js';
@@ -29,8 +29,9 @@ import {
 
 // Mesin status NPR (langkah 1.4): delapan status (T63), perpindahan bebas antar status
 // aktif kecuali kembali ke Terbuka, Ditutup hanya dari Pulih (T64), semua peran memindahkan
-// eskalasi (T65), buka kembali hanya L2/admin (T66), pending wajib alasan (T68), penutupan
-// lewat API menyusul di 1.6 (T69). Status hanya berubah lewat entri linimasa.
+// eskalasi (T65), buka kembali hanya L2/admin (T66), pending wajib alasan (T68). Penutupan
+// lewat endpoint tersendiri (1.6, tickets.close.test.ts), bukan lewat tambah tindakan.
+// Status hanya berubah lewat entri linimasa.
 
 type Agent = ReturnType<typeof request.agent>;
 
@@ -148,7 +149,7 @@ describe('mesin status NPR', () => {
       const res = await move(l2, ticketId, from, to);
       if (to === 'ditutup') {
         expect(res.status).toBe(400);
-        expect(res.body.message).toBe(CLOSE_NOT_YET_MESSAGE);
+        expect(res.body.message).toBe(CLOSE_VIA_BUTTON_MESSAGE);
         expect(await statusOf(ticketId)).toBe(from);
       } else if (isTicketTransitionAllowed(from, to)) {
         expect(res.status).toBe(201);
@@ -215,11 +216,11 @@ describe('mesin status NPR', () => {
       ).rejects.toThrow(/sudah ditutup/);
     });
 
-    it('tidak ada peran yang bisa menutup NPR lewat API di langkah ini (T69)', async () => {
+    it('tambah tindakan tidak bisa menutup NPR, oleh peran apa pun: penutupan lewat "Tutup NPR" (1.6)', async () => {
       for (const agent of [l1, l2, admin]) {
         const ticketId = await ticketIn('pulih');
         const res = await move(agent, ticketId, 'pulih', 'ditutup').expect(400);
-        expect(res.body.message).toBe(CLOSE_NOT_YET_MESSAGE);
+        expect(res.body.message).toBe(CLOSE_VIA_BUTTON_MESSAGE);
       }
     });
   });

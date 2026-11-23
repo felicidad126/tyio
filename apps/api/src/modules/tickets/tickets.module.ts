@@ -8,15 +8,19 @@ import {
   TroubleTicketsController,
 } from '../trouble-tickets/trouble-tickets.controller.js';
 import { TroubleTicketsService } from '../trouble-tickets/trouble-tickets.service.js';
-import { RemoteOpenTicketsController, TicketsController } from './tickets.controller.js';
+import { RemoteOpenTicketsController, RemoteTicketsController, TicketsController } from './tickets.controller.js';
 import { TicketsService } from './tickets.service.js';
 
-/** NPR: buat NPR bernomor dan NPR terbuka per remote (1.3); linimasa, status, lampiran (1.4); antrean dan penanggung (1.5); TT ke SD (1.5b). */
+/**
+ * NPR: buat NPR bernomor dan NPR terbuka per remote (1.3); linimasa, status, lampiran (1.4);
+ * antrean dan penanggung (1.5); TT ke SD (1.5b); penutupan NPR dan TT, riwayat remote (1.6).
+ */
 @Module({
   imports: [RemotesModule],
   controllers: [
     TicketsController,
     RemoteOpenTicketsController,
+    RemoteTicketsController,
     TicketActionsController,
     TicketTroubleTicketsController,
     TroubleTicketsController,
