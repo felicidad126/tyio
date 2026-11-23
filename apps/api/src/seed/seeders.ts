@@ -179,10 +179,92 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
             'Hendra, Kepala Unit · +62 811-0000-0217',
           ],
         );
+        // Riwayat NPR yang sudah ditutup di remote yang sama (mockup DetailTiket "Riwayat
+        // remote", langkah 1.6), hanya bila remote itu belum punya NPR Ditutup. Terlama dulu, agar
+        // nomornya berurutan; setiap NPR pulih lalu ditutup lewat linimasa seperti dari layar.
+        const [history] = (await manager.query(
+          `SELECT EXISTS (SELECT 1 FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
+                           JOIN tenants t ON t.id = r.tenant_id
+                          WHERE t.code = 'BNA' AND r.code = 'BNA-MKS-0217' AND tk.status = 'ditutup') AS present`,
+        )) as Array<{ present: boolean }>;
+        if (history?.present) return;
+        for (const item of SEED_CLOSED_HISTORY) {
+          const [created] = (await manager.query(
+            `INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description,
+                                  started_at, created_at, created_by)
+             SELECT t.id, r.id, r.network_id, c.id, s.id, $1,
+                    now() - make_interval(mins => $2), now() - make_interval(mins => $2 - 5), u.id
+               FROM tenants t
+               JOIN remotes r ON r.tenant_id = t.id AND r.code = 'BNA-MKS-0217'
+               JOIN master_categories c ON c.tenant_id = t.id AND lower(c.name) = lower($3)
+               JOIN master_systems s ON s.tenant_id = t.id AND lower(s.name) = lower($4)
+               JOIN users u ON u.email = $5
+              WHERE t.code = 'BNA'
+             RETURNING id`,
+            [item.description, item.minutes_ago, item.category, item.system, SEED_TICKET_AUTHOR],
+          )) as Array<{ id: string }>;
+          if (!created) continue;
+          await manager.query(
+            `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                                         created_by, created_at)
+             SELECT tenant_id, id, 'catatan', $2, started_at + make_interval(mins => $3), 'terbuka', 'pulih',
+                    created_by, started_at + make_interval(mins => $3)
+               FROM tickets WHERE id = $1`,
+            [created.id, item.recovered_note, item.duration_minutes],
+          );
+          await manager.query(
+            `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                                         close_cause, created_by, created_at)
+             SELECT tk.tenant_id, tk.id, 'tutup', $2, tk.started_at + make_interval(mins => $3 + 10), 'pulih', 'ditutup',
+                    $4, u.id, tk.started_at + make_interval(mins => $3 + 10)
+               FROM tickets tk JOIN users u ON u.email = $5 WHERE tk.id = $1`,
+            [created.id, item.resolution, item.duration_minutes, item.cause, item.closed_by],
+          );
+        }
       },
     },
   ];
 }
+
+/**
+ * NPR yang sudah ditutup di BNA-MKS-0217 (mockup DetailTiket "Riwayat remote"), terlama dulu:
+ * mulai gangguan sekian menit lalu, lama sampai pulih, penyebab (T98), dan penutupnya.
+ */
+export const SEED_CLOSED_HISTORY = [
+  {
+    description: 'Ping gagal 100%, LAN cabang tidak terjangkau',
+    category: 'Remote Down',
+    system: 'SNMP NOC',
+    minutes_ago: 33 * 24 * 60,
+    duration_minutes: 105,
+    recovered_note: 'Remote up setelah kabel LAN dipasang ulang petugas cabang.',
+    cause: 'perangkat',
+    resolution: 'Kabel LAN longgar di switch cabang; dipasang ulang oleh petugas, remote stabil.',
+    closed_by: 'dewi@noc.example',
+  },
+  {
+    description: 'Ping gagal 100%, beberapa remote Makassar ikut turun',
+    category: 'Remote Down',
+    system: 'SNMP NOC',
+    minutes_ago: 26 * 24 * 60,
+    duration_minutes: 185,
+    recovered_note: 'Listrik gedung kembali menyala, remote up.',
+    cause: 'listrik',
+    resolution: 'Listrik padam di gedung (pemadaman PLN); remote pulih sendiri setelah listrik menyala.',
+    closed_by: 'dewi@noc.example',
+  },
+  {
+    description: 'Modem hang, ping putus-sambung',
+    category: 'Corrective',
+    system: 'NMS VSAT',
+    minutes_ago: 17 * 24 * 60,
+    duration_minutes: 100,
+    recovered_note: 'Modem dinyalakan ulang petugas cabang, remote up.',
+    cause: 'perangkat',
+    resolution: 'Modem hang; pulih setelah dinyalakan ulang. Disarankan pemeriksaan adaptor pada kunjungan berikutnya.',
+    closed_by: 'arif@noc.example',
+  },
+] as const;
 
 /** Tindakan contoh untuk NPR BNA-MKS-0217, terlama dulu (mockup DetailTiket). */
 const SEED_TIMELINE = [

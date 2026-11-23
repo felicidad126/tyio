@@ -1,16 +1,27 @@
 <script setup lang="ts">
-import { IconCheck, IconCopy } from '@tabler/icons-vue';
-import type { RemoteZone, TroubleTicket } from '@tyio/shared';
+import { IconCheck, IconCircleCheck, IconCopy } from '@tabler/icons-vue';
+import { isRole, ROLE_LABELS, type RemoteZone, type TroubleTicket } from '@tyio/shared';
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import { ticketApi } from '../ticket-api';
 import { formatZoned } from '../zoned-time';
 import TroubleTicketStatusPill from './TroubleTicketStatusPill.vue';
 
 // Satu TT di halaman NPR (mockup DetailTiket "TT ke SD"). SD tidak login ke portal (K23):
-// operator meneruskan TT lewat "Salin ringkasan TT", dan setiap salin tercatat (K25).
+// operator meneruskan TT lewat "Salin ringkasan TT", dan setiap salin tercatat (K25). TT ditutup
+// L2/admin dengan hasil kunjungan (1.6, K21, T100); TT yang sudah ditutup tidak disalin lagi.
 
-const props = defineProps<{ tt: TroubleTicket; zone: RemoteZone; canCopy: boolean }>();
-const emit = defineEmits<{ copied: [] }>();
+const props = defineProps<{
+  tt: TroubleTicket;
+  zone: RemoteZone;
+  /** NPR induk masih berjalan (TT di NPR Ditutup tidak menerima entri). */
+  ticketOpen: boolean;
+  /** Pengguna L2/admin (K21). */
+  canClose: boolean;
+}>();
+const emit = defineEmits<{ copied: []; close: [tt: TroubleTicket] }>();
+
+const open = computed(() => props.ticketOpen && props.tt.status !== 'ditutup');
+const roleLabel = (role: string) => (isRole(role) ? ROLE_LABELS[role] : role);
 
 const copying = ref(false);
 const justCopied = ref(false);
@@ -53,6 +64,7 @@ async function copy(): Promise<void> {
   <article
     :id="`tt-${tt.id}`"
     class="tt-card"
+    :class="{ 'tt-card--closed': tt.status === 'ditutup' }"
     tabindex="-1"
     :aria-labelledby="`tt-${tt.id}-judul`"
   >
@@ -74,9 +86,18 @@ async function copy(): Promise<void> {
       <dd>{{ formatZoned(tt.createdAt, zone) }} · {{ tt.createdBy.name }}</dd>
       <dt>Diteruskan ke SD</dt>
       <dd>{{ copyNote }}</dd>
+      <template v-if="tt.closure">
+        <dt>Ditutup</dt>
+        <dd>
+          {{ formatZoned(tt.closure.closedAt, zone) }} · {{ tt.closure.closedBy.name }}
+          <span class="text-secondary">· {{ roleLabel(tt.closure.closedBy.role) }}</span>
+        </dd>
+        <dt>Hasil kunjungan</dt>
+        <dd>{{ tt.closure.resolution }}</dd>
+      </template>
     </dl>
     <div
-      v-if="canCopy"
+      v-if="open"
       class="tt-card__actions"
     >
       <button
@@ -97,11 +118,29 @@ async function copy(): Promise<void> {
         />
         {{ justCopied ? 'Ringkasan disalin' : 'Salin ringkasan TT' }}
       </button>
+      <button
+        v-if="canClose"
+        type="button"
+        class="btn btn-close-tt"
+        @click="emit('close', tt)"
+      >
+        <IconCircleCheck
+          size="18"
+          aria-hidden="true"
+        />
+        Tutup TT
+      </button>
       <span
         class="text-secondary small"
         role="status"
       >{{ justCopied ? 'Tercatat di linimasa. Tempel ke chat SD.' : '' }}</span>
     </div>
+    <p
+      v-if="open && !canClose"
+      class="text-secondary small m-0"
+    >
+      TT ditutup oleh L2 atau admin setelah hasil kunjungan SD masuk.
+    </p>
     <div
       v-if="manual"
       class="tt-card__manual"
@@ -138,6 +177,10 @@ async function copy(): Promise<void> {
   border: 1px solid var(--tblr-border-color);
   border-left: 3px solid #9a3d0d;
   border-radius: 6px;
+}
+
+.tt-card--closed {
+  border-left-color: #8a96a3;
 }
 
 .tt-card:target,
@@ -190,6 +233,17 @@ async function copy(): Promise<void> {
 .tt-card__actions .btn {
   gap: 6px;
   min-height: 44px;
+}
+
+/* Penutupan: garis hijau seperti "Tutup NPR" di mockup, bukan tombol utama. */
+.btn-close-tt {
+  border-color: #1b6430;
+  color: #1b6430;
+}
+
+:global([data-bs-theme='dark']) .btn-close-tt {
+  border-color: #6fcf8a;
+  color: #6fcf8a;
 }
 
 @media (max-width: 575.98px) {

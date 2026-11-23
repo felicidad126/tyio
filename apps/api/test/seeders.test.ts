@@ -6,6 +6,7 @@ import { verifyPassword } from '../src/modules/users/password.js';
 import {
   createSeeders,
   DEV_SEED_PASSWORD,
+  SEED_CLOSED_HISTORY,
   SEED_MASTER,
   SEED_REMOTES_PER_TENANT,
   SEED_TENANTS,
@@ -129,14 +130,16 @@ describe('seeder tenant dan pengguna', () => {
     expect(tickets).toEqual(
       SEED_TENANTS.map((tenant) => ({
         code: tenant.code,
-        count: seedTickets().filter((ticket) => ticket.tenant_code === tenant.code).length,
+        count:
+          seedTickets().filter((ticket) => ticket.tenant_code === tenant.code).length +
+          (tenant.code === 'BNA' ? SEED_CLOSED_HISTORY.length : 0),
       })).sort((a, b) => a.code.localeCompare(b.code)),
     );
     const [ticket] = (await dataSource.query(
       `SELECT tk.number, tk.status, tk.customer_ticket_number, u.email,
               (SELECT array_agg(a.kind ORDER BY a.seq) FROM ticket_actions a WHERE a.ticket_id = tk.id) AS kinds
          FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
-         JOIN users u ON u.id = tk.created_by WHERE r.code = 'BNA-MKS-0217'`,
+         JOIN users u ON u.id = tk.created_by WHERE r.code = 'BNA-MKS-0217' AND tk.status <> 'ditutup'`,
     )) as Array<{ number: string; status: string; email: string }>;
     // Contoh linimasa mockup (1.4) dan TT (1.5b): sekali saja walau seed diulang.
     expect(ticket).toMatchObject({
@@ -146,6 +149,23 @@ describe('seeder tenant dan pengguna', () => {
       kinds: ['dibuat', 'catatan', 'cek_lokasi', 'tt_dibuat'],
     });
     expect(ticket?.number).toMatch(/^NPR\/VSAT\/BNA\/\d{4}\/\d{2}\/\d{4}$/);
+
+    // Riwayat NPR Ditutup di remote yang sama (1.6): sekali saja, penyebab dan penyelesaian lewat
+    // entri tutup, terlama dulu.
+    const closed = (await dataSource.query(
+      `SELECT tk.close_cause, tk.resolution, u.email AS closed_by,
+              (SELECT array_agg(a.kind ORDER BY a.seq) FROM ticket_actions a WHERE a.ticket_id = tk.id) AS kinds
+         FROM tickets tk JOIN remotes r ON r.id = tk.remote_id JOIN users u ON u.id = tk.closed_by
+        WHERE r.code = 'BNA-MKS-0217' AND tk.status = 'ditutup' ORDER BY tk.started_at`,
+    )) as Array<Record<string, unknown>>;
+    expect(closed).toEqual(
+      SEED_CLOSED_HISTORY.map((item) => ({
+        close_cause: item.cause,
+        resolution: item.resolution,
+        closed_by: item.closed_by,
+        kinds: ['dibuat', 'catatan', 'tutup'],
+      })),
+    );
   });
 
   it('tidak membaca kata sandi bila seeder pengguna tidak dijalankan', () => {

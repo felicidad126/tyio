@@ -1,4 +1,6 @@
 import type {
+  CloseTicket,
+  CloseTroubleTicket,
   CreateTicket,
   CreateTicketAction,
   CreateTroubleTicket,
@@ -7,6 +9,7 @@ import type {
   OpenTicketsConflict,
   RemoteDetail,
   RemotePage,
+  RemoteTicketHistoryPage,
   TicketAction,
   TicketDetail,
   TicketQueuePage,
@@ -17,7 +20,8 @@ import type {
 } from '@tyio/shared';
 import { ApiError, apiMultipart, apiRequest } from '../../api';
 
-// Panggilan API NPR (langkah 1.3) dan linimasanya (1.4). Cakupan customer diperiksa server.
+// Panggilan API NPR (langkah 1.3), linimasanya (1.4), TT (1.5b), dan penutupan (1.6).
+// Cakupan customer dan aturan peran diperiksa server.
 
 const enc = encodeURIComponent;
 
@@ -42,6 +46,14 @@ export const ticketApi = {
     for (const [key, value] of Object.entries(query)) if (value) params.set(key, value);
     return apiRequest<TroubleTicketPage>('GET', `/trouble-tickets?${params.toString()}`);
   },
+  /** "Tutup NPR" (1.6): penyebab dari daftar tetap dan penyelesaian (T98). */
+  close: (id: string, input: CloseTicket) => apiRequest<TicketTimeline>('POST', `/tickets/${enc(id)}/close`, input),
+  /** Tutup TT (L2/admin, K21) dengan hasil kunjungan / penyelesaian (T100). */
+  closeTroubleTicket: (id: string, input: CloseTroubleTicket) =>
+    apiRequest<TicketTimeline>('POST', `/trouble-tickets/${enc(id)}/close`, input),
+  /** Riwayat semua NPR sebuah remote (T101). */
+  remoteHistory: (remoteId: string, page: number) =>
+    apiRequest<RemoteTicketHistoryPage>('GET', `/remotes/${enc(remoteId)}/tickets?page=${page}`),
   /** Dicatat setelah ringkasan TT berhasil disalin ke clipboard (K25). */
   troubleTicketCopied: (id: string) => apiRequest<TroubleTicketCopied>('POST', `/trouble-tickets/${enc(id)}/copied`),
   search: (q: string) => apiRequest<GlobalSearchResult>('GET', `/search?q=${enc(q)}`),

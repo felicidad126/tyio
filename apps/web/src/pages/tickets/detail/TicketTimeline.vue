@@ -5,6 +5,7 @@ import {
   ROLE_LABELS,
   type RemoteZone,
   TICKET_ACTION_KIND_LABELS,
+  TICKET_CLOSE_CAUSE_LABELS,
   TICKET_STATUS_LABELS,
   type TicketAction,
 } from '@tyio/shared';
@@ -92,6 +93,9 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
             {{ action.assigneeFrom.name }} →
           </template>
           <strong>{{ action.assignee.name }}</strong>
+        </li>
+        <li v-if="action.closeCause">
+          Penyebab: <strong>{{ TICKET_CLOSE_CAUSE_LABELS[action.closeCause] }}</strong>
         </li>
         <li v-if="action.troubleTicket">
           TT: <a
@@ -292,7 +296,13 @@ function onCorrect(action: TicketAction, event: MouseEvent): void {
 }
 
 /* Warna tag mengikuti mockup DetailTiket: sistem abu, koreksi ungu, ambil hijau toska,
-   TT dibuat oranye (eskalasi), salin ringkasan abu. */
+   TT dibuat oranye (eskalasi), salin ringkasan abu; penutupan NPR dan TT abu seperti Ditutup. */
+.kind-tag--tutup,
+.kind-tag--tt_ditutup {
+  background: #eaedf1;
+  color: #454f5c;
+}
+
 .kind-tag--tt_dibuat {
   background: #fde4d5;
   color: #9a3d0d;
