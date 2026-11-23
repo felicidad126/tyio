@@ -17,7 +17,15 @@ import {
   TICKET_CLOSED_MESSAGE,
 } from '../src/modules/tickets/actions/ticket-actions.service.js';
 import { createTestApp } from './create-test-app.js';
-import { insertTenant, insertTicket, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
+import {
+  CLOSE_CAUSE,
+  CLOSE_KIND,
+  insertTenant,
+  insertTicket,
+  insertUser,
+  operatorQuery,
+  TEST_PASSWORD,
+} from './fixtures.js';
 
 // Mesin status NPR (langkah 1.4): delapan status (T63), perpindahan bebas antar status
 // aktif kecuali kembali ke Terbuka, Ditutup hanya dari Pulih (T64), semua peran memindahkan
@@ -83,8 +91,9 @@ describe('mesin status NPR', () => {
     return operatorQuery(
       dataSource,
       `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
-                                   pending_reason, created_by)
-       SELECT tenant_id, id, 'catatan', 'Pindah status', now(), $2, $3, $4, created_by FROM tickets WHERE id = $1`,
+                                   pending_reason, close_cause, created_by)
+       SELECT tenant_id, id, ${CLOSE_KIND}, 'Pindah status', now(), $2, $3, $4, ${CLOSE_CAUSE}, created_by
+         FROM tickets WHERE id = $1`,
       [ticketId, from, to, pendingReason(to)],
     );
   }

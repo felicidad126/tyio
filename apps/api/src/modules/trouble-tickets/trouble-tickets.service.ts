@@ -41,6 +41,11 @@ interface TroubleTicketRow {
   created_by_name: string;
   copied_count: number;
   last_copied_at: Date | null;
+  resolution: string | null;
+  closed_at: Date | null;
+  closed_by: string | null;
+  closed_by_name: string | null;
+  closed_by_role: string | null;
 }
 
 interface QueueRow extends TroubleTicketRow {
@@ -58,6 +63,7 @@ interface QueueRow extends TroubleTicketRow {
 /** Kolom TT beserta jumlah salin ringkasan (K25), untuk halaman NPR dan daftar TT. */
 const TT_COLUMNS = `
   tt.id, tt.number, tt.status, tt.problem, tt.contact, tt.created_at, tt.created_by, u.name AS created_by_name,
+  tt.resolution, tt.closed_at, tt.closed_by, closer.name AS closed_by_name, closer.role AS closed_by_role,
   (SELECT count(*)::int FROM ticket_actions a WHERE a.trouble_ticket_id = tt.id AND a.kind = 'tt_disalin') AS copied_count,
   (SELECT max(a.created_at) FROM ticket_actions a WHERE a.trouble_ticket_id = tt.id AND a.kind = 'tt_disalin') AS last_copied_at`;
 
@@ -105,6 +111,7 @@ export class TroubleTicketsService {
   ): Promise<TroubleTicket[]> {
     const rows = (await this.dataSource.query(
       `SELECT ${TT_COLUMNS} FROM trouble_tickets tt JOIN users u ON u.id = tt.created_by
+         LEFT JOIN users closer ON closer.id = tt.closed_by
         WHERE tt.ticket_id = $1 ORDER BY tt.created_at, tt.number`,
       [ticket.id],
     )) as TroubleTicketRow[];
@@ -126,6 +133,14 @@ export class TroubleTicketsService {
         problem: row.problem,
         contact: row.contact,
       }),
+      closure:
+        row.resolution && row.closed_at && row.closed_by
+          ? {
+              resolution: row.resolution,
+              closedAt: row.closed_at.toISOString(),
+              closedBy: { id: row.closed_by, name: row.closed_by_name ?? '', role: row.closed_by_role ?? '' },
+            }
+          : null,
     }));
   }
 
@@ -201,6 +216,7 @@ export class TroubleTicketsService {
                 r.time_zone AS remote_zone
            FROM trouble_tickets tt
            JOIN users u ON u.id = tt.created_by
+           LEFT JOIN users closer ON closer.id = tt.closed_by
            JOIN tickets tk ON tk.id = tt.ticket_id
            JOIN tenants t ON t.id = tt.tenant_id
            JOIN remotes r ON r.id = tt.remote_id

@@ -15,6 +15,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { TICKET_CLOSED_FOR_TT_MESSAGE } from '../src/modules/trouble-tickets/trouble-tickets.service.js';
 import { createTestApp } from './create-test-app.js';
 import {
+  CLOSE_CAUSE,
+  CLOSE_KIND,
+  closeTicketDirect,
+  closeTroubleTicketDirect,
   insertMasterValue,
   insertRemote,
   insertTenant,
@@ -98,8 +102,9 @@ describe('TT ke SD', () => {
     ]) {
       await operatorQuery(
         dataSource,
-        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, created_by)
-         SELECT tenant_id, id, 'catatan', 'x', now(), $2, $3, created_by FROM tickets WHERE id = $1`,
+        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, close_cause,
+                                     created_by)
+         SELECT tenant_id, id, ${CLOSE_KIND}, 'x', now(), $2, $3, ${CLOSE_CAUSE}, created_by FROM tickets WHERE id = $1`,
         [ticketId, from, to],
       );
     }
@@ -278,7 +283,10 @@ describe('TT ke SD', () => {
       await l1.post('/api/trouble-tickets/x/copied').expect(404);
       const ticket = await newTicket();
       const tt = await insertTroubleTicket(dataSource, ticket.id);
-      await close(ticket.id);
+      // NPR dengan TT hanya ditutup L2 setelah TT-nya ditutup (K21, T99).
+      const closer = await insertUser(dataSource, { role: 'l2' });
+      await closeTroubleTicketDirect(dataSource, tt.id, { closedBy: closer.id });
+      await closeTicketDirect(dataSource, ticket.id, { closedBy: closer.id });
       const res = await l1.post(`/api/trouble-tickets/${tt.id}/copied`).expect(400);
       expect(res.body.message).toBe(TICKET_CLOSED_FOR_TT_MESSAGE);
     });

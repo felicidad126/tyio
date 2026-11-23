@@ -16,6 +16,8 @@ import {
   type TicketAction,
   type TicketActionKind,
   type TicketAttachment,
+  type TicketCloseCause,
+  type CreateTicketAction,
   type TicketStatus,
 } from '@tyio/shared';
 import type { DataSource } from 'typeorm';
@@ -33,7 +35,7 @@ export const CORRECTED_NOT_FOUND_MESSAGE = 'Entri yang dikoreksi tidak ditemukan
 
 /** Masukan yang sudah dibaca controller. */
 export interface AddActionInput {
-  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil' | 'tt_dibuat' | 'tt_disalin'>;
+  kind: CreateTicketAction['kind'];
   note: string;
   occurredAt: Date | null;
   statusTo: TicketStatus | null;
@@ -67,6 +69,7 @@ interface ActionRow {
   assignee_from_name: string | null;
   trouble_ticket_id: string | null;
   trouble_ticket_number: string | null;
+  close_cause: TicketCloseCause | null;
 }
 
 interface AttachmentRow {
@@ -268,7 +271,7 @@ export class TicketActionsService {
               u.role AS created_by_role, a.status_from, a.status_to, a.pending_reason, a.corrects_id,
               a.started_at_correction, a.customer_ticket_number,
               a.assignee_id, asg.name AS assignee_name, a.assignee_from_id, prev.name AS assignee_from_name,
-              a.trouble_ticket_id, tt.number AS trouble_ticket_number,
+              a.trouble_ticket_id, tt.number AS trouble_ticket_number, a.close_cause,
               coalesce((SELECT array_agg(c.id ORDER BY c.created_at, c.seq) FROM ticket_actions c
                          WHERE c.corrects_id = a.id), '{}') AS corrected_by_ids
          FROM ticket_actions a JOIN users u ON u.id = a.created_by
@@ -316,6 +319,7 @@ export class TicketActionsService {
       troubleTicket: row.trouble_ticket_id
         ? { id: row.trouble_ticket_id, number: row.trouble_ticket_number ?? '' }
         : null,
+      closeCause: row.close_cause,
       attachments: byAction.get(row.id) ?? [],
     }));
   }

@@ -28,6 +28,13 @@ export function asOperator<T>(
   return auditedTransaction(dataSource, { source: 'manual', label: 'uji otomatis' }, work);
 }
 
+/**
+ * Potongan SQL untuk entri pindah status yang disisipkan langsung dengan status tujuan `$3`:
+ * ke Ditutup harus entri `tutup` dengan penyebab (langkah 1.6), selain itu `catatan`.
+ */
+export const CLOSE_KIND = `CASE WHEN $3::text = 'ditutup' THEN 'tutup' ELSE 'catatan' END`;
+export const CLOSE_CAUSE = `CASE WHEN $3::text = 'ditutup' THEN 'lainnya' END`;
+
 export function operatorQuery(dataSource: DataSource, sql: string, params: unknown[] = []): Promise<unknown> {
   return asOperator(dataSource, (manager) => manager.query(sql, params));
 }
@@ -191,6 +198,54 @@ export async function insertTroubleTicket(
   const tt = rows[0];
   if (!tt) throw new Error('TT uji gagal dibuat.');
   return tt;
+}
+
+/**
+ * Tutup TT langsung lewat entri `tt_ditutup` (langkah 1.6), seperti perbaikan manual.
+ * Penutupnya harus L2/admin (K21); bila tidak diberikan, dibuat pengguna L2 baru.
+ */
+export async function closeTroubleTicketDirect(
+  dataSource: DataSource,
+  troubleTicketId: string,
+  options: { closedBy?: string; resolution?: string } = {},
+): Promise<void> {
+  const closedBy = options.closedBy ?? (await insertUser(dataSource, { role: 'l2', name: 'Penutup TT' })).id;
+  await operatorQuery(
+    dataSource,
+    `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, trouble_ticket_id, created_by)
+     SELECT tenant_id, ticket_id, 'tt_ditutup', $2, now(), id, $3 FROM trouble_tickets WHERE id = $1`,
+    [troubleTicketId, options.resolution ?? 'Teknisi SD mengganti modem; remote stabil', closedBy],
+  );
+}
+
+/**
+ * Tutup NPR langsung (pindah ke Pulih bila perlu, lalu entri `tutup`), seperti perbaikan
+ * manual. Penutup bawaan pembuat NPR (L1); NPR yang punya TT butuh `closedBy` L2/admin (K21).
+ */
+export async function closeTicketDirect(
+  dataSource: DataSource,
+  ticketId: string,
+  options: { closedBy?: string; cause?: string; resolution?: string } = {},
+): Promise<void> {
+  await asOperator(dataSource, async (manager) => {
+    const [ticket] = (await manager.query('SELECT status FROM tickets WHERE id = $1', [ticketId])) as Array<{
+      status: string;
+    }>;
+    if (ticket && ticket.status !== 'pulih') {
+      await manager.query(
+        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, created_by)
+         SELECT tenant_id, id, 'catatan', 'Remote pulih', now(), status, 'pulih', created_by FROM tickets WHERE id = $1`,
+        [ticketId],
+      );
+    }
+    await manager.query(
+      `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, close_cause,
+                                   created_by)
+       SELECT tenant_id, id, 'tutup', $2, now(), 'pulih', 'ditutup', $3, coalesce($4::uuid, created_by)
+         FROM tickets WHERE id = $1`,
+      [ticketId, options.resolution ?? 'Listrik kembali menyala', options.cause ?? 'listrik', options.closedBy ?? null],
+    );
+  });
 }
 
 /** Berkas .xlsx dari baris-baris sel (baris pertama = judul kolom). */

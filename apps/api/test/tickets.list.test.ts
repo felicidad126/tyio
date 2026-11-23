@@ -9,7 +9,16 @@ import {
   TICKET_CLOSED_MESSAGE,
 } from '../src/modules/tickets/actions/ticket-actions.service.js';
 import { createTestApp } from './create-test-app.js';
-import { insertRemote, insertTenant, insertTicket, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
+import {
+  CLOSE_CAUSE,
+  CLOSE_KIND,
+  insertRemote,
+  insertTenant,
+  insertTicket,
+  insertUser,
+  operatorQuery,
+  TEST_PASSWORD,
+} from './fixtures.js';
 
 // Antrean NPR dan penanggung (langkah 1.5): lima tampilan bawaan dengan jumlahnya (T82),
 // saringan, urutan mulai gangguan terlama (T83), halaman, dan "Ambil" (T81, T85).
@@ -74,8 +83,9 @@ describe('antrean NPR', () => {
       await operatorQuery(
         dataSource,
         `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
-                                     pending_reason, created_by)
-         SELECT tenant_id, id, 'catatan', 'Pindah status', now(), $2, $3, $4, created_by FROM tickets WHERE id = $1`,
+                                     pending_reason, close_cause, created_by)
+         SELECT tenant_id, id, ${CLOSE_KIND}, 'Pindah status', now(), $2, $3, $4, ${CLOSE_CAUSE}, created_by
+           FROM tickets WHERE id = $1`,
         [
           ticket.id,
           from,

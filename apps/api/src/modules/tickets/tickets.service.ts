@@ -5,6 +5,7 @@ import {
   type OpenTicketsConflict,
   TICKET_STARTED_CLOCK_SKEW_MINUTES,
   TICKET_STARTED_MAX_AGE_DAYS,
+  type TicketCloseCause,
   type TicketDetail,
   type TicketStatus,
   type TicketSummary,
@@ -67,6 +68,12 @@ interface DetailRow extends SummaryRow {
   assignee_name: string | null;
   assignee_role: string | null;
   customer_name: string;
+  close_cause: TicketCloseCause | null;
+  resolution: string | null;
+  closed_at: Date | null;
+  closed_by: string | null;
+  closed_by_name: string | null;
+  closed_by_role: string | null;
 }
 
 const MINUTE = 60_000;
@@ -177,6 +184,7 @@ export class TicketsService {
         .innerJoin('master_networks', 'n', 'n.id = tk.network_id')
         .innerJoin('users', 'u', 'u.id = tk.created_by')
         .leftJoin('users', 'asg', 'asg.id = tk.assignee_id')
+        .leftJoin('users', 'closer', 'closer.id = tk.closed_by')
         .innerJoin('tenants', 'cust', 'cust.id = tk.tenant_id')
         .select([
           'cust.name AS customer_name',
@@ -194,6 +202,12 @@ export class TicketsService {
           'n.name AS network_name',
           'tk.created_by AS created_by',
           'tk.customer_ticket_number AS customer_ticket_number',
+          'tk.close_cause AS close_cause',
+          'tk.resolution AS resolution',
+          'tk.closed_at AS closed_at',
+          'tk.closed_by AS closed_by',
+          'closer.name AS closed_by_name',
+          'closer.role AS closed_by_role',
         ])
         .where('tk.id = :id', { id }),
       scope,
@@ -222,6 +236,15 @@ export class TicketsService {
       createdBy: { id: row.created_by, name: row.created_by_name },
       remote,
       troubleTickets,
+      closure:
+        row.close_cause && row.resolution && row.closed_at && row.closed_by
+          ? {
+              cause: row.close_cause,
+              resolution: row.resolution,
+              closedAt: row.closed_at.toISOString(),
+              closedBy: { id: row.closed_by, name: row.closed_by_name ?? '', role: row.closed_by_role ?? '' },
+            }
+          : null,
     };
   }
 
