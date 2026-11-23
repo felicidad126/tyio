@@ -102,9 +102,7 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
           <tr>
             <th>No. NPR</th>
             <th>Status</th>
-            <th>Mulai gangguan</th>
-            <th>Lama gangguan</th>
-            <th>Kategori</th>
+            <th>Gangguan</th>
             <th>Penyebab · penyelesaian</th>
           </tr>
         </thead>
@@ -120,6 +118,7 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
               >
                 {{ item.number }}
               </RouterLink>
+              <span class="d-block text-secondary small">{{ item.categoryName }}</span>
               <span
                 v-for="tt in item.troubleTickets"
                 :key="tt.id"
@@ -132,20 +131,15 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
             <td>
               <TicketStatusPill :status="item.status" />
             </td>
-            <td class="history-table__started">
-              <span class="history-table__label">Mulai</span>
-              {{ formatZoned(item.startedAt, zone) }}
-            </td>
-            <td class="text-nowrap">
-              <span class="history-table__label">Lama</span>
+            <td class="history-table__outage">
               <template v-if="item.recoveredAt">
                 {{ duration(item.startedAt, item.recoveredAt) }}
               </template>
               <template v-else>
                 <span class="running">berjalan</span> {{ duration(item.startedAt, null) }}
               </template>
+              <span class="d-block text-secondary small">mulai {{ formatZoned(item.startedAt, zone) }}</span>
             </td>
-            <td>{{ item.categoryName }}</td>
             <td class="history-table__cause">
               <template v-if="item.closeCause">
                 <strong>{{ TICKET_CLOSE_CAUSE_LABELS[item.closeCause] }}</strong>
@@ -205,7 +199,9 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
 
 <style scoped>
 .history-table__number {
+  width: 1%;
   min-width: 210px;
+  white-space: nowrap;
 }
 
 .history-table__tt {
@@ -218,18 +214,14 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
   color: var(--tblr-secondary);
 }
 
-.history-table__started {
+.history-table__outage {
+  width: 1%;
   white-space: nowrap;
 }
 
 .history-table__cause {
   min-width: 220px;
-  max-width: 420px;
   overflow-wrap: anywhere;
-}
-
-.history-table__label {
-  display: none;
 }
 
 .running {
@@ -237,7 +229,7 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
   font-weight: 600;
 }
 
-:global([data-bs-theme='dark']) .running {
+[data-bs-theme='dark'] .running {
   color: #f4a577;
 }
 
@@ -276,9 +268,12 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
     border: 0;
   }
 
+  /* Lebar 1% milik mode tabel tidak dibawa ke blok: nomor NPR tidak terpotong di tengah. */
   .history-table td.history-table__number {
     flex: 1 1 auto;
+    width: auto;
     min-width: 0;
+    white-space: normal;
   }
 
   .history-table td.history-table__number a {
@@ -288,19 +283,12 @@ const duration = (startedAt: string, recoveredAt: string | null) =>
     overflow-wrap: anywhere;
   }
 
+  .history-table td.history-table__outage,
   .history-table td.history-table__cause {
     flex-basis: 100%;
-    max-width: none;
+    width: auto;
     min-width: 0;
-  }
-
-  .history-table__label {
-    display: inline;
-    color: var(--tblr-secondary);
-  }
-
-  .history-table__label::after {
-    content: ' ';
+    white-space: normal;
   }
 }
 </style>

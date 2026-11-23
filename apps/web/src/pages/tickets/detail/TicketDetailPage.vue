@@ -588,7 +588,7 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
   color: #1b6430;
 }
 
-:global([data-bs-theme='dark']) .btn-close-npr:not(:disabled) {
+[data-bs-theme='dark'] .btn-close-npr:not(:disabled) {
   border-color: #6fcf8a;
   color: #6fcf8a;
 }

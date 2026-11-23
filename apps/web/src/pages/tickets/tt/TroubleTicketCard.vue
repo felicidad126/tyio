@@ -241,7 +241,7 @@ async function copy(): Promise<void> {
   color: #1b6430;
 }
 
-:global([data-bs-theme='dark']) .btn-close-tt {
+[data-bs-theme='dark'] .btn-close-tt {
   border-color: #6fcf8a;
   color: #6fcf8a;
 }
