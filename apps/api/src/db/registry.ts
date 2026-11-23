@@ -13,6 +13,7 @@ import { Tickets1795244806675 } from './migrations/1795244806675-tickets.js';
 import { TicketActions1795352000000 } from './migrations/1795352000000-ticket-actions.js';
 import { TicketAssignee1795420000000 } from './migrations/1795420000000-ticket-assignee.js';
 import { TroubleTickets1795480000000 } from './migrations/1795480000000-trouble-tickets.js';
+import { TicketClose1795540000000 } from './migrations/1795540000000-ticket-close.js';
 
 // Satu-satunya daftar entity dan migrasi. Aplikasi, skrip migrasi, seed, dan uji
 // semuanya membaca dari sini, sehingga tidak ada dua daftar yang bisa menyimpang.
@@ -42,4 +43,5 @@ export const migrations: Registrable = [
   TicketActions1795352000000,
   TicketAssignee1795420000000,
   TroubleTickets1795480000000,
+  TicketClose1795540000000,
 ];

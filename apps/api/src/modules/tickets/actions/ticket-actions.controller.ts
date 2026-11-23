@@ -21,12 +21,14 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   CUSTOMER_TICKET_NUMBER_MAX_LENGTH,
   isTicketActionKind,
+  isTicketCloseCause,
   isTicketStatus,
   TICKET_ACTION_KINDS_SELECTABLE,
   TICKET_ACTION_NOTE_MAX_LENGTH,
   TICKET_ATTACHMENT_MAX_BYTES,
   TICKET_ATTACHMENTS_PER_ACTION,
   TICKET_PENDING_REASON_MAX_LENGTH,
+  TICKET_RESOLUTION_MAX_LENGTH,
   type TicketAction,
   type TicketTimeline,
 } from '@tyio/shared';
@@ -43,6 +45,7 @@ import { checkAttachment, type UploadedPart } from './attachment-file.js';
 import {
   type AddActionInput,
   ATTACHMENT_NOT_FOUND_MESSAGE,
+  type CloseTicketInput,
   isPendingStatus,
   TicketActionsService,
 } from './ticket-actions.service.js';
@@ -156,6 +159,27 @@ export class TicketActionsController {
     }
     const id = ticketId.toLowerCase();
     await this.actions.take(scope, actor, id, expected === null ? null : expected.toLowerCase());
+    const [ticket, actions] = await Promise.all([this.tickets.get(scope, id), this.actions.list(scope, id)]);
+    if (!ticket || !actions) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
+    return { ticket, actions };
+  }
+
+  /**
+   * "Tutup NPR" (langkah 1.6). Isi: `{ cause, resolution }` (T98). Aturan peran K21 dan TT yang
+   * masih berjalan (T99) diperiksa service dan database. Jawaban: NPR terbaru dan linimasanya.
+   */
+  @Post('close')
+  @Header('Cache-Control', 'no-store')
+  async close(
+    @CurrentScope() scope: TenantScope,
+    @CurrentActor() actor: AuditActor,
+    @CurrentUser() user: User,
+    @Param('ticketId') ticketId: string,
+    @Body() body: unknown,
+  ): Promise<TicketTimeline> {
+    if (!isUuid(ticketId)) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
+    const id = ticketId.toLowerCase();
+    await this.actions.close(scope, actor, user.role, id, readClose(body));
     const [ticket, actions] = await Promise.all([this.tickets.get(scope, id), this.actions.list(scope, id)]);
     if (!ticket || !actions) throw new NotFoundException(TICKET_NOT_FOUND_MESSAGE);
     return { ticket, actions };
@@ -280,6 +304,16 @@ function readAction(request: Request & { files?: UploadedPart[] }): AddActionInp
     customerTicketNumber,
     attachments: files.map(checkAttachment),
   };
+}
+
+function readClose(body: unknown): CloseTicketInput {
+  const record = readBody(body, ['cause', 'resolution']);
+  if (!isTicketCloseCause(record.cause)) {
+    throw new BadRequestException('Pilih penyebab: Link/jarkom, Listrik, Cuaca, Perangkat, atau Lainnya.');
+  }
+  const resolution = readText(record.resolution, 'Penyelesaian', TICKET_RESOLUTION_MAX_LENGTH);
+  if (resolution === null) throw new BadRequestException('Penyelesaian wajib diisi.');
+  return { cause: record.cause, resolution };
 }
 
 /** Jenis yang boleh dikirim operator: jenis pilihan formulir dan koreksi (bukan entri sistem). */

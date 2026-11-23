@@ -3,8 +3,12 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import {
   OPEN_TICKET_STATUSES,
   type OpenTicketsConflict,
+  type RemoteTicketHistoryItem,
+  type RemoteTicketHistoryPage,
+  type TroubleTicketStatus,
   TICKET_STARTED_CLOCK_SKEW_MINUTES,
   TICKET_STARTED_MAX_AGE_DAYS,
+  type TicketCloseCause,
   type TicketDetail,
   type TicketStatus,
   type TicketSummary,
@@ -67,6 +71,12 @@ interface DetailRow extends SummaryRow {
   assignee_name: string | null;
   assignee_role: string | null;
   customer_name: string;
+  close_cause: TicketCloseCause | null;
+  resolution: string | null;
+  closed_at: Date | null;
+  closed_by: string | null;
+  closed_by_name: string | null;
+  closed_by_role: string | null;
 }
 
 const MINUTE = 60_000;
@@ -177,6 +187,7 @@ export class TicketsService {
         .innerJoin('master_networks', 'n', 'n.id = tk.network_id')
         .innerJoin('users', 'u', 'u.id = tk.created_by')
         .leftJoin('users', 'asg', 'asg.id = tk.assignee_id')
+        .leftJoin('users', 'closer', 'closer.id = tk.closed_by')
         .innerJoin('tenants', 'cust', 'cust.id = tk.tenant_id')
         .select([
           'cust.name AS customer_name',
@@ -194,6 +205,12 @@ export class TicketsService {
           'n.name AS network_name',
           'tk.created_by AS created_by',
           'tk.customer_ticket_number AS customer_ticket_number',
+          'tk.close_cause AS close_cause',
+          'tk.resolution AS resolution',
+          'tk.closed_at AS closed_at',
+          'tk.closed_by AS closed_by',
+          'closer.name AS closed_by_name',
+          'closer.role AS closed_by_role',
         ])
         .where('tk.id = :id', { id }),
       scope,
@@ -222,7 +239,71 @@ export class TicketsService {
       createdBy: { id: row.created_by, name: row.created_by_name },
       remote,
       troubleTickets,
+      closure:
+        row.close_cause && row.resolution && row.closed_at && row.closed_by
+          ? {
+              cause: row.close_cause,
+              resolution: row.resolution,
+              closedAt: row.closed_at.toISOString(),
+              closedBy: { id: row.closed_by, name: row.closed_by_name ?? '', role: row.closed_by_role ?? '' },
+            }
+          : null,
     };
+  }
+
+  /**
+   * Riwayat NPR sebuah remote (T101): semua NPR, berjalan dan ditutup, mulai gangguan terbaru
+   * dulu. Waktu pulih = waktu kejadian entri terakhir yang memindahkan NPR ke Pulih, hanya bila
+   * NPR sekarang Pulih atau Ditutup. `null` bila remote tidak ada dalam cakupan.
+   */
+  async historyOfRemote(
+    scope: TenantScope,
+    remoteId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<RemoteTicketHistoryPage | null> {
+    const remote = await this.remotes.get(scope, remoteId);
+    if (!remote) return null;
+    const query = applyTenantScope(
+      this.dataSource
+        .createQueryBuilder()
+        .from('tickets', 'tk')
+        .innerJoin('master_categories', 'c', 'c.id = tk.category_id')
+        .where('tk.remote_id = :remoteId', { remoteId: remote.id }),
+      scope,
+      'tk.tenant_id',
+    );
+    const total = await query.clone().select('count(*)::int', 'total').getRawOne<{ total: number }>();
+    const rows = await query
+      .select([
+        'tk.id AS id',
+        'tk.number AS number',
+        'tk.status AS status',
+        'c.name AS category_name',
+        'tk.started_at AS started_at',
+        'tk.close_cause AS close_cause',
+        'tk.resolution AS resolution',
+        'tk.closed_at AS closed_at',
+      ])
+      .addSelect(
+        `CASE WHEN tk.status IN ('pulih', 'ditutup') THEN (
+           SELECT a.occurred_at FROM ticket_actions a WHERE a.ticket_id = tk.id AND a.status_to = 'pulih'
+            ORDER BY a.created_at DESC, a.seq DESC LIMIT 1) END`,
+        'recovered_at',
+      )
+      .addSelect(
+        `coalesce((SELECT json_agg(json_build_object('id', tt.id, 'number', tt.number, 'status', tt.status)
+                                   ORDER BY tt.created_at, tt.number)
+                     FROM trouble_tickets tt WHERE tt.ticket_id = tk.id), '[]'::json)`,
+        'trouble_tickets',
+      )
+      .orderBy('tk.started_at', 'DESC')
+      .addOrderBy('tk.created_at', 'DESC')
+      .addOrderBy('tk.id', 'ASC')
+      .offset((page - 1) * pageSize)
+      .limit(pageSize)
+      .getRawMany<HistoryRow>();
+    return { items: rows.map(toHistoryItem), total: total?.total ?? 0, page, pageSize };
   }
 
   /** NPR terbuka sebuah remote, terbaru dulu; `null` bila remote tidak ada dalam cakupan. */
@@ -244,6 +325,19 @@ export class TicketsService {
 }
 
 const OPEN_TICKETS_LIMIT = 20;
+
+interface HistoryRow {
+  id: string;
+  number: string;
+  status: TicketStatus;
+  category_name: string;
+  started_at: Date;
+  recovered_at: Date | null;
+  close_cause: TicketCloseCause | null;
+  resolution: string | null;
+  closed_at: Date | null;
+  trouble_tickets: Array<{ id: string; number: string; status: TroubleTicketStatus }>;
+}
 
 const SUMMARY_COLUMNS = [
   'tk.id AS id',
@@ -273,6 +367,21 @@ async function openTicketsOf(manager: EntityManager, remoteId: string): Promise<
     .limit(OPEN_TICKETS_LIMIT)
     .getRawMany<SummaryRow>();
   return rows.map(toSummary);
+}
+
+function toHistoryItem(row: HistoryRow): RemoteTicketHistoryItem {
+  return {
+    id: row.id,
+    number: row.number,
+    status: row.status,
+    categoryName: row.category_name,
+    startedAt: row.started_at.toISOString(),
+    recoveredAt: row.recovered_at?.toISOString() ?? null,
+    closeCause: row.close_cause,
+    resolution: row.resolution,
+    closedAt: row.closed_at?.toISOString() ?? null,
+    troubleTickets: row.trouble_tickets,
+  };
 }
 
 function toSummary(row: SummaryRow): TicketSummary {

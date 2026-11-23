@@ -8,9 +8,10 @@ import { useSessionStore } from '../../stores/session';
 import { ticketApi } from '../tickets/ticket-api';
 import { formatZoned } from '../tickets/zoned-time';
 import { remoteApi } from './remote-api';
+import RemoteTicketHistory from './RemoteTicketHistory.vue';
 
 // Halaman remote (langkah 1.2): "rekam medis" site. NPR terbuka tampil sejak 1.3; riwayat
-// lengkap (termasuk yang sudah ditutup) menyusul di 1.6.
+// semua NPR, termasuk yang sudah ditutup beserta penyebabnya, sejak 1.6 (T101).
 
 const route = useRoute();
 const session = useSessionStore();
@@ -302,11 +303,11 @@ const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
         <div class="col-12 col-lg-6">
           <section
             class="card h-100"
-            aria-labelledby="judul-riwayat"
+            aria-labelledby="judul-npr-terbuka"
           >
             <div class="card-header">
               <h2
-                id="judul-riwayat"
+                id="judul-npr-terbuka"
                 class="card-title"
               >
                 NPR terbuka
@@ -359,9 +360,15 @@ const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
               <template v-else>
                 Memuat NPR…
               </template>
-              <span class="d-block mt-1">Riwayat lengkap, termasuk NPR yang sudah ditutup, menyusul di langkah 1.6.</span>
             </div>
           </section>
+        </div>
+
+        <div class="col-12">
+          <RemoteTicketHistory
+            :remote-id="remote.id"
+            :zone="remote.zone"
+          />
         </div>
       </div>
 

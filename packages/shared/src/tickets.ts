@@ -58,15 +58,19 @@ export function isTicketTransitionAllowed(from: TicketStatus, to: TicketStatus):
   return true;
 }
 
-/** Status tujuan yang bisa dipilih dari layar di langkah ini: penutupan menyusul di 1.6 (T69). */
+/**
+ * Status tujuan yang bisa dipilih di panel "Tambah tindakan". Ditutup tidak termasuk: NPR
+ * ditutup lewat tombol "Tutup NPR" dengan penyebab dan penyelesaian wajib (1.6, T98).
+ */
 export function selectableNextStatuses(from: TicketStatus): TicketStatus[] {
   return TICKET_STATUSES.filter((to) => to !== 'ditutup' && isTicketTransitionAllowed(from, to));
 }
 
 /**
  * Jenis entri linimasa (T67). `dibuat` hanya ditulis sistem saat NPR dibuat; `koreksi`
- * merujuk entri lama, yang tetap ada dan ditandai "dikoreksi". "Hasil kunjungan SD" menyusul
- * di 1.5b. Eskalasi dan penutupan adalah perpindahan status, bukan jenis tindakan.
+ * merujuk entri lama, yang tetap ada dan ditandai "dikoreksi". Eskalasi adalah perpindahan
+ * status, bukan jenis tindakan. `tutup` (NPR ditutup, 1.6) dan `tt_ditutup` (TT ditutup) ditulis
+ * lewat tombol penutupan masing-masing, bukan dipilih di panel "Tambah tindakan".
  */
 export const TICKET_ACTION_KINDS = [
   'dibuat',
@@ -78,6 +82,8 @@ export const TICKET_ACTION_KINDS = [
   'ambil',
   'tt_dibuat',
   'tt_disalin',
+  'tutup',
+  'tt_ditutup',
 ] as const;
 export type TicketActionKind = (typeof TICKET_ACTION_KINDS)[number];
 
@@ -94,6 +100,8 @@ export const TICKET_ACTION_KIND_LABELS: Record<TicketActionKind, string> = {
   ambil: 'Ambil',
   tt_dibuat: 'TT dibuat',
   tt_disalin: 'Salin ringkasan TT',
+  tutup: 'NPR ditutup',
+  tt_ditutup: 'TT ditutup',
 };
 
 export function isTicketActionKind(value: unknown): value is TicketActionKind {
@@ -101,6 +109,28 @@ export function isTicketActionKind(value: unknown): value is TicketActionKind {
 }
 
 export const TICKET_ACTION_NOTE_MAX_LENGTH = 2000;
+
+/**
+ * Penyebab gangguan saat NPR ditutup (T98): daftar tetap untuk semua customer, sama dengan
+ * dialog tutup Gamas (R3), agar laporan dan Overview bisa dikelompokkan per penyebab.
+ */
+export const TICKET_CLOSE_CAUSES = ['link', 'listrik', 'cuaca', 'perangkat', 'lainnya'] as const;
+export type TicketCloseCause = (typeof TICKET_CLOSE_CAUSES)[number];
+
+export const TICKET_CLOSE_CAUSE_LABELS: Record<TicketCloseCause, string> = {
+  link: 'Link/jarkom',
+  listrik: 'Listrik',
+  cuaca: 'Cuaca',
+  perangkat: 'Perangkat',
+  lainnya: 'Lainnya',
+};
+
+export function isTicketCloseCause(value: unknown): value is TicketCloseCause {
+  return typeof value === 'string' && (TICKET_CLOSE_CAUSES as readonly string[]).includes(value);
+}
+
+/** Penyelesaian NPR dan hasil kunjungan TT: catatan entri penutupnya, sama panjangnya. */
+export const TICKET_RESOLUTION_MAX_LENGTH = TICKET_ACTION_NOTE_MAX_LENGTH;
 export const TICKET_PENDING_REASON_MAX_LENGTH = 500;
 export const CUSTOMER_TICKET_NUMBER_MAX_LENGTH = 100;
 
@@ -177,6 +207,8 @@ export interface TicketDetail extends TicketSummary {
   assignee: TicketPerson | null;
   /** TT ke SD dari NPR ini (1.5b), terlama dulu. */
   troubleTickets: TroubleTicket[];
+  /** Isian penutupan (1.6); `null` selama NPR belum ditutup (dikosongkan saat dibuka kembali). */
+  closure: TicketClosure | null;
   category: { id: string; name: string };
   system: { id: string; name: string };
   /** Jarkom saat NPR dibuat; kodenya ada di nomor NPR. */
@@ -184,6 +216,20 @@ export interface TicketDetail extends TicketSummary {
   createdBy: { id: string; name: string };
   /** Data remote terkini (lokasi, jaringan, kontak). */
   remote: RemoteDetail;
+}
+
+/** Penutupan NPR (T98): penyebab dari daftar tetap, penyelesaian teks bebas. */
+export interface TicketClosure {
+  cause: TicketCloseCause;
+  resolution: string;
+  closedAt: string;
+  closedBy: TicketPerson;
+}
+
+/** Isi `POST /api/tickets/:id/close`. NPR hanya ditutup dari Pulih · siap ditutup. */
+export interface CloseTicket {
+  cause: TicketCloseCause;
+  resolution: string;
 }
 
 /** Isi jawaban 409 dari `POST /api/tickets` bila remote masih punya NPR terbuka. */
@@ -227,8 +273,10 @@ export interface TicketAction {
   /** Entri `ambil`: penanggung baru dan penanggung sebelumnya (diisi database). */
   assignee: { id: string; name: string } | null;
   assigneeFrom: { id: string; name: string } | null;
-  /** Entri `tt_dibuat` dan `tt_disalin`: TT yang dirujuk. */
+  /** Entri `tt_dibuat`, `tt_disalin`, dan `tt_ditutup`: TT yang dirujuk. */
   troubleTicket: { id: string; number: string } | null;
+  /** Entri `tutup`: penyebab gangguan; penyelesaiannya di `note`. */
+  closeCause: TicketCloseCause | null;
   attachments: TicketAttachment[];
 }
 
@@ -237,7 +285,7 @@ export interface TicketAction {
  * ini dan berkas di bagian `lampiran`).
  */
 export interface CreateTicketAction {
-  kind: Exclude<TicketActionKind, 'dibuat' | 'ambil' | 'tt_dibuat' | 'tt_disalin'>;
+  kind: (typeof TICKET_ACTION_KINDS_SELECTABLE)[number] | 'koreksi';
   note: string;
   /** ISO 8601 dengan zona. Tidak diisi = saat disimpan. */
   occurredAt?: string;
@@ -366,14 +414,15 @@ export interface GlobalSearchResult {
 }
 
 /**
- * Status TT (ATURAN.md §3). Di langkah 1.5b hanya "Menunggu SD"; "Hasil masuk" di R3 dan
- * "Ditutup" di 1.6 (T93).
+ * Status TT (ATURAN.md §3): "Menunggu SD" sejak dibuat (1.5b), "Ditutup" oleh L2/admin (1.6,
+ * T100). "Hasil masuk" menyusul di R3 (T93).
  */
-export const TROUBLE_TICKET_STATUSES = ['menunggu_sd'] as const;
+export const TROUBLE_TICKET_STATUSES = ['menunggu_sd', 'ditutup'] as const;
 export type TroubleTicketStatus = (typeof TROUBLE_TICKET_STATUSES)[number];
 
 export const TROUBLE_TICKET_STATUS_LABELS: Record<TroubleTicketStatus, string> = {
   menunggu_sd: 'Menunggu SD',
+  ditutup: 'Ditutup',
 };
 
 export const TROUBLE_TICKET_PROBLEM_MAX_LENGTH = 2000;
@@ -403,6 +452,19 @@ export interface TroubleTicket {
   lastCopiedAt: string | null;
   /** Teks siap tempel ke chat SD: no. TT, remote, lokasi, problem, kontak. */
   summary: string;
+  /** Penutupan TT (T100): hasil kunjungan / penyelesaian; `null` selama TT belum ditutup. */
+  closure: TroubleTicketClosure | null;
+}
+
+export interface TroubleTicketClosure {
+  resolution: string;
+  closedAt: string;
+  closedBy: TicketPerson;
+}
+
+/** Isi `POST /api/trouble-tickets/:id/close` (hanya L2/admin, K21). */
+export interface CloseTroubleTicket {
+  resolution: string;
 }
 
 /** Satu baris daftar TT aktif. */
@@ -434,3 +496,32 @@ export interface TroubleTicketCopied {
   copiedCount: number;
   lastCopiedAt: string;
 }
+
+/** Satu NPR di riwayat halaman remote (T101). Waktu dalam ISO 8601 UTC. */
+export interface RemoteTicketHistoryItem {
+  id: string;
+  number: string;
+  status: TicketStatus;
+  categoryName: string;
+  startedAt: string;
+  /**
+   * Waktu remote pulih (waktu kejadian entri terakhir yang memindahkan NPR ke Pulih), bila
+   * status sekarang Pulih atau Ditutup; `null` = gangguan masih berjalan.
+   */
+  recoveredAt: string | null;
+  closeCause: TicketCloseCause | null;
+  resolution: string | null;
+  closedAt: string | null;
+  troubleTickets: Array<{ id: string; number: string; status: TroubleTicketStatus }>;
+}
+
+/** `GET /api/remotes/:remoteId/tickets`: semua NPR remote itu, mulai gangguan terbaru dulu. */
+export interface RemoteTicketHistoryPage {
+  items: RemoteTicketHistoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export const REMOTE_HISTORY_PAGE_SIZE_DEFAULT = 10;
+export const REMOTE_HISTORY_PAGE_SIZE_MAX = 50;

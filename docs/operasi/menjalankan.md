@@ -197,6 +197,25 @@ Login, login gagal, dan logout juga tercatat. Hash kata sandi tidak pernah ikut 
   COMMIT;
   ```
 
+- Status dan isian penutupan NPR/TT juga hanya lewat linimasa (langkah 1.6). NPR yang punya TT
+  hanya bisa ditutup atas nama L2/admin, dan setelah semua TT-nya ditutup; database menolak
+  selain itu. Contoh menutup NPR yang sudah Pulih (penyebab: `link`, `listrik`, `cuaca`,
+  `perangkat`, `lainnya`):
+
+  ```sql
+  BEGIN;
+  SELECT set_config('tyio.source', 'manual', true), set_config('tyio.actor_label', 'Nama Operator: alasan', true);
+  INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                              close_cause, created_by)
+  SELECT tenant_id, id, 'tutup', 'Penyelesaian: listrik gedung kembali menyala', now(), 'pulih', 'ditutup',
+         'listrik', (SELECT id FROM users WHERE email = 'operator@contoh')
+    FROM tickets WHERE number = 'NPR/VSAT/BNA/2026/11/0418';
+  COMMIT;
+  ```
+
+  Menutup TT: entri `tt_ditutup` dengan `trouble_ticket_id` dan hasil kunjungan di `note`
+  (rincian di `docs/pengembangan/tenant-dan-audit.md` §9).
+
 - Belum diatur: lama penyimpanan audit (bersama checklist kepatuhan, langkah 0.6) dan
   pencatatan siapa *melihat* data (R-I, sebelum produksi).
 

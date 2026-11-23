@@ -27,7 +27,7 @@ import { formatZoned, fromZonedInput } from '../zoned-time';
 // Panel "Tambah tindakan" (langkah 1.4, mockup DetailTiket). Dialog modal bawaan peramban:
 // fokus terkunci di dalam panel, Escape menutup, fokus kembali ke tombol pembuka.
 // Status sesudah tindakan dipilih di sini (T64); pending wajib alasan (T68); lampiran lewat
-// klik, seret, atau tempel (T70). Penutupan NPR menyusul di 1.6 (T69).
+// klik, seret, atau tempel (T70). Penutupan NPR lewat "Tutup NPR" (1.6), bukan dari panel ini.
 
 const props = defineProps<{
   ticket: TicketDetail;
@@ -365,7 +365,8 @@ const describedBy = (id: string, field: string) => [id, errors.value[field] ? `$
             v-if="!reopening"
             class="form-hint"
           >
-            Pending · Customer atau Pending · TM: pilih pihak yang ditunggu. Menutup NPR belum tersedia di versi ini.
+            Pending · Customer atau Pending · TM: pilih pihak yang ditunggu. NPR ditutup lewat tombol "Tutup NPR"
+            setelah Pulih · siap ditutup.
           </div>
         </fieldset>
 

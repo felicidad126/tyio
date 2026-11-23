@@ -1,6 +1,9 @@
 import { BadRequestException, Body, Controller, Get, Header, NotFoundException, Param, Post, Query } from '@nestjs/common';
 import {
   isTicketStatus,
+  REMOTE_HISTORY_PAGE_SIZE_DEFAULT,
+  REMOTE_HISTORY_PAGE_SIZE_MAX,
+  type RemoteTicketHistoryPage,
   TICKET_DESCRIPTION_MAX_LENGTH,
   TICKET_PAGE_SIZE_DEFAULT,
   TICKET_PAGE_SIZE_MAX,
@@ -101,6 +104,31 @@ export class RemoteOpenTicketsController {
     const tickets = isUuid(remoteId) ? await this.tickets.openTicketsOfRemote(scope, remoteId.toLowerCase()) : null;
     if (!tickets) throw new NotFoundException(REMOTE_NOT_FOUND_MESSAGE);
     return tickets;
+  }
+}
+
+/** Riwayat NPR sebuah remote untuk halaman remote (1.6, T101): `?page=`, `pageSize`. */
+@Controller('remotes/:remoteId/tickets')
+@TenantScoped()
+export class RemoteTicketsController {
+  constructor(private readonly tickets: TicketsService) {}
+
+  @Get()
+  @Header('Cache-Control', 'no-store')
+  async list(
+    @CurrentScope() scope: TenantScope,
+    @Param('remoteId') remoteId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<RemoteTicketHistoryPage> {
+    const unknownKeys = Object.keys(query).filter((key) => !['page', 'pageSize'].includes(key));
+    if (unknownKeys.length > 0) throw new BadRequestException(`Parameter tidak dikenal: ${unknownKeys.join(', ')}.`);
+    const page = positiveInt(query.page, 'page', 100_000) ?? 1;
+    const pageSize = positiveInt(query.pageSize, 'pageSize', REMOTE_HISTORY_PAGE_SIZE_MAX) ?? REMOTE_HISTORY_PAGE_SIZE_DEFAULT;
+    const history = isUuid(remoteId)
+      ? await this.tickets.historyOfRemote(scope, remoteId.toLowerCase(), page, pageSize)
+      : null;
+    if (!history) throw new NotFoundException(REMOTE_NOT_FOUND_MESSAGE);
+    return history;
   }
 }
 

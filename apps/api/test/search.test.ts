@@ -5,7 +5,16 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp } from './create-test-app.js';
-import { insertRemote, insertTenant, insertTicket, insertUser, operatorQuery, TEST_PASSWORD } from './fixtures.js';
+import {
+  CLOSE_CAUSE,
+  CLOSE_KIND,
+  insertRemote,
+  insertTenant,
+  insertTicket,
+  insertUser,
+  operatorQuery,
+  TEST_PASSWORD,
+} from './fixtures.js';
 
 // Pencarian global (langkah 1.5, T84): no. NPR, no. tiket customer, dan kode/nama remote,
 // termasuk NPR yang sudah ditutup. Kata kunci unik per uji, karena berkas uji lain menulis ke
@@ -43,8 +52,9 @@ describe('pencarian global', () => {
     ]) {
       await operatorQuery(
         dataSource,
-        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, created_by)
-         SELECT tenant_id, id, 'catatan', 'x', now(), $2, $3, created_by FROM tickets WHERE id = $1`,
+        `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to, close_cause,
+                                     created_by)
+         SELECT tenant_id, id, ${CLOSE_KIND}, 'x', now(), $2, $3, ${CLOSE_CAUSE}, created_by FROM tickets WHERE id = $1`,
         [ticketId, from, to],
       );
     }

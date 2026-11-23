@@ -26,7 +26,9 @@ berbeda, aturan ini yang benar dan mockup yang diperbaiki.
 - Tombol global di bilah atas bernama **"Buat NPR"** (bukan "Buat tiket").
 - **Penutupan:** L1 boleh menutup NPR yang tidak punya TT. NPR yang punya TT, dan TT itu sendiri,
   hanya ditutup L2. Aturan ini ditegakkan API; di mockup tombolnya mati dengan alasan tertulis.
-- TT tidak bisa ditutup sebelum hasil kunjungan SD dicatat oleh L1/L2.
+- TT ditutup L2 dengan isian "hasil kunjungan / penyelesaian" (T100, sejak 1.6). Mulai R3, hasil
+  kunjungan SD terstruktur (waktu tiba, temuan, perangkat diganti, foto) wajib dicatat L1/L2 lebih dulu.
+- NPR yang masih punya TT yang belum ditutup tidak bisa ditutup (T99).
 - Sampai R5, TT diteruskan ke SD lewat tombol **"Salin ringkasan TT"** (no. TT, remote, lokasi,
   problem, kontak). Setiap salin tercatat di linimasa.
 - "Eskalasi To NOC" = eskalasi L1 → L2.

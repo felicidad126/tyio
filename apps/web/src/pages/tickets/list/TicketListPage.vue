@@ -723,7 +723,7 @@ function open(id: string): void {
   color: #7a4a00;
 }
 
-:global([data-bs-theme='dark']) .pending-reason {
+[data-bs-theme='dark'] .pending-reason {
   color: #f0c36b;
 }
 

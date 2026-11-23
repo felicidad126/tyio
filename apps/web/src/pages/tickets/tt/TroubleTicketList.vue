@@ -280,7 +280,7 @@ const range = computed(() => {
   font-weight: 600;
 }
 
-:global([data-bs-theme='dark']) .not-copied {
+[data-bs-theme='dark'] .not-copied {
   color: #f4a577;
 }
 

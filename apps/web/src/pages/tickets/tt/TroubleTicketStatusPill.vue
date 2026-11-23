@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { TROUBLE_TICKET_STATUS_LABELS, type TroubleTicketStatus } from '@tyio/shared';
 
-// Label status TT, teks dan warna persis ATURAN.md §3 ("Menunggu SD": oranye).
+// Label status TT, teks dan warna persis ATURAN.md §3 ("Menunggu SD" oranye, "Ditutup" abu).
 defineProps<{ status: TroubleTicketStatus }>();
 </script>
 
@@ -28,5 +28,10 @@ defineProps<{ status: TroubleTicketStatus }>();
 .tt-pill--menunggu_sd {
   background: #fde4d5;
   color: #9a3d0d;
+}
+
+.tt-pill--ditutup {
+  background: #eaedf1;
+  color: #454f5c;
 }
 </style>
