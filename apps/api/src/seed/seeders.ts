@@ -187,8 +187,7 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
                            JOIN tenants t ON t.id = r.tenant_id
                           WHERE t.code = 'BNA' AND r.code = 'BNA-MKS-0217' AND tk.status = 'ditutup') AS present`,
         )) as Array<{ present: boolean }>;
-        if (history?.present) return;
-        for (const item of SEED_CLOSED_HISTORY) {
+        for (const item of history?.present ? [] : SEED_CLOSED_HISTORY) {
           const [created] = (await manager.query(
             `INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description,
                                   started_at, created_at, created_by)
@@ -221,9 +220,139 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
             [created.id, item.resolution, item.duration_minutes, item.cause, item.closed_by],
           );
         }
+        // NPR Ditutup yang tersebar dalam 13 hari terakhir (langkah 2.1), agar tren harian dan
+        // remote paling sering bermasalah di Overview bisa dicoba di staging. Sekali saja: tidak
+        // ditambah lagi bila salah satu remote tren sudah punya NPR Ditutup.
+        const recent = seedRecentClosed();
+        const [trend] = (await manager.query(
+          `SELECT EXISTS (SELECT 1 FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
+                          WHERE r.code = ANY($1::text[]) AND tk.status = 'ditutup') AS present`,
+          [[...new Set(recent.map((item) => item.remote_code))]],
+        )) as Array<{ present: boolean }>;
+        for (const item of trend?.present ? [] : recent) {
+          const [created] = (await manager.query(
+            `INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description,
+                                  started_at, created_at, created_by)
+             SELECT t.id, r.id, r.network_id, c.id, s.id, $1, at.created_at - interval '5 minutes', at.created_at, u.id
+               FROM tenants t
+               JOIN remotes r ON r.tenant_id = t.id AND r.code = $2
+               JOIN master_categories c ON c.tenant_id = t.id AND lower(c.name) = lower($3)
+               JOIN master_systems s ON s.tenant_id = t.id AND lower(s.name) = lower($4)
+               JOIN users u ON u.email = $7
+              CROSS JOIN LATERAL (
+                SELECT (((now() AT TIME ZONE 'Asia/Jakarta')::date - $5::int)::timestamp + make_interval(mins => $6))
+                         AT TIME ZONE 'Asia/Jakarta' AS created_at) at
+              WHERE t.code = $8
+             RETURNING id`,
+            [
+              item.description,
+              item.remote_code,
+              item.category,
+              item.system,
+              item.days_ago,
+              item.minute_of_day,
+              SEED_TICKET_AUTHOR,
+              item.tenant_code,
+            ],
+          )) as Array<{ id: string }>;
+          if (!created) continue;
+          await manager.query(
+            `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                                         created_by, created_at)
+             SELECT tenant_id, id, 'catatan', 'Remote up.', started_at + make_interval(mins => $2), 'terbuka', 'pulih',
+                    created_by, started_at + make_interval(mins => $2)
+               FROM tickets WHERE id = $1`,
+            [created.id, item.duration_minutes],
+          );
+          await manager.query(
+            `INSERT INTO ticket_actions (tenant_id, ticket_id, kind, note, occurred_at, status_from, status_to,
+                                         close_cause, created_by, created_at)
+             SELECT tenant_id, id, 'tutup', $2, started_at + make_interval(mins => $3 + 10), 'pulih', 'ditutup',
+                    $4, created_by, started_at + make_interval(mins => $3 + 10)
+               FROM tickets WHERE id = $1`,
+            [created.id, item.resolution, item.duration_minutes, item.cause],
+          );
+        }
       },
     },
   ];
+}
+
+const RECENT_KINDS = [
+  {
+    category: 'Remote Down',
+    system: 'SNMP NOC',
+    description: 'Ping gagal 100% dari NOC',
+    cause: 'listrik',
+    resolution: 'Listrik padam di lokasi; remote pulih setelah listrik menyala.',
+  },
+  {
+    category: 'Remote Down',
+    system: 'SNMP NOC',
+    description: 'Remote tidak terjangkau, hub normal',
+    cause: 'link',
+    resolution: 'Gangguan link jarkom; pulih setelah provider memulihkan jalur.',
+  },
+  {
+    category: 'Corrective',
+    system: 'NMS VSAT',
+    description: 'Modem sering putus, sinyal turun',
+    cause: 'cuaca',
+    resolution: 'Hujan deras di lokasi; sinyal kembali normal setelah cuaca membaik.',
+  },
+  {
+    category: 'Remote Down',
+    system: 'NMS VSAT',
+    description: 'Modem hang, ping putus-sambung',
+    cause: 'perangkat',
+    resolution: 'Modem dinyalakan ulang oleh petugas cabang; remote stabil.',
+  },
+  {
+    category: 'Preventive',
+    system: 'NMS VSAT',
+    description: 'Pemeliharaan terjadwal perangkat VSAT',
+    cause: 'lainnya',
+    resolution: 'Pemeliharaan selesai sesuai jadwal; remote up.',
+  },
+] as const;
+
+/**
+ * NPR Ditutup dummy untuk tren Overview (langkah 2.1): per customer, di remote ke-3 sampai
+ * ke-6 (dua pertama punya NPR terbuka), pada sekitar dua dari tiga hari dalam 13 hari terakhir,
+ * jam 08–20 WIB. Tetap sama setiap kali dibangkitkan; hari dihitung dari saat seed berjalan.
+ */
+export function seedRecentClosed(): Array<{
+  tenant_code: string;
+  remote_code: string;
+  category: string;
+  system: string;
+  description: string;
+  cause: string;
+  resolution: string;
+  days_ago: number;
+  minute_of_day: number;
+  duration_minutes: number;
+}> {
+  const remotes = seedRemotes();
+  const items: ReturnType<typeof seedRecentClosed> = [];
+  SEED_TENANTS.forEach((tenant, tenantIndex) => {
+    const own = remotes.filter((remote) => remote.tenant_code === tenant.code).slice(2, 6);
+    for (let day = 13; day >= 1; day -= 1) {
+      if ((day + tenantIndex) % 3 === 0) continue;
+      // Remote pertama lebih sering, agar "paling sering bermasalah" punya urutan yang jelas.
+      const remote = own[(day + tenantIndex) % 2 === 0 ? 0 : (day % (own.length - 1)) + 1] ?? own[0];
+      const kind = RECENT_KINDS[(day * 2 + tenantIndex) % RECENT_KINDS.length] ?? RECENT_KINDS[0];
+      items.push({
+        tenant_code: tenant.code,
+        remote_code: String(remote?.code),
+        ...kind,
+        days_ago: day,
+        minute_of_day: (8 + ((day * 5 + tenantIndex * 3) % 12)) * 60 + ((day * 17) % 60),
+        duration_minutes: 40 + ((day * 37 + tenantIndex * 11) % 200),
+      });
+    }
+  });
+  return items;
 }
 
 /**

@@ -19,16 +19,15 @@ import type {
   TroubleTicketPage,
 } from '@tyio/shared';
 import { ApiError, apiMultipart, apiRequest } from '../../api';
+import type { QueueApiKey } from './list/queue-query';
 
 // Panggilan API NPR (langkah 1.3), linimasanya (1.4), TT (1.5b), dan penutupan (1.6).
 // Cakupan customer dan aturan peran diperiksa server.
 
 const enc = encodeURIComponent;
 
-/** Saringan antrean seperti di alamat halaman; yang kosong tidak dikirim. */
-export type TicketQueueQuery = Partial<
-  Record<'view' | 'tenantId' | 'categoryId' | 'systemId' | 'status' | 'q' | 'sort' | 'page' | 'pageSize', string>
->;
+/** Parameter antrean `GET /api/tickets`; yang kosong tidak dikirim. */
+export type TicketQueueQuery = Partial<Record<QueueApiKey | 'sort' | 'page' | 'pageSize', string>>;
 
 export const ticketApi = {
   list: (query: TicketQueueQuery) => {

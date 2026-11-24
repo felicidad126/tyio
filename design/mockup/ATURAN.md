@@ -87,8 +87,12 @@ banner kritis, dan angka "SLA sudah lewat". Tren dan informasi ("naik 14 dalam 1
 ## 7. Grafik
 
 - Warna status tidak dipakai untuk seri grafik.
-- Tiket baru per hari: Remote Down `#2a78d6`, Corrective `#86b6ef`, Preventive `#c3cdd9`;
-  celah putih 2 px antarsegmen; selalu ada legenda dan tombol tampilan tabel.
+- Tiket baru per hari (diubah di 2.1, T118): Remote Down `#2a78d6`, Corrective `#eb6834`,
+  Preventive `#1baf7a`; tema gelap `#3987e5`, `#d95926`, `#199e70`. Kategori lain memakai slot
+  berikutnya (`#eda100`, `#e87ba4`, `#008300`, `#6250d6`), sisanya digabung "Kategori lain" (abu).
+  Warna mengikuti kategori, bukan peringkatnya. Palet lama (`#86b6ef`, `#c3cdd9`) gagal validasi
+  buta warna: abu-abu terbaca bukan warna, biru muda vs abu ΔE 11 (batas 15).
+  Celah 2 px antarsegmen; selalu ada legenda dan tombol tampilan tabel.
 - Bilah status up/down dibedakan juga oleh **tinggi** (down = penuh, lambat = ¾, up = ½),
   karena hijau–merah tidak terbedakan bagi deuteranopia (ΔE 3,1).
 

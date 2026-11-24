@@ -49,9 +49,11 @@ test.describe('daftar dan halaman remote', () => {
     await page.getByLabel('Customer').selectOption({ label: 'Bank Selaras' });
     await page.getByLabel('Jarkom').selectOption({ label: 'VPN IP (VPN)' });
     await expect(rows(page).first()).toBeVisible();
-    for (const text of await rows(page).locator('td:nth-child(3)').allTextContents()) {
-      expect(text.trim()).toBe('VPN');
-    }
+    // Ditunggu sampai daftar termuat ulang dengan saringan jarkom: membaca baris sekali saja
+    // kadang masih mendapat daftar sebelumnya (CI run #151).
+    await expect
+      .poll(async () => [...new Set((await rows(page).locator('td:nth-child(3)').allTextContents()).map((text) => text.trim()))])
+      .toEqual(['VPN']);
 
     await page.getByLabel('Customer').selectOption({ label: 'Semua customer' });
     await expect(page.getByLabel('Jarkom')).toHaveValue('');

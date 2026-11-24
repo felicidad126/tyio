@@ -1,13 +1,18 @@
 import { BadRequestException, Body, Controller, Get, Header, NotFoundException, Param, Post, Query } from '@nestjs/common';
 import {
+  isRemoteRegion,
   isTicketStatus,
+  MASTER_NAME_MAX_LENGTH,
+  QUEUE_DATE_PATTERN,
   REMOTE_HISTORY_PAGE_SIZE_DEFAULT,
   REMOTE_HISTORY_PAGE_SIZE_MAX,
+  REMOTE_REGIONS,
   type RemoteTicketHistoryPage,
   TICKET_DESCRIPTION_MAX_LENGTH,
   TICKET_PAGE_SIZE_DEFAULT,
   TICKET_PAGE_SIZE_MAX,
   TICKET_QUEUE_SORTS,
+  TICKET_QUEUE_STATUS_ALL,
   TICKET_QUEUE_VIEWS,
   type TicketDetail,
   type TicketQueuePage,
@@ -47,7 +52,9 @@ export class TicketsController {
   /**
    * Antrean NPR (langkah 1.5): `?view=semua|saya|pending|eskalasi|siap` (T82), saringan
    * `tenantId`, `categoryId`, `systemId`, `status`, `q`, urutan `sort=mulai|terbaru` (T83),
-   * `page`, `pageSize`. Id saringan yang formatnya salah memberi hasil kosong.
+   * `page`, `pageSize`. Id saringan yang formatnya salah memberi hasil kosong. Saringan untuk
+   * angka Overview (2.1, `TicketQueueFilter`): `status=semua`, `categoryName`, `remoteId`,
+   * `region`, `createdFrom`/`createdTo`, `closedFrom`/`closedTo` (tanggal WIB).
    */
   @Get()
   @Header('Cache-Control', 'no-store')
@@ -192,13 +199,30 @@ function readCreateTicket(body: unknown): CreateTicketInput {
   };
 }
 
-const QUEUE_PARAMS = ['view', 'tenantId', 'categoryId', 'systemId', 'status', 'q', 'sort', 'page', 'pageSize'];
+const QUEUE_PARAMS = [
+  'view',
+  'tenantId',
+  'categoryId',
+  'categoryName',
+  'systemId',
+  'status',
+  'remoteId',
+  'region',
+  'q',
+  'createdFrom',
+  'createdTo',
+  'closedFrom',
+  'closedTo',
+  'sort',
+  'page',
+  'pageSize',
+];
 
 /** Saringan antrean; `null` bila ada id saringan yang tidak mungkin cocok (hasil kosong). */
 function readQueueFilters(query: Record<string, unknown>): TicketQueueFilters | null {
   const unknownKeys = Object.keys(query).filter((key) => !QUEUE_PARAMS.includes(key));
   if (unknownKeys.length > 0) throw new BadRequestException(`Saringan tidak dikenal: ${unknownKeys.join(', ')}.`);
-  const { view, status, q, sort, page, pageSize } = query;
+  const { view, status, q, sort, page, pageSize, categoryName, region } = query;
 
   if (view !== undefined && !(TICKET_QUEUE_VIEWS as readonly unknown[]).includes(view)) {
     throw new BadRequestException(`view harus salah satu dari: ${TICKET_QUEUE_VIEWS.join(', ')}.`);
@@ -206,8 +230,11 @@ function readQueueFilters(query: Record<string, unknown>): TicketQueueFilters | 
   if (sort !== undefined && !(TICKET_QUEUE_SORTS as readonly unknown[]).includes(sort)) {
     throw new BadRequestException(`sort harus salah satu dari: ${TICKET_QUEUE_SORTS.join(', ')}.`);
   }
-  if (status !== undefined && status !== '' && !isTicketStatus(status)) {
+  if (status !== undefined && status !== '' && status !== TICKET_QUEUE_STATUS_ALL && !isTicketStatus(status)) {
     throw new BadRequestException('Status tidak dikenal.');
+  }
+  if (region !== undefined && region !== '' && !isRemoteRegion(region)) {
+    throw new BadRequestException(`region harus salah satu dari: ${REMOTE_REGIONS.join(', ')}.`);
   }
   const filters: TicketQueueFilters = {
     view: (view as TicketQueueView | undefined) ?? 'semua',
@@ -215,18 +242,46 @@ function readQueueFilters(query: Record<string, unknown>): TicketQueueFilters | 
     page: positiveInt(page, 'page', 100_000) ?? 1,
     pageSize: positiveInt(pageSize, 'pageSize', TICKET_PAGE_SIZE_MAX) ?? TICKET_PAGE_SIZE_DEFAULT,
   };
-  if (isTicketStatus(status)) filters.status = status;
+  if (isTicketStatus(status) || status === TICKET_QUEUE_STATUS_ALL) filters.status = status;
+  if (isRemoteRegion(region)) filters.region = region;
+  if (categoryName !== undefined) {
+    if (typeof categoryName !== 'string' || categoryName.length > MASTER_NAME_MAX_LENGTH) {
+      throw new BadRequestException(`Nama kategori paling panjang ${MASTER_NAME_MAX_LENGTH} karakter.`);
+    }
+    if (categoryName.trim() !== '') filters.categoryName = categoryName.trim();
+  }
+  for (const [from, to] of [
+    ['createdFrom', 'createdTo'],
+    ['closedFrom', 'closedTo'],
+  ] as const) {
+    const start = queueDate(query[from], from);
+    const end = queueDate(query[to], to);
+    if (start && end && start > end) throw new BadRequestException(`${from} tidak boleh sesudah ${to}.`);
+    if (start) filters[from] = start;
+    if (end) filters[to] = end;
+  }
   if (q !== undefined) {
     if (typeof q !== 'string' || q.length > 100) throw new BadRequestException('Kata kunci paling panjang 100 karakter.');
     if (q.trim() !== '') filters.q = q.trim();
   }
-  for (const key of ['tenantId', 'categoryId', 'systemId'] as const) {
+  for (const key of ['tenantId', 'categoryId', 'systemId', 'remoteId'] as const) {
     const value = query[key];
     if (value === undefined || value === '') continue;
     if (!isUuid(value)) return null;
     filters[key] = value.toLowerCase();
   }
   return filters;
+}
+
+/** Tanggal saringan `YYYY-MM-DD` (WIB) yang benar-benar ada di kalender; kosong = tanpa saringan. */
+function queueDate(value: unknown, name: string): string | undefined {
+  if (value === undefined || value === '') return undefined;
+  const valid =
+    typeof value === 'string' &&
+    QUEUE_DATE_PATTERN.test(value) &&
+    new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+  if (!valid) throw new BadRequestException(`${name} harus tanggal YYYY-MM-DD yang sah.`);
+  return value;
 }
 
 function positiveInt(value: unknown, name: string, max: number): number | undefined {

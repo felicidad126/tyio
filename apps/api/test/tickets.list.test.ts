@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { TicketQueuePage, TicketStatus, TicketTimeline } from '@tyio/shared';
+import { remoteRegionOf, type TicketQueuePage, type TicketStatus, type TicketTimeline } from '@tyio/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -12,6 +12,7 @@ import { createTestApp } from './create-test-app.js';
 import {
   CLOSE_CAUSE,
   CLOSE_KIND,
+  insertMasterValue,
   insertRemote,
   insertTenant,
   insertTicket,
@@ -243,11 +244,134 @@ describe('antrean NPR', () => {
         ['page=0', /page harus bilangan/],
         ['milik=saya', /Saringan tidak dikenal: milik/],
         [`q=${'x'.repeat(101)}`, /paling panjang 100/],
+        ['region=Atlantis', /region harus salah satu dari: Sumatera, Jawa/],
+        [`categoryName=${'k'.repeat(81)}`, /Nama kategori paling panjang 80/],
+        ['createdFrom=2026-02-30', /createdFrom harus tanggal YYYY-MM-DD yang sah/],
+        ['createdTo=24-11-2026', /createdTo harus tanggal YYYY-MM-DD yang sah/],
+        ['closedFrom=2026-11-2', /closedFrom harus tanggal/],
+        ['createdFrom=2026-11-24&createdTo=2026-11-23', /createdFrom tidak boleh sesudah createdTo/],
+        ['closedFrom=2026-11-24&closedTo=2026-11-01', /closedFrom tidak boleh sesudah closedTo/],
       ];
       for (const [query, message] of cases) {
         const res = await l1.get(`/api/tickets?${query}`).expect(400);
         expect(res.body.message).toMatch(message);
       }
+    });
+  });
+
+  describe('saringan untuk angka Overview (langkah 2.1)', () => {
+    /** Hari ini menurut WIB dari jam database, `YYYY-MM-DD`. */
+    async function wibDate(offsetDays = 0): Promise<string> {
+      const [row] = (await dataSource.query(
+        `SELECT to_char((now() AT TIME ZONE 'Asia/Jakarta')::date + $1::int, 'YYYY-MM-DD') AS d`,
+        [offsetDays],
+      )) as Array<{ d: string }>;
+      return row?.d ?? '';
+    }
+
+    it('status=semua memuat NPR Ditutup; jumlah tampilan lain tetap', async () => {
+      const tenantId = await newTenant();
+      const open = await ticketIn(tenantId, 'pending_tm');
+      const closed = await ticketIn(tenantId, 'ditutup');
+      const all = await queue(l1, `tenantId=${tenantId}&status=semua`);
+      expect(idsOf(all)).toEqual([open.id, closed.id].sort());
+      expect(all.counts).toEqual({ semua: 2, saya: 0, pending: 1, eskalasi: 0, siap: 0 });
+      expect((await queue(l1, `tenantId=${tenantId}`)).total).toBe(1);
+      // Waktu ditutup ikut di baris, agar lama gangguan NPR Ditutup tidak dihitung sampai sekarang.
+      const byId = new Map(all.items.map((item) => [item.id, item]));
+      expect(byId.get(open.id)?.closedAt).toBeNull();
+      expect(new Date(byId.get(closed.id)?.closedAt ?? '').getTime()).toBeGreaterThan(Date.now() - 60_000);
+    });
+
+    it('remoteId: hanya NPR remote itu; id yang salah format memberi hasil kosong', async () => {
+      const tenantId = await newTenant();
+      const remote = await insertRemote(dataSource, tenantId);
+      const a = await ticketIn(tenantId, 'terbuka', { remoteId: remote.id });
+      const b = await ticketIn(tenantId, 'ditutup', { remoteId: remote.id });
+      await ticketIn(tenantId, 'terbuka');
+      expect(idsOf(await queue(l1, `tenantId=${tenantId}&remoteId=${remote.id}`))).toEqual([a.id]);
+      expect(idsOf(await queue(l1, `tenantId=${tenantId}&remoteId=${remote.id}&status=semua`))).toEqual(
+        [a.id, b.id].sort(),
+      );
+      expect((await queue(l1, `tenantId=${tenantId}&remoteId=bukan-uuid`)).total).toBe(0);
+    });
+
+    it('categoryName: nama kategori tanpa membedakan huruf besar/kecil, di semua customer (T114)', async () => {
+      const marker = randomUUID().slice(0, 6);
+      const tenantA = await newTenant();
+      const tenantB = await newTenant();
+      const catA = await insertMasterValue(dataSource, 'kategori', tenantA, `Remote Down ${marker}`);
+      const catB = await insertMasterValue(dataSource, 'kategori', tenantB, `remote down ${marker}`);
+      const other = await insertMasterValue(dataSource, 'kategori', tenantA, `Corrective ${marker}`);
+      const a = await insertTicket(dataSource, tenantA, { categoryId: catA.id });
+      const b = await insertTicket(dataSource, tenantB, { categoryId: catB.id });
+      await insertTicket(dataSource, tenantA, { categoryId: other.id });
+
+      const byName = await queue(l1, `categoryName=${encodeURIComponent(`REMOTE DOWN ${marker}`)}`);
+      expect(idsOf(byName)).toEqual([a.id, b.id].sort());
+      expect(idsOf(await queue(l1, `categoryName=${encodeURIComponent(` remote down ${marker} `)}&tenantId=${tenantB}`))).toEqual([
+        b.id,
+      ]);
+      // Nama persis, bukan pola atau potongan.
+      expect((await queue(l1, `categoryName=${encodeURIComponent(`Remote Down ${marker.slice(0, 3)}`)}`)).total).toBe(0);
+      expect((await queue(l1, `categoryName=${encodeURIComponent(`Remote_Down ${marker}`)}`)).total).toBe(0);
+    });
+
+    it('region: wilayah dari provinsi remote; ejaan dirapikan; tidak dikenal atau kosong = Lainnya (T113)', async () => {
+      const tenantId = await newTenant();
+      const ticketAt = async (province?: string) =>
+        insertTicket(dataSource, tenantId, { remoteId: (await insertRemote(dataSource, tenantId, { province })).id });
+      const sulsel = await ticketAt('Sulawesi Selatan');
+      const sulteng = await ticketAt('Prov. Sulawesi Tengah');
+      const sultra = await ticketAt('  SULTRA ');
+      const jabar = await ticketAt('Jawa Barat');
+      const diy = await ticketAt('D.I. Yogyakarta');
+      const blank = await ticketAt();
+      const unknown = await ticketAt('Atlantis');
+
+      const region = async (name: string) =>
+        idsOf(await queue(l1, `tenantId=${tenantId}&region=${encodeURIComponent(name)}`));
+      expect(await region('Sulawesi')).toEqual([sulsel.id, sulteng.id, sultra.id].sort());
+      expect(await region('Jawa')).toEqual([jabar.id, diy.id].sort());
+      expect(await region('Lainnya')).toEqual([blank.id, unknown.id].sort());
+      expect(await region('Papua')).toEqual([]);
+      expect(remoteRegionOf('Prov. Sulawesi Tengah')).toBe('Sulawesi');
+      expect(remoteRegionOf('Atlantis')).toBe('Lainnya');
+    });
+
+    it('createdFrom/createdTo: tanggal dibuat menurut WIB, kedua ujung termasuk (T109)', async () => {
+      const tenantId = await newTenant();
+      // 23:59:59 WIB tanggal 10 dan 00:00 WIB tanggal 11 (remote WIT: sudah tanggal 11 di sana).
+      const remote = await insertRemote(dataSource, tenantId, { zone: 'WIT' });
+      const late = await insertTicket(dataSource, tenantId, {
+        remoteId: remote.id,
+        createdAt: new Date('2026-03-10T16:59:59Z'),
+      });
+      const midnight = await insertTicket(dataSource, tenantId, {
+        remoteId: remote.id,
+        createdAt: new Date('2026-03-10T17:00:00Z'),
+      });
+      const created = async (range: string) => idsOf(await queue(l1, `tenantId=${tenantId}&${range}`));
+      expect(await created('createdFrom=2026-03-10&createdTo=2026-03-10')).toEqual([late.id]);
+      expect(await created('createdFrom=2026-03-11&createdTo=2026-03-11')).toEqual([midnight.id]);
+      expect(await created('createdFrom=2026-03-10&createdTo=2026-03-11')).toEqual([late.id, midnight.id].sort());
+      expect(await created('createdFrom=2026-03-11')).toEqual([midnight.id]);
+      expect(await created('createdTo=2026-03-10')).toEqual([late.id]);
+      expect(await created('createdFrom=2026-03-12')).toEqual([]);
+    });
+
+    it('closedFrom/closedTo: tanggal ditutup menurut WIB; memuat NPR Ditutup tanpa saringan status', async () => {
+      const tenantId = await newTenant();
+      const closed = await ticketIn(tenantId, 'ditutup');
+      await ticketIn(tenantId, 'pulih');
+      const today = await wibDate();
+      const yesterday = await wibDate(-1);
+      expect(idsOf(await queue(l1, `tenantId=${tenantId}&status=ditutup&closedFrom=${today}&closedTo=${today}`))).toEqual([
+        closed.id,
+      ]);
+      expect(idsOf(await queue(l1, `tenantId=${tenantId}&closedFrom=${today}`))).toEqual([closed.id]);
+      expect((await queue(l1, `tenantId=${tenantId}&closedTo=${yesterday}`)).total).toBe(0);
+      expect((await queue(l1, `tenantId=${tenantId}&closedFrom=${await wibDate(1)}`)).total).toBe(0);
     });
   });
 

@@ -45,3 +45,17 @@ export function toZonedInput(date: Date, zone: RemoteZone): string {
 export function fromZonedInput(value: string, zone: RemoteZone): string {
   return `${value}:00+${String(REMOTE_ZONE_UTC_OFFSET[zone]).padStart(2, '0')}:00`;
 }
+
+const dayFormat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+/** Tanggal `YYYY-MM-DD` (hari menurut WIB, T109): "24 Nov 2026". */
+export function formatDay(date: string): string {
+  return dayFormat.format(new Date(`${date}T00:00:00Z`));
+}
+
+/** "11 Nov 2026 – 24 Nov 2026"; satu tanggal bila sama; "sejak …" / "sampai …" bila satu ujung. */
+export function formatDayRange(from: string, to: string): string {
+  if (from && to) return from === to ? formatDay(from) : `${formatDay(from)} – ${formatDay(to)}`;
+  if (from) return `sejak ${formatDay(from)}`;
+  return to ? `sampai ${formatDay(to)}` : '';
+}

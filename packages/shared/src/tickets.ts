@@ -1,3 +1,4 @@
+import type { RemoteRegion } from './regions.js';
 import type { RemoteDetail, RemoteZone } from './remotes.js';
 
 /**
@@ -343,6 +344,40 @@ export type TicketQueueSort = (typeof TICKET_QUEUE_SORTS)[number];
 export const TICKET_PAGE_SIZE_DEFAULT = 25;
 export const TICKET_PAGE_SIZE_MAX = 100;
 
+/** Nilai saringan status antrean untuk semua status, termasuk Ditutup (langkah 2.1). */
+export const TICKET_QUEUE_STATUS_ALL = 'semua';
+export type TicketQueueStatusFilter = TicketStatus | typeof TICKET_QUEUE_STATUS_ALL;
+
+/**
+ * Saringan antrean NPR, sama dengan parameter `GET /api/tickets` di luar urutan dan halaman.
+ * Overview (2.1) mengirim saringan ini bersama setiap angkanya, jadi angka dan daftar yang
+ * dibuka selalu dihitung dengan syarat yang sama.
+ * - `categoryName`: nama kategori tanpa membedakan huruf besar/kecil, di semua customer (T114).
+ * - `region`: wilayah remote dari provinsinya (T113).
+ * - `createdFrom`/`createdTo` (waktu NPR dibuat) dan `closedFrom`/`closedTo` (waktu ditutup):
+ *   tanggal `YYYY-MM-DD` menurut WIB (T109), keduanya termasuk.
+ * Tanpa saringan status, "Semua terbuka" tidak memuat NPR Ditutup (T87); `status=semua` dan
+ * saringan tanggal ditutup memuatnya.
+ */
+export interface TicketQueueFilter {
+  view?: TicketQueueView;
+  tenantId?: string;
+  categoryId?: string;
+  categoryName?: string;
+  systemId?: string;
+  status?: TicketQueueStatusFilter;
+  remoteId?: string;
+  region?: RemoteRegion;
+  q?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  closedFrom?: string;
+  closedTo?: string;
+}
+
+/** Pola tanggal saringan antrean (`YYYY-MM-DD`, WIB). */
+export const QUEUE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 /** Satu baris antrean NPR. Waktu dalam ISO 8601 UTC. */
 export interface TicketQueueItem {
   id: string;
@@ -356,6 +391,8 @@ export interface TicketQueueItem {
   remote: { id: string; code: string; name: string; city: string | null; zone: RemoteZone };
   startedAt: string;
   createdAt: string;
+  /** Waktu ditutup, bila status Ditutup (langkah 1.6). */
+  closedAt: string | null;
   assignee: TicketPerson | null;
   /** Alasan pending terakhir, bila status sekarang pending. */
   pendingReason: string | null;

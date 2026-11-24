@@ -201,3 +201,27 @@ VALUES (..., 'tt_ditutup', 'Teknisi SD mengganti modem; remote up 14:40', now(),
 - Riwayat NPR per remote (`GET /api/remotes/:remoteId/tickets`, T101): waktu pulih = waktu
   kejadian entri terakhir yang memindahkan NPR ke Pulih, hanya bila status sekarang Pulih atau
   Ditutup.
+
+## 10. Angka Overview (langkah 2.1)
+
+Setiap angka Overview harus sama persis dengan daftar yang dibuka darinya. Karena itu angka
+**tidak dihitung dengan query sendiri**: `OverviewService` memanggil
+`TicketQueueService.matching(scope, me, kriteria)`, yaitu query yang sama dengan `total` antrean
+(`GET /api/tickets`), lalu hanya menambah `GROUP BY`. Kriteria itu ikut dikirim bersama angkanya
+(`OverviewCount.filter`, parameter `GET /api/tickets`), dan web membuat tautannya dari sana
+(`queue-query.ts`).
+
+- Angka baru di Overview: tambah syaratnya ke `TicketQueueCriteria` dan `filtered()` (serta
+  `readQueueFilters` di controller), bukan ke query Overview. Uji `overview.test.ts` membandingkan
+  **setiap** angka di jawaban dengan `total` antrean untuk saringannya; angka baru otomatis ikut bila
+  dimasukkan ke `allCounts`.
+- Batas hari menurut WIB (T109) hanya di `tickets/list/wib-day.ts`: `wibDateSql` (tanggal dari
+  waktu) dan `wibDayStartSql` (awal hari dari tanggal). Jangan menulis `AT TIME ZONE` sendiri.
+- Wilayah (T113): pemetaan provinsi → wilayah di `@tyio/shared` (`REMOTE_REGION_PROVINCES`), SQL-nya
+  dirangkai dari daftar yang sama (`remotes/remote-region.ts`). Ejaan baru cukup ditambah ke daftar;
+  uji memeriksa SQL dan TypeScript sama untuk setiap ejaan.
+- Nama yang digabung lintas customer (kategori, T114) dipilih dengan `COLLATE "C"`: tanpa itu
+  hasilnya ikut collation database dan berbeda antara lokal (C.UTF-8) dan CI (en_US). Uji lokal di
+  database ber-collation seperti CI:
+  `CREATE DATABASE tyio_coll ... LOCALE_PROVIDER icu ICU_LOCALE 'en-US' LOCALE 'C.UTF-8'` lalu
+  `TEST_DATABASE_URL=postgres://tyio:tyio@localhost:5432/tyio_coll pnpm test`.

@@ -7,6 +7,7 @@ import { dataSourceOptions } from './db/options.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MasterModule } from './modules/master/master.module.js';
+import { OverviewModule } from './modules/overview/overview.module.js';
 import { RemotesModule } from './modules/remotes/remotes.module.js';
 import { SearchModule } from './modules/search/search.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
@@ -31,6 +32,7 @@ export class AppModule {
         RemotesModule,
         TicketsModule,
         SearchModule,
+        OverviewModule,
       ],
     };
   }

@@ -11,6 +11,7 @@ import {
   SEED_REMOTES_PER_TENANT,
   SEED_TENANTS,
   SEED_USERS,
+  seedRecentClosed,
   seedTickets,
   seedUserPassword,
 } from '../src/seed/seeders.js';
@@ -132,7 +133,8 @@ describe('seeder tenant dan pengguna', () => {
         code: tenant.code,
         count:
           seedTickets().filter((ticket) => ticket.tenant_code === tenant.code).length +
-          (tenant.code === 'BNA' ? SEED_CLOSED_HISTORY.length : 0),
+          (tenant.code === 'BNA' ? SEED_CLOSED_HISTORY.length : 0) +
+          seedRecentClosed().filter((ticket) => ticket.tenant_code === tenant.code).length,
       })).sort((a, b) => a.code.localeCompare(b.code)),
     );
     const [ticket] = (await dataSource.query(
@@ -166,6 +168,23 @@ describe('seeder tenant dan pengguna', () => {
         kinds: ['dibuat', 'catatan', 'tutup'],
       })),
     );
+
+    // NPR Ditutup tersebar dalam 13 hari terakhir untuk tren Overview (2.1): semuanya Ditutup
+    // lewat entri tutup, dibuat 1–13 hari lalu menurut WIB, tidak di remote yang punya NPR terbuka.
+    const recent = seedRecentClosed();
+    expect(recent.length).toBeGreaterThan(20);
+    const [spread] = (await dataSource.query(
+      `SELECT count(*)::int AS n,
+              count(*) FILTER (WHERE tk.status = 'ditutup' AND tk.closed_at IS NOT NULL)::int AS closed,
+              min((now() AT TIME ZONE 'Asia/Jakarta')::date - (tk.created_at AT TIME ZONE 'Asia/Jakarta')::date) AS min_days,
+              max((now() AT TIME ZONE 'Asia/Jakarta')::date - (tk.created_at AT TIME ZONE 'Asia/Jakarta')::date) AS max_days,
+              count(DISTINCT (tk.created_at AT TIME ZONE 'Asia/Jakarta')::date)::int AS days,
+              bool_or(EXISTS (SELECT 1 FROM tickets o WHERE o.remote_id = tk.remote_id AND o.status <> 'ditutup')) AS open_remote
+         FROM tickets tk JOIN remotes r ON r.id = tk.remote_id
+        WHERE r.code = ANY($1::text[])`,
+      [[...new Set(recent.map((item) => item.remote_code))]],
+    )) as Array<{ n: number; closed: number; min_days: number; max_days: number; days: number; open_remote: boolean }>;
+    expect(spread).toEqual({ n: recent.length, closed: recent.length, min_days: 1, max_days: 13, days: 13, open_remote: false });
   });
 
   it('tidak membaca kata sandi bila seeder pengguna tidak dijalankan', () => {

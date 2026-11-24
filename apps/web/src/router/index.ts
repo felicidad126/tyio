@@ -10,6 +10,7 @@ import MasterPage from '../pages/admin/master/MasterPage.vue';
 import ComingSoonPage from '../pages/coming-soon/ComingSoonPage.vue';
 import LoginPage from '../pages/login/LoginPage.vue';
 import NotFoundPage from '../pages/not-found/NotFoundPage.vue';
+import OverviewPage from '../pages/overview/OverviewPage.vue';
 import RemoteDetailPage from '../pages/remotes/RemoteDetailPage.vue';
 import RemoteImportPage from '../pages/remotes/RemoteImportPage.vue';
 import RemoteListPage from '../pages/remotes/RemoteListPage.vue';
@@ -34,6 +35,7 @@ declare module 'vue-router' {
 
 /** Modul yang halamannya sudah dibangun; sisanya memakai halaman "menyusul". */
 const BUILT_PAGES: Partial<Record<string, Component>> = {
+  overview: OverviewPage,
   admin: AdminPage,
   remote: RemoteListPage,
   tiket: TicketListPage,
