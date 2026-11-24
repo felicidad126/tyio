@@ -2,30 +2,54 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   OPEN_TICKET_STATUSES,
+  OVERVIEW_DAY_ZONE_IANA,
   PENDING_TICKET_STATUSES,
+  type RemoteRegion,
   type RemoteZone,
+  TICKET_QUEUE_STATUS_ALL,
   TICKET_QUEUE_VIEWS,
   type TicketActionKind,
   type TicketQueueItem,
   type TicketQueuePage,
   type TicketQueueSort,
+  type TicketQueueStatusFilter,
   type TicketQueueView,
   type TicketStatus,
 } from '@tyio/shared';
 import type { DataSource, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../../common/tenant/tenant-scope.js';
+import { remoteRegionSql } from '../../remotes/remote-region.js';
 
 /** Saringan antrean yang sudah dibaca controller; id berformat UUID huruf kecil. */
 export interface TicketQueueFilters {
   view: TicketQueueView;
   tenantId?: string;
   categoryId?: string;
+  /** Nama kategori tanpa membedakan huruf besar/kecil, di semua customer (T114). */
+  categoryName?: string;
   systemId?: string;
-  status?: TicketStatus;
+  status?: TicketQueueStatusFilter;
+  remoteId?: string;
+  region?: RemoteRegion;
   q?: string;
+  /** Tanggal `YYYY-MM-DD` menurut WIB (T109), termasuk. */
+  createdFrom?: string;
+  createdTo?: string;
+  closedFrom?: string;
+  closedTo?: string;
   sort: TicketQueueSort;
   page: number;
   pageSize: number;
+}
+
+/** Saringan yang memuat NPR Ditutup di "Semua terbuka": status apa pun, atau tanggal ditutup. */
+export function includesClosed(filters: Pick<TicketQueueFilters, 'status' | 'closedFrom' | 'closedTo'>): boolean {
+  return filters.status !== undefined || filters.closedFrom !== undefined || filters.closedTo !== undefined;
+}
+
+/** Awal hari tanggal WIB `$param` sebagai timestamptz; `nextDay` = awal hari berikutnya. */
+function dayStart(param: string, nextDay = false): string {
+  return `((CAST(:${param} AS date)${nextDay ? ' + 1' : ''})::timestamp AT TIME ZONE '${OVERVIEW_DAY_ZONE_IANA}')`;
 }
 
 interface QueueRow {
@@ -87,7 +111,7 @@ export class TicketQueueService {
     const base = () => this.filtered(scope, me, filters);
 
     const countSelect = TICKET_QUEUE_VIEWS.map(
-      (view) => `count(*) FILTER (WHERE ${viewCondition(view, filters.status !== undefined)})::int AS "${view}"`,
+      (view) => `count(*) FILTER (WHERE ${viewCondition(view, includesClosed(filters))})::int AS "${view}"`,
     ).join(', ');
     const counts = (await base().select(countSelect).getRawOne<Record<TicketQueueView, number>>()) ?? {
       semua: 0,
@@ -97,7 +121,7 @@ export class TicketQueueService {
       siap: 0,
     };
 
-    const page = base().andWhere(viewCondition(filters.view, filters.status !== undefined));
+    const page = base().andWhere(viewCondition(filters.view, includesClosed(filters)));
     if (filters.sort === 'terbaru') {
       page.orderBy('tk.created_at', 'DESC').addOrderBy('tk.id', 'DESC');
     } else {
@@ -131,7 +155,23 @@ export class TicketQueueService {
     if (filters.tenantId) query.andWhere('tk.tenant_id = :tenantId', { tenantId: filters.tenantId });
     if (filters.categoryId) query.andWhere('tk.category_id = :categoryId', { categoryId: filters.categoryId });
     if (filters.systemId) query.andWhere('tk.system_id = :systemId', { systemId: filters.systemId });
-    if (filters.status) query.andWhere('tk.status = :status', { status: filters.status });
+    if (filters.status && filters.status !== TICKET_QUEUE_STATUS_ALL) {
+      query.andWhere('tk.status = :status', { status: filters.status });
+    }
+    if (filters.categoryName) {
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM master_categories c WHERE c.id = tk.category_id AND lower(c.name) = lower(:categoryName))`,
+        { categoryName: filters.categoryName },
+      );
+    }
+    if (filters.remoteId) query.andWhere('tk.remote_id = :remoteId', { remoteId: filters.remoteId });
+    if (filters.region) query.andWhere(`${remoteRegionSql('r.province')} = :region`, { region: filters.region });
+    if (filters.createdFrom) {
+      query.andWhere(`tk.created_at >= ${dayStart('createdFrom')}`, { createdFrom: filters.createdFrom });
+    }
+    if (filters.createdTo) query.andWhere(`tk.created_at < ${dayStart('createdTo', true)}`, { createdTo: filters.createdTo });
+    if (filters.closedFrom) query.andWhere(`tk.closed_at >= ${dayStart('closedFrom')}`, { closedFrom: filters.closedFrom });
+    if (filters.closedTo) query.andWhere(`tk.closed_at < ${dayStart('closedTo', true)}`, { closedTo: filters.closedTo });
     if (filters.q) {
       // Huruf %, _, dan \ di kata kunci dicari apa adanya, bukan sebagai pola.
       const pattern = `%${filters.q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;

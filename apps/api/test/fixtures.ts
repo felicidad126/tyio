@@ -107,6 +107,7 @@ export async function insertRemote(
     name?: string;
     networkId?: string;
     city?: string;
+    province?: string;
     active?: boolean;
     zone?: 'WIB' | 'WITA' | 'WIT';
   } = {},
@@ -116,9 +117,18 @@ export async function insertRemote(
   const name = overrides.name ?? `Remote ${code}`;
   const rows = (await operatorQuery(
     dataSource,
-    `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, city, active)
-     VALUES ($1, $2, $3, $4, $7, $5, $6) RETURNING id`,
-    [tenantId, code, name, networkId, overrides.city ?? null, overrides.active ?? true, overrides.zone ?? 'WIB'],
+    `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, city, active, province)
+     VALUES ($1, $2, $3, $4, $7, $5, $6, $8) RETURNING id`,
+    [
+      tenantId,
+      code,
+      name,
+      networkId,
+      overrides.city ?? null,
+      overrides.active ?? true,
+      overrides.zone ?? 'WIB',
+      overrides.province ?? null,
+    ],
   )) as Array<{ id: string }>;
   const id = rows[0]?.id;
   if (!id) throw new Error('Remote uji gagal dibuat.');
@@ -128,23 +138,25 @@ export async function insertRemote(
 /**
  * NPR uji yang disisipkan langsung (seperti perbaikan manual); nomornya dibuat trigger
  * database seperti NPR dari API. Remote, kategori, system, dan pembuat dibuat baru bila
- * tidak diberikan.
+ * tidak diberikan. `createdAt` mengisi waktu dibuat (dan mulai gangguan) untuk uji per hari.
  */
 export async function insertTicket(
   dataSource: DataSource,
   tenantId: string,
-  overrides: { remoteId?: string; description?: string } = {},
+  overrides: { remoteId?: string; description?: string; categoryId?: string; createdAt?: Date } = {},
 ): Promise<{ id: string; number: string; remoteId: string }> {
   const remoteId = overrides.remoteId ?? (await insertRemote(dataSource, tenantId)).id;
-  const category = await insertMasterValue(dataSource, 'kategori', tenantId);
+  const categoryId = overrides.categoryId ?? (await insertMasterValue(dataSource, 'kategori', tenantId)).id;
   const system = await insertMasterValue(dataSource, 'system', tenantId);
   const user = await insertUser(dataSource);
   const rows = (await operatorQuery(
     dataSource,
-    `INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description, started_at, created_by)
-     SELECT $1, r.id, r.network_id, $3, $4, $5, now(), $6 FROM remotes r WHERE r.id = $2
+    `INSERT INTO tickets (tenant_id, remote_id, network_id, category_id, system_id, description, started_at, created_by,
+                          created_at)
+     SELECT $1, r.id, r.network_id, $3, $4, $5, coalesce($7, now()), $6, coalesce($7, now())
+       FROM remotes r WHERE r.id = $2
      RETURNING id, number`,
-    [tenantId, remoteId, category.id, system.id, overrides.description ?? 'NPR uji', user.id],
+    [tenantId, remoteId, categoryId, system.id, overrides.description ?? 'NPR uji', user.id, overrides.createdAt ?? null],
   )) as Array<{ id: string; number: string }>;
   const ticket = rows[0];
   if (!ticket) throw new Error('NPR uji gagal dibuat.');
