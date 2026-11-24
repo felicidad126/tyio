@@ -16,6 +16,8 @@ const PATHS: Record<string, string> = {
 };
 
 const menu = (page: Page) => page.getByRole('navigation', { name: 'Menu utama' });
+/** Teks tautan menu; Tiket diikuti angka NPR berjalan (T130), mis. "Tiket12". */
+const menuText = (label: string) => (label === 'Tiket' ? /^Tiket\d*$/ : label);
 
 test.describe('menu sesuai peran', () => {
   const cases: Array<{ account: Account; items: string[] }> = [
@@ -28,7 +30,7 @@ test.describe('menu sesuai peran', () => {
     test(`${account.role}: menu tampil dan setiap halaman terbuka`, async ({ page }) => {
       await loginAs(page, account);
 
-      await expect(menu(page).getByRole('link')).toHaveText(items);
+      await expect(menu(page).getByRole('link')).toHaveText(items.map(menuText));
       for (const label of items) {
         await menu(page).getByRole('link', { name: label }).click();
 
@@ -36,8 +38,8 @@ test.describe('menu sesuai peran', () => {
         await expect(page.getByRole('heading', { level: 1 })).toHaveText(label);
         await expect(page).toHaveTitle(`${label} · Portal NOC Terpusat`);
         // Tepat satu menu menyala (Overview di path kosong pernah ikut menyala di semua halaman).
-        await expect(menu(page).locator('[aria-current="page"]')).toHaveText(label);
-        await expect(menu(page).locator('.is-active')).toHaveText(label);
+        await expect(menu(page).locator('[aria-current="page"]')).toHaveText(menuText(label));
+        await expect(menu(page).locator('.is-active')).toHaveText(menuText(label));
       }
     });
   }

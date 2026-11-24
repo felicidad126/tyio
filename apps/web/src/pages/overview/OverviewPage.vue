@@ -13,7 +13,9 @@ import {
 } from '@tyio/shared';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { type RouteLocationRaw, useRoute, useRouter } from 'vue-router';
+import LiveStatus from '../../components/LiveStatus.vue';
 import PageHeader from '../../components/PageHeader.vue';
+import { debounced, useStream } from '../../composables/useStream';
 import TicketStatusPill from '../tickets/TicketStatusPill.vue';
 import { ticketApi } from '../tickets/ticket-api';
 import { queueLocation } from '../tickets/list/queue-query';
@@ -25,6 +27,7 @@ import { overviewApi } from './overview-api';
 // Overview (langkah 2.1, mockup Main): angka NPR saat ini dan analitik kejadian dalam periode.
 // Setiap angka membuka antrean dengan saringan yang dikirim API bersama angka itu, jadi
 // jumlahnya sama persis. Periode (T108) dan customer disimpan di alamat halaman.
+// Pembaruan langsung (2.2, T128): setiap perubahan NPR memuat ulang Overview diam-diam.
 
 const route = useRoute();
 const router = useRouter();
@@ -45,6 +48,8 @@ const customer = computed(() => one(route.query.customer));
 
 const customers = ref<Array<{ id: string; name: string }>>([]);
 const data = ref<Overview | null>(null);
+/** Waktu data yang tampil diterima (ms epoch), untuk penanda langsung. */
+const loadedAt = ref<number | null>(null);
 const loading = ref(true);
 const error = ref('');
 const now = ref(Date.now());
@@ -53,15 +58,17 @@ void ticketApi.customers().then((list) => (customers.value = list)).catch(() => 
 
 /** Nomor permintaan terakhir: jawaban yang lebih lama (periode/customer usang) diabaikan. */
 let latest = 0;
-async function load(): Promise<void> {
+/** `silent`: muat ulang karena pembaruan langsung, tanpa meredupkan layar. */
+async function load(silent = false): Promise<void> {
   const mine = ++latest;
-  loading.value = true;
+  if (!silent) loading.value = true;
   error.value = '';
   try {
     const result = await overviewApi.get({ period: period.value, tenantId: customer.value || undefined });
     if (mine === latest) {
       data.value = result;
       now.value = Date.now();
+      loadedAt.value = Date.now();
     }
   } catch (cause) {
     if (mine === latest) error.value = cause instanceof Error ? cause.message : 'Overview gagal dimuat.';
@@ -70,6 +77,14 @@ async function load(): Promise<void> {
   }
 }
 watch([period, customer], () => void load(), { immediate: true });
+
+const refresh = debounced(() => void load(true), 1_000);
+useStream({
+  onChange: (event) => {
+    if (!customer.value || event.tenantId === customer.value) refresh.schedule();
+  },
+  onResync: refresh.schedule,
+});
 
 const clock = setInterval(() => (now.value = Date.now()), 60_000);
 onBeforeUnmount(() => clearInterval(clock));
@@ -158,6 +173,9 @@ const frequentItems = computed<BarItem[]>(() =>
       title="Overview"
       :subtitle="`Kondisi NPR ${customerName || 'semua customer'} saat ini. Klik angka mana pun untuk membuka daftarnya.`"
     >
+      <template #pretitle>
+        <LiveStatus :data-at="loadedAt" />
+      </template>
       <template #actions>
         <div
           v-if="customers.length > 1"
@@ -185,15 +203,11 @@ const frequentItems = computed<BarItem[]>(() =>
             </option>
           </select>
         </div>
-        <span
-          v-if="asOf"
-          class="text-secondary overview__asof"
-        >Data per {{ asOf }}</span>
         <button
           type="button"
           class="btn overview__refresh"
           :disabled="loading"
-          @click="load"
+          @click="load()"
         >
           <IconRefresh
             size="18"
@@ -615,10 +629,6 @@ const frequentItems = computed<BarItem[]>(() =>
 
 .overview__customer .form-select {
   min-width: 180px;
-}
-
-.overview__asof {
-  font-size: 13px;
 }
 
 .overview__refresh {

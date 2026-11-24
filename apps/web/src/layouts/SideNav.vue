@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { SessionUser } from '@tyio/shared';
-import { computed, nextTick, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLogo from '../components/AppLogo.vue';
+import { debounced, useStream } from '../composables/useStream';
+import { ticketApi } from '../pages/tickets/ticket-api';
 import { type ModulePage, MONITOR_PAGE, navFor } from '../navigation';
 
 const props = defineProps<{ user: SessionUser }>();
@@ -19,6 +21,23 @@ function isActive(item: ModulePage): boolean {
   if (item.path === '/') return route.name === item.name;
   return route.path === item.path || route.path.startsWith(`${item.path}/`);
 }
+
+/**
+ * Angka di menu Tiket = NPR berjalan dalam cakupan customer pengguna (T130), sama dengan
+ * "Semua terbuka" di antrean; diperbarui langsung (2.2). Kosong selama belum termuat.
+ */
+const openCount = ref<number | null>(null);
+const number = new Intl.NumberFormat('id-ID');
+async function loadCount(): Promise<void> {
+  try {
+    openCount.value = (await ticketApi.list({ pageSize: '1' })).counts.semua;
+  } catch {
+    // Gagal: angka lama tetap; dicoba lagi pada perubahan berikutnya.
+  }
+}
+void loadCount();
+const countRefresh = debounced(() => void loadCount(), 1_500);
+useStream({ onChange: countRefresh.schedule, onResync: countRefresh.schedule });
 
 // Di layar sempit menu bergulir mendatar; pastikan menu yang aktif terlihat.
 watch(
@@ -91,6 +110,12 @@ watch(
                   aria-hidden="true"
                 />
                 <span>{{ item.label }}</span>
+                <span
+                  v-if="item.name === 'tiket' && openCount !== null"
+                  class="side__count"
+                  data-testid="angka-menu-tiket"
+                  :aria-label="`${openCount} NPR berjalan`"
+                >{{ number.format(openCount) }}</span>
               </a>
             </RouterLink>
           </li>
@@ -124,6 +149,21 @@ watch(
 </template>
 
 <style scoped>
+/* Angka di menu (mockup): pil gelap kecil di ujung kanan. */
+.side__count {
+  margin-left: auto;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2c3a4d;
+  color: #e6ebf1;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+}
+
 .side {
   display: flex;
   flex-direction: column;

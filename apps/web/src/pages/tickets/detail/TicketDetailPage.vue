@@ -13,7 +13,9 @@ import {
 } from '@tyio/shared';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import LiveStatus from '../../../components/LiveStatus.vue';
 import PageHeader from '../../../components/PageHeader.vue';
+import { debounced, useStream } from '../../../composables/useStream';
 import { useSessionStore } from '../../../stores/session';
 import RemoteFacts from '../RemoteFacts.vue';
 import TicketStatusPill from '../TicketStatusPill.vue';
@@ -28,7 +30,9 @@ import TicketTimelineList from './TicketTimeline.vue';
 // Halaman NPR: data gangguan (1.3), linimasa tindakan dan perubahan status (1.4), TT (1.5b),
 // penutupan NPR dan TT (1.6), dan data remote terkini. "Tutup NPR" hanya di Pulih · siap
 // ditutup; tombol mati dengan alasan tertulis bila aturan K21/T99 tidak terpenuhi (API tetap
-// penjaga yang sebenarnya).
+// penjaga yang sebenarnya). Pembaruan langsung (2.2, T128): perubahan oleh orang lain dimuat
+// ulang sendiri; panel yang terbuka tetap memakai NPR saat panel dibuka, jadi status yang sudah
+// berganti tetap ditolak 409 (T73), bukan diam-diam dipakai sebagai status asal yang baru.
 
 const route = useRoute();
 const session = useSessionStore();
@@ -47,6 +51,12 @@ const closePanel = ref<{ troubleTicket: TroubleTicket | null } | null>(null);
 /** Panel tindakan yang sedang terbuka, beserta isian awalnya. */
 const panel = ref<{ correcting: TicketAction | null; initialStatus: TicketStatus | null } | null>(null);
 const savedNotice = ref<HTMLElement | null>(null);
+/** Waktu NPR yang tampil diterima (ms epoch), untuk penanda langsung. */
+const loadedAt = ref<number | null>(null);
+/** NPR saat panel dibuka; panel memakai salinan ini, bukan NPR yang diperbarui langsung. */
+const dialogTicket = ref<TicketDetail | null>(null);
+/** Pengumuman untuk pembaca layar saat linimasa berubah karena orang lain. */
+const liveNotice = ref('');
 
 watch(
   () => route.params.id,
@@ -59,6 +69,7 @@ watch(
       const [detail, timeline] = await Promise.all([ticketApi.get(id), ticketApi.actions(id)]);
       ticket.value = detail;
       actions.value = timeline;
+      loadedAt.value = Date.now();
       document.title = `${detail.number} · ${APP_NAME}`;
       // Dari pencarian global: alamat #tt-<id> menunjuk satu TT di halaman ini.
       if (route.hash.startsWith('#tt-')) {
@@ -129,10 +140,43 @@ function openPanel(correcting: TicketAction | null = null, initialStatus: Ticket
 /** Muat ulang NPR dan linimasa tanpa menutup panel (status diubah pengguna lain). */
 async function reload(): Promise<void> {
   if (!ticket.value) return;
-  const [detail, timeline] = await Promise.all([ticketApi.get(ticket.value.id), ticketApi.actions(ticket.value.id)]);
+  const id = ticket.value.id;
+  const [detail, timeline] = await Promise.all([ticketApi.get(id), ticketApi.actions(id)]);
+  if (ticket.value?.id !== id) return; // sudah pindah ke NPR lain
   ticket.value = detail;
   actions.value = timeline;
+  loadedAt.value = Date.now();
 }
+
+/** Panel melaporkan status usang (409): muat ulang, lalu panel memakai NPR terbaru. */
+async function onStale(): Promise<void> {
+  await reload();
+  dialogTicket.value = ticket.value;
+}
+
+watch(
+  () => Boolean(panel.value || closePanel.value || ttPanel.value),
+  (open) => {
+    dialogTicket.value = open ? ticket.value : null;
+  },
+);
+
+/** Pembaruan langsung: entri baru di NPR ini (oleh siapa pun) memuat ulang halaman diam-diam. */
+const liveReload = debounced(async () => {
+  const before = actions.value.length;
+  try {
+    await reload();
+  } catch {
+    return; // gagal di latar: layar tetap
+  }
+  if (actions.value.length > before) liveNotice.value = `Linimasa diperbarui: ${actions.value.length - before} entri baru.`;
+}, 500);
+useStream({
+  onChange: (event) => {
+    if (event.ticketId === ticket.value?.id) liveReload.schedule();
+  },
+  onResync: liveReload.schedule,
+});
 
 async function onTroubleTicketSaved(timeline: TicketTimeline): Promise<void> {
   ticket.value = timeline.ticket;
@@ -193,13 +237,22 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
     <template v-else-if="ticket">
       <PageHeader :title="ticket.number">
         <template #pretitle>
-          <RouterLink :to="{ name: 'tiket' }">
-            Tiket
-          </RouterLink>
-          · NPR
-          <template v-if="customerName">
-            · {{ customerName }}
-          </template>
+          <span class="pretitle-row">
+            <span>
+              <RouterLink :to="{ name: 'tiket' }">
+                Tiket
+              </RouterLink>
+              · NPR
+              <template v-if="customerName">
+                · {{ customerName }}
+              </template>
+            </span>
+            <LiveStatus :data-at="loadedAt" />
+          </span>
+          <span
+            class="visually-hidden"
+            role="status"
+          >{{ liveNotice }}</span>
         </template>
         <template #actions>
           <TicketStatusPill :status="ticket.status" />
@@ -522,24 +575,24 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
 
       <TroubleTicketDialog
         v-if="ttPanel"
-        :ticket="ticket"
+        :ticket="dialogTicket ?? ticket"
         @saved="onTroubleTicketSaved"
         @close="ttPanel = false"
       />
       <CloseDialog
         v-if="closePanel"
-        :ticket="ticket"
+        :ticket="dialogTicket ?? ticket"
         :trouble-ticket="closePanel.troubleTicket"
         @saved="onClosed"
         @close="closePanel = null"
       />
       <ActionDialog
         v-if="panel"
-        :ticket="ticket"
+        :ticket="dialogTicket ?? ticket"
         :correcting="panel.correcting"
         :initial-status="panel.initialStatus"
         @saved="onSaved"
-        @stale="reload"
+        @stale="onStale"
         @close="panel = null"
       />
     </template>
@@ -555,6 +608,13 @@ async function onSaved(timeline: TicketTimeline): Promise<void> {
 </template>
 
 <style scoped>
+.pretitle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
 /* Nomor NPR panjang (kode jarkom/customer sampai 10 huruf) tetap muat di ponsel. */
 :deep(.page-title) {
   overflow-wrap: anywhere;

@@ -16,7 +16,9 @@ import {
 } from '@tyio/shared';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router';
+import LiveStatus from '../../../components/LiveStatus.vue';
 import PageHeader from '../../../components/PageHeader.vue';
+import { debounced, useStream } from '../../../composables/useStream';
 import TicketStatusPill from '../TicketStatusPill.vue';
 import TroubleTicketList from '../tt/TroubleTicketList.vue';
 import { ticketApi } from '../ticket-api';
@@ -28,7 +30,8 @@ import { durationLabel, sinceLabel } from './relative-time';
 // halaman (bisa dibagikan; diingat saat kembali ke Tiket), urutan mulai gangguan terlama (T83),
 // dan "Ambil" untuk NPR yang belum punya penanggung (T81). Saringan yang datang dari angka
 // Overview (2.1: remote, nama kategori, wilayah, tanggal dibuat/ditutup) tampil sebagai label
-// yang bisa dihapus satu per satu.
+// yang bisa dihapus satu per satu. Pembaruan langsung (2.2, T129): angka di tab langsung
+// berubah; daftar tidak bergeser sendiri, perubahannya menunggu "Tampilkan".
 
 const STORAGE_KEY = 'tyio:antrean';
 type Key = QueuePageKey | 'sort' | 'page';
@@ -188,27 +191,89 @@ function clearFilters(): void {
 
 /** Nomor permintaan terakhir: jawaban permintaan yang lebih lama (saringan usang) diabaikan. */
 let latest = 0;
+/** Waktu baris yang tampil diterima (ms epoch), untuk penanda langsung. */
+const loadedAt = ref<number | null>(null);
+/** TT aktif: waktu daftar TT diterima. */
+const ttLoadedAt = ref<number | null>(null);
+/** Daftar terbaru yang belum ditampilkan (T129) dan banyaknya baris yang berubah. */
+const pending = ref<TicketQueuePage | null>(null);
+const pendingChanges = ref(0);
+
+function queueParams() {
+  const f = filters.value;
+  return { ...queueApiParams(route.query), view: f.view, q: f.q, sort: f.sort, page: String(f.page) };
+}
 
 async function load(): Promise<void> {
   const mine = ++latest;
   loading.value = true;
   error.value = '';
   try {
-    const f = filters.value;
-    const result = await ticketApi.list({
-      ...queueApiParams(route.query),
-      view: f.view,
-      q: f.q,
-      sort: f.sort,
-      page: String(f.page),
-    });
-    if (mine === latest) page.value = result;
+    const result = await ticketApi.list(queueParams());
+    if (mine === latest) show(result);
   } catch (cause) {
     if (mine === latest) error.value = cause instanceof Error ? cause.message : 'Antrean NPR gagal dimuat.';
   } finally {
     if (mine === latest) loading.value = false;
   }
 }
+
+function show(result: TicketQueuePage): void {
+  page.value = result;
+  pending.value = null;
+  pendingChanges.value = 0;
+  loadedAt.value = Date.now();
+}
+
+/** Isi baris yang terlihat operator; berbeda = baris itu berubah. */
+const rowKey = (item: TicketQueueItem) =>
+  [
+    item.status,
+    item.assignee?.id ?? '',
+    item.lastAction.at,
+    item.pendingReason ?? '',
+    item.customerTicketNumber ?? '',
+    item.startedAt,
+    item.closedAt ?? '',
+  ].join('|');
+
+/** Banyaknya perubahan antara dua halaman: baris baru/hilang (satu masuk satu keluar = 1) dan baris yang berubah. */
+function rowChanges(before: TicketQueueItem[], after: TicketQueueItem[]): number {
+  const old = new Map(before.map((item) => [item.id, rowKey(item)]));
+  const fresh = new Map(after.map((item) => [item.id, rowKey(item)]));
+  const added = [...fresh.keys()].filter((id) => !old.has(id)).length;
+  const removed = [...old.keys()].filter((id) => !fresh.has(id)).length;
+  const changed = [...fresh.entries()].filter(([id, key]) => old.has(id) && old.get(id) !== key).length;
+  const reordered = changed === 0 && added === 0 && removed === 0 && before.some((item, i) => after[i]?.id !== item.id);
+  return Math.max(added, removed) + changed + (reordered ? 1 : 0);
+}
+
+/** Pembaruan langsung: ambil daftar dengan saringan yang sama di latar, tanpa menggeser layar. */
+async function check(): Promise<void> {
+  if (showTt.value || !page.value) return;
+  const mine = latest;
+  try {
+    const result = await ticketApi.list(queueParams());
+    if (mine !== latest || !page.value) return; // saringan sudah berganti
+    const changes = rowChanges(page.value.items, result.items);
+    if (changes === 0) {
+      show(result);
+      return;
+    }
+    page.value = { ...page.value, counts: result.counts };
+    pending.value = result;
+    pendingChanges.value = changes;
+  } catch {
+    // Gagal di latar: layar tetap; dicoba lagi pada perubahan berikutnya.
+  }
+}
+
+function showPending(): void {
+  if (pending.value) show(pending.value);
+}
+
+const liveCheck = debounced(() => void check(), 800);
+useStream({ onChange: liveCheck.schedule, onResync: liveCheck.schedule });
 
 watch(
   filters,
@@ -284,6 +349,9 @@ function open(id: string): void {
       title="Tiket"
       :subtitle="showTt ? 'TT yang menunggu Service Delivery. Yang paling lama di atas.' : 'Antrean NPR. Yang paling lama gangguannya di atas.'"
     >
+      <template #pretitle>
+        <LiveStatus :data-at="showTt ? ttLoadedAt : loadedAt" />
+      </template>
       <template #actions>
         <RouterLink
           :to="{ name: 'ticket-new' }"
@@ -321,6 +389,7 @@ function open(id: string): void {
     <TroubleTicketList
       v-if="showTt"
       :customers="customers"
+      @loaded="(at) => (ttLoadedAt = at)"
     />
 
     <template v-else>
@@ -491,6 +560,20 @@ function open(id: string): void {
           </div>
         </div>
 
+        <div
+          v-if="pendingChanges > 0"
+          class="card-body border-bottom py-2 live-changes"
+          role="status"
+        >
+          <span>{{ pendingChanges }} perubahan baru</span>
+          <button
+            type="button"
+            class="btn btn-sm"
+            @click="showPending"
+          >
+            Tampilkan
+          </button>
+        </div>
         <div
           v-if="extraFilters.length > 0"
           class="card-body border-bottom py-2 extra-filters"
@@ -797,6 +880,25 @@ function open(id: string): void {
 
 .queue-row__remote {
   min-width: 150px;
+}
+
+.live-changes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  background: var(--tblr-primary-lt);
+  font-weight: 600;
+}
+
+.live-changes .btn {
+  min-height: 32px;
+}
+
+@media (max-width: 767.98px) {
+  .live-changes .btn {
+    min-height: 44px;
+  }
 }
 
 .extra-filters {

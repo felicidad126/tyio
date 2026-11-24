@@ -84,8 +84,9 @@ test.describe('buat NPR', () => {
 
     await page.getByRole('banner').getByRole('link', { name: 'Buat NPR' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Buat NPR');
+    // Menu Tiket diikuti angka NPR berjalan (T130).
     await expect(page.getByRole('navigation', { name: 'Menu utama' }).locator('[aria-current="page"]')).toHaveText(
-      'Tiket',
+      /^Tiket\d*$/,
     );
 
     await page.getByLabel('Cari remote').fill(remote.code.toLowerCase());
