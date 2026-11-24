@@ -4,12 +4,11 @@ import { type Account, ACCOUNTS, accountButton, loginAs } from './accounts';
 // Kerangka aplikasi (langkah 0.5): menu sesuai peran, tata letak dari ponsel 375px sampai
 // layar dinding, menu akun, tema, dan PWA yang bisa dipasang.
 
-const WORK_MENU = ['Overview', 'Alert', 'Tiket', 'Gamas', 'Remote', 'Laporan', 'Dokumen'];
+// Alert dan Gamas dihapus dari rencana (T124, T126).
+const WORK_MENU = ['Overview', 'Tiket', 'Remote', 'Laporan', 'Dokumen'];
 const PATHS: Record<string, string> = {
   Overview: '/',
-  Alert: '/alert',
   Tiket: '/tiket',
-  Gamas: '/gamas',
   Remote: '/remote',
   Laporan: '/laporan',
   Dokumen: '/dokumen',
@@ -128,13 +127,13 @@ test.describe('tata letak dari ponsel sampai layar dinding', () => {
   for (const viewport of viewports) {
     test(`${viewport.name} ${viewport.width}px: tanpa geser mendatar, menu dan isi terjangkau`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await loginAs(page, ACCOUNTS.admin, '/masuk?next=/gamas');
+      await loginAs(page, ACCOUNTS.admin, '/masuk?next=/dokumen');
 
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow).toBeLessThanOrEqual(0);
       await expect(page.getByRole('heading', { level: 1 })).toBeInViewport();
       // Menu yang aktif terlihat, juga saat menu menjadi bilah mendatar yang digulir.
-      await expect(menu(page).getByRole('link', { name: 'Gamas' })).toBeInViewport();
+      await expect(menu(page).getByRole('link', { name: 'Dokumen' })).toBeInViewport();
 
       const side = await menu(page).boundingBox();
       if (viewport.width <= 900) {
@@ -211,4 +210,13 @@ test.describe('aplikasi bisa dipasang (PWA)', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Portal NOC Terpusat');
     await context.setOffline(false);
   });
+});
+
+test('alamat Alert dan Gamas lama (dihapus dari rencana, T124/T126) menjadi halaman tidak ditemukan', async ({ page }) => {
+  await loginAs(page, ACCOUNTS.l1);
+  for (const path of ['/alert', '/gamas']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Halaman tidak ditemukan');
+  }
+  await expect(menu(page).getByRole('link', { name: /^(Alert|Gamas)$/ })).toHaveCount(0);
 });

@@ -379,7 +379,7 @@ const frequentItems = computed<BarItem[]>(() =>
                   NPR berjalan per wilayah
                 </h2>
                 <p class="card-subtitle">
-                  Saat ini · terbanyak dulu · remote down per wilayah menyusul di R6
+                  Saat ini · terbanyak dulu · jumlah remote aktif di bawah nama wilayah
                 </p>
               </div>
             </div>

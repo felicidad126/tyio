@@ -1,7 +1,7 @@
 /**
  * Remote = site milik customer (ATM, KCP, kiosk) yang dipantau NOC (langkah 1.2).
- * Status di sini adalah status data (aktif/nonaktif, T49), bukan up/down dari alat
- * monitoring (R6).
+ * Status di sini adalah status data (aktif/nonaktif, T49). Status up/down dari alat
+ * monitoring tidak ada: alert otomatis (R6) dihapus dari rencana (T126).
  */
 
 /** Zona waktu tampilan mengikuti lokasi remote (T12). */

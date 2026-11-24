@@ -5,8 +5,8 @@ import UserMenu from './UserMenu.vue';
 import ZoneClock from './ZoneClock.vue';
 
 // "Buat NPR" berfungsi sejak langkah 1.3, pencarian global sejak 1.5. Pilihan customer dan
-// notifikasi (mockup) menyusul bersama fitur yang mengisinya (R5), agar tidak ada tombol
-// yang belum berfungsi (T36).
+// lonceng notifikasi dari mockup tidak dibangun (T36; notifikasi dihapus bersama R5, T125),
+// agar tidak ada tombol yang belum berfungsi.
 </script>
 
 <template>

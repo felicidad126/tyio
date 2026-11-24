@@ -4,6 +4,12 @@ Berlaku untuk semua layar di `project/`. Sumber keputusan: [rencana induk](../..
 (K1–K25) dan [langkah teknis](../../plans/pending/langkah-teknis.md). Bila mockup dan aturan ini
 berbeda, aturan ini yang benar dan mockup yang diperbaiki.
 
+**Cakupan dikurangi 2026-11-24 (T124–T127):** Gamas, notifikasi (R5), alert otomatis (R6), dan
+integrasi customer (R7) dihapus. Layar `Alert.dc.html`, `Gamas.dc.html`, `GamasDetail.dc.html`,
+label Kandidat / Bukan gangguan / Gamas / Remote Up·Down, lonceng notifikasi, kartu Remote down,
+Alert, dan Gamas di Overview, serta badge Alert dan Gamas di sidebar tidak dibangun. Mockup itu
+dibiarkan sebagai arsip desain.
+
 ## 1. Peran dan tim (K20, K23, K24)
 
 | Peran | Siapa | Di mockup |

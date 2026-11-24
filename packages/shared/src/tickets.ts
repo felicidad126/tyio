@@ -9,7 +9,8 @@ import type { RemoteDetail, RemoteZone } from './remotes.js';
  */
 
 /**
- * Status NPR (T63, ATURAN.md §3). Kandidat dan Bukan gangguan menyusul di R6 (alert).
+ * Status NPR (T63, ATURAN.md §3). Kandidat dan Bukan gangguan dari mockup tidak dipakai:
+ * alert otomatis (R6) dihapus dari rencana (T126).
  * Status hanya berubah lewat entri linimasa (`ticket_actions`), tidak pernah langsung.
  */
 export const TICKET_STATUSES = [
@@ -112,8 +113,8 @@ export function isTicketActionKind(value: unknown): value is TicketActionKind {
 export const TICKET_ACTION_NOTE_MAX_LENGTH = 2000;
 
 /**
- * Penyebab gangguan saat NPR ditutup (T98): daftar tetap untuk semua customer, sama dengan
- * dialog tutup Gamas (R3), agar laporan dan Overview bisa dikelompokkan per penyebab.
+ * Penyebab gangguan saat NPR ditutup (T98): daftar tetap untuk semua customer (sama dengan
+ * dialog tutup Gamas di mockup), agar laporan dan Overview bisa dikelompokkan per penyebab.
  */
 export const TICKET_CLOSE_CAUSES = ['link', 'listrik', 'cuaca', 'perangkat', 'lainnya'] as const;
 export type TicketCloseCause = (typeof TICKET_CLOSE_CAUSES)[number];

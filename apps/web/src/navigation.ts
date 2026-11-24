@@ -1,19 +1,18 @@
 import {
   IconAdjustmentsHorizontal,
-  IconAlertTriangle,
   IconChartBar,
   IconDeviceDesktop,
   IconFolder,
   IconLayoutDashboard,
   IconMapPin,
-  IconStack2,
   IconTicket,
 } from '@tabler/icons-vue';
 import type { Role } from '@tyio/shared';
 import type { Component } from 'vue';
 
 // Satu daftar menu untuk sidebar, rute, judul halaman, dan hak akses per peran.
-// Urutan dan pengelompokan mengikuti mockup (design/mockup/project/Main.dc.html).
+// Urutan dan pengelompokan mengikuti mockup (design/mockup/project/Main.dc.html), tanpa Alert
+// dan Gamas: keduanya dihapus dari rencana (T124, T126).
 
 export interface ModulePage {
   /** Nama rute, juga dipakai uji layar. */
@@ -47,28 +46,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         release: 'R2 · Overview dan monitor 24/7',
       },
       {
-        name: 'alert',
-        path: '/alert',
-        label: 'Alert',
-        icon: IconAlertTriangle,
-        summary: 'Alert yang masuk dari alat monitoring, verifikasi L1, kandidat tiket, dan saran Gamas.',
-        release: 'R6 · Alert otomatis',
-      },
-      {
         name: 'tiket',
         path: '/tiket',
         label: 'Tiket',
         icon: IconTicket,
         summary: 'Antrean NPR dan TT, buat NPR, dan detail tiket dengan linimasa tindakan.',
         release: 'R1 · Remote dan tiket',
-      },
-      {
-        name: 'gamas',
-        path: '/gamas',
-        label: 'Gamas',
-        icon: IconStack2,
-        summary: 'Gangguan massal: remote terdampak, tiket anak, dan penyelesaian sekaligus.',
-        release: 'R3 · Gamas dan laporan teknisi',
       },
     ],
   },
