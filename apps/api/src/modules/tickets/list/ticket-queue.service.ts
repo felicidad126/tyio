@@ -9,6 +9,7 @@ import {
   TICKET_QUEUE_STATUS_ALL,
   TICKET_QUEUE_VIEWS,
   type TicketActionKind,
+  type TicketQueueFilter,
   type TicketQueueItem,
   type TicketQueuePage,
   type TicketQueueSort,
@@ -20,8 +21,11 @@ import type { DataSource, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../../common/tenant/tenant-scope.js';
 import { remoteRegionSql } from '../../remotes/remote-region.js';
 
-/** Saringan antrean yang sudah dibaca controller; id berformat UUID huruf kecil. */
-export interface TicketQueueFilters {
+/**
+ * Syarat antrean (tampilan + saringan) tanpa urutan dan halaman; id berformat UUID huruf kecil.
+ * Overview (2.1) menghitung angkanya dengan syarat yang sama (`matching`).
+ */
+export interface TicketQueueCriteria {
   view: TicketQueueView;
   tenantId?: string;
   categoryId?: string;
@@ -37,14 +41,28 @@ export interface TicketQueueFilters {
   createdTo?: string;
   closedFrom?: string;
   closedTo?: string;
+}
+
+/** Saringan antrean yang sudah dibaca controller. */
+export interface TicketQueueFilters extends TicketQueueCriteria {
   sort: TicketQueueSort;
   page: number;
   pageSize: number;
 }
 
 /** Saringan yang memuat NPR Ditutup di "Semua terbuka": status apa pun, atau tanggal ditutup. */
-export function includesClosed(filters: Pick<TicketQueueFilters, 'status' | 'closedFrom' | 'closedTo'>): boolean {
+export function includesClosed(filters: Pick<TicketQueueCriteria, 'status' | 'closedFrom' | 'closedTo'>): boolean {
   return filters.status !== undefined || filters.closedFrom !== undefined || filters.closedTo !== undefined;
+}
+
+/** Syarat antrean sebagai parameter `GET /api/tickets` (untuk tautan angka Overview). */
+export function toQueueFilter(criteria: TicketQueueCriteria): TicketQueueFilter {
+  const { view, ...rest } = criteria;
+  const filter: TicketQueueFilter = view === 'semua' ? {} : { view };
+  for (const [key, value] of Object.entries(rest) as Array<[keyof typeof rest, string | undefined]>) {
+    if (value !== undefined && value !== '') Object.assign(filter, { [key]: value });
+  }
+  return filter;
 }
 
 /** Awal hari tanggal WIB `$param` sebagai timestamptz; `nextDay` = awal hari berikutnya. */
@@ -121,7 +139,7 @@ export class TicketQueueService {
       siap: 0,
     };
 
-    const page = base().andWhere(viewCondition(filters.view, includesClosed(filters)));
+    const page = this.matching(scope, me, filters);
     if (filters.sort === 'terbaru') {
       page.orderBy('tk.created_at', 'DESC').addOrderBy('tk.id', 'DESC');
     } else {
@@ -142,7 +160,16 @@ export class TicketQueueService {
     };
   }
 
-  private filtered(scope: TenantScope, me: string, filters: TicketQueueFilters): SelectQueryBuilder<ObjectLiteral> {
+  /**
+   * NPR yang dihitung sebagai `total` antrean untuk syarat ini, tanpa urutan dan halaman.
+   * Alias: `tk` (tickets), `r` (remotes). Overview mengelompokkan query ini, jadi angkanya
+   * dan daftar yang dibuka dari angka itu memakai syarat yang sama persis.
+   */
+  matching(scope: TenantScope, me: string, criteria: TicketQueueCriteria): SelectQueryBuilder<ObjectLiteral> {
+    return this.filtered(scope, me, criteria).andWhere(viewCondition(criteria.view, includesClosed(criteria)));
+  }
+
+  private filtered(scope: TenantScope, me: string, filters: TicketQueueCriteria): SelectQueryBuilder<ObjectLiteral> {
     const query = applyTenantScope(
       this.dataSource
         .createQueryBuilder()

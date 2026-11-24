@@ -14,6 +14,7 @@ import { TicketsService } from './tickets.service.js';
 /**
  * NPR: buat NPR bernomor dan NPR terbuka per remote (1.3); linimasa, status, lampiran (1.4);
  * antrean dan penanggung (1.5); TT ke SD (1.5b); penutupan NPR dan TT, riwayat remote (1.6).
+ * Antrean dan daftar TT dipakai juga oleh Overview (2.1) untuk menghitung angkanya.
  */
 @Module({
   imports: [RemotesModule],
@@ -26,6 +27,6 @@ import { TicketsService } from './tickets.service.js';
     TroubleTicketsController,
   ],
   providers: [TicketsService, TicketActionsService, TicketQueueService, TroubleTicketsService],
-  exports: [TicketsService],
+  exports: [TicketsService, TicketQueueService, TroubleTicketsService],
 })
 export class TicketsModule {}

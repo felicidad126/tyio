@@ -8,6 +8,7 @@ import {
   MASTER_KINDS,
   type MasterKind,
   type MasterValue,
+  type Overview,
   type RemoteDetail,
   type RemoteImportReport,
   type RemotePage,
@@ -545,6 +546,43 @@ const CLOSE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** Overview (langkah 2.1): angka hanya dari customer dalam cakupan. */
+const OVERVIEW_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'GET /api/overview': async (fx) => {
+    const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+    await insertTroubleTicket(fx.dataSource, other.id);
+    const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+    const result = (await fx.operatorA.agent.get('/api/overview').expect(200)).body as Overview;
+    const [stored] = (await fx.dataSource.query(
+      `SELECT count(*) FILTER (WHERE status <> 'ditutup')::int AS open,
+              count(*) FILTER (WHERE created_at >= (now() AT TIME ZONE 'Asia/Jakarta')::date::timestamp
+                                                   AT TIME ZONE 'Asia/Jakarta')::int AS today,
+              (SELECT count(*)::int FROM trouble_tickets WHERE tenant_id = $1 AND status <> 'ditutup') AS tt
+         FROM tickets WHERE tenant_id = $1`,
+      [fx.tenantA.id],
+    )) as Array<{ open: number; today: number; tt: number }>;
+    expect(result.open.count).toBe(stored?.open);
+    expect(result.createdToday.count).toBe(stored?.today);
+    expect(result.activeTroubleTickets).toBe(stored?.tt);
+    expect(result.byCustomer.map((item) => item.tenantId)).toEqual([fx.tenantA.id]);
+    expect(new Set(result.urgent.map((item) => item.tenantId))).toEqual(new Set([fx.tenantA.id]));
+    expect(result.frequent.every((item) => item.remote.customerName === fx.tenantA.name)).toBe(true);
+    expect(result.frequent.map((item) => item.remote.id)).not.toContain(other.remoteId);
+    expect(result.open.count).toBeGreaterThan(0);
+    expect(own.id).toBeTruthy();
+
+    // Customer B lewat saringan: semua angka nol, tanpa daftar.
+    const byB = (await fx.operatorA.agent.get(`/api/overview?tenantId=${fx.tenantB.id}`).expect(200)).body as Overview;
+    expect([byB.open, byB.pending, byB.escalated, byB.ready, byB.createdToday, byB.closedToday].map((item) => item.count)).toEqual([
+      0, 0, 0, 0, 0, 0,
+    ]);
+    expect(byB.byStatus.every((item) => item.count === 0)).toBe(true);
+    expect(byB.daily.days.every((day) => day.total.count === 0)).toBe(true);
+    expect([byB.byCategory, byB.byCustomer, byB.regions, byB.urgent, byB.frequent]).toEqual([[], [], [], [], []]);
+    expect(byB.activeTroubleTickets).toBe(0);
+  },
+};
+
 const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   'POST /api/auth/login': async (fx) => {
     const res = await request(fx.server)
@@ -596,6 +634,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...QUEUE_PROBES,
   ...TROUBLE_TICKET_PROBES,
   ...CLOSE_PROBES,
+  ...OVERVIEW_PROBES,
 };
 
 
