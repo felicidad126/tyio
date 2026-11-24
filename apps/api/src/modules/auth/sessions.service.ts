@@ -63,6 +63,23 @@ export class SessionsService {
     return row ? { userId: row.user_id } : null;
   }
 
+  /**
+   * Pemilik sesi yang masih berlaku, tanpa mencatatnya dipakai (batas idle tidak diperpanjang).
+   * Dipakai aliran pembaruan langsung (2.2): sambungan yang terbuka tidak membuat sesi abadi.
+   */
+  async peek(token: string): Promise<{ userId: string } | null> {
+    if (!TOKEN_PATTERN.test(token)) return null;
+    const rows: Array<{ user_id: string }> = await this.dataSource.query(
+      `SELECT user_id FROM sessions
+        WHERE token_hash = $1
+          AND expires_at > now()
+          AND last_seen_at > now() - make_interval(mins => $2)`,
+      [hashToken(token), this.config.session.idleMinutes],
+    );
+    const row = rows[0];
+    return row ? { userId: row.user_id } : null;
+  }
+
   /** Mencabut sesi; mengembalikan pemiliknya bila sesi itu memang ada. */
   async revoke(token: string): Promise<{ userId: string; email: string } | null> {
     if (!TOKEN_PATTERN.test(token)) return null;

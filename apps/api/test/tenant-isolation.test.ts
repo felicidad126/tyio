@@ -13,6 +13,8 @@ import {
   type RemoteImportReport,
   type RemotePage,
   type SessionUser,
+  STREAM_EVENTS,
+  type TicketChangeEvent,
   type TenantSummary,
   type TicketAction,
   type TicketDetail,
@@ -55,6 +57,7 @@ import {
   TEST_PASSWORD,
 } from './fixtures.js';
 import { type RegisteredRoute, registeredRoutes } from './routes.js';
+import { openStream, sessionCookie } from './sse.js';
 
 // Isolasi tenant (langkah 0.4): pengguna yang dibatasi ke customer A tidak bisa membaca
 // data customer B lewat endpoint mana pun. Uji ini membaca daftar endpoint dari aplikasi,
@@ -583,6 +586,24 @@ const OVERVIEW_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   },
 };
 
+/** Pembaruan langsung (langkah 2.2): pemberitahuan hanya untuk customer dalam cakupan. */
+const STREAM_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
+  'GET /api/stream': async (fx) => {
+    const stream = await openStream(fx.server, await sessionCookie(fx.server, fx.operatorA.email));
+    try {
+      await stream.next(STREAM_EVENTS.hello);
+      const other = await insertTicket(fx.dataSource, fx.tenantB.id);
+      const own = await insertTicket(fx.dataSource, fx.tenantA.id);
+      await stream.next(STREAM_EVENTS.ticket, (data) => (data as TicketChangeEvent).ticketId === own.id);
+      const seen = stream.events.filter((event) => event.type === STREAM_EVENTS.ticket);
+      expect(seen.map((event) => (event.data as TicketChangeEvent).ticketId)).not.toContain(other.id);
+      expect(new Set(seen.map((event) => (event.data as TicketChangeEvent).tenantId))).toEqual(new Set([fx.tenantA.id]));
+    } finally {
+      stream.close();
+    }
+  },
+};
+
 const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   'POST /api/auth/login': async (fx) => {
     const res = await request(fx.server)
@@ -635,6 +656,7 @@ const PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
   ...TROUBLE_TICKET_PROBES,
   ...CLOSE_PROBES,
   ...OVERVIEW_PROBES,
+  ...STREAM_PROBES,
 };
 
 
