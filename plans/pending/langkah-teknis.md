@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 selesai (PR #14). Gamas (3.1), R5, R6, dan R7 dihapus dari rencana (T124–T127, 2026-11-24)** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
+Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 selesai (PR #14), 2.2 dikerjakan. Gamas (3.1), R5, R6, dan R7 dihapus dari rencana (T124–T127, 2026-11-24)** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -222,6 +222,14 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T125 | **R5 Notifikasi dihapus:** tidak ada bot Telegram dan email | TT tetap diteruskan ke SD lewat "Salin ringkasan TT" (K25, T96) seterusnya; lonceng notifikasi di bilah atas tidak dibangun (T36) |
 | T126 | **R6 Alert otomatis dihapus:** NPR selalu dibuat operator | Menu Alert dihapus; status Kandidat dan Bukan gangguan tidak ditambahkan (T63); remote tidak punya status up/down dari alat monitoring (T49), jadi panel wilayah Overview tetap NPR berjalan (T113) dan kartu Remote down serta Alert menunggu verifikasi tidak dibangun (T111). 2.2 menjadi pembaruan langsung tiket saja; arti "warna sesuai status" di peta (2.3) ditanyakan saat 2.3 |
 | T127 | **R7 Integrasi customer dihapus:** tidak ada API tiket per customer | Nomor tiket customer tetap diisi operator (T76) |
+
+**Keputusan yang diambil saat 2.2** (T128–T130 jawaban user 2026-11-24):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T128 | **Yang diperbarui langsung (tanpa muat ulang): Overview** (semua angka dan panel), **antrean Tiket** (NPR dan TT aktif), dan **halaman NPR** yang sedang dibuka (linimasa, status, penanggung, TT) | Jawaban user 2026-11-24 |
+| T129 | **Antrean tidak bergeser sendiri:** angka di tab langsung berubah; bila isi daftar berubah, muncul bilah "N perubahan baru · Tampilkan" yang memuat ulang daftar saat diklik | Jawaban user 2026-11-24; baris tidak pindah saat operator hendak menekan "Ambil" |
+| T130 | **Menu Tiket di sidebar menampilkan jumlah NPR berjalan** (dalam cakupan customer pengguna), selalu terkini di semua halaman, seperti mockup ("Tiket 48"). Tidak ada pemberitahuan terpisah; bunyi untuk layar dinding diputuskan di 2.4 | Jawaban user 2026-11-24; T36 menunda angka di menu sampai fitur yang mengisinya ada |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
