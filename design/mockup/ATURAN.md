@@ -65,6 +65,10 @@ Chip sisa SLA: aman `1 j 34 m` (abu + ikon jam), hampir lewat `18 m` (kuning + i
 lewat `Lewat 25 m` (merah + ikon peringatan), jeda `Jeda 2 j 10 m` (abu + ikon jeda), `Terpenuhi`
 (hijau + ikon centang). Warna tidak pernah sendirian: selalu ada teks, dan ikon bila ada.
 
+Peta remote (2.3, T141, T148): remote dengan NPR berjalan = bulatan merah `#c42b2b` (gelap `#e05252`)
+berisi jumlah NPR; tanpa NPR berjalan = titik abu kecil. Kelompok = lingkaran berisi jumlah remote,
+dengan garis dan lencana merah berisi jumlah remote bermasalah bila ada. Legenda selalu tampil.
+
 ## 4. Satuan waktu
 
 - **Nilai durasi** (chip, sel tabel, angka ringkasan): `m`, `j`, `h` → "18 m", "2 j 05 m", "1 h 4 j".
