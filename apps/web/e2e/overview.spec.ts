@@ -175,13 +175,13 @@ test('setiap angka di Overview membuka antrean dengan jumlah yang sama persis', 
   await page.getByRole('button', { name: 'Lihat sebagai tabel' }).click();
   await follow(page, today().getByRole('link', { name: /NPR Corrective,/ }), 1);
 
-  // TT aktif membuka daftar TT customer itu dengan jumlah yang sama (satu halaman).
+  // TT aktif membuka daftar TT customer itu dengan jumlah yang sama.
   const tt = stats.getByRole('link', { name: /^\d+ TT aktif$/ });
   const ttCount = await countOf(tt);
   expect(ttCount).toBeGreaterThanOrEqual(1);
   await tt.click();
   await expect(page).toHaveURL(/daftar=tt/);
-  await expect(page.locator('.tt-table tbody tr')).toHaveCount(Math.min(ttCount, 25));
+  await expect(page.getByText(new RegExp(`dari ${ttCount} TT aktif$`))).toBeVisible();
 });
 
 test('saringan dari Overview tampil di antrean dan bisa dihapus satu per satu', async ({ page, browser }) => {

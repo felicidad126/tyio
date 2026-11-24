@@ -152,6 +152,34 @@ test('halaman NPR: entri dari orang lain muncul tanpa muat ulang', async ({ page
   expect(await notReloaded()).toBe(true);
 });
 
+test('panel yang terbuka tetap memakai status saat dibuka: perubahan langsung tidak meloloskan tabrakan (T73)', async ({
+  page,
+  browser,
+}) => {
+  const ticket = await newTicket(browser);
+  await loginAs(page, ACCOUNTS.l1);
+  await page.goto(`/tiket/${ticket.id}`);
+  await expect(live(page)).toContainText('Langsung');
+  await page.getByRole('button', { name: 'Tambah tindakan' }).click();
+  const panel = page.getByRole('dialog');
+  await panel.getByLabel('Catatan').fill(`Dicek dari layar ${run}`);
+  await panel.getByLabel('Eskalasi · L2').check();
+
+  await asAdmin(browser, async (admin) => {
+    const res = await admin.request.post(`/api/tickets/${ticket.id}/actions`, {
+      data: { kind: 'catatan', note: 'Diambil operator lain', statusFrom: 'terbuka', statusTo: 'dikerjakan' },
+    });
+    expect(res.status()).toBe(201);
+  });
+  // Pembaruan langsung sudah tiba di halaman (status di judul berganti) sebelum menyimpan.
+  await expect(page.locator('.page-header').getByText('Dikerjakan', { exact: true })).toBeVisible();
+
+  await panel.getByRole('button', { name: 'Simpan tindakan' }).click();
+  await expect(panel.getByRole('alert')).toContainText('Status NPR sudah berubah menjadi Dikerjakan');
+  await panel.getByRole('button', { name: 'Batal' }).click();
+  await expect(page.getByRole('region', { name: /^Linimasa/ })).not.toContainText(`Dicek dari layar ${run}`);
+});
+
 test('sambungan putus terlihat jelas, lalu menyambung sendiri dan memuat perubahan yang terlewat', async ({
   page,
   browser,
