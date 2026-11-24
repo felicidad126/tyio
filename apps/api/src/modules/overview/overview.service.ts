@@ -29,6 +29,13 @@ export interface OverviewInput {
   tenantId?: string;
 }
 
+/**
+ * Nama tampilan kategori yang digabung: ejaan terkecil menurut urutan byte ("Remote Down"
+ * sebelum "remote down"). Tanpa `COLLATE "C"` pilihannya ikut collation database, dan berbeda
+ * antara server (CI run #151: en_US memilih "remote down").
+ */
+const DISPLAY_NAME = 'min(c.name COLLATE "C")';
+
 interface Clock {
   now: Date;
   today: string;
@@ -124,16 +131,19 @@ export class OverviewService {
     }));
   }
 
-  /** NPR berjalan per kategori; kategori customer berbeda dengan nama sama digabung (T114). */
+  /**
+   * NPR berjalan per kategori; kategori customer berbeda dengan nama sama digabung (T114).
+   * Nama tampilannya ejaan terkecil menurut urutan byte (`DISPLAY_NAME`), sama di server mana pun.
+   */
   private async byCategory(scope: TenantScope, me: string, base: TicketQueueCriteria): Promise<Overview['byCategory']> {
     const rows = await this.queue
       .matching(scope, me, base)
       .innerJoin('master_categories', 'c', 'c.id = tk.category_id')
-      .select('min(c.name)', 'name')
+      .select(DISPLAY_NAME, 'name')
       .addSelect('count(*)::int', 'n')
       .groupBy('lower(c.name)')
       .orderBy('count(*)', 'DESC')
-      .addOrderBy('min(c.name)', 'ASC')
+      .addOrderBy(DISPLAY_NAME, 'ASC')
       .getRawMany<{ name: string; n: number }>();
     return rows.map((row) => ({ name: row.name, count: row.n, filter: toQueueFilter({ ...base, categoryName: row.name }) }));
   }
@@ -206,7 +216,7 @@ export class OverviewService {
       .innerJoin('master_categories', 'c', 'c.id = tk.category_id')
       .select(day, 'day')
       .addSelect('lower(c.name)', 'key')
-      .addSelect('min(c.name)', 'name')
+      .addSelect(DISPLAY_NAME, 'name')
       .addSelect('count(*)::int', 'n')
       .groupBy(day)
       .addGroupBy('lower(c.name)')
