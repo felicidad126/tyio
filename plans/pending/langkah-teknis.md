@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 selesai di branch** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
+Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 selesai (PR #14). Gamas (3.1), R5, R6, dan R7 dihapus dari rencana (T124–T127, 2026-11-24)** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -214,6 +214,15 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T122 | **Seed: NPR Ditutup tersebar dalam 13 hari terakhir** (36 NPR di empat customer, remote ke-3 sampai ke-6), sekali saja walau seed diulang | Tren dan remote paling sering bermasalah bisa dicoba di staging (seperti T107) |
 | T123 | **Tanpa indeks baru.** Diukur pada 60.012 NPR berjalan + 20.241 remote (kasus terburuk; biasanya puluhan NPR berjalan): seluruh Overview 0,15–0,2 detik, query wilayah 75 ms, tren 12 ms (seq scan) | Belum perlu; indeks `tickets (tenant_id, created_at)` bisa ditambah bila data tumbuh |
 
+**Perubahan cakupan 2026-11-24** (T124–T127 jawaban user 2026-11-24):
+
+| # | Keputusan | Akibat |
+| --- | --- | --- |
+| T124 | **Gamas (3.1) dikeluarkan dari rencana.** R3 tinggal 3.2 (penugasan teknisi pada TT) dan 3.3 (hasil kunjungan SD) | Laporan Gamas di 4.2 hilang dan 4.2 tidak lagi menunggu 3.1; menu Gamas dihapus; kartu "Gamas aktif" dan banner saran Gamas di Overview tidak dibangun (T111). Penyebab penutupan NPR tetap daftar T98 |
+| T125 | **R5 Notifikasi dihapus:** tidak ada bot Telegram dan email | TT tetap diteruskan ke SD lewat "Salin ringkasan TT" (K25, T96) seterusnya; lonceng notifikasi di bilah atas tidak dibangun (T36) |
+| T126 | **R6 Alert otomatis dihapus:** NPR selalu dibuat operator | Menu Alert dihapus; status Kandidat dan Bukan gangguan tidak ditambahkan (T63); remote tidak punya status up/down dari alat monitoring (T49), jadi panel wilayah Overview tetap NPR berjalan (T113) dan kartu Remote down serta Alert menunggu verifikasi tidak dibangun (T111). 2.2 menjadi pembaruan langsung tiket saja; arti "warna sesuai status" di peta (2.3) ditanyakan saat 2.3 |
+| T127 | **R7 Integrasi customer dihapus:** tidak ada API tiket per customer | Nomor tiket customer tetap diisi operator (T76) |
+
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
 
@@ -318,7 +327,7 @@ Selesai bila: angka Overview cocok dengan daftar tiket; layar dinding jalan 24 j
 - Berkas: `apps/api/src/modules/overview/`, `apps/web/src/pages/overview/`
 - Menunggu: 1.5
 
-**2.2 Pembaruan langsung dan alert di dashboard (S)**
+**2.2 Pembaruan langsung di dashboard (S)** — alert dihapus bersama R6 (T126)
 - Terima: tiket baru/berubah muncul tanpa muat ulang; koneksi putus terlihat jelas dan menyambung sendiri; setiap panel menampilkan "data terakhir diterima".
 - Verifikasi: `pnpm test:api stream && pnpm e2e live-update`
 - Berkas: `apps/api/src/modules/stream/`, `apps/web/src/composables/useStream.ts`
@@ -326,6 +335,7 @@ Selesai bila: angka Overview cocok dengan daftar tiket; layar dinding jalan 24 j
 
 **2.3 Peta remote (M)**
 - Terima: marker berkelompok, warna sesuai status, klik menuju remote; lancar dengan ribuan titik.
+- Catatan: tanpa R6 tidak ada status up/down dari alat monitoring (T126); arti "status" di peta (mis. ada NPR berjalan) ditanyakan saat langkah ini.
 - Verifikasi: `pnpm e2e map`
 - Berkas: `apps/web/src/pages/overview/map/`
 - Menunggu: 2.1 · **Belum jelas: sumber ubin peta bila jaringan NOC tertutup dari internet**
@@ -337,14 +347,10 @@ Selesai bila: angka Overview cocok dengan daftar tiket; layar dinding jalan 24 j
 - Berkas: `apps/web/src/pages/wall/`
 - Menunggu: 2.2
 
-### R3 — Gamas + laporan teknisi
-Selesai bila: satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket.
+### R3 — Laporan teknisi
+Selesai bila: TT tercatat di linimasa tiket beserta penugasan teknisi dan hasil kunjungan SD.
 
-**3.1 Gamas: buat, tautkan, tutup (M)**
-- Terima: Gamas menyimpan waktu mulai/selesai, durasi, penyebab, troubleshooting, penyelesaian; remote dan tiket bisa ditautkan massal; menutup Gamas menawarkan penutupan tiket anak.
-- Verifikasi: `pnpm test:api gamas && pnpm e2e gamas`
-- Berkas: `apps/api/src/modules/gamas/`, `apps/web/src/pages/gamas/`
-- Menunggu: 1.6 · **Butuh: sesi detail Gamas**
+**~~3.1 Gamas: buat, tautkan, tutup~~ — dihapus dari rencana (T124, 2026-11-24).**
 
 **3.2 Penugasan teknisi pada TT (S)** — TT dasar sudah dibuat di 1.5b
 - Terima: eskalasi ke lapangan membuat TT bernomor `TT/…`; tindakan TT tampil di linimasa tiket yang sama; satu tiket bisa punya lebih dari satu TT.
@@ -368,53 +374,16 @@ Selesai bila: laporan bulanan dihasilkan tanpa olah manual di Excel.
 - Menunggu: 1.4 · **Butuh: sesi aturan SLA**
 
 **4.2 Template laporan dan ekspor (M)**
-- Terima: laporan NPR, Gamas, SLA, dan teknisi dengan filter periode/customer/kategori; ekspor Excel dan PDF; laporan besar dikerjakan di latar dan diunduh saat siap.
+- Terima: laporan NPR, SLA, dan teknisi dengan filter periode/customer/kategori; ekspor Excel dan PDF; laporan besar dikerjakan di latar dan diunduh saat siap. (Laporan Gamas dihapus bersama 3.1, T124.)
 - Verifikasi: `pnpm test:api reports && pnpm e2e reports`
 - Berkas: `apps/api/src/modules/reports/`, `apps/web/src/pages/reports/`
-- Menunggu: 4.1, 3.1 · **Butuh: contoh laporan wajib**
+- Menunggu: 4.1 · **Butuh: contoh laporan wajib**
 
-### R5 — Notifikasi
-Selesai bila: notifikasi sampai cepat dan tidak dobel.
+### ~~R5 — Notifikasi~~ — dihapus dari rencana (T125, 2026-11-24)
 
-**5.1 Mesin notifikasi dan pusat notifikasi di aplikasi (M)**
-- Terima: kejadian (tiket baru, eskalasi, SLA hampir lewat, Gamas) menjadi notifikasi lewat antrean; kiriman gagal dicoba ulang; satu kejadian satu notifikasi per penerima per kanal.
-- Verifikasi: `pnpm test:api notifications`
-- Berkas: `apps/api/src/modules/notifications/`
-- Menunggu: 2.2
+### ~~R6 — Alert otomatis~~ — dihapus dari rencana (T126, 2026-11-24)
 
-**5.2 Kanal Telegram dan email (S + S)**
-- Terima: bot mengirim ke grup per tenant/shift; email memakai template; pengguna mengatur kanal yang diterima.
-- Verifikasi: `pnpm test:api notifications.telegram notifications.email` (dengan penerima tiruan)
-- Menunggu: 5.1 · **Butuh: akun bot dan server email**
-
-### R6 — Alert otomatis
-Selesai bila: remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui.
-
-**6.0 Uji coba sambungan (S, eksperimen)**
-- Terima: satu alert nyata dari alat SNMP dan satu dari sistem VSAT berhasil diterima di staging; bentuk datanya terdokumentasi.
-- Verifikasi: catatan di `docs/integrasi/sumber-alert.md`
-- Menunggu: 0.2 (boleh mulai sejak R0) · **Butuh: nama produk + akses**
-
-**6.1 Pintu masuk alert dan kandidat tiket (M)**
-- Terima: alert dipetakan ke remote lewat IP/ID; disimpan dengan waktu kejadian dan waktu diterima; alert berulang menempel ke kandidat/tiket yang terbuka; alert yang tidak cocok dengan remote mana pun masuk daftar tersendiri.
-- Verifikasi: `pnpm test:api alerts.ingest alerts.dedup`
-- Berkas: `apps/api/src/modules/alerts/`
-- Menunggu: 6.0, 1.4
-
-**6.2 Verifikasi L1, debounce, pemulihan (M)**
-- Terima: L1 mengubah kandidat jadi tiket atau menandai bukan gangguan dengan alasan; gangguan lebih singkat dari ambang tidak menjadi kandidat; alert pulih memperbarui tiket yang sama.
-- Verifikasi: `pnpm test:api alerts.verify alerts.debounce && pnpm e2e alerts`
-- Berkas: `apps/web/src/pages/alerts/`
-- Menunggu: 6.1
-
-**6.3 Dugaan penyebab dan saran Gamas (M)**
-- Terima: kandidat diberi dugaan (link / perangkat / listrik / cuaca) dari gabungan data SNMP dan VSAT; banyak remote turun dalam satu jendela waktu pada hub/wilayah yang sama memunculkan saran Gamas.
-- Verifikasi: `pnpm test:api alerts.classify alerts.gamas-suggest`
-- Menunggu: 6.2, 3.1
-
-### R7 — Integrasi customer
-**7.1 API tiket per tenant (M)** — kunci API per tenant, pembuatan tiket yang aman diulang (kunci idempoten), nomor tiket customer tersimpan, batas laju. Verifikasi: `pnpm test:api public-api`. Menunggu: 6.1.
-**Belum jelas:** bentuk sistem customer; dirinci saat ada kebutuhan eksternal nyata.
+### ~~R7 — Integrasi customer~~ — dihapus dari rencana (T127, 2026-11-24)
 
 ### R8 — Go-live penuh
 **8.1 Hak akses rinci (M)** — matriks izin per peran, diuji per endpoint. Menunggu: sesi hak akses.
@@ -426,18 +395,17 @@ Selesai bila: remote turun di alat monitoring → kandidat muncul; pulih → tik
 
 ```
 0.1 → 0.2 → 0.3 → 0.4 ─┬→ 1.1 → 1.2 → 1.3 → 1.4 ─┬→ 1.5 → 2.1 → 2.2 → 2.4
-              └→ 0.5 ──┘                         ├→ 1.6 → 1.7       └→ 5.1 → 5.2
-        0.2 → 0.6                                ├→ 3.1 ┐  2.1 → 2.3
-        0.2 → 6.0 (eksperimen, paralel)          ├→ 3.2 → 3.3
-                                                 ├→ 4.1 → 4.2
-                                                 └→ 6.1 → 6.2 → 6.3 → 7.1
+              └→ 0.5 ──┘                         ├→ 1.6 → 1.7       2.1 → 2.3
+        0.2 → 0.6                                ├→ 3.2 → 3.3
+                                                 └→ 4.1 → 4.2
 ```
 
 Titik periksa dengan user: setelah 0.5 (kerangka terlihat), 1.4 (alur tiket), 1.7 (produksi
-pertama), 2.4 (layar dinding), lalu di akhir tiap rilis.
+pertama), 2.4 (layar dinding), lalu di akhir tiap rilis. Gamas (3.1), R5, R6, dan R7 dihapus
+(T124–T127).
 
 Langkah paling berisiko dikerjakan paling awal di rilisnya: 0.4 (isolasi tenant),
-1.3 (penomoran serentak), 1.4 (mesin status), 6.0 (sambungan ke alat yang belum dikenal).
+1.3 (penomoran serentak), 1.4 (mesin status).
 
 ## D. Yang harus tersedia agar tidak tertahan
 
@@ -446,10 +414,8 @@ Langkah paling berisiko dikerjakan paling awal di rilisnya: 0.4 (isolasi tenant)
 | Keputusan hosting + server staging + registry image | 0.2 (pemasangan staging), 0.6 | Anda |
 | Alur status tiket disetujui | 1.4 | Sesi dengan user |
 | Server produksi (dua unit) | 1.7 | Anda |
-| Detail Gamas, arti eskalasi/Take Action | 3.1, 3.2 | Sesi dengan user |
+| Arti eskalasi/Take Action untuk penugasan teknisi | 3.2 | Sesi dengan user |
 | Aturan SLA, contoh laporan wajib | 4.1, 4.2 | Sesi dengan user |
-| Akun bot Telegram, server email | 5.2 | Anda |
-| Nama produk + akses alat SNMP dan sistem VSAT | 6.0 | Tim NOC |
 | Matriks hak akses | 8.1 | Sesi dengan user |
 
 Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai begitu disetujui.
@@ -475,4 +441,4 @@ Langkah 0.1–0.5 dan 1.1–1.3 tidak bergantung pada siapa pun dan bisa mulai b
 | 1.5b Open Ticket (TT) ke Service Delivery | **Selesai 2026-11-22.** CI run #133 (commit `b429226`) hijau di kedua job (`verify`: lint/build/353 uji API; `image`: image, compose staging, seed, uji layar, latihan restore). Tidak ada run merah selama langkah ini; run #126, #128, #129 dibatalkan oleh push berikutnya (aturan concurrency), termasuk #128 di `5bbc57c` yang membawa galat tipe di berkas uji (diperbaiki di `78b24f4` sebelum CI sempat berjalan). Aturan disetujui user (T90–T93); keputusan teknis T94–T97 mohon dicek. `pnpm test:api trouble-tickets` (15 uji) dan seluruh `pnpm test` (353 uji, 3× berturut-turut) lulus terhadap PostgreSQL 18.7 (UTF8); migrasi naik-turun-naik di setiap run uji. Diuji: nomor TT per jarkom/customer/bulan zona remote, banyak TT per NPR, 6 TT serentak → nomor berurutan tanpa bentrok, status NPR tetap, semua peran, ringkasan lima baris, isian salah, NPR Ditutup (API dan database), remote/jarkom dari NPR walau dipalsukan, kolom TT tetap, entri TT di linimasa hanya untuk TT NPR yang sama, salin ringkasan tercatat (jumlah, waktu terakhir), daftar TT aktif, no. TT di pencarian global dan kata kunci antrean. Uji isolasi membaca 38 endpoint; 3 endpoint baru (`POST /api/tickets/:ticketId/trouble-tickets`, `GET /api/trouble-tickets`, `POST /api/trouble-tickets/:id/copied`) masing-masing punya uji lintas-tenant, dan uji pencarian kini juga memeriksa TT customer lain. Uji mutasi: 14 penjaga dirusak satu per satu dan masing-masing membuat uji merah (remote TT dari NPR, TT ditolak untuk NPR Ditutup di database dan API, jarkom diambil sebelum nomor dibuat, entri TT dibuat otomatis, salin di NPR Ditutup, cakupan buat/salin/daftar TT, kontak dari permintaan, jumlah salin, lokasi dengan zona, cakupan TT di pencarian, no. TT di kata kunci antrean). Dua uji diperkuat karena mutasi: penolakan TT untuk NPR Ditutup kini memeriksa pesan penjaga TT (bukan penjaga linimasa), dan pencarian TT customer lain kini diuji (mutasi cakupan TT di pencarian sempat lolos). Seed: contoh TT di NPR BNA-MKS-0217. Latihan restore lokal: `COCOK: 16 tabel, 7277 baris`. `pnpm e2e` (58 uji: + tt 5) lulus terhadap aplikasi hasil build (`TYIO_ENV=staging`) di Chromium penuh, dan 3× berturut-turut di headless shell (174/174), termasuk clipboard yang ditolak peramban. Tangkapan layar terang/gelap di 375 dan 1280 px diperiksa; yang diperbaiki: kolom remote daftar TT terlalu sempit, subjudul halaman Tiket tidak sesuai saat menampilkan TT. **Belum:** hasil kunjungan SD dan status "Hasil masuk" (R3, T93); penutupan TT oleh L2 (1.6); notifikasi otomatis ke SD (R5, K25). |
 | 1.6 Aturan penutupan dan halaman riwayat remote | **Selesai 2026-11-23.** CI run #144 (commit `7ba42ff`) hijau di kedua job (`verify`: lint/build/376 uji API; `image`: image, compose staging, seed, **semua 63 uji layar** — termasuk ticket-detail, ticket-queue, dan tt untuk pertama kali di CI — lalu latihan restore `COCOK: 16 tabel, 1221 baris` dan `uji-backup.sh` 9/9). Run #140–#143 (commit antara) hijau; run #139 (bagian 1) dibatalkan oleh push berikutnya (aturan concurrency), bukan gagal. Aturan disetujui user (T98–T101); keputusan teknis T102–T107 mohon dicek. `pnpm test:api tickets.close` (20 uji) dan seluruh `pnpm test` (376 uji, 3× berturut-turut) lulus terhadap PostgreSQL 18.7 (UTF8); migrasi naik-turun-naik di setiap run uji. Diuji: L1 menutup NPR tanpa TT (penyebab, penyelesaian, penutup di NPR dan linimasa), kelima penyebab, isian wajib dan tidak dikenal, hanya dari Pulih, NPR sudah ditutup, K21 (NPR dengan TT walau TT sudah ditutup: L1 403, L2/admin boleh), T99 (pesan menyebut TT yang masih berjalan saja), buka kembali mengosongkan isian lalu bisa ditutup lagi, tutup NPR serentak dengan buat TT (4 ronde, tidak pernah keduanya berhasil), 5 penutupan serentak → tepat 1; tutup TT oleh L2/admin (hasil kunjungan, status NPR tetap, hilang dari TT aktif), L1 403, TT sudah ditutup, salin TT yang sudah ditutup ditolak, 4 penutupan TT serentak → tepat 1; penjaga database (ke Ditutup hanya entri `tutup` berpenyebab, K21 dari peran penulis, T99, TT ditutup tidak menerima entri, UPDATE langsung isian penutupan NPR/TT ditolak, TT baru harus Menunggu SD); riwayat remote (urutan, waktu pulih dari entri Pulih terakhir, pulih lalu turun lagi = berjalan, TT dan statusnya, halaman, parameter salah, remote tidak ada). Uji isolasi membaca 41 endpoint; 3 endpoint baru (`POST /api/tickets/:ticketId/close`, `POST /api/trouble-tickets/:id/close`, `GET /api/remotes/:remoteId/tickets`) masing-masing punya uji lintas-tenant. Uji mutasi: 26 penjaga dirusak satu per satu dan masing-masing membuat uji merah (14 di API dan riwayat: peran K21, TT terbuka, hanya dari Pulih, NPR sudah ditutup, kunci baris NPR (merah 3/3), penyebab dari daftar, tutup TT hanya L2/admin, TT sudah ditutup, salin TT ditutup, kunci NPR + TT saat tutup TT (merah 3/3), waktu pulih hanya Pulih/Ditutup, entri Pulih terakhir, urutan, hanya NPR remote itu; 12 di database: K21 tutup NPR, TT terbuka (hanya yang belum ditutup / ada), TT ditutup tidak menerima entri, tutup TT hanya L2/admin, hasil kunjungan dari catatan, penyelesaian dari catatan, buka kembali mengosongkan, isian NPR hanya lewat linimasa, status TT hanya lewat linimasa, TT baru Menunggu SD, entri tutup wajib penyebab). Seed: tiga NPR Ditutup di BNA-MKS-0217 (T107). Latihan restore lokal: `COCOK: 16 tabel, 3175 baris`. Contoh perbaikan manual (tutup NPR lewat entri) di `docs/operasi/menjalankan.md` dicoba di database dev dan tercatat di audit. `pnpm e2e` (63 uji: + ticket-close 5) lulus terhadap aplikasi hasil build (`TYIO_ENV=staging`) di Chromium penuh, dan 3× berturut-turut di headless shell (189/189). Tangkapan layar terang/gelap di 375 dan 1280 px diperiksa; yang diperbaiki: tabel riwayat melebar di 1280 px (kolom digabung, T105), nomor NPR terpotong di 375 px (lebar kolom mode tabel terbawa ke blok). **Cacat lama yang ditemukan dan diperbaiki:** aturan tema gelap `:global([data-bs-theme='dark']) .kelas` di CSS komponen dikompilasi Vue menjadi `[data-bs-theme=dark]{…}` tanpa kelasnya, jadi alasan pending di antrean (1.5) dan "Belum disalin" di daftar TT (1.5b) tetap oranye gelap di latar gelap; uji regresi tema gelap terbukti merah pada CSS lama. **CI:** langkah uji layar masih memakai daftar berkas sampai 1.3 (`… remotes ticket-create`), jadi `ticket-detail`, `ticket-queue`, dan `tt` tidak pernah berjalan di CI sejak 1.4; kini `pnpm e2e` menjalankan semua berkas. **Belum:** hasil kunjungan SD terstruktur dan status TT "Hasil masuk" (R3, T93/T100); penutupan massal lewat Gamas (3.1); filter riwayat per periode. |
 | 2.1 Ringkasan dan analitik kejadian | **Selesai 2026-11-24.** CI run #156 (commit `147f41f`) hijau di kedua job (`verify`: lint/build/401 uji API; `image`: image, compose staging, seed, 68 uji layar termasuk overview, latihan restore `COCOK: 16 tabel, 1675 baris` dan `uji-backup.sh` 9/9). Run #151–#153 (bagian 2–4) merah di uji API `overview`: PostgreSQL CI (collation en_US) memilih "remote down" sebagai nama tampilan kategori gabungan, lokal (C.UTF-8) "Remote Down"; merah dibuktikan lokal di database ICU en-US lalu diperbaiki (`COLLATE "C"`, T118). Run #151 juga merah di `remotes.spec.ts` (uji lama yang membaca baris sebelum daftar dimuat ulang; kini menunggu). Run #154 dan #155 hijau di kedua job. Aturan disetujui user (T108–T114); keputusan teknis T115–T123 mohon dicek. `pnpm test:api overview` (18 uji) dan seluruh `pnpm test` (401 uji, 3× berturut-turut) lulus terhadap PostgreSQL 18.7 (UTF8), juga di database ber-collation ICU en-US seperti CI. Inti uji: **setiap angka** di jawaban Overview (angka utama, per status/kategori/customer/wilayah, setiap hari dan setiap kategori di tren, remote paling sering) dibandingkan dengan `total` `GET /api/tickets` untuk saringannya, di lima kombinasi periode/customer; TT aktif dengan `GET /api/trouble-tickets`. Diuji juga: nilai tiap panel pada data tetap (dua customer), batas periode 7 hari (00:00 WIB masuk, 23:59:59 sebelumnya tidak), batas hari WIB di SQL pada 16:59:59/17:00 UTC, urutan dan seri remote paling sering, saringan customer, cakupan customer, parameter salah, pemetaan wilayah SQL = TypeScript untuk setiap ejaan dan 38 provinsi resmi; saringan antrean baru (status semua, nama kategori lintas customer, remote, wilayah, tanggal dibuat/ditutup WIB). Uji isolasi membaca 42 endpoint; endpoint baru `GET /api/overview` punya uji lintas-tenant. Uji mutasi: 32 penjaga dirusak satu per satu dan masing-masing membuat uji merah (27 API: status semua, tanggal ditutup memuat Ditutup, nama kategori tanpa beda huruf, saringan wilayah/remote, ujung tanggal termasuk, awal hari dan tanggal menurut WIB, closed_at bukan created_at, pengelompokan kategori, remote aktif, tren per hari WIB, panjang periode, seri remote, batas 5 remote, cakupan jumlah remote, TT aktif per customer dan cakupannya, status bernilai nol, saringan ikut angka, NPR baru termasuk Ditutup, nama tampilan, awalan provinsi, Lainnya, periode 7/14/30, tanggal dari ≤ sampai; 5 web: warna tema gelap, tautan wilayah, segmen grafik, antrean memakai saringan Overview, label bisa dihapus). Satu mutasi sempat lolos (zona "hari ini" diganti UTC, karena uji berjalan saat tanggal UTC = WIB); batas hari dipindah ke `wib-day.ts` dan diuji dengan jam tetap. Baris yang membaca `now()` sendiri tidak bisa diuji pada jam tetap. Seed: 36 NPR Ditutup dalam 13 hari terakhir (T122). Latihan restore lokal: `COCOK: 16 tabel, 5492 baris`. Uji beban: Overview 0,15–0,2 detik pada 60.012 NPR berjalan + 20.241 remote (T123). `pnpm e2e` (68 uji: + overview 5) lulus terhadap aplikasi hasil build (`TYIO_ENV=staging`) di Chromium penuh, dan 3× berturut-turut di headless shell (204/204) ditambah sekali setelah perbaikan terakhir. Tangkapan layar terang/gelap di 375 dan 1280 px diperiksa; yang diperbaiki: panah baris "Perlu tindakan" turun ke baris sendiri di ponsel, tooltip menutupi legenda, tabel tren tergeser di dalam kotaknya di 375 px (kini blok bertumpuk), kartu angka utama satu kolom memanjang di ponsel (kini dua kolom), lama gangguan NPR Ditutup di antrean dihitung sampai sekarang (T121). **Belum:** remote down per wilayah, alert, dan Gamas di Overview (R6, R3); sisa SLA (R4); pembaruan langsung (2.2); peta (2.3). |
-| R2 lainnya, R3–R8 | Belum mulai |
+| R2 lainnya (2.2–2.4), R3 (3.2–3.3), R4, R8 | Belum mulai. Gamas (3.1), R5, R6, dan R7 dihapus dari rencana (T124–T127, 2026-11-24) |

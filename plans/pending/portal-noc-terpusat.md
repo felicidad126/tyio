@@ -214,11 +214,11 @@ Langkah teknis per rilis (file, perintah verifikasi) ditulis setelah R-A s.d. R-
 | **R0 Fondasi** | Tiga lingkungan, kerangka PWA, login, peran dasar L1/L2/L3/admin, tenant, backup otomatis, audit log, checklist kepatuhan bank/OJK | Aplikasi bisa dipasang di perangkat, login jalan, backup bisa di-restore | Hosting diputuskan |
 | **R1 Remote + Tiket** | Master remote, buat tiket (data remote terisi otomatis), linimasa tindakan, antrean, penutupan oleh L2/L3, pencarian | Satu gangguan bisa dicatat dari awal sampai ditutup tanpa sistem lama | R0, alur status disetujui |
 | **R2 Overview + monitor 24/7** | Ringkasan dan analitik kejadian, peta remote berwarna status, mode layar dinding, alert di dashboard, indikator "data terakhir diterima" | Angka Overview cocok dengan daftar tiket; layar dinding jalan 24 jam tanpa disentuh | R1 |
-| **R3 Gamas + laporan teknisi** | Gamas dengan remote terdampak dan tiket anak; pencatatan hasil kunjungan SD oleh L1/L2 (TT dasar pindah ke R1, lihat K16; SD tidak login, K23) | Satu Gamas menutup banyak tiket sekaligus; TT tercatat di linimasa tiket | R1, sesi Gamas |
+| **R3 Laporan teknisi** | Penugasan teknisi pada TT dan pencatatan hasil kunjungan SD oleh L1/L2 (TT dasar pindah ke R1, lihat K16; SD tidak login, K23). ~~Gamas~~ dihapus 2026-11-24 (T124) | TT tercatat di linimasa tiket beserta hasil kunjungan | R1 |
 | **R4 SLA + Laporan** | Aturan SLA, hitung mundur, jeda saat pending; template laporan + ekspor | Laporan bulanan dihasilkan tanpa olah manual di Excel | R1, sesi SLA |
-| **R5 Notifikasi** | Bot Telegram dan email: tiket baru, eskalasi, SLA hampir lewat, Gamas | Notifikasi sampai dalam hitungan detik dan tidak dobel | R4 untuk SLA |
-| **R6 Alert otomatis** | Pintu masuk alert dari SNMP/ping NOC dan dari sistem VSAT, kandidat tiket, verifikasi L1, deduplikasi, debounce untuk gangguan sesaat (rain fade), dugaan penyebab (link / perangkat / listrik / cuaca), saran Gamas | Remote turun di alat monitoring → kandidat muncul; pulih → tiket diperbarui | Akses ke alat SNMP dan sistem VSAT yang ada |
-| **R7 Integrasi customer** | API pembuatan tiket per tenant, nomor tiket customer tersinkron | Sistem customer uji membuat tiket di tenant yang benar | R6, kebutuhan eksternal nyata |
+| ~~R5 Notifikasi~~ | Dihapus 2026-11-24 (keputusan user, T125) | — | — |
+| ~~R6 Alert otomatis~~ | Dihapus 2026-11-24 (keputusan user, T126) | — | — |
+| ~~R7 Integrasi customer~~ | Dihapus 2026-11-24 (keputusan user, T127) | — | — |
 | **R8 Go-live penuh** | Hak akses rinci, dokumen/runbook, pengerasan keamanan, pelatihan, sistem lama dimatikan | Semua shift bekerja di portal baru selama satu periode laporan | Sesi hak akses |
 
 **Urutan dan alasannya:** R1 lebih dulu karena semua modul lain bergantung pada tiket dan
@@ -226,7 +226,12 @@ remote. R2 segera setelahnya karena layar 24/7 adalah yang paling terlihat oleh 
 (alert otomatis) sengaja belakangan: paling berisiko, bergantung pada alat yang belum dipilih,
 dan tiket manual harus sudah stabil sebelum dibanjiri alert.
 
-**Yang bisa berjalan paralel:** R3 dan R4 setelah R1; riset alat monitoring (untuk R6) sejak R0.
+**Yang bisa berjalan paralel:** R3 dan R4 setelah R1.
+
+**Perubahan cakupan 2026-11-24 (keputusan user):** Gamas dikeluarkan dari R3; R5 (notifikasi),
+R6 (alert otomatis), dan R7 (integrasi customer) dihapus. Akibatnya NPR selalu dibuat operator,
+TT diteruskan ke SD lewat "salin ringkasan TT" seterusnya (K25), dan menu Alert serta Gamas
+dihapus. Rincian di `langkah-teknis.md` (T124–T127).
 
 ## 9. Pertanyaan yang masih terbuka
 
