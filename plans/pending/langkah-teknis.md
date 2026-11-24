@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 selesai (PR #14), 2.2 selesai di branch. Gamas (3.1), R5, R6, dan R7 dihapus dari rencana (T124–T127, 2026-11-24)** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
+Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 selesai (PR #14), 2.2 selesai (PR #16), 2.3 dikerjakan. Gamas (3.1), R5, R6, dan R7 dihapus dari rencana (T124–T127, 2026-11-24)** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -239,6 +239,15 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T137 | **Panel di halaman NPR (tambah tindakan, tutup, buat TT) memakai salinan NPR saat panel dibuka.** Perubahan langsung tidak mengganti status asal di panel, jadi tabrakan tetap ditolak 409 (T73); setelah 409 panel memakai NPR terbaru | Tanpa ini, pembaruan langsung diam-diam menjadikan status baru sebagai status asal dan penjaga T73 terlewat (dijaga uji layar `ticket-detail`) |
 | T138 | **Angka menu Tiket = "Semua terbuka" antrean tanpa saringan** (NPR berjalan dalam cakupan), dengan pemisah ribuan; nama aksesibel "Tiket 48 NPR berjalan" | Sama persis dengan angka yang dilihat saat membuka Tiket |
 | T139 | **Uji layar memutus aliran dengan mencatat EventSource lewat skrip awal uji** dan menolak sambungan baru lewat route; kode aplikasi tidak punya kait khusus uji | Mode offline Chromium tidak memutus aliran SSE yang sudah terbuka |
+
+**Keputusan yang diambil saat 2.3** (T140–T143 jawaban user 2026-11-24):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T140 | **Peta di halaman Remote, dengan pilihan Daftar \| Peta**; saringan customer dan kata kunci berlaku di keduanya. Panel wilayah di Overview menautkan ke Peta (mockup: "Lihat peta lengkap di halaman Remote") | Jawaban user 2026-11-24 |
+| T141 | **Warna marker = ada NPR berjalan atau tidak:** merah = remote punya NPR berjalan, abu = tidak. Semua remote aktif tampil; kelompok marker menampilkan jumlah remote bermasalah di dalamnya | Jawaban user 2026-11-24; status up/down tidak ada (T126) |
+| T142 | **Peta dasar = garis pantai dan batas provinsi Indonesia yang disimpan di portal** (data publik), tanpa sambungan internet dan tanpa peta jalan | Jawaban user 2026-11-24; jaringan NOC mungkin tertutup dari internet; tidak bergantung keputusan hosting |
+| T143 | **Remote tanpa koordinat disebut jumlahnya** di atas peta ("N remote belum punya koordinat") dengan tautan ke daftar remote itu | Jawaban user 2026-11-24; admin bisa melengkapinya lewat impor |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
