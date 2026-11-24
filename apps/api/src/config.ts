@@ -33,7 +33,16 @@ export interface AppConfig {
   trustProxy: string | number | undefined;
   session: SessionConfig;
   loginLimit: LoginLimitConfig;
+  stream: StreamConfig;
 }
+
+/** Pembaruan langsung (langkah 2.2). */
+export interface StreamConfig {
+  /** Jeda detak di aliran `GET /api/stream`; sesi juga diperiksa ulang setiap detak. */
+  heartbeatMs: number;
+}
+
+export const DEFAULT_STREAM: StreamConfig = { heartbeatMs: 15_000 };
 
 export const DEFAULT_LOGIN_LIMIT: LoginLimitConfig = {
   maxFailuresPerAccount: 5,
@@ -104,6 +113,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     trustProxy,
     session: { idleMinutes, maxHours, cookieSecure },
     loginLimit: { ...DEFAULT_LOGIN_LIMIT },
+    stream: { ...DEFAULT_STREAM },
   };
 }
 

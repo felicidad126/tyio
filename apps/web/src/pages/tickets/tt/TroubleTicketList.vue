@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { IconSearch } from '@tabler/icons-vue';
-import type { TroubleTicketPage } from '@tyio/shared';
+import type { TroubleTicketPage, TroubleTicketQueueItem } from '@tyio/shared';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { debounced, useStream } from '../../../composables/useStream';
 import { sinceLabel } from '../list/relative-time';
 import { ticketApi } from '../ticket-api';
 import { formatZonedShort } from '../zoned-time';
@@ -13,6 +14,8 @@ import TroubleTicketStatusPill from './TroubleTicketStatusPill.vue';
 // Saringan (`tq`, `customer`, `tpage`) di alamat halaman, sama seperti antrean NPR.
 
 const props = defineProps<{ customers: Array<{ id: string; name: string }> }>();
+/** Waktu daftar yang tampil diterima (ms epoch), untuk penanda langsung di judul halaman. */
+const emit = defineEmits<{ loaded: [at: number] }>();
 
 const route = useRoute();
 const router = useRouter();
@@ -50,17 +53,26 @@ function setQuery(change: Partial<Record<'tq' | 'customer' | 'tpage', string>>):
 }
 
 let latest = 0;
+/** Daftar terbaru yang belum ditampilkan (pembaruan langsung, T129). */
+const pending = ref<TroubleTicketPage | null>(null);
+const pendingChanges = ref(0);
+
+const params = () => ({ tenantId: filters.value.customer, q: filters.value.q, page: String(filters.value.page) });
+
+function show(result: TroubleTicketPage): void {
+  page.value = result;
+  pending.value = null;
+  pendingChanges.value = 0;
+  emit('loaded', Date.now());
+}
+
 async function load(): Promise<void> {
   const mine = ++latest;
   loading.value = true;
   error.value = '';
   try {
-    const result = await ticketApi.troubleTickets({
-      tenantId: filters.value.customer,
-      q: filters.value.q,
-      page: String(filters.value.page),
-    });
-    if (mine === latest) page.value = result;
+    const result = await ticketApi.troubleTickets(params());
+    if (mine === latest) show(result);
   } catch (cause) {
     if (mine === latest) error.value = cause instanceof Error ? cause.message : 'Daftar TT gagal dimuat.';
   } finally {
@@ -68,6 +80,37 @@ async function load(): Promise<void> {
   }
 }
 watch(filters, () => void load(), { immediate: true, deep: true });
+
+const rowKey = (item: TroubleTicketQueueItem) => [item.status, item.copiedCount, item.lastCopiedAt ?? ''].join('|');
+
+/** Pembaruan langsung: daftar tidak bergeser sendiri; perubahan menunggu "Tampilkan" (T129). */
+async function check(): Promise<void> {
+  if (!page.value) return;
+  const mine = latest;
+  try {
+    const result = await ticketApi.troubleTickets(params());
+    if (mine !== latest || !page.value) return;
+    const old = new Map(page.value.items.map((item) => [item.id, rowKey(item)]));
+    const fresh = new Map(result.items.map((item) => [item.id, rowKey(item)]));
+    const added = [...fresh.keys()].filter((id) => !old.has(id)).length;
+    const removed = [...old.keys()].filter((id) => !fresh.has(id)).length;
+    const changed = [...fresh.entries()].filter(([id, key]) => old.has(id) && old.get(id) !== key).length;
+    const changes = Math.max(added, removed) + changed;
+    if (changes === 0) show(result);
+    else {
+      pending.value = result;
+      pendingChanges.value = changes;
+    }
+  } catch {
+    // Gagal di latar: layar tetap; dicoba lagi pada perubahan berikutnya.
+  }
+}
+const liveCheck = debounced(() => void check(), 800);
+useStream({ onChange: liveCheck.schedule, onResync: liveCheck.schedule });
+
+function showPending(): void {
+  if (pending.value) show(pending.value);
+}
 
 const lastPage = computed(() => (page.value ? Math.max(1, Math.ceil(page.value.total / page.value.pageSize)) : 1));
 const range = computed(() => {
@@ -131,6 +174,21 @@ const range = computed(() => {
           </option>
         </select>
       </div>
+    </div>
+
+    <div
+      v-if="pendingChanges > 0"
+      class="card-body border-bottom py-2 live-changes"
+      role="status"
+    >
+      <span>{{ pendingChanges }} perubahan baru</span>
+      <button
+        type="button"
+        class="btn btn-sm"
+        @click="showPending"
+      >
+        Tampilkan
+      </button>
     </div>
 
     <div
@@ -257,6 +315,25 @@ const range = computed(() => {
 </template>
 
 <style scoped>
+.live-changes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  background: var(--tblr-primary-lt);
+  font-weight: 600;
+}
+
+.live-changes .btn {
+  min-height: 32px;
+}
+
+@media (max-width: 767.98px) {
+  .live-changes .btn {
+    min-height: 44px;
+  }
+}
+
 .tt-filters {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);

@@ -72,6 +72,12 @@ export class AuthService {
     return user;
   }
 
+  /** Sesi masih berlaku dan pemiliknya masih aktif, tanpa memperpanjang batas idle (2.2). */
+  async isSessionActive(token: string): Promise<boolean> {
+    const session = await this.sessions.peek(token);
+    return session !== null && (await this.users.findActiveById(session.userId)) !== null;
+  }
+
   /** Dicatat di audit hanya bila sesi itu memang masih ada. */
   async logout(token: string, client: ClientInfo): Promise<void> {
     const owner = await this.sessions.revoke(token);

@@ -17,6 +17,8 @@ describe('loadConfig', () => {
       // K28: 30 menit idle, paling lama 12 jam.
       session: { idleMinutes: 30, maxHours: 12, cookieSecure: true },
       loginLimit: DEFAULT_LOGIN_LIMIT,
+      // Detak aliran pembaruan langsung (2.2) tiap 15 detik.
+      stream: { heartbeatMs: 15_000 },
     });
   });
 

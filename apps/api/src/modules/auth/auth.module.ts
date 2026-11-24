@@ -22,5 +22,7 @@ import { SessionsService } from './sessions.service.js';
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
+  // Aliran pembaruan langsung (2.2) memeriksa ulang sesi di setiap detak.
+  exports: [AuthService],
 })
 export class AuthModule {}
