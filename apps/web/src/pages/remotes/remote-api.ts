@@ -2,6 +2,7 @@ import {
   type MasterValue,
   type RemoteDetail,
   type RemoteImportReport,
+  type RemoteMap,
   type RemotePage,
   type TenantSummary,
   XLSX_MIME,
@@ -15,17 +16,24 @@ export interface RemoteQuery {
   tenantId?: string;
   networkId?: string;
   active?: 'true' | 'false';
+  hasCoordinates?: 'true' | 'false';
   page?: number;
 }
 
+/** Saringan peta remote (langkah 2.3): sama dengan daftar, tanpa halaman. */
+export type RemoteMapQuery = Omit<RemoteQuery, 'page' | 'hasCoordinates'>;
+
+function toParams(query: object): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== '') params.set(key, String(value));
+  }
+  return params.toString();
+}
+
 export const remoteApi = {
-  list(query: RemoteQuery) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== '') params.set(key, String(value));
-    }
-    return apiRequest<RemotePage>('GET', `/remotes?${params.toString()}`);
-  },
+  list: (query: RemoteQuery) => apiRequest<RemotePage>('GET', `/remotes?${toParams(query)}`),
+  map: (query: RemoteMapQuery) => apiRequest<RemoteMap>('GET', `/remote-map?${toParams(query)}`),
   get: (id: string) => apiRequest<RemoteDetail>('GET', `/remotes/${encodeURIComponent(id)}`),
   customers: () => apiRequest<TenantSummary[]>('GET', '/tenants'),
   networks: (tenantId: string) =>

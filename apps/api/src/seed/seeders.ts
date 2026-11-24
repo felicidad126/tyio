@@ -477,9 +477,12 @@ export function seedRemotes(): Array<Record<string, unknown>> {
       const number = String(i * 7).padStart(4, '0');
       const cityCode = place.city.slice(0, 3).toUpperCase();
       const kanca = `KCP ${place.city} ${i}`;
-      // Sebaran tetap ±0,06° (±7 km) di sekitar kota: sama setiap kali seed dijalankan.
+      // Sebaran acak-tetap ±0,06° (±7 km) di sekitar kota: sama setiap kali seed dijalankan.
       const located = i % SEED_REMOTES_WITHOUT_COORDINATES_EVERY !== 0;
-      const spread = (seed: number) => (((seed % 13) + 13) % 13) * 0.01 - 0.06;
+      const spread = (seed: number) => {
+        const x = Math.sin(seed) * 43_758.5453;
+        return (x - Math.floor(x) - 0.5) * 0.12;
+      };
       remotes.push({
         tenant_code: tenant.code,
         network_code: i % 4 === 0 ? 'VPN' : 'VSAT',

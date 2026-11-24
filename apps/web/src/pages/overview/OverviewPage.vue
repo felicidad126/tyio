@@ -108,6 +108,11 @@ const asOf = computed(() =>
 );
 const customerName = computed(() => customers.value.find((item) => item.id === customer.value)?.name ?? '');
 const showCustomers = computed(() => customers.value.length > 1 && !customer.value);
+/** Peta remote (langkah 2.3, T140) dengan customer yang sama. */
+const mapLink = computed<RouteLocationRaw>(() => ({
+  name: 'remote',
+  query: customer.value ? { tampilan: 'peta', customer: customer.value } : { tampilan: 'peta' },
+}));
 const ttLink = computed<RouteLocationRaw>(() => ({
   name: 'tiket',
   query: customer.value ? { daftar: 'tt', customer: customer.value } : { daftar: 'tt' },
@@ -409,6 +414,11 @@ const frequentItems = computed<BarItem[]>(() =>
               >
                 Belum ada remote aktif.
               </p>
+            </div>
+            <div class="card-footer">
+              <RouterLink :to="mapLink">
+                Lihat peta lengkap di halaman Remote
+              </RouterLink>
             </div>
           </section>
         </div>
