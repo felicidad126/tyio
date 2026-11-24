@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   OPEN_TICKET_STATUSES,
-  OVERVIEW_DAY_ZONE_IANA,
   OVERVIEW_FREQUENT_LIMIT,
   OVERVIEW_URGENT_LIMIT,
   type Overview,
@@ -22,6 +21,7 @@ import {
   TicketQueueService,
   toQueueFilter,
 } from '../tickets/list/ticket-queue.service.js';
+import { wibDateSql } from '../tickets/list/wib-day.js';
 import { TroubleTicketsService } from '../trouble-tickets/trouble-tickets.service.js';
 
 export interface OverviewInput {
@@ -106,10 +106,8 @@ export class OverviewService {
   /** Jam database: sekarang, hari ini menurut WIB (T109), dan hari pertama periode. */
   private async clock(period: OverviewPeriod): Promise<Clock> {
     const [row] = (await this.dataSource.query(
-      `SELECT now() AS now,
-              to_char((now() AT TIME ZONE $1)::date, 'YYYY-MM-DD') AS today,
-              to_char((now() AT TIME ZONE $1)::date - ($2::int - 1), 'YYYY-MM-DD') AS "from"`,
-      [OVERVIEW_DAY_ZONE_IANA, period],
+      `SELECT now() AS now, ${wibDateSql('now()')} AS today, ${wibDateSql('now()', '($1::int - 1)')} AS "from"`,
+      [period],
     )) as Clock[];
     if (!row) throw new Error('Jam database tidak terbaca.');
     return row;
@@ -210,7 +208,7 @@ export class OverviewService {
     inPeriod: TicketQueueCriteria,
     clock: Clock,
   ): Promise<Overview['daily']> {
-    const day = `to_char((tk.created_at AT TIME ZONE '${OVERVIEW_DAY_ZONE_IANA}')::date, 'YYYY-MM-DD')`;
+    const day = wibDateSql('tk.created_at');
     const rows = await this.queue
       .matching(scope, me, inPeriod)
       .innerJoin('master_categories', 'c', 'c.id = tk.category_id')

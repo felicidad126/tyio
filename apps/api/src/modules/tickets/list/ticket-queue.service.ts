@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   OPEN_TICKET_STATUSES,
-  OVERVIEW_DAY_ZONE_IANA,
   PENDING_TICKET_STATUSES,
   type RemoteRegion,
   type RemoteZone,
@@ -20,6 +19,7 @@ import {
 import type { DataSource, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../../common/tenant/tenant-scope.js';
 import { remoteRegionSql } from '../../remotes/remote-region.js';
+import { wibDayStartSql } from './wib-day.js';
 
 /**
  * Syarat antrean (tampilan + saringan) tanpa urutan dan halaman; id berformat UUID huruf kecil.
@@ -65,10 +65,6 @@ export function toQueueFilter(criteria: TicketQueueCriteria): TicketQueueFilter 
   return filter;
 }
 
-/** Awal hari tanggal WIB `$param` sebagai timestamptz; `nextDay` = awal hari berikutnya. */
-function dayStart(param: string, nextDay = false): string {
-  return `((CAST(:${param} AS date)${nextDay ? ' + 1' : ''})::timestamp AT TIME ZONE '${OVERVIEW_DAY_ZONE_IANA}')`;
-}
 
 interface QueueRow {
   id: string;
@@ -195,11 +191,11 @@ export class TicketQueueService {
     if (filters.remoteId) query.andWhere('tk.remote_id = :remoteId', { remoteId: filters.remoteId });
     if (filters.region) query.andWhere(`${remoteRegionSql('r.province')} = :region`, { region: filters.region });
     if (filters.createdFrom) {
-      query.andWhere(`tk.created_at >= ${dayStart('createdFrom')}`, { createdFrom: filters.createdFrom });
+      query.andWhere(`tk.created_at >= ${wibDayStartSql('createdFrom')}`, { createdFrom: filters.createdFrom });
     }
-    if (filters.createdTo) query.andWhere(`tk.created_at < ${dayStart('createdTo', true)}`, { createdTo: filters.createdTo });
-    if (filters.closedFrom) query.andWhere(`tk.closed_at >= ${dayStart('closedFrom')}`, { closedFrom: filters.closedFrom });
-    if (filters.closedTo) query.andWhere(`tk.closed_at < ${dayStart('closedTo', true)}`, { closedTo: filters.closedTo });
+    if (filters.createdTo) query.andWhere(`tk.created_at < ${wibDayStartSql('createdTo', true)}`, { createdTo: filters.createdTo });
+    if (filters.closedFrom) query.andWhere(`tk.closed_at >= ${wibDayStartSql('closedFrom')}`, { closedFrom: filters.closedFrom });
+    if (filters.closedTo) query.andWhere(`tk.closed_at < ${wibDayStartSql('closedTo', true)}`, { closedTo: filters.closedTo });
     if (filters.q) {
       // Huruf %, _, dan \ di kata kunci dicari apa adanya, bukan sebagai pola.
       const pattern = `%${filters.q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;

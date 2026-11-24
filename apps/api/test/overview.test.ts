@@ -15,6 +15,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { provinceKeySql, remoteRegionSql } from '../src/modules/remotes/remote-region.js';
+import { wibDateSql, wibDayStartSql } from '../src/modules/tickets/list/wib-day.js';
 import { createTestApp } from './create-test-app.js';
 import {
   closeTicketDirect,
@@ -317,6 +318,16 @@ describe('Overview', () => {
   it('saringan customer: semua panel hanya customer itu; saringan ikut di setiap angka', async () => {
     const result = await overview(op, `tenantId=${tenantB.id}`);
     expect(result.open).toEqual({ count: 4, filter: { tenantId: tenantB.id } });
+    // Semua status berjalan tetap tercantum, juga yang nol.
+    expect(result.byStatus.map((item) => [item.status, item.count])).toEqual([
+      ['terbuka', 3],
+      ['dikerjakan', 0],
+      ['pending_customer', 0],
+      ['pending_tm', 0],
+      ['eskalasi_l2', 1],
+      ['eskalasi_sd', 0],
+      ['pulih', 0],
+    ]);
     expect(result.byCustomer.map((item) => item.tenantId)).toEqual([tenantB.id]);
     expect(result.activeTroubleTickets).toBe(0);
     expect(result.frequent.every((item) => item.filter.tenantId === tenantB.id)).toBe(true);
@@ -349,6 +360,26 @@ describe('Overview', () => {
       const res = await op.get(`/api/overview?${query}`).expect(400);
       expect(res.body.message).toMatch(message);
     }
+  });
+
+  it('batas hari WIB di SQL: tanggal dari waktu dan awal hari dari tanggal (T109)', async () => {
+    const dates = (await dataSource.query(
+      `SELECT ${wibDateSql("'2026-11-23T16:59:59Z'::timestamptz")} AS before,
+              ${wibDateSql("'2026-11-23T17:00:00Z'::timestamptz")} AS midnight,
+              ${wibDateSql("'2026-11-23T17:00:00Z'::timestamptz", '(14 - 1)')} AS first`,
+    )) as Array<{ before: string; midnight: string; first: string }>;
+    expect(dates[0]).toEqual({ before: '2026-11-23', midnight: '2026-11-24', first: '2026-11-11' });
+    const starts = (await dataSource
+      .createQueryBuilder()
+      .select(wibDayStartSql('d'), 'start')
+      .addSelect(wibDayStartSql('d', true), 'next')
+      .from('(SELECT 1)', 'x')
+      .setParameter('d', '2026-11-24')
+      .getRawOne()) as { start: Date; next: Date };
+    expect([starts.start.toISOString(), starts.next.toISOString()]).toEqual([
+      '2026-11-23T17:00:00.000Z',
+      '2026-11-24T17:00:00.000Z',
+    ]);
   });
 
   describe('wilayah di SQL sama dengan @tyio/shared (T113)', () => {
