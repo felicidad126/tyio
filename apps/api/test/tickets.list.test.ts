@@ -277,6 +277,10 @@ describe('antrean NPR', () => {
       expect(idsOf(all)).toEqual([open.id, closed.id].sort());
       expect(all.counts).toEqual({ semua: 2, saya: 0, pending: 1, eskalasi: 0, siap: 0 });
       expect((await queue(l1, `tenantId=${tenantId}`)).total).toBe(1);
+      // Waktu ditutup ikut di baris, agar lama gangguan NPR Ditutup tidak dihitung sampai sekarang.
+      const byId = new Map(all.items.map((item) => [item.id, item]));
+      expect(byId.get(open.id)?.closedAt).toBeNull();
+      expect(new Date(byId.get(closed.id)?.closedAt ?? '').getTime()).toBeGreaterThan(Date.now() - 60_000);
     });
 
     it('remoteId: hanya NPR remote itu; id yang salah format memberi hasil kosong', async () => {

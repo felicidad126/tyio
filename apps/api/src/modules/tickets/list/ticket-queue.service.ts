@@ -85,6 +85,7 @@ interface QueueRow {
   remote_city: string | null;
   remote_zone: RemoteZone;
   started_at: Date;
+  closed_at: Date | null;
   created_at: Date;
   assignee_id: string | null;
   assignee_name: string | null;
@@ -218,7 +219,7 @@ export class TicketQueueService {
     const rows = (await this.dataSource.query(
       `SELECT tk.id, tk.number, tk.status, tk.tenant_id, t.name AS customer_name, c.name AS category_name,
               s.name AS system_name, tk.customer_ticket_number, r.id AS remote_id, r.code AS remote_code,
-              r.name AS remote_name, r.city AS remote_city, r.time_zone AS remote_zone, tk.started_at,
+              r.name AS remote_name, r.city AS remote_city, r.time_zone AS remote_zone, tk.started_at, tk.closed_at,
               tk.created_at, tk.assignee_id, asg.name AS assignee_name, asg.role AS assignee_role,
               CASE WHEN tk.status IN (${list(PENDING_TICKET_STATUSES)}) THEN
                 (SELECT a.pending_reason FROM ticket_actions a
@@ -264,6 +265,7 @@ function toItem(row: QueueRow): TicketQueueItem {
       zone: row.remote_zone,
     },
     startedAt: row.started_at.toISOString(),
+    closedAt: row.closed_at ? row.closed_at.toISOString() : null,
     createdAt: row.created_at.toISOString(),
     assignee:
       row.assignee_id && row.assignee_name && row.assignee_role

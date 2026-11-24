@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { IconPlus, IconSearch } from '@tabler/icons-vue';
+import { IconPlus, IconSearch, IconX } from '@tabler/icons-vue';
 import {
   isRole,
   type MasterValue,
   ROLE_LABELS,
   TICKET_ACTION_KIND_LABELS,
   TICKET_QUEUE_VIEW_LABELS,
+  TICKET_QUEUE_STATUS_ALL,
   TICKET_QUEUE_VIEWS,
   TICKET_STATUS_LABELS,
   TICKET_STATUSES,
@@ -19,15 +20,18 @@ import PageHeader from '../../../components/PageHeader.vue';
 import TicketStatusPill from '../TicketStatusPill.vue';
 import TroubleTicketList from '../tt/TroubleTicketList.vue';
 import { ticketApi } from '../ticket-api';
-import { formatZoned, formatZonedShort } from '../zoned-time';
+import { formatDayRange, formatZoned, formatZonedShort } from '../zoned-time';
+import { type QueuePageKey, queueApiParams } from './queue-query';
 import { durationLabel, sinceLabel } from './relative-time';
 
 // Antrean NPR (langkah 1.5): lima tampilan bawaan dengan jumlahnya (T82), saringan di alamat
 // halaman (bisa dibagikan; diingat saat kembali ke Tiket), urutan mulai gangguan terlama (T83),
-// dan "Ambil" untuk NPR yang belum punya penanggung (T81).
+// dan "Ambil" untuk NPR yang belum punya penanggung (T81). Saringan yang datang dari angka
+// Overview (2.1: remote, nama kategori, wilayah, tanggal dibuat/ditutup) tampil sebagai label
+// yang bisa dihapus satu per satu.
 
 const STORAGE_KEY = 'tyio:antrean';
-type Key = 'view' | 'customer' | 'kategori' | 'system' | 'status' | 'q' | 'sort' | 'page';
+type Key = QueuePageKey | 'sort' | 'page';
 
 const route = useRoute();
 const router = useRouter();
@@ -55,13 +59,63 @@ const filters = computed(() => {
     q: one(route.query.q),
     sort: one(route.query.sort) === 'terbaru' ? 'terbaru' : 'mulai',
     page: Math.max(1, Number(one(route.query.page)) || 1),
+    remote: one(route.query.remote),
+    kategoriNama: one(route.query.kategoriNama),
+    wilayah: one(route.query.wilayah),
+    dibuatDari: one(route.query.dibuatDari),
+    dibuatSampai: one(route.query.dibuatSampai),
+    ditutupDari: one(route.query.ditutupDari),
+    ditutupSampai: one(route.query.ditutupSampai),
   };
 });
 /** Daftar TT aktif (1.5b) di halaman yang sama: `?daftar=tt`. */
 const showTt = computed(() => route.query.daftar === 'tt');
+/** Saringan dari angka Overview yang tidak punya pilihan sendiri di halaman ini. */
+const extraFilters = computed(() => {
+  const f = filters.value;
+  const chips: Array<{ label: string; keys: QueuePageKey[] }> = [];
+  if (f.remote) chips.push({ label: `Remote: ${remoteLabel.value}`, keys: ['remote'] });
+  if (f.kategoriNama) {
+    chips.push({ label: `Kategori: ${f.kategoriNama}${f.customer ? '' : ' (semua customer)'}`, keys: ['kategoriNama'] });
+  }
+  if (f.wilayah) chips.push({ label: `Wilayah: ${f.wilayah}`, keys: ['wilayah'] });
+  if (f.dibuatDari || f.dibuatSampai) {
+    chips.push({ label: `Dibuat ${formatDayRange(f.dibuatDari, f.dibuatSampai)} (WIB)`, keys: ['dibuatDari', 'dibuatSampai'] });
+  }
+  if (f.ditutupDari || f.ditutupSampai) {
+    chips.push({
+      label: `Ditutup ${formatDayRange(f.ditutupDari, f.ditutupSampai)} (WIB)`,
+      keys: ['ditutupDari', 'ditutupSampai'],
+    });
+  }
+  return chips;
+});
 const filtered = computed(
-  () => !!(filters.value.customer || filters.value.kategori || filters.value.system || filters.value.status || filters.value.q),
+  () =>
+    !!(filters.value.customer || filters.value.kategori || filters.value.system || filters.value.status || filters.value.q) ||
+    extraFilters.value.length > 0,
 );
+
+/** Nama remote untuk label saringan `remote`. */
+const remoteLabel = ref('');
+watch(
+  () => filters.value.remote,
+  async (id) => {
+    remoteLabel.value = id ? '…' : '';
+    if (!id) return;
+    try {
+      const remote = await ticketApi.remote(id);
+      if (filters.value.remote === id) remoteLabel.value = `${remote.code} · ${remote.name}`;
+    } catch {
+      if (filters.value.remote === id) remoteLabel.value = 'tidak ditemukan';
+    }
+  },
+  { immediate: true },
+);
+
+function removeFilter(keys: QueuePageKey[]): void {
+  setQuery(Object.fromEntries(keys.map((key) => [key, ''])));
+}
 
 // Kembali ke Tiket dari menu (alamat tanpa saringan): pakai saringan terakhir.
 try {
@@ -142,11 +196,8 @@ async function load(): Promise<void> {
   try {
     const f = filters.value;
     const result = await ticketApi.list({
+      ...queueApiParams(route.query),
       view: f.view,
-      tenantId: f.customer,
-      categoryId: f.kategori,
-      systemId: f.system,
-      status: f.status,
       q: f.q,
       sort: f.sort,
       page: String(f.page),
@@ -407,6 +458,9 @@ function open(id: string): void {
               <option value="">
                 Sesuai tampilan
               </option>
+              <option :value="TICKET_QUEUE_STATUS_ALL">
+                Semua, termasuk Ditutup
+              </option>
               <option
                 v-for="status in TICKET_STATUSES"
                 :key="status"
@@ -435,6 +489,40 @@ function open(id: string): void {
               </option>
             </select>
           </div>
+        </div>
+
+        <div
+          v-if="extraFilters.length > 0"
+          class="card-body border-bottom py-2 extra-filters"
+        >
+          <span
+            id="saringan-lain"
+            class="text-secondary"
+          >Saringan lain:</span>
+          <ul
+            class="extra-filters__list"
+            aria-labelledby="saringan-lain"
+          >
+            <li
+              v-for="chip in extraFilters"
+              :key="chip.keys[0]"
+              class="extra-filters__chip"
+            >
+              <span>{{ chip.label }}</span>
+              <button
+                type="button"
+                class="btn btn-ghost-secondary btn-icon extra-filters__remove"
+                :aria-label="`Hapus saringan ${chip.label}`"
+                :title="`Hapus saringan ${chip.label}`"
+                @click="removeFilter(chip.keys)"
+              >
+                <IconX
+                  size="16"
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
+          </ul>
         </div>
 
         <div
@@ -535,8 +623,15 @@ function open(id: string): void {
                   >{{ item.pendingReason }}</span>
                 </td>
                 <td class="queue-row__duration">
-                  {{ durationLabel(item.startedAt, now) }}
+                  <!-- NPR Ditutup: lama sampai ditutup, bukan sampai sekarang. -->
+                  {{ durationLabel(item.startedAt, item.closedAt ? Date.parse(item.closedAt) : now) }}
                   <span
+                    v-if="item.closedAt"
+                    class="d-block text-secondary small"
+                    :title="`Mulai ${formatZoned(item.startedAt, item.remote.zone)}, ditutup ${formatZoned(item.closedAt, item.remote.zone)}`"
+                  >ditutup {{ formatZonedShort(item.closedAt, item.remote.zone) }}</span>
+                  <span
+                    v-else
                     class="d-block text-secondary small"
                     :title="`Mulai ${formatZoned(item.startedAt, item.remote.zone)}`"
                   >sejak {{ formatZonedShort(item.startedAt, item.remote.zone) }}</span>
@@ -702,6 +797,47 @@ function open(id: string): void {
 
 .queue-row__remote {
   min-width: 150px;
+}
+
+.extra-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.extra-filters__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.extra-filters__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 32px;
+  padding-left: 10px;
+  border: 1px solid var(--tblr-border-color);
+  border-radius: 999px;
+  background: var(--tblr-bg-surface-secondary);
+  overflow-wrap: anywhere;
+}
+
+.extra-filters__remove {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 999px;
+}
+
+@media (max-width: 767.98px) {
+  .extra-filters__remove {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .queue-row {

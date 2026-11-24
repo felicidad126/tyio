@@ -391,6 +391,8 @@ export interface TicketQueueItem {
   remote: { id: string; code: string; name: string; city: string | null; zone: RemoteZone };
   startedAt: string;
   createdAt: string;
+  /** Waktu ditutup, bila status Ditutup (langkah 1.6). */
+  closedAt: string | null;
   assignee: TicketPerson | null;
   /** Alasan pending terakhir, bila status sekarang pending. */
   pendingReason: string | null;
