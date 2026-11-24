@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RemoteImportController, RemotesController } from './remotes.controller.js';
+import { RemoteImportController, RemoteMapController, RemotesController } from './remotes.controller.js';
 import { RemotesService } from './remotes.service.js';
 
 /** Remote per customer (langkah 1.2): daftar, halaman remote, dan impor dari Excel. */
 @Module({
-  controllers: [RemoteImportController, RemotesController],
+  controllers: [RemoteImportController, RemotesController, RemoteMapController],
   providers: [RemotesService],
   exports: [RemotesService],
 })

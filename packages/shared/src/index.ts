@@ -45,6 +45,8 @@ export {
 export type {
   RemoteContact,
   RemoteDetail,
+  RemoteMap,
+  RemoteMapPoint,
   RemoteImportFailure,
   RemoteImportReport,
   RemotePage,
