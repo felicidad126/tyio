@@ -1,7 +1,7 @@
 # Portal NOC Terpusat — Langkah teknis per rilis
 
 Induk: [portal-noc-terpusat.md](portal-noc-terpusat.md) (keputusan K1–K14, rekomendasi R-A s.d. R-I — disetujui).
-Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 berjalan — 1.1 sampai 1.6 selesai** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
+Status: **R0 selesai sejauh yang tidak bergantung hosting; R1 selesai sampai 1.6 (1.7 menunggu hosting); R2 berjalan — 2.1 dikerjakan** (staging, salinan backup kedua, dan TLS menunggu keputusan hosting). T1–T12 dan pilihan versi 0.1 disetujui 2026-11-16.
 
 Cara baca: tiap langkah satu alur utuh (data → API → layar), berukuran S atau M, dengan
 kriteria terima, perintah verifikasi, dan langkah yang harus selesai lebih dulu.
@@ -192,6 +192,18 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T105 | **Riwayat remote:** urut mulai gangguan terbaru, 10 NPR per halaman, di bawah kartu "NPR terbuka" (yang tetap ada). Lama gangguan = mulai gangguan → waktu kejadian entri **Pulih terakhir**; NPR yang belum pulih, atau pulih lalu turun lagi, ditandai "berjalan" dengan lama sampai sekarang. Kolom digabung agar muat tanpa geser mendatar: No. NPR (+ kategori, TT dan statusnya) · Status · Gangguan (lama + mulai) · Penyebab · penyelesaian; di bawah 1200 px menjadi blok bertumpuk | T101; lebar konten 1280 px tidak memuat tujuh kolom (ditemukan dari tangkapan layar) |
 | T106 | **NPR Ditutup yang sudah ada sebelum 1.6** (hanya mungkin dari perbaikan manual di dev/staging) diberi penyebab "Lainnya" dan penyelesaian dari catatan entri penutupnya saat migrasi | Migrasi tidak gagal di database yang sudah berisi; tidak ada data produksi (K1) |
 | T107 | **Seed: tiga NPR Ditutup di BNA-MKS-0217** (riwayat mockup: kabel LAN longgar, listrik padam, modem hang), sekali saja walau seed diulang. Karena disisipkan sesudah NPR berjalan, nomor NPR lama di bulan yang sama bisa lebih besar dari NPR yang lebih baru (hanya data dummy) | Halaman remote dan riwayat bisa dicoba di staging tanpa menutup NPR dulu |
+
+**Keputusan yang diambil saat 2.1** (T108–T114 jawaban user 2026-11-24):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T108 | **Satu pilihan periode 7 / 14 / 30 hari, bawaan 14**, berlaku untuk tren "Tiket baru per hari" dan "Remote paling sering bermasalah"; tersimpan di alamat halaman | Jawaban user 2026-11-24; angka kedua panel selalu dari periode yang sama |
+| T109 | **Batas hari menurut WIB untuk semua NPR** (tren per hari, "hari ini"), walau remote di WITA/WIT. Contoh: NPR remote Jayapura 00:30 WIT 2 Des = 22:30 WIB 1 Des → dihitung 1 Des | Jawaban user 2026-11-24; satu "hari ini" untuk semua, seperti mockup ("hari ini sampai 16:58 WIB"). Bulan di nomor NPR tetap menurut zona remote (T55) |
+| T110 | **Jumlah per status, per kategori, dan per customer = NPR berjalan saat ini**, sama dengan antrean "Semua terbuka" (semua status selain Ditutup). Periode hanya dipakai tren dan remote paling sering bermasalah | Jawaban user 2026-11-24 |
+| T111 | **"Angka utama" hanya yang datanya sudah ada:** NPR berjalan (+ pending, eskalasi, siap ditutup), TT aktif, NPR baru hari ini, NPR ditutup hari ini. Kartu Remote down (R6), SLA kurang dari 1 jam (R4), Alert menunggu verifikasi (R6), dan Gamas aktif (R3) muncul di rilisnya. **"Perlu tindakan sekarang" = 5 NPR berjalan dengan mulai gangguan terlama** (urutan bawaan antrean, T83) sampai sisa SLA ada di R4 | Jawaban user 2026-11-24; sama dengan T36 (tidak ada kartu atau tombol yang belum berbuat apa-apa) |
+| T112 | **"Remote paling sering bermasalah" = jumlah NPR dalam periode, termasuk yang sudah Ditutup, 5 teratas**; klik membuka antrean NPR remote itu dalam periode yang sama | Jawaban user 2026-11-24; seperti mockup |
+| T113 | **Panel wilayah di 2.1 = "NPR berjalan / total remote" per kelompok pulau**, dipetakan dari provinsi remote; provinsi yang tidak dikenali masuk "Lainnya". Diganti remote down per wilayah di R6 | Jawaban user 2026-11-24; status up/down baru datang dari alat monitoring di R6 |
+| T114 | **Batang "Tiket baru per hari" dipecah per kategori**, kategori customer berbeda dengan nama sama digabung (mis. Remote Down, Corrective, Preventive); tiap segmen bisa diklik ke antrean dengan jumlah sama | Jawaban user 2026-11-24; seperti mockup. Kategori milik tiap customer (T44) |
 
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
