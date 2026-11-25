@@ -2,7 +2,7 @@
 
 Untuk operator staging dan produksi. Skrip ada di [`deploy/scripts/`](../../deploy/scripts/);
 service `backup` ada di [`deploy/compose.staging.yml`](../../deploy/compose.staging.yml) dan
-[`deploy/compose.prod.yml`](../../deploy/compose.prod.yml) (berkas `tyio-produksi-<waktu>.tar.gpg`;
+[`deploy/compose.prod.yml`](../../deploy/compose.prod.yml) (berkas `npr-produksi-<waktu>.tar.gpg`;
 di produksi ganti `$STAGING` dengan `$PROD` dari [produksi.md](produksi.md)).
 
 ## Ringkasnya
@@ -10,9 +10,9 @@ di produksi ganti `$STAGING` dengan `$PROD` dari [produksi.md](produksi.md)).
 | | |
 | --- | --- |
 | Isi | Database PostgreSQL utuh: semua tabel, termasuk jejak audit. Lampiran berkas (T8) belum ada; ditambahkan ke backup saat R1 menambah penyimpanan berkas |
-| Jadwal | Setiap hari 01:30 WIB (18:30 UTC, ubah dengan `TYIO_BACKUP_TIME_UTC`). Saat service `backup` pertama kali menyala, langsung dibuat backup bila belum ada backup dalam 24 jam terakhir |
-| Tempat | Folder `TYIO_BACKUP_DIR` di server (bawaan `deploy/backup/`), berkas `tyio-staging-<waktu UTC>.tar.gpg`, hanya bisa dibaca root (mode 600) |
-| Lama simpan | 30 hari (`TYIO_BACKUP_RETENTION_DAYS`). Backup lama dihapus hanya setelah backup baru berhasil, jadi backup baik terakhir tidak pernah ikut terhapus |
+| Jadwal | Setiap hari 01:30 WIB (18:30 UTC, ubah dengan `NPR_BACKUP_TIME_UTC`). Saat service `backup` pertama kali menyala, langsung dibuat backup bila belum ada backup dalam 24 jam terakhir |
+| Tempat | Folder `NPR_BACKUP_DIR` di server (bawaan `deploy/backup/`), berkas `npr-staging-<waktu UTC>.tar.gpg`, hanya bisa dibaca root (mode 600) |
+| Lama simpan | 30 hari (`NPR_BACKUP_RETENTION_DAYS`). Backup lama dihapus hanya setelah backup baru berhasil, jadi backup baik terakhir tidak pernah ikut terhapus |
 | Enkripsi | GPG dengan kunci publik. Server hanya memegang kunci **publik**: bisa membuat backup, tidak bisa membukanya. Kunci privat disimpan di luar server |
 | Bukti isi | Setiap backup membawa sidik data per tabel (jumlah baris dan hash isi) dari snapshot yang sama dengan dump. Restore dianggap berhasil hanya bila sidiknya cocok |
 | Pemantauan | `docker compose ps`: service `backup` **healthy** bila ada backup kurang dari 26 jam. Log: `docker compose logs backup` |
@@ -29,7 +29,7 @@ STAGING="docker compose --env-file deploy/staging.env -f deploy/compose.staging.
 Tunjuk dua pemegang kunci. Buat pasangan kunci di laptop salah satunya:
 
 ```bash
-gpg --quick-gen-key "Tyio Backup <backup@perusahaan.co.id>" future-default default never
+gpg --quick-gen-key "NPR Backup <backup@perusahaan.co.id>" future-default default never
 gpg --armor --export backup@perusahaan.co.id > backup-public.asc
 gpg --armor --export-secret-keys backup@perusahaan.co.id > backup-private.asc
 ```
@@ -38,7 +38,7 @@ gpg --armor --export-secret-keys backup@perusahaan.co.id > backup-private.asc
   di dua tempat terpisah yang dipegang dua pemegang kunci (mis. pengelola kata sandi
   perusahaan dan salinan offline). **Jangan** taruh kunci privat di server.
 - Salin hanya `backup-public.asc` ke server, ke `deploy/kunci/backup-public.asc` (diabaikan
-  git), lalu isi `TYIO_BACKUP_PUBLIC_KEY` di `deploy/staging.env`.
+  git), lalu isi `NPR_BACKUP_PUBLIC_KEY` di `deploy/staging.env`.
 - Tanpa kunci privat, backup tidak bisa dibuka oleh siapa pun. Kehilangan kunci privat =
   kehilangan semua backup; karena itu dua salinan.
 
@@ -61,7 +61,7 @@ Di mesin yang punya Docker dan kunci privat (laptop pemegang kunci, atau server 
 yang dibawa sementara):
 
 ```bash
-sudo BACKUP_DIR=/srv/tyio/deploy/backup \
+sudo BACKUP_DIR=/srv/npr/deploy/backup \
      BACKUP_PRIVATE_KEY=/media/aman/backup-private.asc \
      BACKUP_KEY_PASSPHRASE_FILE=/media/aman/passphrase.txt \
      deploy/scripts/latihan-restore.sh
@@ -89,26 +89,26 @@ yang ada tidak pernah tertimpa. Perubahan setelah waktu backup hilang (lihat RPO
 3. Buat database kosong dan pulihkan backup ke situ:
 
    ```bash
-   $STAGING exec db createdb -U tyio tyio_pulih
+   $STAGING exec db createdb -U npr npr_pulih
    $STAGING run --rm --no-deps \
      -v /root/pulih:/pulih:ro \
      -e BACKUP_PRIVATE_KEY=/pulih/backup-private.asc \
      -e BACKUP_KEY_PASSPHRASE_FILE=/pulih/passphrase.txt \
      --entrypoint /scripts/restore.sh backup \
-     /backup/tyio-staging-<waktu>.tar.gpg postgres://tyio@db/tyio_pulih
+     /backup/npr-staging-<waktu>.tar.gpg postgres://npr@db/npr_pulih
    ```
 
    Lanjutkan hanya bila tercetak `COCOK`.
 4. Tukar database (tidak ada koneksi lain ke keduanya):
 
    ```bash
-   $STAGING exec db psql -U tyio -d postgres -c 'ALTER DATABASE tyio RENAME TO tyio_sebelum_pulih' \
-     -c 'ALTER DATABASE tyio_pulih RENAME TO tyio'
+   $STAGING exec db psql -U npr -d postgres -c 'ALTER DATABASE npr RENAME TO npr_sebelum_pulih' \
+     -c 'ALTER DATABASE npr_pulih RENAME TO npr'
    ```
 
 5. Jalankan migrasi (bila kode lebih baru dari backup), lalu nyalakan aplikasi:
    `$STAGING up -d --wait`.
-6. Hapus kunci privat dari server (`shred -u /root/pulih/*`). Simpan `tyio_sebelum_pulih`
+6. Hapus kunci privat dari server (`shred -u /root/pulih/*`). Simpan `npr_sebelum_pulih`
    sampai penyebab kerusakan diperiksa, lalu hapus.
 7. Catat kejadian, waktu backup yang dipakai, dan lama pemulihan di tabel di bawah.
 
@@ -116,8 +116,8 @@ yang ada tidak pernah tertimpa. Perubahan setelah waktu backup hilang (lihat RPO
 
 | Tanggal | Lingkungan | Backup | Hasil | Lama | Oleh |
 | --- | --- | --- | --- | --- | --- |
-| 2026-11-19 | Lokal, PostgreSQL 18.7 (server terpisah, database sementara) | `tyio-lokal-20261119T141916Z` | COCOK: 7 tabel, 437 baris | < 1 detik | Langkah 0.6 (Claude) |
-| 2026-11-19 | CI run #81: container PostgreSQL baru, data staging hasil seed dan uji layar | `tyio-staging-20261119T142738Z` | COCOK: 7 tabel, 74 baris | ± 7 detik (termasuk menyalakan container) | CI |
+| 2026-11-19 | Lokal, PostgreSQL 18.7 (server terpisah, database sementara) | `npr-lokal-20261119T141916Z` | COCOK: 7 tabel, 437 baris | < 1 detik | Langkah 0.6 (Claude) |
+| 2026-11-19 | CI run #81: container PostgreSQL baru, data staging hasil seed dan uji layar | `npr-staging-20261119T142738Z` | COCOK: 7 tabel, 74 baris | ± 7 detik (termasuk menyalakan container) | CI |
 | Setiap push | CI, seperti di atas | backup terbaru dari service `backup` | Job `image` gagal bila tidak cocok | — | CI |
 | Belum | Server staging sungguhan | — | Menunggu keputusan hosting | — | — |
 

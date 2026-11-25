@@ -5,7 +5,7 @@ import {
   type TicketTimeline,
   TROUBLE_TICKET_CONTACT_MAX_LENGTH,
   TROUBLE_TICKET_PROBLEM_MAX_LENGTH,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { ticketApi } from '../ticket-api';
 

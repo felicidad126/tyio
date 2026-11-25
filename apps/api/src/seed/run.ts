@@ -1,4 +1,4 @@
-// Mengisi data dummy: `node dist/seed/run.js`. Ditolak bila TYIO_ENV=production.
+// Mengisi data dummy: `node dist/seed/run.js`. Ditolak bila NPR_ENV=production.
 // Kata sandi akun dummy: SEED_USER_PASSWORD (wajib di staging; bawaan di development).
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';

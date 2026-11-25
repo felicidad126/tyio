@@ -9,7 +9,7 @@ import type {
   TroubleTicketPage,
   TroubleTicketQueueItem,
   TroubleTicketStatus,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { DataSource, EntityManager } from 'typeorm';
 import { type AuditActor, auditedTransaction } from '../../common/audit/audit-context.js';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';

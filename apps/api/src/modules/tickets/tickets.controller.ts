@@ -19,7 +19,7 @@ import {
   type TicketQueueSort,
   type TicketQueueView,
   type TicketSummary,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { AuditActor } from '../../common/audit/audit-context.js';
 import { CurrentScope, TenantScoped } from '../../common/tenant/tenancy.js';
 import type { TenantScope } from '../../common/tenant/tenant-scope.js';

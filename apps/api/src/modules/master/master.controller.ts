@@ -19,7 +19,7 @@ import {
   type MasterKind,
   type MasterValue,
   type UpdateMasterValue,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { AuditActor } from '../../common/audit/audit-context.js';
 import { CurrentScope, TenantScoped } from '../../common/tenant/tenancy.js';
 import type { TenantScope } from '../../common/tenant/tenant-scope.js';

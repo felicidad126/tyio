@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SessionUser } from '@tyio/shared';
+import type { SessionUser } from '@npr/shared';
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLogo from '../components/AppLogo.vue';

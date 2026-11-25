@@ -6,10 +6,10 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { Role } from '@tyio/shared';
+import type { Role } from '@npr/shared';
 import type { AuthenticatedRequest } from './auth-request.js';
 
-const ROLES_KEY = 'tyio:roles';
+const ROLES_KEY = 'npr:roles';
 
 export const FORBIDDEN_ROLE_MESSAGE = 'Akun Anda tidak punya akses ke fitur ini.';
 

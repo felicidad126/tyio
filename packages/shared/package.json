@@ -1,5 +1,5 @@
 {
-  "name": "@tyio/shared",
+  "name": "@npr/shared",
   "version": "0.0.0",
   "private": true,
   "description": "Tipe dan konstanta yang dipakai bersama oleh API dan web",

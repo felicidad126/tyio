@@ -3,8 +3,8 @@ import { DEFAULT_LOGIN_LIMIT, loadConfig } from '../src/config.js';
 
 describe('loadConfig', () => {
   const valid = {
-    TYIO_ENV: 'staging',
-    DATABASE_URL: 'postgres://pengguna:sandi-rahasia@db:5432/tyio',
+    NPR_ENV: 'staging',
+    DATABASE_URL: 'postgres://pengguna:sandi-rahasia@db:5432/npr',
   };
 
   it('membaca nilai yang sah dan memakai bawaan untuk yang kosong', () => {
@@ -22,22 +22,22 @@ describe('loadConfig', () => {
     });
   });
 
-  it('mewajibkan TYIO_ENV, tanpa nilai bawaan', () => {
+  it('mewajibkan NPR_ENV, tanpa nilai bawaan', () => {
     // Tanpa bawaan agar produksi tidak pernah diam-diam dianggap lingkungan dev.
-    expect(() => loadConfig({ DATABASE_URL: valid.DATABASE_URL })).toThrow(/TYIO_ENV/);
-    expect(() => loadConfig({ ...valid, TYIO_ENV: 'prod' })).toThrow(/TYIO_ENV/);
+    expect(() => loadConfig({ DATABASE_URL: valid.DATABASE_URL })).toThrow(/NPR_ENV/);
+    expect(() => loadConfig({ ...valid, NPR_ENV: 'prod' })).toThrow(/NPR_ENV/);
   });
 
   it('mewajibkan DATABASE_URL PostgreSQL yang sah', () => {
-    expect(() => loadConfig({ TYIO_ENV: 'staging' })).toThrow(/DATABASE_URL/);
+    expect(() => loadConfig({ NPR_ENV: 'staging' })).toThrow(/DATABASE_URL/);
     expect(() => loadConfig({ ...valid, DATABASE_URL: 'bukan-url' })).toThrow(/DATABASE_URL/);
-    expect(() => loadConfig({ ...valid, DATABASE_URL: 'mysql://a:b@db/tyio' })).toThrow(
+    expect(() => loadConfig({ ...valid, DATABASE_URL: 'mysql://a:b@db/npr' })).toThrow(
       /DATABASE_URL/,
     );
   });
 
   it('tidak pernah mencetak isi DATABASE_URL dalam pesan galat', () => {
-    const rusak = 'postgres://pengguna:sandi-rahasia@db:bukan-port/tyio';
+    const rusak = 'postgres://pengguna:sandi-rahasia@db:bukan-port/npr';
 
     expect(() => loadConfig({ ...valid, DATABASE_URL: rusak })).toThrow(/DATABASE_URL/);
     expect(() => loadConfig({ ...valid, DATABASE_URL: rusak })).not.toThrow(/sandi-rahasia/);
@@ -63,9 +63,9 @@ describe('loadConfig', () => {
   });
 
   it('mewajibkan cookie Secure kecuali di development dan test, dan bisa diatur', () => {
-    expect(loadConfig({ ...valid, TYIO_ENV: 'production' }).session.cookieSecure).toBe(true);
-    expect(loadConfig({ ...valid, TYIO_ENV: 'development' }).session.cookieSecure).toBe(false);
-    expect(loadConfig({ ...valid, TYIO_ENV: 'test' }).session.cookieSecure).toBe(false);
+    expect(loadConfig({ ...valid, NPR_ENV: 'production' }).session.cookieSecure).toBe(true);
+    expect(loadConfig({ ...valid, NPR_ENV: 'development' }).session.cookieSecure).toBe(false);
+    expect(loadConfig({ ...valid, NPR_ENV: 'test' }).session.cookieSecure).toBe(false);
     expect(loadConfig({ ...valid, SESSION_COOKIE_SECURE: 'false' }).session.cookieSecure).toBe(false);
     expect(() => loadConfig({ ...valid, SESSION_COOKIE_SECURE: 'ya' })).toThrow(
       /SESSION_COOKIE_SECURE/,

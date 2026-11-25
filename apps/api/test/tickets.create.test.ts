@@ -7,7 +7,7 @@ import {
   type RemoteZone,
   type TicketDetail,
   type TicketSummary,
-} from '@tyio/shared';
+} from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

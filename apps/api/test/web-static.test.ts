@@ -14,7 +14,7 @@ describe('layanan aplikasi web', () => {
   let webDir: string;
 
   beforeAll(async () => {
-    webDir = mkdtempSync(join(tmpdir(), 'tyio-web-'));
+    webDir = mkdtempSync(join(tmpdir(), 'npr-web-'));
     writeFileSync(join(webDir, 'index.html'), '<!doctype html><title>penanda-index</title>');
     mkdirSync(join(webDir, 'assets'));
     writeFileSync(join(webDir, 'assets', 'app.js'), 'console.log("penanda-aset");');

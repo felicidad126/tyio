@@ -8,7 +8,7 @@ import {
   TICKET_CLOSE_CAUSE_LABELS,
   TICKET_STATUS_LABELS,
   type TicketAction,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed } from 'vue';
 import { formatZoned } from '../zoned-time';
 

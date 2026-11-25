@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import type { HealthResponse } from '@tyio/shared';
+import type { HealthResponse } from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterEach, describe, expect, it } from 'vitest';

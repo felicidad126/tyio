@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconSearch } from '@tabler/icons-vue';
-import { type GlobalSearchResult, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from '@tyio/shared';
+import { type GlobalSearchResult, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from '@npr/shared';
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import TicketStatusPill from '../pages/tickets/TicketStatusPill.vue';

@@ -12,7 +12,7 @@ const KINDS_V3 = [
   'tt_disalin',
 ];
 const KINDS_V4 = [...KINDS_V3, 'tutup', 'tt_ditutup'];
-/** Sama dengan `TICKET_CLOSE_CAUSES` di @tyio/shared (T98). */
+/** Sama dengan `TICKET_CLOSE_CAUSES` di @npr/shared (T98). */
 const CLOSE_CAUSES = ['link', 'listrik', 'cuaca', 'perangkat', 'lainnya'];
 const list = (values: readonly string[]) => values.map((value) => `'${value}'`).join(', ');
 

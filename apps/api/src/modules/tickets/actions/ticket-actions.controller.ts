@@ -31,7 +31,7 @@ import {
   TICKET_RESOLUTION_MAX_LENGTH,
   type TicketAction,
   type TicketTimeline,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { Request, Response } from 'express';
 import { catchError, defer, mergeMap, type Observable, throwError } from 'rxjs';
 import type { AuditActor } from '../../../common/audit/audit-context.js';

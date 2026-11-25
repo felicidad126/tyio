@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconLogout, IconUser } from '@tabler/icons-vue';
-import { ROLE_LABELS } from '@tyio/shared';
+import { ROLE_LABELS } from '@npr/shared';
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../api';

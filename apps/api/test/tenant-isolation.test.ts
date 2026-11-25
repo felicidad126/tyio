@@ -25,7 +25,7 @@ import {
   type RemoteTicketHistoryPage,
   type TroubleTicketPage,
   XLSX_MIME,
-} from '@tyio/shared';
+} from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

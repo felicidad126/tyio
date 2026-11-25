@@ -11,7 +11,7 @@ export const THEME_OPTIONS: ReadonlyArray<{ value: ThemePreference; label: strin
   { value: 'dark', label: 'Gelap' },
 ];
 
-const STORAGE_KEY = 'tyio:tema';
+const STORAGE_KEY = 'npr:tema';
 
 function readStored(): ThemePreference {
   try {

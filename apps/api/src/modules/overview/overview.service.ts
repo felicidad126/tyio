@@ -12,7 +12,7 @@ import {
   type RemoteRegion,
   type RemoteZone,
   type TicketStatus,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { DataSource } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';
 import { remoteRegionSql } from '../remotes/remote-region.js';

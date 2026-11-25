@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { GlobalSearchResult } from '@tyio/shared';
+import type { GlobalSearchResult } from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

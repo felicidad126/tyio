@@ -6,7 +6,7 @@ import {
   type RemoteTicketHistoryPage,
   type TicketTimeline,
   type TroubleTicketPage,
-} from '@tyio/shared';
+} from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconDownload } from '@tabler/icons-vue';
-import { REMOTE_IMPORT_MAX_BYTES, type RemoteImportReport, type TenantSummary } from '@tyio/shared';
+import { REMOTE_IMPORT_MAX_BYTES, type RemoteImportReport, type TenantSummary } from '@npr/shared';
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import PageHeader from '../../components/PageHeader.vue';
 import { ApiError } from '../../api';

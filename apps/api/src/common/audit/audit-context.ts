@@ -1,4 +1,4 @@
-import type { AuditSource } from '@tyio/shared';
+import type { AuditSource } from '@npr/shared';
 import type { DataSource, EntityManager } from 'typeorm';
 
 /**
@@ -35,10 +35,10 @@ export async function applyAuditActor(manager: EntityManager, actor: AuditActor)
     throw new Error('Konteks audit hanya bisa dipasang di dalam transaksi.');
   }
   await manager.query(
-    `SELECT set_config('tyio.source', $1, true),
-            set_config('tyio.actor_user_id', $2, true),
-            set_config('tyio.actor_label', $3, true),
-            set_config('tyio.client_ip', $4, true)`,
+    `SELECT set_config('npr.source', $1, true),
+            set_config('npr.actor_user_id', $2, true),
+            set_config('npr.actor_label', $3, true),
+            set_config('npr.client_ip', $4, true)`,
     [actor.source, actor.userId ?? '', actor.label?.slice(0, 320) ?? '', actor.clientIp ?? ''],
   );
 }

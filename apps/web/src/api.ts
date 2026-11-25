@@ -1,4 +1,4 @@
-import { API_PREFIX } from '@tyio/shared';
+import { API_PREFIX } from '@npr/shared';
 
 // Klien kecil untuk API di origin yang sama (T13). Cookie sesi ikut otomatis;
 // halaman tidak pernah memegang token (cookie HttpOnly, T5).

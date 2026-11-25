@@ -25,7 +25,7 @@ require_commands psql pg_restore gpg tar diff
 started=$(date +%s)
 work=$(mktemp -d)
 # Rumah gpg di jalur pendek: soket gpg-agent gagal dibuat bila jalurnya lebih dari ~100 karakter.
-GNUPGHOME=$(mktemp -d /tmp/tyio-gpg.XXXXXX)
+GNUPGHOME=$(mktemp -d /tmp/npr-gpg.XXXXXX)
 export GNUPGHOME
 trap 'stop_gpg; rm -rf "$work"' EXIT
 
@@ -43,7 +43,7 @@ mkdir "$work/payload"
 gpg --batch --quiet --pinentry-mode loopback "${passphrase_args[@]}" --decrypt "$backup_file" |
   tar -C "$work/payload" -xf - ||
   die "backup tidak bisa dibuka: kunci salah, atau berkas rusak/diubah"
-for part in tyio.dump manifest.tsv info.txt; do
+for part in npr.dump manifest.tsv info.txt; do
   [[ -s "$work/payload/$part" ]] || die "isi backup tidak lengkap: $part tidak ada"
 done
 log "Isi backup: $(tr '\n' ' ' <"$work/payload/info.txt")"
@@ -55,7 +55,7 @@ existing=$(psql "${PSQL_ARGS[@]}" "$target_url" -c \
 [[ "$existing" == "0" ]] || die "database tujuan tidak kosong ($existing objek); restore hanya ke database baru"
 
 log "Memulihkan ke database tujuan"
-pg_restore --exit-on-error --no-owner --no-privileges --dbname="$target_url" "$work/payload/tyio.dump" ||
+pg_restore --exit-on-error --no-owner --no-privileges --dbname="$target_url" "$work/payload/npr.dump" ||
   die "pg_restore gagal"
 
 psql "${PSQL_ARGS[@]}" "$target_url" -o "$work/restored.tsv" <<<"$(manifest_sql)" ||

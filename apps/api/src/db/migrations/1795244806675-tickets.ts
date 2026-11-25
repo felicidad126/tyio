@@ -48,7 +48,7 @@ export class Tickets1795244806675 implements MigrationInterface {
     `);
     await queryRunner.query(`SELECT audit_enable('ticket_counters', 'tenant_id')`);
 
-    // Zona remote → nama zona IANA. Sama dengan REMOTE_ZONE_IANA di @tyio/shared (diuji).
+    // Zona remote → nama zona IANA. Sama dengan REMOTE_ZONE_IANA di @npr/shared (diuji).
     await queryRunner.query(`
       CREATE FUNCTION ticket_zone_iana(zone text) RETURNS text
       LANGUAGE sql IMMUTABLE STRICT AS $$

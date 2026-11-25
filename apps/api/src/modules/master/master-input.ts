@@ -1,5 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { MASTER_CODE_PATTERN, MASTER_NAME_MAX_LENGTH } from '@tyio/shared';
+import { MASTER_CODE_PATTERN, MASTER_NAME_MAX_LENGTH } from '@npr/shared';
 import { QueryFailedError } from 'typeorm';
 
 // Pembacaan isi permintaan untuk endpoint data master. Pesan galat berbahasa Indonesia

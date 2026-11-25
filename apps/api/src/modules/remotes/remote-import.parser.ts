@@ -5,7 +5,7 @@ import {
   type RemoteContact,
   type RemoteImportFailure,
   type RemoteZone,
-} from '@tyio/shared';
+} from '@npr/shared';
 
 // Pembaca berkas impor remote (langkah 1.2): satu baris Excel → satu remote yang sudah
 // diperiksa, atau daftar alasan baris itu ditolak. Fungsi murni tanpa database; jarkom

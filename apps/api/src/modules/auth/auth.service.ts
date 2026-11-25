@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { LoginRequest, SessionUser } from '@tyio/shared';
+import type { LoginRequest, SessionUser } from '@npr/shared';
 import { AuditService } from '../../common/audit/audit.service.js';
 import { verifyAgainstDummy, verifyPassword } from '../users/password.js';
 import { normalizeEmail } from '../users/user-accounts.js';

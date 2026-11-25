@@ -1,4 +1,4 @@
-import { OVERVIEW_DAY_ZONE_IANA } from '@tyio/shared';
+import { OVERVIEW_DAY_ZONE_IANA } from '@npr/shared';
 
 // Hari menurut WIB untuk semua NPR (T109), di SQL. Satu tempat untuk kedua arah: tanggal dari
 // waktu (tren harian, "hari ini" Overview) dan awal hari dari tanggal (saringan antrean), jadi

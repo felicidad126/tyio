@@ -13,7 +13,7 @@ import {
   type TicketQueueItem,
   type TicketQueuePage,
   type TicketQueueView,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router';
 import LiveStatus from '../../../components/LiveStatus.vue';
@@ -33,7 +33,7 @@ import { durationLabel, sinceLabel } from './relative-time';
 // yang bisa dihapus satu per satu. Pembaruan langsung (2.2, T129): angka di tab langsung
 // berubah; daftar tidak bergeser sendiri, perubahannya menunggu "Tampilkan".
 
-const STORAGE_KEY = 'tyio:antrean';
+const STORAGE_KEY = 'npr:antrean';
 type Key = QueuePageKey | 'sort' | 'page';
 
 const route = useRoute();

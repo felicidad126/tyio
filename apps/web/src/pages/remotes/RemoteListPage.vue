@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconFileSpreadsheet, IconList, IconMap, IconSearch, IconX } from '@tabler/icons-vue';
-import type { MasterValue, RemotePage, TenantSummary } from '@tyio/shared';
+import type { MasterValue, RemotePage, TenantSummary } from '@npr/shared';
 import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue';
 import { type RouteLocationRaw, useRoute, useRouter } from 'vue-router';
 import PageHeader from '../../components/PageHeader.vue';

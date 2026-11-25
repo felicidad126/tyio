@@ -1,5 +1,5 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { API_PREFIX, REMOTE_IMPORT_MAX_BYTES, XLSX_MIME } from '@tyio/shared';
+import { API_PREFIX, REMOTE_IMPORT_MAX_BYTES, XLSX_MIME } from '@npr/shared';
 import type { AppConfig } from './config.js';
 import { serveWebApp } from './web-static.js';
 

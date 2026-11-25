@@ -7,7 +7,7 @@ import {
   type TicketAction,
   type TicketStatus,
   type TicketTimeline,
-} from '@tyio/shared';
+} from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -113,7 +113,7 @@ describe('mesin status NPR', () => {
       .send({ kind: 'catatan', note: `Ke ${to}`, statusFrom: from, statusTo: to, pendingReason: pendingReason(to) ?? undefined, ...extra });
 
   describe('tabel perpindahan', () => {
-    it('aturan di database sama dengan @tyio/shared untuk semua 64 pasangan status', async () => {
+    it('aturan di database sama dengan @npr/shared untuk semua 64 pasangan status', async () => {
       const rows = (await dataSource.query(
         `SELECT f AS "from", t AS "to", ticket_status_transition_allowed(f, t) AS allowed
            FROM unnest($1::text[]) f CROSS JOIN unnest($1::text[]) t`,

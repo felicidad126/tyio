@@ -1,4 +1,4 @@
-import { REMOTE_ZONE_IANA, REMOTE_ZONE_UTC_OFFSET, type RemoteZone } from '@tyio/shared';
+import { REMOTE_ZONE_IANA, REMOTE_ZONE_UTC_OFFSET, type RemoteZone } from '@npr/shared';
 
 // Waktu tiket selalu ditulis dengan zona remote (T12, ATURAN.md §4): "21 Nov 2026 14:05 WITA".
 

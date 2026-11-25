@@ -5,7 +5,7 @@
 #
 #   deploy/scripts/uji-produksi.sh
 #
-# Dijalankan dari akar repo. TYIO_ENV_FILE = berkas env (bawaan deploy/prod.env).
+# Dijalankan dari akar repo. NPR_ENV_FILE = berkas env (bawaan deploy/prod.env).
 # Login dan aliran pembaruan langsung ikut diperiksa bila UJI_EMAIL dan UJI_PASSWORD diisi
 # (akun yang sudah ada; kata sandi lewat environment, bukan argumen):
 #   read -rs UJI_PASSWORD && export UJI_PASSWORD UJI_EMAIL=admin@perusahaan.co.id
@@ -15,7 +15,7 @@
 source "$(dirname "$0")/lib.sh"
 require_commands docker curl grep mktemp
 
-env_file="${TYIO_ENV_FILE:-deploy/prod.env}"
+env_file="${NPR_ENV_FILE:-deploy/prod.env}"
 [[ -f "$env_file" ]] || die "berkas env tidak ada: $env_file (jalankan dari akar repo)"
 compose=(docker compose --env-file "$env_file" -f deploy/compose.prod.yml)
 work=$(mktemp -d)
@@ -47,8 +47,8 @@ for service in db app caddy backup; do
   if [[ "$status" == healthy ]]; then pass "service $service sehat"; else fail "service $service: $status"; fi
 done
 
-host=$("${compose[@]}" exec -T caddy printenv TYIO_HOST 2>/dev/null) || die "container caddy tidak berjalan"
-tls=$("${compose[@]}" exec -T caddy printenv TYIO_TLS 2>/dev/null || true)
+host=$("${compose[@]}" exec -T caddy printenv NPR_HOST 2>/dev/null) || die "container caddy tidak berjalan"
+tls=$("${compose[@]}" exec -T caddy printenv NPR_TLS 2>/dev/null || true)
 https_port=$(published caddy 443)
 http_port=$(published caddy 80)
 [[ -n "$https_port" && -n "$http_port" ]] || die "port HTTP/HTTPS caddy tidak dibuka di host"
@@ -82,8 +82,8 @@ if grep -qi '^strict-transport-security:' "$work/head"; then pass "header HSTS";
 if grep -qi '^content-encoding: gzip' "$work/head"; then pass "halaman dikompresi"; else fail "halaman tidak dikompresi"; fi
 
 # 5. Mode produksi (seed data dummy ditolak), database dan aplikasi tidak dibuka langsung ke host.
-env_mode=$("${compose[@]}" exec -T app printenv TYIO_ENV 2>/dev/null || true)
-if [[ "$env_mode" == production ]]; then pass "TYIO_ENV=production"; else fail "TYIO_ENV=$env_mode"; fi
+env_mode=$("${compose[@]}" exec -T app printenv NPR_ENV 2>/dev/null || true)
+if [[ "$env_mode" == production ]]; then pass "NPR_ENV=production"; else fail "NPR_ENV=$env_mode"; fi
 for target in "db 5432" "app 3000"; do
   # shellcheck disable=SC2086 # sengaja dipecah menjadi service dan port
   port=$(published $target)

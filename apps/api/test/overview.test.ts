@@ -10,7 +10,7 @@ import {
   type TicketQueuePage,
   type TicketStatus,
   type TroubleTicketPage,
-} from '@tyio/shared';
+} from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -382,7 +382,7 @@ describe('Overview', () => {
     ]);
   });
 
-  describe('wilayah di SQL sama dengan @tyio/shared (T113)', () => {
+  describe('wilayah di SQL sama dengan @npr/shared (T113)', () => {
     const spellings = [
       ...Object.values(REMOTE_REGION_PROVINCES).flat(),
       'Sulawesi Selatan',

@@ -1,4 +1,4 @@
-import type { MasterKind } from '@tyio/shared';
+import type { MasterKind } from '@npr/shared';
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 /** Kolom bersama semua nilai master (tabel `master_*`, migrasi 1.1). */

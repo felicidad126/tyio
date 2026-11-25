@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { SessionUser } from '@tyio/shared';
+import type { SessionUser } from '@npr/shared';
 import type { Repository } from 'typeorm';
 import { scopeFor } from '../../common/tenant/tenant-scope.js';
 import { TenantsService, toTenantSummary } from '../tenants/tenants.service.js';

@@ -10,7 +10,7 @@ import {
   type TicketStatus,
   type TicketTimeline,
   type TroubleTicket,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import LiveStatus from '../../../components/LiveStatus.vue';

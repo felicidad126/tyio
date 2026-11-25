@@ -23,16 +23,16 @@ jobs:
       postgres:
         image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
         env:
-          POSTGRES_USER: tyio
-          POSTGRES_PASSWORD: tyio
-          POSTGRES_DB: tyio_test
+          POSTGRES_USER: npr
+          POSTGRES_PASSWORD: npr
+          POSTGRES_DB: npr_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U tyio -d tyio_test"
+          --health-cmd "pg_isready -U npr -d npr_test"
           --health-interval 2s --health-timeout 3s --health-retries 30
     env:
-      TEST_DATABASE_URL: postgres://tyio:tyio@localhost:5432/tyio_test
+      TEST_DATABASE_URL: postgres://npr:npr@localhost:5432/npr_test
     steps:
       # Action dipin ke SHA commit, bukan tag, agar tag yang dipindahkan tidak ikut terpakai.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,7 +70,7 @@ jobs:
     # Image dibangun sekali, lalu dijalankan dengan berkas compose staging yang sama
     # seperti di server staging. Yang lolos uji asap inilah artefak untuk staging.
     env:
-      TYIO_IMAGE: tyio-app:ci-${{ github.sha }}
+      NPR_IMAGE: npr-app:ci-${{ github.sha }}
       STAGING: docker compose --env-file ${{ github.workspace }}/../staging-ci.env -f deploy/compose.staging.yml
       PROD_ENV: ${{ github.workspace }}/../prod-ci.env
       PROD: docker compose --env-file ${{ github.workspace }}/../prod-ci.env -f deploy/compose.prod.yml
@@ -90,7 +90,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Bangun image
-        run: docker build -f deploy/Dockerfile -t "$TYIO_IMAGE" .
+        run: docker build -f deploy/Dockerfile -t "$NPR_IMAGE" .
 
       # Pasangan kunci backup sekali pakai: staging hanya menerima kunci publik; kunci privat
       # dipakai latihan restore di bawah. Service backup langsung membuat backup pertama, dan
@@ -101,14 +101,14 @@ jobs:
           KUNCI="$RUNNER_TEMP/kunci-backup"
           export GNUPGHOME="$KUNCI/gnupg"
           mkdir -p -m 700 "$GNUPGHOME"
-          gpg --batch --quiet --passphrase '' --quick-gen-key 'Tyio Backup CI <ci@tyio.invalid>' future-default default never
-          gpg --armor --export ci@tyio.invalid > "$KUNCI/backup-public.asc"
-          gpg --batch --pinentry-mode loopback --passphrase '' --armor --export-secret-keys ci@tyio.invalid > "$KUNCI/backup-private.asc"
+          gpg --batch --quiet --passphrase '' --quick-gen-key 'NPR Backup CI <ci@npr.invalid>' future-default default never
+          gpg --armor --export ci@npr.invalid > "$KUNCI/backup-public.asc"
+          gpg --batch --pinentry-mode loopback --passphrase '' --armor --export-secret-keys ci@npr.invalid > "$KUNCI/backup-private.asc"
           gpgconf --kill gpg-agent
           {
-            echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)"
-            echo "TYIO_BACKUP_PUBLIC_KEY=$KUNCI/backup-public.asc"
-            echo "TYIO_BACKUP_DIR=$RUNNER_TEMP/backup"
+            echo "NPR_DB_PASSWORD=$(openssl rand -hex 24)"
+            echo "NPR_BACKUP_PUBLIC_KEY=$KUNCI/backup-public.asc"
+            echo "NPR_BACKUP_DIR=$RUNNER_TEMP/backup"
           } > "$GITHUB_WORKSPACE/../staging-ci.env"
           echo "BACKUP_PRIVATE_KEY=$KUNCI/backup-private.asc" >> "$GITHUB_ENV"
           echo "BACKUP_DIR=$RUNNER_TEMP/backup" >> "$GITHUB_ENV"
@@ -125,7 +125,7 @@ jobs:
           $STAGING run --rm --no-deps -T -e SEED_USER_PASSWORD app node dist/seed/run.js
 
       - name: Pasang Chromium untuk Playwright
-        run: pnpm --filter @tyio/web exec playwright install --with-deps chromium
+        run: pnpm --filter @npr/web exec playwright install --with-deps chromium
 
       # Staging memakai cookie Secure; Chromium menerimanya di http://localhost.
       # Service worker PWA juga hanya jalan di HTTPS atau localhost.
@@ -144,31 +144,31 @@ jobs:
         run: |
           $STAGING exec -T backup /scripts/backup.sh
           sudo -E deploy/scripts/latihan-restore.sh
-          DB_PASSWORD="$(grep '^TYIO_DB_PASSWORD=' "$GITHUB_WORKSPACE/../staging-ci.env" | cut -d= -f2)"
+          DB_PASSWORD="$(grep '^NPR_DB_PASSWORD=' "$GITHUB_WORKSPACE/../staging-ci.env" | cut -d= -f2)"
           echo "::add-mask::$DB_PASSWORD"
-          export UJI_SERVER_URL="postgres://tyio:$DB_PASSWORD@db:5432/postgres"
+          export UJI_SERVER_URL="postgres://npr:$DB_PASSWORD@db:5432/postgres"
           $STAGING run --rm --no-deps -T --entrypoint /scripts/uji-backup.sh -e UJI_SERVER_URL backup
 
       # Langkah 1.7 (T155): image yang sama dijalankan dengan compose produksi satu server
-      # (Caddy di depan aplikasi, HTTPS dari CA internal Caddy, TYIO_ENV=production), lalu
+      # (Caddy di depan aplikasi, HTTPS dari CA internal Caddy, NPR_ENV=production), lalu
       # diperiksa dengan skrip uji asap yang sama yang dijalankan di server sesudah memasang.
       # Akun uji dibuat dengan perintah pembuat pengguna, kata sandi lewat pipa.
       - name: Compose produksi satu server (Caddy, HTTPS) dan uji asap produksi
         id: prod
         run: |
           {
-            echo "TYIO_DB_PASSWORD=$(openssl rand -hex 24)"
-            echo "TYIO_HOST=noc.tyio.test"
-            echo "TYIO_TLS=internal"
-            echo "TYIO_BACKUP_PUBLIC_KEY=$RUNNER_TEMP/kunci-backup/backup-public.asc"
-            echo "TYIO_BACKUP_DIR=$RUNNER_TEMP/backup-prod"
+            echo "NPR_DB_PASSWORD=$(openssl rand -hex 24)"
+            echo "NPR_HOST=noc.npr.test"
+            echo "NPR_TLS=internal"
+            echo "NPR_BACKUP_PUBLIC_KEY=$RUNNER_TEMP/kunci-backup/backup-public.asc"
+            echo "NPR_BACKUP_DIR=$RUNNER_TEMP/backup-prod"
           } > "$PROD_ENV"
           $PROD up -d --wait --no-build
           UJI_PASSWORD="$(openssl rand -hex 16)"
           echo "::add-mask::$UJI_PASSWORD"
           printf '%s' "$UJI_PASSWORD" | $PROD run --rm --no-deps -T app \
-            node dist/modules/users/create-user.js --email uji@noc.tyio.test --name "Uji Produksi" --role admin
-          UJI_EMAIL=uji@noc.tyio.test UJI_PASSWORD="$UJI_PASSWORD" TYIO_ENV_FILE="$PROD_ENV" \
+            node dist/modules/users/create-user.js --email uji@noc.npr.test --name "Uji Produksi" --role admin
+          UJI_EMAIL=uji@noc.npr.test UJI_PASSWORD="$UJI_PASSWORD" NPR_ENV_FILE="$PROD_ENV" \
             deploy/scripts/uji-produksi.sh
 
       # Langkah-langkah terakhir hanya bila stack sempat dinyalakan; bila build gagal atau run

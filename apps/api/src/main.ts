@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { API_PREFIX, APP_NAME } from '@tyio/shared';
+import { API_PREFIX, APP_NAME } from '@npr/shared';
 import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
 import { runScript } from './cli.js';

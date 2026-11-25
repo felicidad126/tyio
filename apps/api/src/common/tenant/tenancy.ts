@@ -7,7 +7,7 @@ import {
 import type { AuthenticatedRequest } from '../../modules/auth/auth-request.js';
 import { scopeFor, type TenantScope } from './tenant-scope.js';
 
-export const TENANCY_KEY = 'tyio:tenancy';
+export const TENANCY_KEY = 'npr:tenancy';
 export type Tenancy = 'scoped' | 'none';
 
 /**

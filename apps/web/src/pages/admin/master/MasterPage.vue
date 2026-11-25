@@ -6,7 +6,7 @@ import {
   MASTER_KINDS_WITH_CODE,
   type MasterKind,
   type TenantSummary,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageHeader from '../../../components/PageHeader.vue';

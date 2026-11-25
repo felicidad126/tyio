@@ -7,7 +7,7 @@
 // shell dan daftar proses). Di terminal, kata sandi diminta dua kali tanpa ditampilkan.
 // Lewat pipa: printf '%s' "$SANDI" | docker compose ... run --rm -T app node dist/... .
 import 'reflect-metadata';
-import { isRole, PASSWORD_MIN_LENGTH, ROLE_LABELS, ROLES } from '@tyio/shared';
+import { isRole, PASSWORD_MIN_LENGTH, ROLE_LABELS, ROLES } from '@npr/shared';
 import { parseArgs } from 'node:util';
 import { DataSource } from 'typeorm';
 import { auditedTransaction } from '../../common/audit/audit-context.js';

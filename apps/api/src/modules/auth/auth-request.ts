@@ -14,7 +14,7 @@ export interface AuthenticatedRequest extends Request {
   auth?: { user: User; token: string };
 }
 
-const IS_PUBLIC = 'tyio:public';
+const IS_PUBLIC = 'npr:public';
 
 /**
  * Menandai endpoint yang boleh diakses tanpa sesi (mis. health dan login).

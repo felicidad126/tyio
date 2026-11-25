@@ -1,5 +1,5 @@
-export const TYIO_ENVS = ['development', 'test', 'staging', 'production'] as const;
-export type TyioEnv = (typeof TYIO_ENVS)[number];
+export const NPR_ENVS = ['development', 'test', 'staging', 'production'] as const;
+export type NprEnv = (typeof NPR_ENVS)[number];
 
 export interface SessionConfig {
   /** Sesi berakhir bila tidak dipakai selama ini (K28: 30 menit). */
@@ -20,7 +20,7 @@ export interface LoginLimitConfig {
 }
 
 export interface AppConfig {
-  env: TyioEnv;
+  env: NprEnv;
   port: number;
   databaseUrl: string;
   /** Folder hasil build web yang dilayani di luar /api. Kosong = API saja (mis. saat uji). */
@@ -57,9 +57,9 @@ export const DEFAULT_LOGIN_LIMIT: LoginLimitConfig = {
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   const problems: string[] = [];
 
-  const env = source.TYIO_ENV;
-  if (!isTyioEnv(env)) {
-    problems.push(`TYIO_ENV wajib diisi salah satu dari: ${TYIO_ENVS.join(', ')}`);
+  const env = source.NPR_ENV;
+  if (!isNprEnv(env)) {
+    problems.push(`NPR_ENV wajib diisi salah satu dari: ${NPR_ENVS.join(', ')}`);
   }
 
   const databaseUrl = source.DATABASE_URL;
@@ -96,7 +96,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
 
   if (
     problems.length > 0 ||
-    !isTyioEnv(env) ||
+    !isNprEnv(env) ||
     !databaseUrl ||
     idleMinutes === undefined ||
     maxHours === undefined ||
@@ -117,8 +117,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   };
 }
 
-function isTyioEnv(value: string | undefined): value is TyioEnv {
-  return TYIO_ENVS.includes(value as TyioEnv);
+function isNprEnv(value: string | undefined): value is NprEnv {
+  return NPR_ENVS.includes(value as NprEnv);
 }
 
 function isPostgresUrl(value: string): boolean {

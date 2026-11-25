@@ -19,7 +19,7 @@ import {
   type TicketCloseCause,
   type CreateTicketAction,
   type TicketStatus,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { DataSource } from 'typeorm';
 import { type AuditActor, auditedTransaction } from '../../../common/audit/audit-context.js';
 import { applyTenantScope, type TenantScope } from '../../../common/tenant/tenant-scope.js';

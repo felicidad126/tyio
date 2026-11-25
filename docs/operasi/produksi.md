@@ -13,13 +13,13 @@ Berkas: [`deploy/compose.prod.yml`](../../deploy/compose.prod.yml),
 | Service | Isi | Dibuka ke luar |
 | --- | --- | --- |
 | `caddy` | Penutup HTTPS (Caddy 2.11.8): sertifikat, HTTP → HTTPS, HSTS, kompresi | Port 80 dan 443 |
-| `app` | Portal NOC (API + web), `TYIO_ENV=production` | Tidak; hanya lewat Caddy |
+| `app` | Portal NOC (API + web), `NPR_ENV=production` | Tidak; hanya lewat Caddy |
 | `migrate` | Menjalankan migrasi database setiap kali dinyalakan, lalu berhenti | — |
-| `db` | PostgreSQL 18, data di volume `tyio-prod_db-data` | Tidak |
+| `db` | PostgreSQL 18, data di volume `npr-prod_db-data` | Tidak |
 | `backup` | Backup terenkripsi harian 01:30 WIB ke `deploy/backup/` | — |
 
 Image aplikasi **dibangun di server** dari commit yang sudah lolos CI (T157), diberi tag
-`tyio-app:<commit pendek>`. Image versi sebelumnya tetap ada di server untuk kembali.
+`npr-app:<commit pendek>`. Image versi sebelumnya tetap ada di server untuk kembali.
 Seed data dummy ditolak di produksi; untuk mencoba dengan data dummy pakai staging
 ([menjalankan.md](menjalankan.md#staging)).
 
@@ -36,7 +36,7 @@ Seed data dummy ditolak di produksi; untuk mencoba dengan data dummy pakai stagi
 ## Memasang pertama kali
 
 Semua perintah dijalankan sebagai root (atau anggota grup `docker`) dari folder repo, mis.
-`/opt/tyio`. Singkatan:
+`/opt/npr`. Singkatan:
 
 ```bash
 PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
@@ -46,12 +46,12 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
    (T161):
 
    ```bash
-   ssh-keygen -t ed25519 -N '' -C "tyio-deploy@$(hostname)" -f /root/.ssh/tyio_deploy
-   cat /root/.ssh/tyio_deploy.pub    # tempel di GitHub: repo › Settings › Deploy keys › Add (tanpa write access)
-   GIT_SSH_COMMAND='ssh -i /root/.ssh/tyio_deploy -o IdentitiesOnly=yes' \
-     git clone git@github.com:felicidad126/tyio.git /opt/tyio
-   cd /opt/tyio
-   git config core.sshCommand 'ssh -i /root/.ssh/tyio_deploy -o IdentitiesOnly=yes'
+   ssh-keygen -t ed25519 -N '' -C "npr-deploy@$(hostname)" -f /root/.ssh/npr_deploy
+   cat /root/.ssh/npr_deploy.pub    # tempel di GitHub: repo › Settings › Deploy keys › Add (tanpa write access)
+   GIT_SSH_COMMAND='ssh -i /root/.ssh/npr_deploy -o IdentitiesOnly=yes' \
+     git clone git@github.com:felicidad126/tyio.git /opt/npr
+   cd /opt/npr
+   git config core.sshCommand 'ssh -i /root/.ssh/npr_deploy -o IdentitiesOnly=yes'
    git checkout <commit yang lolos CI>
    ```
 
@@ -63,12 +63,12 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
 
    ```bash
    cp deploy/prod.env.example deploy/prod.env && chmod 600 deploy/prod.env
-   sed -i "s/^TYIO_DB_PASSWORD=.*/TYIO_DB_PASSWORD=$(openssl rand -hex 24)/" deploy/prod.env
+   sed -i "s/^NPR_DB_PASSWORD=.*/NPR_DB_PASSWORD=$(openssl rand -hex 24)/" deploy/prod.env
    ```
 
-   Lalu isi `TYIO_HOST` (nama host atau IP yang diketik pengguna) dan `TYIO_TLS`:
+   Lalu isi `NPR_HOST` (nama host atau IP yang diketik pengguna) dan `NPR_TLS`:
 
-   | `TYIO_TLS` | Kapan | Yang perlu disiapkan |
+   | `NPR_TLS` | Kapan | Yang perlu disiapkan |
    | --- | --- | --- |
    | `internal` | Intranet/VPN tanpa sertifikat dari IT | Root CA Caddy dipasang sekali di setiap perangkat (langkah 6) |
    | email admin, mis. `admin@perusahaan.co.id` | Domain publik | DNS domain mengarah ke server; port 80 dan 443 terbuka dari internet |
@@ -77,7 +77,7 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
 4. **Bangun dan nyalakan:**
 
    ```bash
-   export TYIO_IMAGE=tyio-app:$(git rev-parse --short HEAD)
+   export NPR_IMAGE=npr-app:$(git rev-parse --short HEAD)
    $PROD up -d --build --wait
    ```
 
@@ -94,13 +94,13 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
    untuk membatasi customer). Setelah itu admin mengisi customer dan data master di portal,
    lalu mengimpor remote dari Excel.
 
-6. **Hanya untuk `TYIO_TLS=internal`:** ambil root CA dan pasang di setiap perangkat pengguna
+6. **Hanya untuk `NPR_TLS=internal`:** ambil root CA dan pasang di setiap perangkat pengguna
    (Windows: *Trusted Root Certification Authorities*; macOS: Keychain, *Always Trust*;
    Android/iOS: profil sertifikat). Tanpa ini peramban memberi peringatan dan aplikasi tidak bisa
    dipasang.
 
    ```bash
-   $PROD exec -T caddy cat /data/caddy/pki/authorities/local/root.crt > tyio-root-ca.crt
+   $PROD exec -T caddy cat /data/caddy/pki/authorities/local/root.crt > npr-root-ca.crt
    ```
 
 7. **Uji asap** (tidak mengubah data):
@@ -112,7 +112,7 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
    deploy/scripts/uji-produksi.sh
    ```
 
-   Harus berakhir `Selesai: <n> lulus, 0 gagal`. Lalu buka `https://<TYIO_HOST>` di peramban.
+   Harus berakhir `Selesai: <n> lulus, 0 gagal`. Lalu buka `https://<NPR_HOST>` di peramban.
 
 8. **Firewall:** buka hanya 80/443 (dan SSH untuk admin server). Port database dan aplikasi
    memang tidak dibuka ke host.
@@ -120,16 +120,16 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
 ## Memperbarui ke versi baru
 
 ```bash
-cd /opt/tyio
+cd /opt/npr
 $PROD exec -T backup /scripts/backup.sh          # backup manual sebelum memperbarui
 git fetch && git checkout <commit baru yang lolos CI>
-export TYIO_IMAGE=tyio-app:$(git rev-parse --short HEAD)
+export NPR_IMAGE=npr-app:$(git rev-parse --short HEAD)
 $PROD up -d --build --wait                       # migrasi baru berjalan otomatis
 deploy/scripts/uji-produksi.sh
 ```
 
 Kembali ke versi sebelumnya hanya aman bila versi baru tidak membawa migrasi database:
-`git checkout <commit lama>`, `export TYIO_IMAGE=tyio-app:<commit lama pendek>`,
+`git checkout <commit lama>`, `export NPR_IMAGE=npr-app:<commit lama pendek>`,
 `$PROD up -d --no-build --wait`. Bila ada migrasi, pulihkan dari backup manual tadi
 ([backup.md](backup.md#restore-sungguhan-bencana-atau-data-rusak)).
 
@@ -140,7 +140,7 @@ Kembali ke versi sebelumnya hanya aman bila versi baru tidak membawa migrasi dat
 - Backup ada di `deploy/backup/` (perintah backup dan restore di [backup.md](backup.md), dengan
   `$PROD` sebagai pengganti `$STAGING`). Latihan restore minimal sebulan sekali di mesin lain
   yang memegang kunci privat.
-- Membersihkan image lama: `docker image ls tyio-app` lalu `docker image rm tyio-app:<tag>`
+- Membersihkan image lama: `docker image ls npr-app` lalu `docker image rm npr-app:<tag>`
   (simpan dua versi terakhir).
 
 ## Tidak dicakup (T155)

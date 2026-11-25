@@ -1,4 +1,4 @@
-import type { Role } from '@tyio/shared';
+import type { Role } from '@npr/shared';
 import {
   Column,
   CreateDateColumn,

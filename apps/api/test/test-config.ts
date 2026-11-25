@@ -1,8 +1,8 @@
 import { type AppConfig, DEFAULT_LOGIN_LIMIT, DEFAULT_STREAM } from '../src/config.js';
 
-// Database uji terpisah dari database dev (`tyio`), dibuat oleh init script compose dev.
+// Database uji terpisah dari database dev (`npr`), dibuat oleh init script compose dev.
 // Kredensial ini hanya untuk Postgres lokal yang terikat ke 127.0.0.1.
-const DEFAULT_TEST_DATABASE_URL = 'postgres://tyio:tyio@localhost:5432/tyio_test';
+const DEFAULT_TEST_DATABASE_URL = 'postgres://npr:npr@localhost:5432/npr_test';
 
 export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   return {

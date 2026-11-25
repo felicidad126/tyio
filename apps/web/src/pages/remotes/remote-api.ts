@@ -6,7 +6,7 @@ import {
   type RemotePage,
   type TenantSummary,
   XLSX_MIME,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { apiRequest, apiUpload } from '../../api';
 
 // Panggilan API halaman remote (langkah 1.2). Cakupan customer dan peran diperiksa server.

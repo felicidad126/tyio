@@ -7,7 +7,7 @@ import type {
   TenantSummary,
   UpdateCustomer,
   UpdateMasterValue,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { apiRequest } from '../../../api';
 
 // Panggilan API halaman data master (langkah 1.1). API tetap penjaga yang sebenarnya:

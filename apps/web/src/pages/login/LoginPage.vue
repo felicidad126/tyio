@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { APP_NAME, EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH } from '@tyio/shared';
+import { APP_NAME, EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH } from '@npr/shared';
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../../api';

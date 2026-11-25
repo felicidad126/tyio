@@ -8,7 +8,7 @@ import {
   type RemotePage,
   type RemoteSummary,
   type RemoteZone,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { readSheet } from 'read-excel-file/node';
 import writeXlsxFile from 'write-excel-file/node';
 import type { DataSource, EntityManager, ObjectLiteral, SelectQueryBuilder } from 'typeorm';

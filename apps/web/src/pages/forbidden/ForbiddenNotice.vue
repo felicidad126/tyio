@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconLock } from '@tabler/icons-vue';
-import { ROLE_LABELS } from '@tyio/shared';
+import { ROLE_LABELS } from '@npr/shared';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import PageHeader from '../../components/PageHeader.vue';

@@ -1,4 +1,4 @@
-import type { AuditAction, AuditSource } from '@tyio/shared';
+import type { AuditAction, AuditSource } from '@npr/shared';
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 /**

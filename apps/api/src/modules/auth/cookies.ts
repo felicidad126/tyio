@@ -1,8 +1,8 @@
-import { API_PREFIX } from '@tyio/shared';
+import { API_PREFIX } from '@npr/shared';
 import type { CookieOptions } from 'express';
 
 /** Nama cookie sesi. Isinya token acak; artinya hanya diketahui tabel `sessions`. */
-export const SESSION_COOKIE = 'tyio_sesi';
+export const SESSION_COOKIE = 'npr_sesi';
 
 /**
  * Atribut cookie sesi (T5):
