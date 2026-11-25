@@ -4,7 +4,7 @@ Tanggal: 25 November 2026
 Branch: `Rev-NPR-Tyio` (tidak di-merge ke `main`)
 Dasar: [REVIEW-NPR.md](REVIEW-NPR.md) dan keputusan pengguna di bawah ini.
 
-Status: keputusan D-1…D-8 dan T-1…T-5 sudah ada; T-6 menyusul. Pengerjaan dimulai 25 November 2026.
+Status: keputusan D-1…D-8 dan T-1…T-6 sudah ada. Pengerjaan dimulai 25 November 2026.
 
 | Tahap | Status | Hasil uji |
 | --- | --- | --- |
@@ -12,7 +12,8 @@ Status: keputusan D-1…D-8 dan T-1…T-5 sudah ada; T-6 menyusul. Pengerjaan di
 | 1. Perbaikan data | Selesai | build, lint, setup lulus; uji API 30/30 |
 | 2. Akun per orang | Selesai | build, lint, setup lulus; uji API 42/42; migrasi diuji pada database lama dan database kosong |
 | Temuan Tinggi lainnya (K-01, X-01, X-02, U-01, U-02) | Selesai | build, lint, setup lulus; uji API 49/49; dicek di browser 1440 px dan 390 px |
-| 3–9 (sisa) | Menunggu keputusan T-6 | – |
+| Sisa yang ditentukan D-1…D-8 (U-05, X-07, X-10, H-05, R-01…R-07) | Belum | – |
+| Temuan lain (T-6) | Tidak dikerjakan | – |
 
 Kode program ada di folder `monitoring-vsat/` (di-commit setelah syarat T-1 terpenuhi). Kode program belum ada di repo dan belum diubah.
 
@@ -245,7 +246,7 @@ Beberapa tahap mengubah struktur database: tabel penghitung nomor (tahap 1), kol
 | T-3 | Nomor NPR/TT lama | Tetap seperti aslinya. Nomor urut baru mulai dari `0001` pada bulan berjalan | **Ya** |
 | T-4 | Pecah `App.tsx` dan alamat per halaman (`K-06`) | Ikut dikerjakan di tahap 3, karena `K-01` sudah mengubah cara setiap halaman mengambil data | **Tidak.** `K-06` tidak dikerjakan |
 | T-5 | Pustaka tambahan | `lucide-react` (ikon), `jspdf-autotable` (tabel PDF), `prettier` (format kode). Tidak ada pustaka lain | **Ya**, tanpa `react-router` karena T-4 tidak |
-| T-6 | Temuan yang tidak dikerjakan | Tidak ada. Semua temuan K, U, X, H, dan R masuk rencana. Pemindahan lampiran ke Cloudflare R2 (saran jangka panjang di `K-01`) **tidak** dikerjakan | **Nanti.** Cakupan diputuskan kemudian |
+| T-6 | Temuan yang tidak dikerjakan | Tidak ada. Semua temuan K, U, X, H, dan R masuk rencana. Pemindahan lampiran ke Cloudflare R2 (saran jangka panjang di `K-01`) **tidak** dikerjakan | **Tidak perlu.** Temuan di luar yang ditentukan D-1…D-8 tidak dikerjakan |
 
 ---
 
