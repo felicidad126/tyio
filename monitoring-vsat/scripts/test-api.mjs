@@ -61,11 +61,12 @@ async function post(path, body) {
   return result.data;
 }
 
-async function all() {
-  const result = await request("/api/data");
-  assert.ok(result.response.ok, JSON.stringify(result.data));
+async function get(path) {
+  const result = await request(path);
+  assert.ok(result.response.ok, `${path}: ${JSON.stringify(result.data)}`);
   return result.data;
 }
+const nprDetail = (id) => get(`/api/nprs/${id}`);
 
 check(
   bulanWIB("2026-11-30T16:59:00Z") === "2026-11" &&
@@ -73,7 +74,7 @@ check(
   "month is determined in WIB (00.30 WIB on the 1st belongs to the new month)",
 );
 
-const unauthorized = await request("/api/data", undefined, false);
+const unauthorized = await request("/api/master", undefined, false);
 check(
   unauthorized.response.status === 401,
   "protected data rejects anonymous access",
@@ -117,7 +118,7 @@ const csrf = await fetch(`${base}/api/customers`, {
 check(csrf.status === 403, "cross-origin write rejected");
 
 await post("/api/customers", { name: `QA Bank ${suffix}`, code: `Q${suffix}` });
-let data = await all();
+let data = await get("/api/master");
 const customer = data.customers.find(
   (row) => row.code === `Q${suffix}`.toUpperCase(),
 );
@@ -138,7 +139,7 @@ for (const [index, jarkom] of ["VSAT", "M2M"].entries()) {
     pic_name: "PIC Simulasi QA",
     pic_phone: "08000000000",
   });
-  data = await all();
+  data = await get("/api/master");
   remotes.push(data.remotes.find((row) => row.site_id === site_id));
 }
 check(remotes.every(Boolean), "customer can have both VSAT and M2M sites");
@@ -152,16 +153,13 @@ const month = at(0).slice(0, 7);
 
 async function newNpr(remote, status, offset = 0) {
   const notes = `QA ${suffix} ${status} ${offset}`;
-  await post("/api/nprs", {
+  const created = await post("/api/nprs", {
     remote_id: remote.id,
     remote_status: status,
     started_at: at(offset),
     notes,
   });
-  const records = await all();
-  const found = records.nprs
-    .filter((row) => row.remote_id === remote.id)
-    .sort((a, b) => b.id - a.id)[0];
+  const found = (await nprDetail(created.id)).npr;
   assert.ok(found);
   return found;
 }
@@ -195,9 +193,8 @@ const uncategorised = await request(`/api/nprs/${customerNpr.id}/actions`, {
 check(!uncategorised.response.ok, "Problem action requires a pending category");
 await action(customerNpr, "Problem", 0.5);
 await action(customerNpr, "Close", 1, { online_at: at(1) });
-data = await all();
 check(
-  data.nprs.find((row) => row.id === customerNpr.id)?.status === "CLOSED",
+  (await nprDetail(customerNpr.id)).npr.status === "CLOSED",
   "customer NPR closes without technician ticket",
 );
 
@@ -234,15 +231,13 @@ await action(maintenance, "Problem", 4, {
   pending_by: "Customer",
   notes: "Menunggu akses lokasi dari customer.",
 });
-data = await all();
+data = await nprDetail(maintenance.id);
 check(
-  data.nprs.find((row) => row.id === maintenance.id)?.status === "ESKALASI",
+  data.npr.status === "ESKALASI",
   "NPR stays ESKALASI after a Problem action while its TT is open",
 );
 check(
-  new RegExp(`^${prefix("TT")}\\d{4}$`).test(
-    data.tickets.find((row) => row.npr_id === maintenance.id)?.number,
-  ),
+  new RegExp(`^${prefix("TT")}\\d{4}$`).test(data.ticket?.number),
   "TT number is sequential per WIB month (TT/YYYY/MM/0001)",
 );
 await action(maintenance, "Problem", 5, {
@@ -255,15 +250,16 @@ await action(maintenance, "Report Teknisi", 6, {
   notes: "Modem diganti; jaringan normal.",
 });
 await action(maintenance, "Close", 7, { pending_by: "TM", online_at: at(6) });
-data = await all();
-const closed = data.nprs.find((row) => row.id === maintenance.id);
+data = await nprDetail(maintenance.id);
+const closed = data.npr;
 check(
   closed?.status === "CLOSED" &&
     Date.parse(closed.online_at) === Date.parse(at(6)),
   "actual restoration time retained independently of administrative close",
 );
 check(
-  data.tickets.filter((row) => row.npr_id === maintenance.id).length === 1,
+  (await get("/api/tickets?cari=" + encodeURIComponent(data.ticket.number)))
+    .rows.length === 1,
   "one TT remains linked to its NPR",
 );
 
@@ -309,20 +305,18 @@ const closedEdit = await request(`/api/nprs/${maintenance.id}/actions`, {
 });
 check(!closedEdit.response.ok, "closed NPR history is immutable");
 
-await post("/api/gamas", {
+const gamasBaru = await post("/api/gamas", {
   location: "Data Center QA",
   notes: `Gangguan massal QA ${suffix}`,
   remote_ids: remotes.map((row) => row.id),
   started_at: at(4),
 });
-data = await all();
-const gamas = data.gamas.find(
-  (row) => row.notes === `Gangguan massal QA ${suffix}`,
-);
+data = await get(`/api/gamas/${gamasBaru.id}`);
+const gamas = data.gamas;
 assert.ok(gamas);
 check(
   new RegExp(`^${prefix("GAMAS")}\\d{4}$`).test(gamas.number) &&
-    data.gamas_sites.filter((row) => row.gamas_id === gamas.id).length === 2,
+    data.sites.length === 2,
   "Gamas receives a sequential number and its affected sites",
 );
 const earlyGamas = await request(`/api/gamas/${gamas.id}/actions`, {
@@ -369,6 +363,55 @@ check(
 check(
   afterGamas?.downtime_minutes < tmSla.downtime_minutes + 240,
   "overlapping Gamas and TT downtime is not double-counted",
+);
+
+// Data diambil per halaman (K-01)
+const tiny =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+const withFile = await newNpr(remotes[1], "ATM Offline", 10);
+await action(withFile, "Problem", 10.5, {
+  attachment_name: "bukti.png",
+  attachment_data: tiny,
+});
+const fileDetail = await nprDetail(withFile.id);
+const fileAction = fileDetail.actions.find((row) => row.kind === "Problem");
+check(
+  fileAction?.attachment_name === "bukti.png" &&
+    !("attachment_data" in fileAction),
+  "NPR detail lists attachment names without their content",
+);
+check(
+  (await get(`/api/lampiran/${fileAction.id}`)).data === tiny,
+  "attachment content is fetched separately when opened",
+);
+const page1 = await get("/api/nprs?per=1&halaman=1");
+check(
+  page1.rows.length === 1 && page1.total > 1,
+  "NPR list is paginated on the server",
+);
+check(
+  !page1.rows.some((row) => "attachment_data" in row),
+  "NPR list never carries attachment content",
+);
+const found = await get(
+  `/api/nprs?cari=${encodeURIComponent(withFile.number)}`,
+);
+check(
+  found.total === 1 && found.rows[0].id === withFile.id,
+  "NPR list searches by number",
+);
+const active = await get("/api/nprs?kondisi=aktif&per=100");
+check(
+  active.rows.some((row) => row.id === withFile.id) &&
+    active.rows.every((row) => row.status !== "CLOSED"),
+  "NPR list filters active NPRs for the dashboard",
+);
+const dashboard = await get("/api/dashboard");
+check(
+  dashboard.grafik.length === 7 &&
+    dashboard.ringkas.aktif === active.total &&
+    dashboard.npr_terlama.length <= 10,
+  "dashboard summary matches the filtered NPR list",
 );
 
 // Akun per orang
@@ -424,9 +467,8 @@ const staffNpr = await request(
   true,
   staffJar,
 );
-data = await all();
 check(
-  data.nprs.find((row) => row.id === staffNpr.data.id)?.created_by ===
+  (await nprDetail(staffNpr.data.id)).npr.created_by ===
     `Helpdesk QA ${suffix}`,
   "NPR records the account that created it",
 );
@@ -472,7 +514,7 @@ check(
 
 await post("/api/logout", {});
 check(
-  (await request("/api/data")).response.status === 401,
+  (await request("/api/master")).response.status === 401,
   "logout invalidates server session",
 );
 console.log(

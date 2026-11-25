@@ -11,7 +11,8 @@ Status: keputusan D-1…D-8 dan T-1…T-5 sudah ada; T-6 menyusul. Pengerjaan di
 | 0. Persiapan | Selesai | build, lint, setup lulus; uji API 20/20 (sama dengan saat review) |
 | 1. Perbaikan data | Selesai | build, lint, setup lulus; uji API 30/30 |
 | 2. Akun per orang | Selesai | build, lint, setup lulus; uji API 42/42; migrasi diuji pada database lama dan database kosong |
-| 3–9 | Belum | – |
+| Temuan Tinggi lainnya (K-01, X-01, X-02, U-01, U-02) | Selesai | build, lint, setup lulus; uji API 49/49; dicek di browser 1440 px dan 390 px |
+| 3–9 (sisa) | Menunggu keputusan T-6 | – |
 
 Kode program ada di folder `monitoring-vsat/` (di-commit setelah syarat T-1 terpenuhi). Kode program belum ada di repo dan belum diubah.
 

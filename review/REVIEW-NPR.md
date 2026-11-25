@@ -54,22 +54,22 @@ Kolom **Perlu?** diisi sesuai keputusan D-1 sampai D-8 (25 November 2026). Yang 
 
 | ID | Tingkat | Temuan | Perlu? |
 | --- | --- | --- | --- |
-| K-01 | Tinggi | Setiap buka/simpan, seluruh database termasuk lampiran ikut diunduh | |
+| K-01 | Tinggi | Setiap buka/simpan, seluruh database termasuk lampiran ikut diunduh | Ya |
 | K-02 | Tinggi | Nomor NPR/TT 16 digit acak, bulan pakai UTC, bisa bentrok | Ya (D-6 a) |
-| K-03 | Tinggi | Status ESKALASI berubah jadi PENDING setelah ada tindakan baru | |
-| K-04 | Sedang | Close Gamas tanpa jam online memakai jam klik; waktu perkembangan Gamas tidak bisa diatur | |
-| K-05 | Sedang | Bulan default laporan SLA pakai UTC, bukan WIB | |
+| K-03 | Tinggi | Status ESKALASI berubah jadi PENDING setelah ada tindakan baru | Ya |
+| K-04 | Sedang | Close Gamas tanpa jam online memakai jam klik; waktu perkembangan Gamas tidak bisa diatur | Ya |
+| K-05 | Sedang | Bulan default laporan SLA pakai UTC, bukan WIB | Ya |
 | K-06 | Sedang | `App.tsx` 2.222 baris dalam satu komponen, tanpa URL per halaman | Tidak (T-4) |
 | K-07 | Sedang | `worker/domain.ts` ditulis padat satu baris, sulit dibaca dan dijelaskan | |
 | K-08 | Sedang | Aturan isian beda antara form dan server | |
 | K-09 | Rendah | Pesan error teknis muncul kalau server tidak membalas JSON | |
 | K-10 | Rendah | Hitung SLA memuat seluruh riwayat sepanjang masa | |
-| K-11 | Rendah | Sesi dan catatan login kedaluwarsa tidak pernah dibersihkan | |
+| K-11 | Rendah | Sesi dan catatan login kedaluwarsa tidak pernah dibersihkan | Ya |
 | K-12 | Rendah | Grafik 7 hari dihitung ulang berlapis dan memakai zona waktu laptop | |
 | K-13 | Rendah | Hanya satu akun tetap (`setio`), tanpa pengelolaan pengguna | Ya (D-3 c) |
-| K-14 | Rendah | Sisa berkas template (logo Vite/React, gambar hero) tidak dipakai | |
-| U-01 | Tinggi | Ukuran huruf 9–12 px di hampir semua tempat | |
-| U-02 | Tinggi | Teks abu-abu di bawah standar kontras | |
+| K-14 | Rendah | Sisa berkas template (logo Vite/React, gambar hero) tidak dipakai | Ya |
+| U-01 | Tinggi | Ukuran huruf 9–12 px di hampir semua tempat | Ya |
+| U-02 | Tinggi | Teks abu-abu di bawah standar kontras | Ya |
 | U-03 | Sedang | 116 kode warna ditulis langsung, tanpa variabel warna | |
 | U-04 | Sedang | Ikon menu berupa karakter Unicode acak | |
 | U-05 | Sedang | Tampilan HP: menu terpotong, tabel harus digeser | Ya (D-4 b) |
@@ -79,8 +79,8 @@ Kolom **Perlu?** diisi sesuai keputusan D-1 sampai D-8 (25 November 2026). Yang 
 | U-09 | Rendah | Bingkai fokus pada input hampir tidak terlihat | |
 | U-10 | Sedang | SLA tertulis "100.000%" (terbaca seratus ribu persen) dan menit berkoma | |
 | U-11 | Rendah | Kartu "Menunggu Report" berwarna hijau | |
-| X-01 | Tinggi | Menu "Detail NPR" dan "Report NPR" menampilkan daftar yang sama | |
-| X-02 | Tinggi | Dashboard hanya angka; tidak ada daftar NPR yang perlu ditangani | |
+| X-01 | Tinggi | Menu "Detail NPR" dan "Report NPR" menampilkan daftar yang sama | Ya |
+| X-02 | Tinggi | Dashboard hanya angka; tidak ada daftar NPR yang perlu ditangani | Ya |
 | X-03 | Sedang | Form tindakan menampilkan semua isian untuk semua jenis tindakan | |
 | X-04 | Sedang | Setelah Submit NPR, pengguna dibawa ke daftar, bukan ke NPR baru | |
 | X-05 | Sedang | Customer dan Remote tidak bisa diubah | |

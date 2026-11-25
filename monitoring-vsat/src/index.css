@@ -2,8 +2,12 @@
   box-sizing: border-box;
 }
 :root {
+  /* Warna teks. Teks redup minimal kontras 5,3 : 1 di latar terang. */
+  --teks: #1b2b45;
+  --teks-redup: #536580;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
-  color: #1b2b45;
+  font-size: 14px;
+  color: var(--teks);
   background: #f3f6fb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;

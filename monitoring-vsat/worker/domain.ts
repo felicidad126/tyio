@@ -1,5 +1,9 @@
 import { bulanWIB } from "../shared/waktu.js";
 import type { Pengguna } from "./pengguna.js";
+import { ApiError } from "./galat.js";
+import { baca } from "./baca.js";
+
+export { ApiError };
 
 type DB = D1Database;
 const remoteStatuses = [
@@ -12,13 +16,6 @@ const remoteStatuses = [
   "Preventive Maintenance",
   "Other",
 ];
-export class ApiError extends Error {
-  status: number;
-  constructor(message: string, status = 400) {
-    super(message);
-    this.status = status;
-  }
-}
 const fail = (message: string): never => {
   throw new ApiError(message);
 };
@@ -90,24 +87,9 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
   const db = env.DB,
     url = new URL(request.url),
     path = url.pathname;
-  if (request.method === "GET" && path === "/api/data") {
-    // created_by berisi nama pencatat, diambil dari tabel pengguna.
-    const queries = {
-      customers: "SELECT * FROM customers ORDER BY id",
-      remotes: "SELECT * FROM remotes ORDER BY id",
-      nprs: "SELECT t.*, u.full_name AS created_by FROM nprs t LEFT JOIN users u ON u.id = t.user_id ORDER BY t.id DESC",
-      actions:
-        "SELECT t.*, u.full_name AS created_by FROM actions t LEFT JOIN users u ON u.id = t.user_id ORDER BY t.id DESC",
-      tickets: "SELECT * FROM tickets ORDER BY id DESC",
-      gamas:
-        "SELECT t.*, u.full_name AS created_by FROM gamas t LEFT JOIN users u ON u.id = t.user_id ORDER BY t.id DESC",
-      gamas_sites: "SELECT * FROM gamas_sites ORDER BY gamas_id DESC",
-      gamas_actions:
-        "SELECT t.*, t.occurred_at AS created_at, u.full_name AS created_by FROM gamas_actions t LEFT JOIN users u ON u.id = t.user_id ORDER BY t.id DESC",
-    };
-    const names = Object.keys(queries) as (keyof typeof queries)[];
-    const results = await db.batch(names.map((n) => db.prepare(queries[n])));
-    return Object.fromEntries(names.map((n, i) => [n, results[i].results]));
+  if (request.method === "GET" && path !== "/api/sla") {
+    const hasil = await baca(db, url);
+    if (hasil !== undefined) return hasil;
   }
   if (request.method === "GET" && path === "/api/sla")
     return sla(db, url.searchParams.get("month"));

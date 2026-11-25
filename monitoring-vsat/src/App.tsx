@@ -5,9 +5,15 @@ import { bulanWIB } from "../shared/waktu";
 import { Field } from "./komponen";
 import { GantiPassword, HalamanPengguna } from "./Pengguna";
 import { namaPeran, type Peran } from "./peran";
+import { useMuat, useTunda } from "./useMuat";
 
 type User = { id: number; username: string; full_name: string; peran: Peran };
-type Customer = { id: number; name: string; code: string };
+type Customer = {
+  id: number;
+  name: string;
+  code: string;
+  remote_count: number;
+};
 type Remote = {
   id: number;
   customer_id: number;
@@ -20,8 +26,10 @@ type Remote = {
   ip_lan: string;
   pic_name: string;
   pic_phone: string;
+  customer_name?: string;
 };
-type NPR = {
+// Baris NPR dari server, sudah digabung dengan data site, customer, dan TT.
+type NprRow = {
   id: number;
   number: string;
   remote_id: number;
@@ -33,6 +41,13 @@ type NPR = {
   closed_at: string | null;
   created_by: string;
   last_action: string;
+  site_id: string;
+  location: string;
+  jarkom: string;
+  customer_id: number;
+  customer_name: string;
+  ticket_number: string | null;
+  ticket_report: string | null;
 };
 type Action = {
   id: number;
@@ -43,8 +58,7 @@ type Action = {
   pending_by: string;
   occurred_at: string;
   created_by: string;
-  attachment_name?: string;
-  attachment_data?: string;
+  attachment_name: string;
 };
 type Ticket = {
   id: number;
@@ -56,6 +70,21 @@ type Ticket = {
   report: string;
   technician: string;
 };
+// Data lengkap yang dibutuhkan untuk PDF TT.
+type TicketPdf = Ticket &
+  Pick<
+    Remote,
+    | "site_id"
+    | "location"
+    | "address"
+    | "city"
+    | "province"
+    | "jarkom"
+    | "ip_lan"
+    | "pic_name"
+    | "pic_phone"
+  > & { npr_number: string; customer_name: string };
+type TicketRow = TicketPdf & { npr_status: string };
 type Gamas = {
   id: number;
   number: string;
@@ -66,6 +95,7 @@ type Gamas = {
   closed_at: string | null;
   status: string;
   report: string;
+  site_count?: number;
 };
 type GamasAction = {
   id: number;
@@ -75,15 +105,18 @@ type GamasAction = {
   created_at: string;
   created_by: string;
 };
-type Data = {
-  customers: Customer[];
-  remotes: Remote[];
-  nprs: NPR[];
+type GamasDetail = { gamas: Gamas; sites: Remote[]; actions: GamasAction[] };
+type NprDetail = {
+  npr: NprRow;
+  remote: Remote;
+  ticket: Ticket | null;
   actions: Action[];
-  tickets: Ticket[];
-  gamas: Gamas[];
-  gamas_sites: { gamas_id: number; remote_id: number }[];
-  gamas_actions: GamasAction[];
+};
+type Dashboard = {
+  ringkas: Record<string, number>;
+  grafik: { hari: string; jumlah: number }[];
+  gamas_aktif: Pick<Gamas, "id" | "number" | "location" | "status">[];
+  npr_terlama: NprRow[];
 };
 type SlaRow = {
   remote_id: number;
@@ -96,25 +129,14 @@ type SlaRow = {
 };
 type Page =
   | "Dashboard"
-  | "New NPR"
-  | "Detail NPR"
+  | "NPR"
+  | "NPR Baru"
   | "Trouble Ticket"
   | "TT Gamas"
-  | "Report NPR"
   | "Laporan SLA"
   | "Customer"
   | "Remote"
   | "Pengguna";
-const emptyData: Data = {
-  customers: [],
-  remotes: [],
-  nprs: [],
-  actions: [],
-  tickets: [],
-  gamas: [],
-  gamas_sites: [],
-  gamas_actions: [],
-};
 const cases = [
   "ATM Offline",
   "Remote Down",
@@ -125,19 +147,27 @@ const cases = [
   "Preventive Maintenance",
   "Other",
 ];
-const pages: Page[] = [
-  "Dashboard",
-  "New NPR",
-  "Detail NPR",
-  "Trouble Ticket",
-  "TT Gamas",
-  "Report NPR",
-  "Laporan SLA",
-  "Customer",
-  "Remote",
-  "Pengguna",
+// "NPR Baru" dibuka dari tombol di daftar NPR, jadi tidak tampil di menu.
+const menu: { page: Page; icon: string }[] = [
+  { page: "Dashboard", icon: "◈" },
+  { page: "NPR", icon: "▤" },
+  { page: "Trouble Ticket", icon: "↗" },
+  { page: "TT Gamas", icon: "◎" },
+  { page: "Laporan SLA", icon: "◷" },
+  { page: "Customer", icon: "▦" },
+  { page: "Remote", icon: "⌖" },
+  { page: "Pengguna", icon: "◉" },
 ];
-const icons = ["◈", "+", "▤", "↗", "◎", "▥", "◷", "▦", "⌖", "◉"];
+// Filter daftar NPR yang dibuka dari kartu dan tautan di Dashboard.
+const kondisiNpr: Record<string, string> = {
+  aktif: "NPR aktif",
+  kritis: "Critical >48 jam",
+  aging: "Aging 24–48 jam",
+  menunggu_report: "Menunggu report teknisi",
+  pending_tm: "Pending TM",
+  pending_customer: "Pending Customer",
+  belum_kategori: "Belum dikategorikan",
+};
 function localNow() {
   return new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 16);
 }
@@ -153,6 +183,12 @@ function dateText(value?: string | null) {
 function iso(value: string) {
   return new Date(value + ":00+07:00").toISOString();
 }
+// Lama gangguan berjalan, mis. "2 hari 5 jam".
+function lamaBerjalan(mulai: string, sekarang: number) {
+  const jam = Math.max(0, Math.floor((sekarang - Date.parse(mulai)) / 3600000));
+  const hari = Math.floor(jam / 24);
+  return hari ? `${hari} hari ${jam % 24} jam` : `${jam} jam`;
+}
 function Status({ value }: { value: string }) {
   return (
     <span className={`status status-${value?.toLowerCase()}`}>
@@ -162,7 +198,7 @@ function Status({ value }: { value: string }) {
 }
 function csv(name: string, rows: (string | number)[][]) {
   const text =
-    "\uFEFF" +
+    "﻿" +
     rows
       .map((row) =>
         row
@@ -224,7 +260,6 @@ async function pdf(title: string, number: string, entries: [string, string][]) {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
-  const [data, setData] = useState<Data>(emptyData);
   const [page, setPage] = useState<Page>("Dashboard");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -242,6 +277,7 @@ function App() {
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [kondisi, setKondisi] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [rowPage, setRowPage] = useState(1);
@@ -252,22 +288,18 @@ function App() {
   const [newCase, setNewCase] = useState("Remote Down");
   const [slaMonth, setSlaMonth] = useState(() => bulanWIB());
   const [closeGamas, setCloseGamas] = useState(false);
-  const [sla, setSla] = useState<{
-    rows: SlaRow[];
-    target: number;
-    month: string;
-  } | null>(null);
-  const [slaLoading, setSlaLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  // Dinaikkan setelah ada data yang disimpan, supaya tampilan memuat ulang.
+  const [versi, setVersi] = useState(0);
+  const [versiMaster, setVersiMaster] = useState(0);
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setClock(Date.now()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  const [showPassword, setShowPassword] = useState(false);
-
   // Dibungkus useCallback supaya fungsi ini tetap sama di setiap render dan
-  // aman dipakai sebagai dependensi useEffect di halaman lain.
+  // aman dipakai sebagai dependensi useEffect.
   const api = useCallback(
     async <T,>(path: string, body?: unknown): Promise<T> => {
       const response = await fetch(path, {
@@ -286,12 +318,6 @@ function App() {
     },
     [],
   );
-  async function reload() {
-    const result = await api<Data>("/api/data");
-    const fresh = { ...emptyData, ...result };
-    setData(fresh);
-    return fresh;
-  }
   useEffect(() => {
     let alive = true;
     fetch("/api/me")
@@ -311,47 +337,79 @@ function App() {
       alive = false;
     };
   }, []);
-  useEffect(() => {
-    if (!user) return;
-    let alive = true;
-    fetch("/api/data")
-      .then(async (r) => {
-        const result = await r.json();
-        if (!r.ok) throw new Error(result.message || "Gagal memuat data");
-        if (alive) setData({ ...emptyData, ...result });
-      })
-      .catch((e) => {
-        if (alive) setError(e.message);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [user]);
-  useEffect(() => {
-    if (!user || page !== "Laporan SLA") return;
-    let alive = true;
-    queueMicrotask(() => {
-      if (alive) {
-        setSlaLoading(true);
-        setSla(null);
-      }
-    });
-    fetch(`/api/sla?month=${slaMonth}`)
-      .then(async (r) => {
-        const result = await r.json();
-        if (!r.ok) throw new Error(result.message);
-        if (alive) setSla(result);
-      })
-      .catch((e) => {
-        if (alive) setError(e.message);
-      })
-      .finally(() => {
-        if (alive) setSlaLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [user, page, slaMonth, data]);
+
+  // Setiap halaman hanya memuat data yang ditampilkannya.
+  const lihatDetail = selected !== null || selectedGamas !== null;
+  const cariTunda = useTunda(search);
+  const butuhMaster =
+    !!user &&
+    (["NPR", "NPR Baru", "Customer", "Remote"].includes(page) ||
+      modal !== null);
+  const master = useMuat<{ customers: Customer[]; remotes: Remote[] }>(
+    butuhMaster ? "/api/master" : null,
+    api,
+    versiMaster,
+  );
+  const customers = master.data?.customers ?? [];
+  const remotes = master.data?.remotes ?? [];
+
+  const nprQuery = new URLSearchParams({
+    halaman: String(rowPage),
+    per: String(perPage),
+    ...(cariTunda && { cari: cariTunda }),
+    ...(customerFilter && { customer: customerFilter }),
+    ...(statusFilter && { status: statusFilter }),
+    ...(kondisi && { kondisi, urut: "terlama" }),
+    ...(from && { dari: from }),
+    ...(to && { sampai: to }),
+  }).toString();
+  const nprList = useMuat<{ rows: NprRow[]; total: number }>(
+    user && page === "NPR" && !lihatDetail ? `/api/nprs?${nprQuery}` : null,
+    api,
+    versi,
+  );
+  const detail = useMuat<NprDetail>(
+    user && selected !== null ? `/api/nprs/${selected}` : null,
+    api,
+    versi,
+  );
+  const gamasDetail = useMuat<GamasDetail>(
+    user && selectedGamas !== null ? `/api/gamas/${selectedGamas}` : null,
+    api,
+    versi,
+  );
+  const dashboard = useMuat<Dashboard>(
+    user && page === "Dashboard" && !lihatDetail ? "/api/dashboard" : null,
+    api,
+    versi,
+  );
+  const tickets = useMuat<{ rows: TicketRow[] }>(
+    user && page === "Trouble Ticket" && !lihatDetail
+      ? `/api/tickets?cari=${encodeURIComponent(cariTunda)}`
+      : null,
+    api,
+    versi,
+  );
+  const gamasList = useMuat<{ rows: Gamas[] }>(
+    user && page === "TT Gamas" && !lihatDetail ? "/api/gamas" : null,
+    api,
+    versi,
+  );
+  const sla = useMuat<{ rows: SlaRow[]; target: number; month: string }>(
+    user && page === "Laporan SLA" ? `/api/sla?month=${slaMonth}` : null,
+    api,
+    versi,
+  );
+  const loadError =
+    master.error ||
+    nprList.error ||
+    detail.error ||
+    gamasDetail.error ||
+    dashboard.error ||
+    tickets.error ||
+    gamasList.error ||
+    sla.error;
+
   function go(next: Page) {
     setPage(next);
     setSelected(null);
@@ -360,9 +418,23 @@ function App() {
     setSearch("");
     setCustomerFilter("");
     setStatusFilter("");
+    setKondisi("");
     setFrom("");
     setTo("");
     setRowPage(1);
+    setError("");
+    setNotice("");
+  }
+  // Membuka daftar NPR yang sudah tersaring dari Dashboard.
+  function bukaDaftar(namaKondisi: string) {
+    go("NPR");
+    setKondisi(namaKondisi);
+  }
+  function bukaNpr(id: number) {
+    setPage("NPR");
+    setSelectedGamas(null);
+    setSelected(id);
+    setKind("Problem");
     setError("");
     setNotice("");
   }
@@ -389,139 +461,131 @@ function App() {
     try {
       await api("/api/logout", {});
       setUser(null);
-      setData(emptyData);
-      setPage("Dashboard");
+      go("Dashboard");
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
-  async function mutate(
+  async function mutate<T = { id?: number }>(
     path: string,
     body: unknown,
     success: string,
-    after?: (fresh: Data) => void,
+    after?: (result: T) => void,
   ) {
     if (busy) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await api(path, body);
-      const fresh = await reload();
+      const result = await api<T>(path, body);
+      setVersi((v) => v + 1);
       setNotice(success);
-      after?.(fresh);
+      after?.(result);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
-  const remote = (id: number) => data.remotes.find((r) => r.id === id);
-  const customer = (id?: number) => data.customers.find((c) => c.id === id);
-  const ticket = (id: number) => data.tickets.find((t) => t.npr_id === id);
-  const active = data.nprs.filter((n) => n.status !== "CLOSED");
-  const current = data.nprs.find((n) => n.id === selected);
-  const currentRemote = current ? remote(current.remote_id) : undefined;
-  const currentTicket = current ? ticket(current.id) : undefined;
-  const currentGamas = data.gamas.find((g) => g.id === selectedGamas);
-  const filtered = data.nprs
-    .filter((n) => {
-      const r = remote(n.remote_id);
-      const c = customer(r?.customer_id);
-      const day = new Date(n.started_at).toLocaleDateString("en-CA", {
-        timeZone: "Asia/Jakarta",
-      });
-      return (
-        (!customerFilter || String(r?.customer_id) === customerFilter) &&
-        (!statusFilter || n.status === statusFilter) &&
-        (!from || day >= from) &&
-        (!to || day <= to) &&
-        `${n.number} ${ticket(n.id)?.number || ""} ${r?.site_id} ${r?.location} ${c?.name} ${n.last_action}`
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      );
-    })
-    .sort((a, b) => b.id - a.id);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
-  const visible = filtered.slice(
-    (Math.min(rowPage, pageCount) - 1) * perPage,
-    Math.min(rowPage, pageCount) * perPage,
+  const customerName = (id?: number) =>
+    customers.find((c) => c.id === id)?.name;
+  const picked = remotes.find((r) => r.id === Number(newRemote));
+  const pageCount = Math.max(
+    1,
+    Math.ceil((nprList.data?.total ?? 0) / perPage),
   );
-  const picked = remote(Number(newRemote));
-  function exportNpr() {
-    csv("Laporan-NPR.csv", [
-      [
-        "No NPR",
-        "No TT",
-        "Customer",
-        "Site ID",
-        "Lokasi",
-        "Jarkom",
-        "Jenis Gangguan",
-        "Status",
-        "Pending By",
-        "Mulai WIB",
-        "Online WIB",
-        "Catatan Terakhir",
-      ],
-      ...filtered.map((n) => {
-        const r = remote(n.remote_id);
-        return [
+
+  async function exportNpr() {
+    try {
+      const params = new URLSearchParams(nprQuery);
+      params.set("ekspor", "1");
+      const { rows } = await api<{ rows: NprRow[] }>(`/api/nprs?${params}`);
+      csv("Laporan-NPR.csv", [
+        [
+          "No NPR",
+          "No TT",
+          "Customer",
+          "Site ID",
+          "Lokasi",
+          "Jarkom",
+          "Jenis Gangguan",
+          "Status",
+          "Pending By",
+          "Mulai WIB",
+          "Online WIB",
+          "Catatan Terakhir",
+        ],
+        ...rows.map((n) => [
           n.number,
-          ticket(n.id)?.number || "",
-          customer(r?.customer_id)?.name || "",
-          r?.site_id || "",
-          r?.location || "",
-          r?.jarkom || "",
+          n.ticket_number || "",
+          n.customer_name,
+          n.site_id,
+          n.location,
+          n.jarkom,
           n.remote_status,
           n.status,
           n.pending_by || "",
           dateText(n.started_at),
           dateText(n.online_at),
           n.last_action || "",
-        ];
-      }),
-    ]);
+        ]),
+      ]);
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
-  function ticketPdf(t: Ticket) {
-    const n = data.nprs.find((v) => v.id === t.npr_id);
-    const r = n ? remote(n.remote_id) : undefined;
+  function ticketPdf(t: TicketPdf) {
     void pdf("TROUBLE TICKET / KUNJUNGAN TEKNISI", t.number, [
-      ["Referensi NPR", n?.number || ""],
-      ["Customer", customer(r?.customer_id)?.name || ""],
+      ["Referensi NPR", t.npr_number],
+      ["Customer", t.customer_name],
       ["Instruction", t.instruction],
       ["Tanggal TT", dateText(t.created_at)],
-      ["Site ID", r?.site_id || ""],
-      ["Lokasi", r?.location || ""],
-      ["Alamat", r?.address || ""],
-      ["Kota / Provinsi", `${r?.city || ""} / ${r?.province || ""}`],
-      ["Jarkom / IP LAN", `${r?.jarkom || ""} / ${r?.ip_lan || ""}`],
-      ["PIC", `${r?.pic_name || ""} / ${r?.pic_phone || ""}`],
+      ["Site ID", t.site_id],
+      ["Lokasi", t.location],
+      ["Alamat", t.address],
+      ["Kota / Provinsi", `${t.city} / ${t.province}`],
+      ["Jarkom / IP LAN", `${t.jarkom} / ${t.ip_lan}`],
+      ["PIC", `${t.pic_name} / ${t.pic_phone}`],
       ["Catatan NOC", t.notes],
       ["Teknisi", t.technician],
       ["Report teknisi", t.report],
     ]).catch(() => setError("PDF gagal dibuat. Silakan coba unduh kembali."));
   }
-  function gamasPdf(g: Gamas, source: Data = data) {
+  function gamasPdf({ gamas: g, sites }: GamasDetail) {
     void pdf("TROUBLE TICKET GANGGUAN MASSAL", g.number, [
       ["Lokasi penanganan", g.location],
       ["Mulai gangguan", dateText(g.started_at)],
       ["Catatan", g.notes],
       [
         "Remote terdampak",
-        source.gamas_sites
-          .filter((s) => s.gamas_id === g.id)
-          .map((s) => {
-            const r = remote(s.remote_id);
-            return `${r?.site_id} - ${r?.location}`;
-          })
-          .join("\n"),
+        sites.map((r) => `${r.site_id} - ${r.location}`).join("\n"),
       ],
       ["Report teknisi", g.report],
       ["Kembali online", dateText(g.online_at)],
     ]).catch(() => setError("PDF gagal dibuat. Silakan coba unduh kembali."));
+  }
+  async function gamasPdfDariDaftar(id: number) {
+    try {
+      gamasPdf(await api<GamasDetail>(`/api/gamas/${id}`));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  // Isi lampiran baru diambil dari server saat tautannya diklik.
+  async function unduhLampiran(a: Action) {
+    try {
+      const file = await api<{ name: string; data: string }>(
+        `/api/lampiran/${a.id}`,
+      );
+      const link = document.createElement("a");
+      link.href = file.data;
+      link.download = file.name;
+      link.click();
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
   async function attachment(file: File | null) {
     if (!file || !file.size) return {};
@@ -539,14 +603,14 @@ function App() {
   }
   async function saveAction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!current) return;
+    if (selected === null) return;
     const form = event.currentTarget;
     const f = new FormData(form);
     try {
       const file = f.get("attachment");
       const attached = await attachment(file instanceof File ? file : null);
       await mutate(
-        `/api/nprs/${current.id}/actions`,
+        `/api/nprs/${selected}/actions`,
         {
           kind,
           notes: f.get("notes"),
@@ -561,13 +625,9 @@ function App() {
           ...attached,
         },
         kind === "Eskalasi Service"
-          ? "TT berhasil dibuat. PDF tersedia pada bagian Trouble Ticket."
+          ? "TT berhasil dibuat. PDF dapat diunduh dari bagian Trouble Ticket di bawah."
           : "Tindakan berhasil disimpan.",
-        (fresh) => {
-          if (kind === "Eskalasi Service") {
-            const created = fresh.tickets.find((t) => t.npr_id === current.id);
-            if (created) ticketPdf(created);
-          }
+        () => {
           form.reset();
           setKind("Problem");
         },
@@ -596,7 +656,7 @@ function App() {
         }}
       >
         <option value="">Semua customer</option>
-        {data.customers.map((c) => (
+        {customers.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
           </option>
@@ -615,31 +675,30 @@ function App() {
           <option key={s}>{s}</option>
         ))}
       </select>
-      {page === "Report NPR" && (
-        <>
-          <input
-            type="date"
-            aria-label="Dari tanggal"
-            value={from}
-            onChange={(e) => {
-              setFrom(e.target.value);
-              setRowPage(1);
-            }}
-          />
-          <input
-            type="date"
-            aria-label="Sampai tanggal"
-            value={to}
-            min={from}
-            onChange={(e) => {
-              setTo(e.target.value);
-              setRowPage(1);
-            }}
-          />
-        </>
-      )}
+      <input
+        type="date"
+        aria-label="Dari tanggal"
+        title="Dari tanggal mulai gangguan"
+        value={from}
+        onChange={(e) => {
+          setFrom(e.target.value);
+          setRowPage(1);
+        }}
+      />
+      <input
+        type="date"
+        aria-label="Sampai tanggal"
+        title="Sampai tanggal mulai gangguan"
+        value={to}
+        min={from}
+        onChange={(e) => {
+          setTo(e.target.value);
+          setRowPage(1);
+        }}
+      />
     </div>
   );
+  const nprRows = nprList.data?.rows ?? [];
   const nprTable = (
     <>
       <div className="table-scroll">
@@ -657,56 +716,47 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {visible.map((n) => {
-              const r = remote(n.remote_id);
-              return (
-                <tr key={n.id}>
-                  <td>
-                    <strong className="mono">{n.number}</strong>
-                    <small>{ticket(n.id)?.number || "Belum ada TT"}</small>
-                  </td>
-                  <td>
-                    <strong>{customer(r?.customer_id)?.name}</strong>
-                    <small>
-                      {r?.site_id} · {r?.location}
-                    </small>
-                  </td>
-                  <td>
-                    {n.remote_status}
-                    <small>{r?.jarkom}</small>
-                  </td>
-                  <td>{dateText(n.started_at)}</td>
-                  <td>
-                    <Status value={n.status} />
-                  </td>
-                  <td>{n.pending_by || "—"}</td>
-                  <td className="notes-cell">{n.last_action || "—"}</td>
-                  <td>
-                    <button
-                      className="text-button"
-                      onClick={() => {
-                        setSelected(n.id);
-                        setKind("Problem");
-                        setError("");
-                        setNotice("");
-                      }}
-                    >
-                      Detail →
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {nprRows.map((n) => (
+              <tr key={n.id}>
+                <td>
+                  <strong className="mono">{n.number}</strong>
+                  <small>{n.ticket_number || "Belum ada TT"}</small>
+                </td>
+                <td>
+                  <strong>{n.customer_name}</strong>
+                  <small>
+                    {n.site_id} · {n.location}
+                  </small>
+                </td>
+                <td>
+                  {n.remote_status}
+                  <small>{n.jarkom}</small>
+                </td>
+                <td>{dateText(n.started_at)}</td>
+                <td>
+                  <Status value={n.status} />
+                </td>
+                <td>{n.pending_by || "—"}</td>
+                <td className="notes-cell">{n.last_action || "—"}</td>
+                <td>
+                  <button className="text-button" onClick={() => bukaNpr(n.id)}>
+                    Detail →
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
-        {!visible.length && (
+        {!nprRows.length && (
           <div className="empty">
-            Tidak ada NPR yang sesuai dengan pencarian.
+            {nprList.loading
+              ? "Memuat daftar NPR…"
+              : "Tidak ada NPR yang sesuai dengan pencarian."}
           </div>
         )}
       </div>
       <div className="pagination">
-        <span>{filtered.length} NPR ditemukan</span>
+        <span>{nprList.data?.total ?? 0} NPR ditemukan</span>
         <select
           aria-label="Jumlah baris"
           value={perPage}
@@ -724,6 +774,7 @@ function App() {
         <button
           disabled={rowPage <= 1}
           onClick={() => setRowPage((v) => v - 1)}
+          aria-label="Halaman sebelumnya"
         >
           ←
         </button>
@@ -733,6 +784,7 @@ function App() {
         <button
           disabled={rowPage >= pageCount}
           onClick={() => setRowPage((v) => v + 1)}
+          aria-label="Halaman berikutnya"
         >
           →
         </button>
@@ -825,6 +877,15 @@ function App() {
       </main>
     );
 
+  const ringkas = dashboard.data?.ringkas ?? {};
+  const grafik = dashboard.data?.grafik ?? [];
+  const grafikMax = Math.max(1, ...grafik.map((g) => g.jumlah));
+  const nprDetail = detail.data;
+  const current = nprDetail?.npr;
+  const currentRemote = nprDetail?.remote;
+  const currentTicket = nprDetail?.ticket ?? null;
+  const currentGamas = gamasDetail.data?.gamas;
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -837,18 +898,22 @@ function App() {
         </div>
         <div className="side-caption">WORKSPACE HELPDESK</div>
         <nav>
-          {pages.map((p, i) =>
-            p === "Pengguna" && user.peran !== "admin" ? null : (
+          {menu
+            .filter((m) => m.page !== "Pengguna" || user.peran === "admin")
+            .map((m) => (
               <button
-                className={page === p ? "active" : ""}
-                key={p}
-                onClick={() => go(p)}
+                className={
+                  page === m.page || (m.page === "NPR" && page === "NPR Baru")
+                    ? "active"
+                    : ""
+                }
+                key={m.page}
+                onClick={() => go(m.page)}
               >
-                <span>{icons[i]}</span>
-                {p}
+                <span>{m.icon}</span>
+                {m.page}
               </button>
-            ),
-          )}
+            ))}
         </nav>
         <div className="side-bottom">
           <span className="online-dot" /> VSAT & M2M
@@ -891,7 +956,9 @@ function App() {
                   ? "Detail & Tindak Lanjut NPR"
                   : selectedGamas
                     ? "Detail Gangguan Massal"
-                    : page}
+                    : page === "NPR"
+                      ? "Daftar NPR"
+                      : page}
               </h1>
               <p>
                 {page === "Dashboard"
@@ -901,9 +968,9 @@ function App() {
             </div>
             <span className="demo-tag">SIMULASI · DATA FIKTIF</span>
           </div>
-          {error && (
+          {(error || loadError) && (
             <div className="alert error" role="alert">
-              {error}
+              {error || loadError}
               <button onClick={() => setError("")} aria-label="Tutup pesan">
                 ×
               </button>
@@ -918,100 +985,112 @@ function App() {
             </div>
           )}
 
-          {current && currentRemote ? (
-            <>
-              <button
-                className="text-button back"
-                onClick={() => setSelected(null)}
-              >
-                ← Kembali ke daftar
-              </button>
-              <section className="panel">
-                <div className="panel-title">
-                  <div>
-                    <span className="eyebrow">NETWORK PROBLEM REPORT</span>
-                    <h2 className="mono">{current.number}</h2>
-                  </div>
-                  <Status value={current.status} />
-                </div>
-                <div className="info-grid">
-                  {[
-                    ["Customer", customer(currentRemote.customer_id)?.name],
-                    [
-                      "Site / Lokasi",
-                      `${currentRemote.site_id} · ${currentRemote.location}`,
-                    ],
-                    [
-                      "Alamat",
-                      `${currentRemote.address}, ${currentRemote.city}, ${currentRemote.province}`,
-                    ],
-                    [
-                      "Jarkom / IP LAN",
-                      `${currentRemote.jarkom} / ${currentRemote.ip_lan}`,
-                    ],
-                    [
-                      "PIC / Kontak",
-                      `${currentRemote.pic_name} / ${currentRemote.pic_phone}`,
-                    ],
-                    [
-                      "Mulai / Kembali online",
-                      `${dateText(current.started_at)} / ${dateText(current.online_at)}`,
-                    ],
-                    ["Jenis Gangguan", current.remote_status],
-                    ["Pending By", current.pending_by || "—"],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <small>{k}</small>
-                      <strong>{v}</strong>
-                    </div>
-                  ))}
-                </div>
-              </section>
-              {currentTicket && (
+          {selected !== null ? (
+            !current || !currentRemote || current.id !== selected ? (
+              <div className="empty">Memuat NPR…</div>
+            ) : (
+              <>
+                <button
+                  className="text-button back"
+                  onClick={() => setSelected(null)}
+                >
+                  ← Kembali ke daftar
+                </button>
                 <section className="panel">
                   <div className="panel-title">
                     <div>
-                      <h2>Trouble Ticket</h2>
-                      <span className="mono">{currentTicket.number}</span>
+                      <span className="eyebrow">NETWORK PROBLEM REPORT</span>
+                      <h2 className="mono">{current.number}</h2>
                     </div>
-                    <button onClick={() => ticketPdf(currentTicket)}>
-                      Unduh PDF TT
-                    </button>
+                    <Status value={current.status} />
                   </div>
                   <div className="info-grid">
-                    <div>
-                      <small>Instruction</small>
-                      <strong>{currentTicket.instruction}</strong>
-                    </div>
-                    <div>
-                      <small>Catatan NOC</small>
-                      <strong>{currentTicket.notes}</strong>
-                    </div>
-                    <div>
-                      <small>Teknisi</small>
-                      <strong>
-                        {currentTicket.technician || "Belum dilaporkan"}
-                      </strong>
-                    </div>
-                    <div>
-                      <small>Report Teknisi</small>
-                      <strong>
-                        {currentTicket.report || "Menunggu report teknisi"}
-                      </strong>
-                    </div>
+                    {[
+                      ["Customer", currentRemote.customer_name],
+                      [
+                        "Site / Lokasi",
+                        `${currentRemote.site_id} · ${currentRemote.location}`,
+                      ],
+                      [
+                        "Alamat",
+                        `${currentRemote.address}, ${currentRemote.city}, ${currentRemote.province}`,
+                      ],
+                      [
+                        "Jarkom / IP LAN",
+                        `${currentRemote.jarkom} / ${currentRemote.ip_lan}`,
+                      ],
+                      [
+                        "PIC / Kontak",
+                        `${currentRemote.pic_name} / ${currentRemote.pic_phone}`,
+                      ],
+                      [
+                        "Mulai / Kembali online",
+                        `${dateText(current.started_at)} / ${dateText(current.online_at)}`,
+                      ],
+                      ["Jenis Gangguan", current.remote_status],
+                      [
+                        "Pending By",
+                        current.pending_by || "Belum dikategorikan",
+                      ],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <small>{k}</small>
+                        <strong>{v}</strong>
+                      </div>
+                    ))}
                   </div>
                 </section>
-              )}
-              <section className="panel">
-                <div className="panel-title">
-                  <h2>Riwayat tindakan</h2>
-                  <span className="muted">Urutan waktu pencatatan</span>
-                </div>
-                <div className="timeline">
-                  {data.actions
-                    .filter((a) => a.npr_id === current.id)
-                    .sort((a, b) => a.id - b.id)
-                    .map((a) => (
+                {currentTicket && (
+                  <section className="panel">
+                    <div className="panel-title">
+                      <div>
+                        <h2>Trouble Ticket</h2>
+                        <span className="mono">{currentTicket.number}</span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          ticketPdf({
+                            ...currentRemote,
+                            ...currentTicket,
+                            npr_number: current.number,
+                            customer_name: currentRemote.customer_name ?? "",
+                          })
+                        }
+                      >
+                        Unduh PDF TT
+                      </button>
+                    </div>
+                    <div className="info-grid">
+                      <div>
+                        <small>Instruction</small>
+                        <strong>{currentTicket.instruction}</strong>
+                      </div>
+                      <div>
+                        <small>Catatan NOC</small>
+                        <strong>{currentTicket.notes}</strong>
+                      </div>
+                      <div>
+                        <small>Teknisi</small>
+                        <strong>
+                          {currentTicket.technician || "Belum dilaporkan"}
+                        </strong>
+                      </div>
+                      <div>
+                        <small>Report Teknisi</small>
+                        <strong>
+                          {currentTicket.report || "Menunggu report teknisi"}
+                        </strong>
+                      </div>
+                    </div>
+                  </section>
+                )}
+                <section className="panel">
+                  <div className="panel-title">
+                    <h2>Riwayat tindakan</h2>
+                    <span className="muted">Urutan waktu pencatatan</span>
+                  </div>
+                  <div className="timeline">
+                    {nprDetail.actions.map((a) => (
                       <article key={a.id}>
                         <span className="timeline-dot" />
                         <div className="timeline-heading">
@@ -1025,213 +1104,223 @@ function App() {
                           {a.remote_status}{" "}
                           {a.pending_by && `· Pending ${a.pending_by}`}
                         </small>
-                        {a.attachment_data && (
-                          <a
-                            className="attachment"
-                            href={a.attachment_data}
-                            download={a.attachment_name}
+                        {a.attachment_name && (
+                          <button
+                            className="attachment text-button"
+                            onClick={() => void unduhLampiran(a)}
                           >
                             ↓ {a.attachment_name}
-                          </a>
+                          </button>
                         )}
                       </article>
                     ))}
-                </div>
-              </section>
-              {current.status !== "CLOSED" && (
-                <section className="panel">
-                  <h2>Add Action NPR</h2>
-                  <form
-                    onSubmit={saveAction}
-                    key={`${current.id}-${data.actions.length}`}
-                  >
-                    <fieldset disabled={busy}>
-                      <div className="form-grid">
-                        <Field label="Tindakan">
-                          <select
-                            value={kind}
-                            onChange={(e) => setKind(e.target.value)}
-                          >
-                            <option>Problem</option>
-                            {!currentTicket && (
-                              <option>Eskalasi Service</option>
-                            )}
-                            {currentTicket && <option>Report Teknisi</option>}
-                            <option>Close</option>
-                          </select>
-                        </Field>
-                        <Field label="Remote Status">
-                          <select
-                            name="remote_status"
-                            defaultValue={current.remote_status}
-                          >
-                            {cases.map((c) => (
-                              <option key={c}>{c}</option>
-                            ))}
-                          </select>
-                        </Field>
-                        <Field label="Waktu tindakan">
-                          <input
-                            type="datetime-local"
-                            name="occurred_at"
-                            defaultValue={localNow()}
-                            required
-                          />
-                        </Field>
-                        <Field label="Category Pending">
-                          <select
-                            name="pending_by"
-                            defaultValue={current.pending_by}
-                            required={kind === "Problem"}
-                          >
-                            <option value="">
-                              {kind === "Problem"
-                                ? "Pilih kategori"
-                                : "Belum dikategorikan"}
-                            </option>
-                            <option value="Customer">Pending Customer</option>
-                            <option value="TM">Pending TM</option>
-                          </select>
-                        </Field>
-                        {kind === "Eskalasi Service" && (
-                          <>
-                            <div className="form-note wide">
-                              Form Trouble Ticket · Nomor TT dibuat otomatis
-                              ketika dikirim. Catatan berikut diisi berdasarkan
-                              hasil pengecekan NOC.
-                            </div>
-                            <Field label="Instruction">
-                              <select name="instruction">
-                                <option>Maintenance</option>
-                                <option>Preventive Maintenance</option>
-                              </select>
-                            </Field>
-                            <Field label="No. Referensi NPR">
-                              <input value={current.number} readOnly />
-                            </Field>
-                          </>
-                        )}
-                        {kind === "Report Teknisi" && (
-                          <Field label="Nama teknisi">
-                            <input name="technician" required maxLength={120} />
+                  </div>
+                </section>
+                {current.status !== "CLOSED" && (
+                  <section className="panel">
+                    <h2>Add Action NPR</h2>
+                    <form
+                      onSubmit={saveAction}
+                      key={`${current.id}-${nprDetail.actions.length}`}
+                    >
+                      <fieldset disabled={busy}>
+                        <div className="form-grid">
+                          <Field label="Tindakan">
+                            <select
+                              value={kind}
+                              onChange={(e) => setKind(e.target.value)}
+                            >
+                              <option>Problem</option>
+                              {!currentTicket && (
+                                <option>Eskalasi Service</option>
+                              )}
+                              {currentTicket && <option>Report Teknisi</option>}
+                              <option>Close</option>
+                            </select>
                           </Field>
-                        )}
-                        {kind === "Close" && (
-                          <>
-                            <Field label="Waktu jaringan kembali online / pekerjaan selesai">
+                          <Field label="Remote Status">
+                            <select
+                              name="remote_status"
+                              defaultValue={current.remote_status}
+                            >
+                              {cases.map((c) => (
+                                <option key={c}>{c}</option>
+                              ))}
+                            </select>
+                          </Field>
+                          <Field label="Waktu tindakan">
+                            <input
+                              type="datetime-local"
+                              name="occurred_at"
+                              defaultValue={localNow()}
+                              required
+                            />
+                          </Field>
+                          <Field label="Category Pending">
+                            <select
+                              name="pending_by"
+                              defaultValue={current.pending_by}
+                              required={kind === "Problem"}
+                            >
+                              <option value="">
+                                {kind === "Problem"
+                                  ? "Pilih kategori"
+                                  : "Belum dikategorikan"}
+                              </option>
+                              <option value="Customer">Pending Customer</option>
+                              <option value="TM">Pending TM</option>
+                            </select>
+                          </Field>
+                          {kind === "Eskalasi Service" && (
+                            <>
+                              <div className="form-note wide">
+                                Form Trouble Ticket · Nomor TT dibuat otomatis
+                                ketika dikirim. Catatan berikut diisi
+                                berdasarkan hasil pengecekan NOC.
+                              </div>
+                              <Field label="Instruction">
+                                <select name="instruction">
+                                  <option>Maintenance</option>
+                                  <option>Preventive Maintenance</option>
+                                </select>
+                              </Field>
+                              <Field label="No. Referensi NPR">
+                                <input value={current.number} readOnly />
+                              </Field>
+                            </>
+                          )}
+                          {kind === "Report Teknisi" && (
+                            <Field label="Nama teknisi">
                               <input
-                                type="datetime-local"
-                                name="online_at"
+                                name="technician"
                                 required
-                                defaultValue={localNow()}
+                                maxLength={120}
                               />
                             </Field>
-                            <div className="form-note">
-                              {currentTicket
-                                ? "NPR dengan TT hanya dapat ditutup setelah report teknisi dicatat."
-                                : "NPR tanpa TT dapat ditutup setelah kondisi lokasi dipastikan normal."}
-                            </div>
-                          </>
-                        )}
-                        <Field
-                          label={
-                            kind === "Eskalasi Service"
-                              ? "Catatan problem dari NOC"
-                              : kind === "Report Teknisi"
-                                ? "Report teknisi"
-                                : "Catatan tindakan"
-                          }
-                          wide
-                        >
-                          <textarea
-                            name="notes"
-                            required
-                            rows={4}
-                            maxLength={4000}
-                          />
-                        </Field>
-                        <Field
-                          label="Lampiran opsional · JPG, PNG, PDF · maks. 500 KB"
-                          wide
-                        >
-                          <input
-                            name="attachment"
-                            type="file"
-                            accept="image/png,image/jpeg,application/pdf"
-                          />
-                        </Field>
-                      </div>
-                      <div className="form-footer">
-                        <button
-                          className="primary"
-                          disabled={
-                            kind === "Close" &&
-                            !!currentTicket &&
-                            !currentTicket.report
-                          }
-                        >
-                          {busy
-                            ? "Menyimpan…"
-                            : kind === "Eskalasi Service"
-                              ? "Send Trouble Ticket"
-                              : "Simpan tindakan"}
-                        </button>
-                      </div>
-                    </fieldset>
-                  </form>
+                          )}
+                          {kind === "Close" && (
+                            <>
+                              <Field label="Waktu jaringan kembali online / pekerjaan selesai">
+                                <input
+                                  type="datetime-local"
+                                  name="online_at"
+                                  required
+                                  defaultValue={localNow()}
+                                />
+                              </Field>
+                              <div className="form-note">
+                                {currentTicket
+                                  ? "NPR dengan TT hanya dapat ditutup setelah report teknisi dicatat."
+                                  : "NPR tanpa TT dapat ditutup setelah kondisi lokasi dipastikan normal."}
+                              </div>
+                            </>
+                          )}
+                          <Field
+                            label={
+                              kind === "Eskalasi Service"
+                                ? "Catatan problem dari NOC"
+                                : kind === "Report Teknisi"
+                                  ? "Report teknisi"
+                                  : "Catatan tindakan"
+                            }
+                            wide
+                          >
+                            <textarea
+                              name="notes"
+                              required
+                              rows={4}
+                              maxLength={4000}
+                            />
+                          </Field>
+                          <Field
+                            label="Lampiran opsional · JPG, PNG, PDF · maks. 500 KB"
+                            wide
+                          >
+                            <input
+                              name="attachment"
+                              type="file"
+                              accept="image/png,image/jpeg,application/pdf"
+                            />
+                          </Field>
+                        </div>
+                        <div className="form-footer">
+                          <button
+                            className="primary"
+                            disabled={
+                              kind === "Close" &&
+                              !!currentTicket &&
+                              !currentTicket.report
+                            }
+                          >
+                            {busy
+                              ? "Menyimpan…"
+                              : kind === "Eskalasi Service"
+                                ? "Send Trouble Ticket"
+                                : "Simpan tindakan"}
+                          </button>
+                        </div>
+                      </fieldset>
+                    </form>
+                  </section>
+                )}
+              </>
+            )
+          ) : selectedGamas !== null ? (
+            !currentGamas || currentGamas.id !== selectedGamas ? (
+              <div className="empty">Memuat TT Gamas…</div>
+            ) : (
+              <>
+                <button
+                  className="text-button back"
+                  onClick={() => setSelectedGamas(null)}
+                >
+                  ← Kembali ke TT Gamas
+                </button>
+                <section className="panel">
+                  <div className="panel-title">
+                    <div>
+                      <h2 className="mono">{currentGamas.number}</h2>
+                      <p>{currentGamas.location}</p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        gamasDetail.data && gamasPdf(gamasDetail.data)
+                      }
+                    >
+                      Unduh PDF TT Gamas
+                    </button>
+                  </div>
+                  <Status value={currentGamas.status} />
+                  <p className="preserve">{currentGamas.notes}</p>
+                  <div className="info-grid">
+                    <div>
+                      <small>Mulai gangguan</small>
+                      <strong>{dateText(currentGamas.started_at)}</strong>
+                    </div>
+                    <div>
+                      <small>Kembali online</small>
+                      <strong>{dateText(currentGamas.online_at)}</strong>
+                    </div>
+                    <div>
+                      <small>Remote terdampak</small>
+                      <strong>
+                        {gamasDetail.data?.sites
+                          .map((r) => r.site_id)
+                          .join(", ")}
+                      </strong>
+                    </div>
+                    <div>
+                      <small>Report teknisi</small>
+                      <strong>
+                        {currentGamas.report || "Belum ada report"}
+                      </strong>
+                    </div>
+                  </div>
                 </section>
-              )}
-            </>
-          ) : currentGamas ? (
-            <>
-              <button
-                className="text-button back"
-                onClick={() => setSelectedGamas(null)}
-              >
-                ← Kembali ke TT Gamas
-              </button>
-              <section className="panel">
-                <div className="panel-title">
-                  <div>
-                    <h2 className="mono">{currentGamas.number}</h2>
-                    <p>{currentGamas.location}</p>
-                  </div>
-                  <button onClick={() => gamasPdf(currentGamas)}>
-                    Unduh PDF TT Gamas
-                  </button>
-                </div>
-                <Status value={currentGamas.status} />
-                <p className="preserve">{currentGamas.notes}</p>
-                <div className="info-grid">
-                  <div>
-                    <small>Mulai gangguan</small>
-                    <strong>{dateText(currentGamas.started_at)}</strong>
-                  </div>
-                  <div>
-                    <small>Kembali online</small>
-                    <strong>{dateText(currentGamas.online_at)}</strong>
-                  </div>
-                  <div>
-                    <small>Remote terdampak</small>
-                    <strong>
-                      {data.gamas_sites
-                        .filter((s) => s.gamas_id === currentGamas.id)
-                        .map((s) => remote(s.remote_id)?.site_id)
-                        .join(", ")}
-                    </strong>
-                  </div>
-                  <div>
-                    <small>Report teknisi</small>
-                    <strong>{currentGamas.report || "Belum ada report"}</strong>
-                  </div>
-                </div>
-              </section>
-              <section className="panel">
-                <h2>Riwayat penanganan</h2>
-                <div className="timeline">
-                  {data.gamas_actions
-                    .filter((a) => a.gamas_id === currentGamas.id)
-                    .map((a) => (
+                <section className="panel">
+                  <h2>Riwayat penanganan</h2>
+                  <div className="timeline">
+                    {gamasDetail.data?.actions.map((a) => (
                       <article key={a.id}>
                         <span className="timeline-dot" />
                         <small>
@@ -1241,77 +1330,86 @@ function App() {
                         {a.report && <p>Report teknisi: {a.report}</p>}
                       </article>
                     ))}
-                </div>
-              </section>
-              {!currentGamas.closed_at && currentGamas.status !== "CLOSED" && (
-                <section className="panel">
-                  <h2>Perbarui penanganan Gamas</h2>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const f = new FormData(e.currentTarget);
-                      void mutate(
-                        `/api/gamas/${currentGamas.id}/actions`,
-                        {
-                          notes: f.get("notes"),
-                          report: f.get("report") || undefined,
-                          occurred_at: iso(String(f.get("occurred_at"))),
-                          close: f.get("close") === "on",
-                          ...(f.get("online_at")
-                            ? { online_at: iso(String(f.get("online_at"))) }
-                            : {}),
-                        },
-                        "Perkembangan Gamas berhasil disimpan.",
-                        () => setCloseGamas(false),
-                      );
-                    }}
-                  >
-                    <fieldset disabled={busy}>
-                      <div className="form-grid">
-                        <Field label="Catatan perkembangan" wide>
-                          <textarea name="notes" required rows={3} />
-                        </Field>
-                        <Field
-                          label="Report teknisi · isi jika sudah diterima"
-                          wide
-                        >
-                          <textarea name="report" rows={3} />
-                        </Field>
-                        <Field label="Waktu perkembangan">
-                          <input
-                            name="occurred_at"
-                            type="datetime-local"
-                            defaultValue={localNow()}
-                            required
-                          />
-                        </Field>
-                        <label className="check">
-                          <input
-                            type="checkbox"
-                            name="close"
-                            checked={closeGamas}
-                            onChange={(e) => setCloseGamas(e.target.checked)}
-                          />{" "}
-                          Tutup TT Gamas (report teknisi harus sudah ada)
-                        </label>
-                        {closeGamas && (
-                          <Field label="Waktu kembali online">
-                            <input
-                              name="online_at"
-                              type="datetime-local"
-                              required
-                            />
-                          </Field>
-                        )}
-                      </div>
-                      <div className="form-footer">
-                        <button className="primary">Simpan perkembangan</button>
-                      </div>
-                    </fieldset>
-                  </form>
+                  </div>
                 </section>
-              )}
-            </>
+                {!currentGamas.closed_at &&
+                  currentGamas.status !== "CLOSED" && (
+                    <section className="panel">
+                      <h2>Perbarui penanganan Gamas</h2>
+                      <form
+                        key={`${currentGamas.id}-${gamasDetail.data?.actions.length}`}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const f = new FormData(e.currentTarget);
+                          void mutate(
+                            `/api/gamas/${currentGamas.id}/actions`,
+                            {
+                              notes: f.get("notes"),
+                              report: f.get("report") || undefined,
+                              occurred_at: iso(String(f.get("occurred_at"))),
+                              close: f.get("close") === "on",
+                              ...(f.get("online_at")
+                                ? {
+                                    online_at: iso(String(f.get("online_at"))),
+                                  }
+                                : {}),
+                            },
+                            "Perkembangan Gamas berhasil disimpan.",
+                            () => setCloseGamas(false),
+                          );
+                        }}
+                      >
+                        <fieldset disabled={busy}>
+                          <div className="form-grid">
+                            <Field label="Catatan perkembangan" wide>
+                              <textarea name="notes" required rows={3} />
+                            </Field>
+                            <Field
+                              label="Report teknisi · isi jika sudah diterima"
+                              wide
+                            >
+                              <textarea name="report" rows={3} />
+                            </Field>
+                            <Field label="Waktu perkembangan">
+                              <input
+                                name="occurred_at"
+                                type="datetime-local"
+                                defaultValue={localNow()}
+                                required
+                              />
+                            </Field>
+                            <label className="check">
+                              <input
+                                type="checkbox"
+                                name="close"
+                                checked={closeGamas}
+                                onChange={(e) =>
+                                  setCloseGamas(e.target.checked)
+                                }
+                              />{" "}
+                              Tutup TT Gamas (report teknisi harus sudah ada)
+                            </label>
+                            {closeGamas && (
+                              <Field label="Waktu kembali online">
+                                <input
+                                  name="online_at"
+                                  type="datetime-local"
+                                  required
+                                />
+                              </Field>
+                            )}
+                          </div>
+                          <div className="form-footer">
+                            <button className="primary">
+                              Simpan perkembangan
+                            </button>
+                          </div>
+                        </fieldset>
+                      </form>
+                    </section>
+                  )}
+              </>
+            )
           ) : (
             <>
               {page === "Dashboard" && (
@@ -1319,49 +1417,101 @@ function App() {
                   <div className="stats-grid">
                     {[
                       [
+                        "aktif",
                         "NPR Aktif",
-                        active.length,
                         "Seluruh gangguan yang belum ditutup",
                         "blue",
                       ],
                       [
+                        "kritis",
                         "Critical >48 jam",
-                        active.filter(
-                          (n) =>
-                            clock - Date.parse(n.started_at) > 48 * 3600000,
-                        ).length,
                         "Perlu perhatian dan tindak lanjut",
                         "red",
                       ],
                       [
+                        "aging",
                         "Aging 24–48 jam",
-                        active.filter((n) => {
-                          const h =
-                            (clock - Date.parse(n.started_at)) / 3600000;
-                          return h >= 24 && h <= 48;
-                        }).length,
                         "Pantau perkembangan penanganan",
                         "amber",
                       ],
                       [
+                        "menunggu_report",
                         "Menunggu Report",
-                        data.tickets.filter(
-                          (t) =>
-                            !t.report &&
-                            data.nprs.find((n) => n.id === t.npr_id)?.status !==
-                              "CLOSED",
-                        ).length,
                         "TT belum memiliki report teknisi",
                         "green",
                       ],
-                    ].map(([label, value, sub, color]) => (
-                      <article className={`stat-card ${color}`} key={label}>
+                    ].map(([key, label, sub, color]) => (
+                      <button
+                        className={`stat-card ${color}`}
+                        key={key}
+                        onClick={() => bukaDaftar(key)}
+                        aria-label={`${label}: ${ringkas[key] ?? 0}. Buka daftar`}
+                      >
                         <span>{label}</span>
-                        <strong>{value}</strong>
+                        <strong>
+                          {dashboard.data ? (ringkas[key] ?? 0) : "…"}
+                        </strong>
                         <small>{sub}</small>
-                      </article>
+                      </button>
                     ))}
                   </div>
+                  <section className="panel">
+                    <div className="panel-title">
+                      <h2>NPR aktif terlama</h2>
+                      <button
+                        className="text-button"
+                        onClick={() => bukaDaftar("aktif")}
+                      >
+                        Lihat semua NPR aktif →
+                      </button>
+                    </div>
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>No. NPR</th>
+                            <th>Customer / Remote</th>
+                            <th>Lama gangguan</th>
+                            <th>Status</th>
+                            <th>Pending</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dashboard.data?.npr_terlama.map((n) => (
+                            <tr key={n.id}>
+                              <td>
+                                <strong className="mono">{n.number}</strong>
+                                <small>{n.remote_status}</small>
+                              </td>
+                              <td>
+                                <strong>{n.customer_name}</strong>
+                                <small>
+                                  {n.site_id} · {n.location}
+                                </small>
+                              </td>
+                              <td>{lamaBerjalan(n.started_at, clock)}</td>
+                              <td>
+                                <Status value={n.status} />
+                              </td>
+                              <td>{n.pending_by || "Belum dikategorikan"}</td>
+                              <td>
+                                <button
+                                  className="text-button"
+                                  onClick={() => bukaNpr(n.id)}
+                                >
+                                  Detail →
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {dashboard.data && !dashboard.data.npr_terlama.length && (
+                        <div className="empty">Tidak ada NPR aktif.</div>
+                      )}
+                    </div>
+                  </section>
                   <div className="dashboard-grid">
                     <section className="panel">
                       <div className="panel-title">
@@ -1369,38 +1519,26 @@ function App() {
                         <span className="muted">NPR aktif</span>
                       </div>
                       {[
-                        [
-                          "Pending TM",
-                          active.filter((n) => n.pending_by === "TM").length,
-                        ],
-                        [
-                          "Pending Customer",
-                          active.filter((n) => n.pending_by === "Customer")
-                            .length,
-                        ],
-                        [
-                          "Belum dikategorikan",
-                          active.filter((n) => !n.pending_by).length,
-                        ],
-                      ].map(([k, v]) => (
-                        <div className="distribution" key={k}>
-                          <span>{k}</span>
-                          <strong>{v}</strong>
+                        ["pending_tm", "Pending TM"],
+                        ["pending_customer", "Pending Customer"],
+                        ["belum_kategori", "Belum dikategorikan"],
+                      ].map(([key, label]) => (
+                        <button
+                          className="distribution"
+                          key={key}
+                          onClick={() => bukaDaftar(key)}
+                        >
+                          <span>{label}</span>
+                          <strong>{ringkas[key] ?? 0}</strong>
                           <div>
                             <i
                               style={{
-                                width: `${active.length ? (Number(v) / active.length) * 100 : 0}%`,
+                                width: `${ringkas.aktif ? ((ringkas[key] ?? 0) / ringkas.aktif) * 100 : 0}%`,
                               }}
                             />
                           </div>
-                        </div>
+                        </button>
                       ))}
-                      <button
-                        className="text-button"
-                        onClick={() => go("Detail NPR")}
-                      >
-                        Lihat seluruh NPR →
-                      </button>
                     </section>
                     <section className="panel">
                       <div className="panel-title">
@@ -1408,53 +1546,27 @@ function App() {
                         <span className="muted">WIB</span>
                       </div>
                       <div className="bar-chart">
-                        {Array.from({ length: 7 }, (_, i) => {
-                          const d = new Date();
-                          d.setDate(d.getDate() - 6 + i);
-                          const key = d.toLocaleDateString("en-CA", {
-                            timeZone: "Asia/Jakarta",
-                          });
-                          const count = data.nprs.filter(
-                            (n) =>
-                              new Date(n.started_at).toLocaleDateString(
-                                "en-CA",
-                                { timeZone: "Asia/Jakarta" },
-                              ) === key,
-                          ).length;
-                          const max = Math.max(
-                            1,
-                            ...Array.from({ length: 7 }, (_, j) => {
-                              const t = new Date();
-                              t.setDate(t.getDate() - j);
-                              return data.nprs.filter(
-                                (n) =>
-                                  new Date(n.started_at).toLocaleDateString(
-                                    "en-CA",
-                                    { timeZone: "Asia/Jakarta" },
-                                  ) ===
-                                  t.toLocaleDateString("en-CA", {
-                                    timeZone: "Asia/Jakarta",
-                                  }),
-                              ).length;
-                            }),
-                          );
-                          return (
-                            <div className="bar-item" key={key}>
-                              <strong>{count}</strong>
-                              <div className="bar-track">
-                                <div
-                                  style={{ height: `${(count / max) * 100}%` }}
-                                />
-                              </div>
-                              <small>
-                                {d.toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "short",
-                                })}
-                              </small>
+                        {grafik.map((g) => (
+                          <div className="bar-item" key={g.hari}>
+                            <strong>{g.jumlah}</strong>
+                            <div className="bar-track">
+                              <div
+                                style={{
+                                  height: `${(g.jumlah / grafikMax) * 100}%`,
+                                }}
+                              />
                             </div>
-                          );
-                        })}
+                            <small>
+                              {new Date(
+                                `${g.hari}T12:00:00+07:00`,
+                              ).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                timeZone: "Asia/Jakarta",
+                              })}
+                            </small>
+                          </div>
+                        ))}
                       </div>
                     </section>
                   </div>
@@ -1468,23 +1580,21 @@ function App() {
                         Kelola TT Gamas →
                       </button>
                     </div>
-                    {data.gamas.filter((g) => g.status !== "CLOSED").length ? (
-                      data.gamas
-                        .filter((g) => g.status !== "CLOSED")
-                        .map((g) => (
-                          <button
-                            className="gamas-summary"
-                            key={g.id}
-                            onClick={() => {
-                              setPage("TT Gamas");
-                              setSelectedGamas(g.id);
-                            }}
-                          >
-                            <strong>{g.number}</strong>
-                            <span>{g.location}</span>
-                            <Status value={g.status} />
-                          </button>
-                        ))
+                    {dashboard.data?.gamas_aktif.length ? (
+                      dashboard.data.gamas_aktif.map((g) => (
+                        <button
+                          className="gamas-summary"
+                          key={g.id}
+                          onClick={() => {
+                            setPage("TT Gamas");
+                            setSelectedGamas(g.id);
+                          }}
+                        >
+                          <strong>{g.number}</strong>
+                          <span>{g.location}</span>
+                          <Status value={g.status} />
+                        </button>
+                      ))
                     ) : (
                       <div className="empty">
                         Tidak ada gangguan massal aktif.
@@ -1494,7 +1604,7 @@ function App() {
                 </>
               )}
 
-              {page === "New NPR" && (
+              {page === "NPR Baru" && (
                 <section className="panel">
                   <div className="panel-title">
                     <h2>Buat Network Problem Report</h2>
@@ -1516,7 +1626,7 @@ function App() {
                         },
                         "NPR berhasil dibuat.",
                         () => {
-                          go("Detail NPR");
+                          go("NPR");
                           setNotice("NPR berhasil dibuat.");
                           setNewRemote("");
                         },
@@ -1547,7 +1657,7 @@ function App() {
                             required
                           >
                             <option value="">Pilih bank</option>
-                            {data.customers.map((c) => (
+                            {customers.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.name}
                               </option>
@@ -1561,7 +1671,7 @@ function App() {
                             required
                           >
                             <option value="">Pilih site ATM</option>
-                            {data.remotes
+                            {remotes
                               .filter(
                                 (r) =>
                                   String(r.customer_id) === newCustomer &&
@@ -1643,6 +1753,13 @@ function App() {
                         merupakan data dummy.
                       </div>
                       <div className="form-footer">
+                        <button
+                          type="button"
+                          onClick={() => go("NPR")}
+                          disabled={busy}
+                        >
+                          Batal
+                        </button>
                         <button className="primary">
                           {busy ? "Menyimpan…" : "Submit NPR"}
                         </button>
@@ -1651,22 +1768,38 @@ function App() {
                   </form>
                 </section>
               )}
-              {(page === "Detail NPR" || page === "Report NPR") && (
+              {page === "NPR" && (
                 <section className="panel">
                   <div className="panel-title">
-                    <h2>
-                      {page === "Report NPR"
-                        ? "Histori & laporan NPR"
-                        : "Daftar NPR"}
-                    </h2>
+                    <h2>Daftar NPR</h2>
                     <div className="button-group">
-                      <button onClick={exportNpr}>Ekspor CSV</button>
-                      <button className="primary" onClick={() => go("New NPR")}>
-                        + New NPR
+                      <button onClick={() => void exportNpr()}>
+                        Ekspor CSV
+                      </button>
+                      <button
+                        className="primary"
+                        onClick={() => go("NPR Baru")}
+                      >
+                        + NPR Baru
                       </button>
                     </div>
                   </div>
                   {filters}
+                  {kondisi && (
+                    <div className="filter-chip">
+                      Filter dari Dashboard:{" "}
+                      <strong>{kondisiNpr[kondisi]}</strong>
+                      <button
+                        onClick={() => {
+                          setKondisi("");
+                          setRowPage(1);
+                        }}
+                        aria-label="Hapus filter Dashboard"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
                   {nprTable}
                 </section>
               )}
@@ -1699,61 +1832,49 @@ function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.tickets
-                          .filter((t) => {
-                            const n = data.nprs.find((n) => n.id === t.npr_id);
-                            return `${t.number} ${n?.number} ${remote(n?.remote_id || 0)?.site_id}`
-                              .toLowerCase()
-                              .includes(search.toLowerCase());
-                          })
-                          .map((t) => {
-                            const n = data.nprs.find((n) => n.id === t.npr_id);
-                            const r = remote(n?.remote_id || 0);
-                            return (
-                              <tr key={t.id}>
-                                <td>
-                                  <strong className="mono">{t.number}</strong>
-                                  <small>{n?.number}</small>
-                                </td>
-                                <td>
-                                  {r?.site_id}
-                                  <small>{r?.location}</small>
-                                </td>
-                                <td>{t.instruction}</td>
-                                <td>
-                                  {t.report
-                                    ? "Sudah diterima"
-                                    : "Menunggu report"}
-                                  <small>{t.technician}</small>
-                                </td>
-                                <td>
-                                  <Status value={n?.status || "OPEN"} />
-                                </td>
-                                <td>
-                                  <div className="button-group">
-                                    <button onClick={() => ticketPdf(t)}>
-                                      PDF
-                                    </button>
-                                    <button
-                                      className="text-button"
-                                      onClick={() => {
-                                        setSelected(t.npr_id);
-                                        setKind("Report Teknisi");
-                                      }}
-                                    >
-                                      Detail / Report
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                        {tickets.data?.rows.map((t) => (
+                          <tr key={t.id}>
+                            <td>
+                              <strong className="mono">{t.number}</strong>
+                              <small>{t.npr_number}</small>
+                            </td>
+                            <td>
+                              {t.site_id}
+                              <small>{t.location}</small>
+                            </td>
+                            <td>{t.instruction}</td>
+                            <td>
+                              {t.report ? "Sudah diterima" : "Menunggu report"}
+                              <small>{t.technician}</small>
+                            </td>
+                            <td>
+                              <Status value={t.npr_status} />
+                            </td>
+                            <td>
+                              <div className="button-group">
+                                <button onClick={() => ticketPdf(t)}>
+                                  PDF
+                                </button>
+                                <button
+                                  className="text-button"
+                                  onClick={() => {
+                                    bukaNpr(t.npr_id);
+                                    setKind("Report Teknisi");
+                                  }}
+                                >
+                                  Detail / Report
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
-                    {!data.tickets.length && (
+                    {!tickets.data?.rows.length && (
                       <div className="empty">
-                        Belum ada TT. Buka NPR, pilih Add Action → Eskalasi
-                        Service.
+                        {tickets.loading
+                          ? "Memuat daftar TT…"
+                          : "Belum ada TT. Buka NPR, pilih Add Action → Eskalasi Service."}
                       </div>
                     )}
                   </div>
@@ -1783,24 +1904,22 @@ function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.gamas.map((g) => (
+                        {gamasList.data?.rows.map((g) => (
                           <tr key={g.id}>
                             <td className="mono">{g.number}</td>
                             <td>{g.location}</td>
                             <td>{dateText(g.started_at)}</td>
-                            <td>
-                              {
-                                data.gamas_sites.filter(
-                                  (s) => s.gamas_id === g.id,
-                                ).length
-                              }
-                            </td>
+                            <td>{g.site_count}</td>
                             <td>
                               <Status value={g.status} />
                             </td>
                             <td>
                               <div className="button-group">
-                                <button onClick={() => gamasPdf(g)}>PDF</button>
+                                <button
+                                  onClick={() => void gamasPdfDariDaftar(g.id)}
+                                >
+                                  PDF
+                                </button>
                                 <button
                                   className="text-button"
                                   onClick={() => setSelectedGamas(g.id)}
@@ -1813,8 +1932,12 @@ function App() {
                         ))}
                       </tbody>
                     </table>
-                    {!data.gamas.length && (
-                      <div className="empty">Belum ada gangguan massal.</div>
+                    {!gamasList.data?.rows.length && (
+                      <div className="empty">
+                        {gamasList.loading
+                          ? "Memuat daftar Gamas…"
+                          : "Belum ada gangguan massal."}
+                      </div>
                     )}
                   </div>
                 </section>
@@ -1832,9 +1955,9 @@ function App() {
                         required
                       />
                       <button
-                        disabled={!sla}
+                        disabled={!sla.data}
                         onClick={() =>
-                          sla &&
+                          sla.data &&
                           csv(`SLA-${slaMonth}.csv`, [
                             [
                               "Site ID",
@@ -1844,7 +1967,7 @@ function App() {
                               "Downtime Menit",
                               "SLA %",
                             ],
-                            ...sla.rows.map((r) => [
+                            ...sla.data.rows.map((r) => [
                               r.site_id,
                               r.location,
                               r.customer_name,
@@ -1868,10 +1991,11 @@ function App() {
                       per site; waktu yang tumpang tindih tidak digandakan.
                       Waktu pemulihan menggunakan waktu kembali online, bukan
                       waktu administrasi penutupan. Periode berjalan dihitung
-                      sampai saat ini. Target simulasi: {sla?.target ?? 99.5}%.
+                      sampai saat ini. Target simulasi:{" "}
+                      {sla.data?.target ?? 99.5}%.
                     </p>
                   </div>
-                  {slaLoading ? (
+                  {sla.loading && !sla.data ? (
                     <div className="empty">Menghitung laporan…</div>
                   ) : (
                     <div className="table-scroll">
@@ -1887,7 +2011,7 @@ function App() {
                           </tr>
                         </thead>
                         <tbody>
-                          {sla?.rows.map((r) => (
+                          {sla.data?.rows.map((r) => (
                             <tr key={r.remote_id}>
                               <td>
                                 <strong>{r.site_id}</strong>
@@ -1916,10 +2040,10 @@ function App() {
                               </td>
                               <td>
                                 <span
-                                  className={`status ${r.sla !== null && r.sla >= (sla.target || 99.5) ? "status-closed" : "status-pending"}`}
+                                  className={`status ${r.sla !== null && r.sla >= (sla.data?.target || 99.5) ? "status-closed" : "status-pending"}`}
                                 >
                                   {r.sla !== null &&
-                                  r.sla >= (sla.target || 99.5)
+                                  r.sla >= (sla.data?.target || 99.5)
                                     ? "Tercapai"
                                     : r.sla === null
                                       ? "Belum berjalan"
@@ -1930,7 +2054,7 @@ function App() {
                           ))}
                         </tbody>
                       </table>
-                      {!sla?.rows.length && (
+                      {!sla.data?.rows.length && (
                         <div className="empty">
                           Tidak ada data pada periode ini.
                         </div>
@@ -1960,20 +2084,13 @@ function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.customers.map((c) => (
+                        {customers.map((c) => (
                           <tr key={c.id}>
                             <td className="mono">{c.code}</td>
                             <td>
                               <strong>{c.name}</strong>
                             </td>
-                            <td>
-                              {
-                                data.remotes.filter(
-                                  (r) => r.customer_id === c.id,
-                                ).length
-                              }{" "}
-                              site
-                            </td>
+                            <td>{c.remote_count} site</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2012,7 +2129,7 @@ function App() {
                       aria-label="Filter customer"
                     >
                       <option value="">Semua customer</option>
-                      {data.customers.map((c) => (
+                      {customers.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
@@ -2032,7 +2149,7 @@ function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.remotes
+                        {remotes
                           .filter(
                             (r) =>
                               (!customerFilter ||
@@ -2045,7 +2162,7 @@ function App() {
                             <tr key={r.id}>
                               <td className="mono">{r.site_id}</td>
                               <td>
-                                <strong>{customer(r.customer_id)?.name}</strong>
+                                <strong>{customerName(r.customer_id)}</strong>
                                 <small>{r.location}</small>
                               </td>
                               <td>{r.jarkom}</td>
@@ -2130,14 +2247,13 @@ function App() {
                 void mutate(
                   `/api/${modal === "customer" ? "customers" : modal === "remote" ? "remotes" : "gamas"}`,
                   body,
-                  "Data berhasil disimpan.",
-                  (fresh) => {
-                    if (modal === "gamas") {
-                      const created = fresh.gamas.find(
-                        (g) => !data.gamas.some((old) => old.id === g.id),
-                      );
-                      if (created) gamasPdf(created, fresh);
-                    }
+                  modal === "gamas"
+                    ? "TT Gamas berhasil dibuat. PDF dapat diunduh dari halaman ini."
+                    : "Data berhasil disimpan.",
+                  (result) => {
+                    if (modal === "gamas" && result.id)
+                      setSelectedGamas(result.id);
+                    else setVersiMaster((v) => v + 1);
                     setModal(null);
                   },
                 );
@@ -2164,7 +2280,7 @@ function App() {
                       <Field label="Customer">
                         <select name="customer_id" required>
                           <option value="">Pilih customer</option>
-                          {data.customers.map((c) => (
+                          {customers.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.name}
                             </option>
@@ -2231,7 +2347,7 @@ function App() {
                           <span>Remote terdampak · pilih minimal satu</span>
                         </label>
                         <div className="site-checks">
-                          {data.remotes.map((r) => (
+                          {remotes.map((r) => (
                             <label className="check" key={r.id}>
                               <input
                                 type="checkbox"

@@ -1,6 +1,6 @@
 // Pengelolaan akun: daftar dan ubah pengguna (khusus admin), reset password
 // oleh admin, dan ganti password sendiri.
-import { ApiError } from "./domain.js";
+import { ApiError } from "./galat.js";
 import { buatSalt, hashPassword, hashesMatch } from "./sandi.js";
 
 export type Peran = "admin" | "helpdesk";

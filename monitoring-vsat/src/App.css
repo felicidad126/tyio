@@ -5,7 +5,7 @@ button {
   background: #fff;
   color: #283e5e;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
   transition: background 0.15s;
 }
 button:hover:not(:disabled) {
@@ -29,15 +29,15 @@ button:hover:not(:disabled) {
   padding: 6px 0;
 }
 .muted {
-  font-size: 12px;
-  color: #7b8aa1;
+  font-size: 13px;
+  color: var(--teks-redup);
 }
 .mono {
   font-family: "Consolas", monospace;
-  font-size: 12px;
+  font-size: 13px;
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 1.8px;
   color: #2474cd;
@@ -117,11 +117,11 @@ button:hover:not(:disabled) {
 .brand div > span {
   margin-top: 5px;
   color: #aabbd1;
-  font-size: 12px;
+  font-size: 13px;
 }
 .intro-label {
   color: #7dd3fc;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 2px;
 }
@@ -145,7 +145,7 @@ button:hover:not(:disabled) {
   padding-top: 24px;
   border-top: 1px solid #ffffff20;
   color: #b5c3d7;
-  font-size: 12px;
+  font-size: 13px;
 }
 .login-card {
   padding: 42px;
@@ -160,8 +160,8 @@ button:hover:not(:disabled) {
 }
 .login-card > p {
   margin: 0 0 30px;
-  color: #738198;
-  font-size: 14px;
+  color: var(--teks-redup);
+  font-size: 15px;
 }
 .login-card form {
   display: grid;
@@ -176,14 +176,14 @@ button:hover:not(:disabled) {
   margin-top: 28px;
   padding-top: 20px;
   border-top: 1px solid #edf0f5;
-  font-size: 12px;
-  color: #7b8aa1;
+  font-size: 13px;
+  color: var(--teks-redup);
   text-align: center;
 }
 .page-footer {
   margin-top: 56px;
   color: #93a5bf;
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
 }
 .error-dialog {
@@ -199,7 +199,7 @@ button:hover:not(:disabled) {
 }
 .error-dialog p {
   line-height: 1.7;
-  color: #728198;
+  color: var(--teks-redup);
 }
 .error-dialog form {
   display: block;
@@ -242,12 +242,12 @@ button:hover:not(:disabled) {
 }
 .side-brand strong {
   display: block;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 1.3px;
   color: #fff;
 }
 .side-brand small {
-  font-size: 10px;
+  font-size: 12px;
   display: block;
   margin-top: 5px;
 }
@@ -257,10 +257,10 @@ button:hover:not(:disabled) {
   font-size: 13px;
 }
 .side-caption {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.6px;
   padding: 0 14px 14px;
-  color: #7489a8;
+  color: #a9bad1;
 }
 .sidebar nav {
   display: grid;
@@ -275,7 +275,7 @@ button:hover:not(:disabled) {
   display: flex;
   align-items: center;
   gap: 13px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .sidebar nav button span {
   width: 18px;
@@ -296,13 +296,13 @@ button:hover:not(:disabled) {
   margin-top: auto;
   padding: 25px 12px 0;
   border-top: 1px solid #ffffff12;
-  font-size: 11px;
+  font-size: 12px;
 }
 .side-bottom small {
   display: block;
   margin-top: 10px;
-  font-size: 9px;
-  color: #69809f;
+  font-size: 12px;
+  color: #a9bad1;
 }
 .online-dot {
   display: inline-block;
@@ -325,8 +325,8 @@ button:hover:not(:disabled) {
   padding: 16px 36px;
   background: white;
   border-bottom: 1px solid #e6edf6;
-  color: #7f8da2;
-  font-size: 12px;
+  color: var(--teks-redup);
+  font-size: 14px;
 }
 .topbar strong {
   color: #354b6b;
@@ -340,12 +340,12 @@ button:hover:not(:disabled) {
   align-items: center;
   gap: 12px;
   color: #344b69;
-  font-size: 12px;
+  font-size: 14px;
 }
 .account small {
   display: block;
-  color: #8593a7;
-  font-size: 10px;
+  color: var(--teks-redup);
+  font-size: 12px;
   margin-top: 4px;
 }
 .avatar {
@@ -356,7 +356,7 @@ button:hover:not(:disabled) {
   place-items: center;
   background: #e9f1ff;
   color: #1768d0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 .content {
@@ -378,16 +378,16 @@ button:hover:not(:disabled) {
 }
 .page-heading p {
   margin: 0;
-  color: #7d8ba1;
-  font-size: 12px;
+  color: var(--teks-redup);
+  font-size: 14px;
   line-height: 1.6;
 }
 .demo-tag {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: 1px;
   background: #e9eff9;
-  color: #6d83a3;
+  color: var(--teks-redup);
   border: 1px solid #dce6f4;
   padding: 9px 12px;
   border-radius: 6px;
@@ -402,7 +402,7 @@ button:hover:not(:disabled) {
   box-shadow: 0 3px 9px #192d4812;
 }
 .panel h2 {
-  font-size: 15px;
+  font-size: 17px;
   margin: 0 0 12px;
   letter-spacing: -0.2px;
 }
@@ -417,8 +417,8 @@ button:hover:not(:disabled) {
   margin: 0;
 }
 .panel-title p {
-  font-size: 12px;
-  color: #77879d;
+  font-size: 14px;
+  color: var(--teks-redup);
 }
 .stats-grid {
   display: grid;
@@ -433,6 +433,19 @@ button:hover:not(:disabled) {
   padding: 23px;
   position: relative;
   overflow: hidden;
+}
+/* Kartu Dashboard berupa tombol yang membuka daftar NPR tersaring. */
+button.stat-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-weight: 400;
+  color: inherit;
+}
+button.stat-card:hover:not(:disabled) {
+  background: #fff;
+  border-color: #9dbbe6;
+  box-shadow: 0 4px 14px rgb(23 104 208 / 10%);
 }
 .stat-card:before {
   content: "";
@@ -453,8 +466,8 @@ button:hover:not(:disabled) {
   background: #1db895;
 }
 .stat-card > span {
-  font-size: 12px;
-  color: #718199;
+  font-size: 14px;
+  color: var(--teks-redup);
 }
 .stat-card strong {
   display: block;
@@ -463,8 +476,8 @@ button:hover:not(:disabled) {
   margin: 15px 0 10px;
 }
 .stat-card small {
-  font-size: 10px;
-  color: #8d9bb0;
+  font-size: 12px;
+  color: var(--teks-redup);
 }
 .dashboard-grid {
   display: grid;
@@ -475,9 +488,25 @@ button:hover:not(:disabled) {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 14px;
   padding: 15px 0;
-  color: #637795;
+  color: var(--teks-redup);
+}
+button.distribution {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 15px 0;
+  font-weight: 400;
+  text-align: left;
+}
+button.distribution:hover:not(:disabled) {
+  background: transparent;
+}
+button.distribution:hover > span {
+  color: #1768d0;
+  text-decoration: underline;
 }
 .distribution strong {
   color: #223c60;
@@ -508,13 +537,13 @@ button:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   gap: 8px;
   min-width: 0;
 }
 .bar-item strong {
-  font-size: 11px;
-  color: #65809f;
+  font-size: 13px;
+  color: var(--teks-redup);
 }
 .bar-track {
   width: 100%;
@@ -533,9 +562,9 @@ button:hover:not(:disabled) {
   border-radius: 5px;
 }
 .bar-item small {
-  font-size: 9px;
+  font-size: 12px;
   white-space: nowrap;
-  color: #8a99ae;
+  color: var(--teks-redup);
 }
 .gamas-summary {
   display: flex;
@@ -549,10 +578,10 @@ button:hover:not(:disabled) {
 }
 .gamas-summary > span:not(.status) {
   flex: 1;
-  color: #8391a5;
+  color: var(--teks-redup);
 }
 .status {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.3px;
   background: #eaf1fd;
@@ -564,19 +593,19 @@ button:hover:not(:disabled) {
 }
 .status-pending {
   background: #fff3d7;
-  color: #a87513;
+  color: #7a5200;
 }
 .status-eskalasi {
   background: #eae8ff;
-  color: #7460c3;
+  color: #5a46ad;
 }
 .status-closed {
   background: #e1f6ef;
-  color: #23896c;
+  color: #17694f;
 }
 .status-open {
   background: #e6f2fe;
-  color: #2b83c7;
+  color: #195f99;
 }
 .alert {
   display: flex;
@@ -586,7 +615,7 @@ button:hover:not(:disabled) {
   padding: 14px 18px;
   border-radius: 9px;
   margin-bottom: 20px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
 }
 .alert.error {
@@ -621,7 +650,7 @@ button:hover:not(:disabled) {
   min-width: 0;
 }
 .field > span {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
   color: #61718a;
 }
@@ -633,7 +662,7 @@ textarea {
   padding: 11px 12px;
   background: #fff;
   color: #334b6e;
-  font-size: 12px;
+  font-size: 14px;
   min-width: 0;
 }
 input:focus,
@@ -644,7 +673,7 @@ textarea:focus {
 }
 input[readonly] {
   background: #f5f8fc;
-  color: #8091a9;
+  color: var(--teks-redup);
 }
 textarea {
   resize: vertical;
@@ -668,9 +697,9 @@ fieldset {
   background: #f1f6ff;
   border: 1px solid #e0eafa;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.8;
-  color: #607c9f;
+  color: var(--teks-redup);
   padding: 14px 17px;
   margin: 18px 0;
 }
@@ -699,17 +728,17 @@ fieldset {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 13px;
   text-align: left;
 }
 th {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   white-space: nowrap;
   padding: 13px 12px;
   background: #f5f8fc;
-  color: #8392a8;
+  color: var(--teks-redup);
   border-bottom: 1px solid #e5ecf5;
 }
 td {
@@ -726,8 +755,8 @@ td strong {
 }
 td small {
   display: block;
-  font-size: 10px;
-  color: #93a0b4;
+  font-size: 12px;
+  color: var(--teks-redup);
   margin-top: 4px;
 }
 .notes-cell {
@@ -738,8 +767,8 @@ td small {
 .empty {
   text-align: center;
   padding: 40px 20px;
-  color: #93a0b3;
-  font-size: 12px;
+  color: var(--teks-redup);
+  font-size: 14px;
 }
 .pagination {
   display: flex;
@@ -747,8 +776,8 @@ td small {
   justify-content: flex-end;
   gap: 10px;
   padding-top: 20px;
-  font-size: 11px;
-  color: #7e8fa7;
+  font-size: 13px;
+  color: var(--teks-redup);
 }
 .pagination > span:first-child {
   margin-right: auto;
@@ -767,12 +796,12 @@ td small {
 }
 .info-grid small {
   display: block;
-  font-size: 10px;
-  color: #8695ab;
+  font-size: 12px;
+  color: var(--teks-redup);
   margin-bottom: 8px;
 }
 .info-grid strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.8;
   white-space: pre-wrap;
@@ -805,14 +834,14 @@ td small {
   gap: 16px;
 }
 .timeline-heading strong {
-  font-size: 12px;
+  font-size: 14px;
 }
 .timeline small {
-  font-size: 10px;
-  color: #91a0b6;
+  font-size: 12px;
+  color: var(--teks-redup);
 }
 .timeline p {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.8;
   white-space: pre-wrap;
   margin: 10px 0;
@@ -821,12 +850,33 @@ td small {
 .attachment {
   display: block;
   margin-top: 10px;
-  font-size: 11px;
+  font-size: 13px;
+}
+/* Penanda filter yang dibuka dari Dashboard, bisa dihapus dengan tombol ×. */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 999px;
+  background: #e6f2fe;
+  color: #195f99;
+  font-size: 13px;
+}
+.filter-chip button {
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #195f99;
+  font-size: 15px;
+  line-height: 1.2;
 }
 .app-footer {
   padding: 0 36px 25px;
-  font-size: 10px;
-  color: #8b9ab0;
+  font-size: 12px;
+  color: var(--teks-redup);
   display: flex;
   justify-content: space-between;
 }
@@ -853,8 +903,8 @@ td small {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
-  color: #667b99;
+  font-size: 14px;
+  color: var(--teks-redup);
   line-height: 1.6;
 }
 .check input {
@@ -986,7 +1036,7 @@ td small {
     font-size: 29px;
   }
   .stat-card small {
-    font-size: 9px;
+    font-size: 12px;
   }
   .form-grid,
   .form-grid.three,
@@ -1031,4 +1081,7 @@ td small {
   .topbar {
     padding: 15px;
   }
+}
+td .text-button {
+  white-space: nowrap;
 }
