@@ -50,12 +50,12 @@ online, jadi perlu diputuskan dulu (bagian 7 dan 9).
 
 ## 2. Tabel ringkas untuk dibahas
 
-Kolom **Perlu?** dikosongkan untuk diisi saat diskusi.
+Kolom **Perlu?** diisi sesuai keputusan D-1 sampai D-8 (25 November 2026). Yang masih kosong diusulkan masuk revisi, lihat [RENCANA-REVISI.md](RENCANA-REVISI.md), dan menunggu konfirmasi.
 
 | ID | Tingkat | Temuan | Perlu? |
 | --- | --- | --- | --- |
 | K-01 | Tinggi | Setiap buka/simpan, seluruh database termasuk lampiran ikut diunduh | |
-| K-02 | Tinggi | Nomor NPR/TT 16 digit acak, bulan pakai UTC, bisa bentrok | |
+| K-02 | Tinggi | Nomor NPR/TT 16 digit acak, bulan pakai UTC, bisa bentrok | Ya (D-6 a) |
 | K-03 | Tinggi | Status ESKALASI berubah jadi PENDING setelah ada tindakan baru | |
 | K-04 | Sedang | Close Gamas tanpa jam online memakai jam klik; waktu perkembangan Gamas tidak bisa diatur | |
 | K-05 | Sedang | Bulan default laporan SLA pakai UTC, bukan WIB | |
@@ -66,13 +66,13 @@ Kolom **Perlu?** dikosongkan untuk diisi saat diskusi.
 | K-10 | Rendah | Hitung SLA memuat seluruh riwayat sepanjang masa | |
 | K-11 | Rendah | Sesi dan catatan login kedaluwarsa tidak pernah dibersihkan | |
 | K-12 | Rendah | Grafik 7 hari dihitung ulang berlapis dan memakai zona waktu laptop | |
-| K-13 | Rendah | Hanya satu akun tetap (`setio`), tanpa pengelolaan pengguna | |
+| K-13 | Rendah | Hanya satu akun tetap (`setio`), tanpa pengelolaan pengguna | Ya (D-3 c) |
 | K-14 | Rendah | Sisa berkas template (logo Vite/React, gambar hero) tidak dipakai | |
 | U-01 | Tinggi | Ukuran huruf 9–12 px di hampir semua tempat | |
 | U-02 | Tinggi | Teks abu-abu di bawah standar kontras | |
 | U-03 | Sedang | 116 kode warna ditulis langsung, tanpa variabel warna | |
 | U-04 | Sedang | Ikon menu berupa karakter Unicode acak | |
-| U-05 | Sedang | Tampilan HP: menu terpotong, tabel harus digeser | |
+| U-05 | Sedang | Tampilan HP: menu terpotong, tabel harus digeser | Ya (D-4 b) |
 | U-06 | Sedang | Blok judul halaman besar tapi isinya sama di semua halaman | |
 | U-07 | Sedang | Form New NPR mencampur isian dan 7 kolom baca-saja | |
 | U-08 | Rendah | Dua gaya dialog; modal form tidak bisa ditutup dengan Esc | |
@@ -85,20 +85,20 @@ Kolom **Perlu?** dikosongkan untuk diisi saat diskusi.
 | X-04 | Sedang | Setelah Submit NPR, pengguna dibawa ke daftar, bukan ke NPR baru | |
 | X-05 | Sedang | Customer dan Remote tidak bisa diubah | |
 | X-06 | Sedang | Memilih site terdampak Gamas tanpa pencarian | |
-| X-07 | Sedang | PDF terunduh otomatis dan isinya teks polos tanpa kop | |
+| X-07 | Sedang | PDF terunduh otomatis dan isinya teks polos tanpa kop | Ya (D-7 b) |
 | X-08 | Rendah | Urutan riwayat NPR dan Gamas berlawanan | |
 | X-09 | Rendah | Daftar TT, Gamas, dan Remote tanpa halaman/paginasi | |
-| X-10 | Sedang | Bahasa label campur Inggris dan Indonesia | |
+| X-10 | Sedang | Bahasa label campur Inggris dan Indonesia | Ya (D-8 a) |
 | H-01 | Sedang | Halaman login bergaya iklan | |
 | H-02 | Rendah | Label huruf kapital berspasi di mana-mana | |
 | H-03 | Rendah | Titik tengah "·" (20×) dan panah "→" (7×) di label dan tombol | |
 | H-04 | Rendah | Teks pengisi yang mengulang judul | |
-| H-05 | Sedang | Disclaimer "dummy/fiktif/simulasi" diulang 10× | |
+| H-05 | Sedang | Disclaimer "dummy/fiktif/simulasi" diulang 10× | Ya (D-1 b) |
 | H-06 | Rendah | Catatan yang menjelaskan cara kerja sistem ke pengguna | |
 | H-07 | Sedang | Gaya kode dan komentar tidak seragam | |
 | H-08 | Sedang | `HASIL-PEMERIKSAAN.md` adalah laporan alat AI, bukan hasil uji sendiri | |
 | H-09 | Rendah | Tampilan dashboard generik, belum punya identitas TM | |
-| R-01…R-07 | — | Ganti nama, logo, dan warna (bagian 7) | |
+| R-01…R-07 | — | Ganti nama, logo, dan warna (bagian 7) | Ya (D-1 b, D-2 b, D-5 a) |
 
 ---
 
@@ -661,16 +661,16 @@ login, judul tab, dan kop PDF. Di dalam aplikasi cukup logo + "NPR".
 
 ## 9. Pertanyaan yang perlu diputuskan (D)
 
-| ID | Pertanyaan | Pilihan |
-| --- | --- | --- |
-| D-1 | Label akademik ("Proyek Kerja Praktek · Universitas Dian Nusantara", "SIMULASI · DATA FIKTIF", kop PDF) tetap tampil? | a) tetap di semua tempat; b) cukup di footer login; c) hapus semua |
-| D-2 | Nama teknis ikut diganti? (alamat worker, nama database, cookie) | a) hanya yang tampil; b) paket + cookie; c) semua, termasuk alamat dan database |
-| D-3 | Akun pengguna | a) tetap satu akun `setio`; b) satu akun umum mis. `helpdesk`; c) akun per orang + menu pengguna |
-| D-4 | Perlu nyaman dipakai di HP? | a) cukup laptop; b) HP juga |
-| D-5 | "VSAT & M2M" tetap disebut? | a) ya, sebagai subjudul; b) tidak |
-| D-6 | Format nomor NPR | a) `NPR/2026/11/0001` per bulan input; b) per bulan gangguan; c) biarkan |
-| D-7 | PDF TT untuk teknisi | a) cukup tambah logo; b) kop + tabel + tanda tangan |
-| D-8 | Bahasa label | a) Indonesia, istilah kerja tetap (NPR, TT, Gamas, Pending, Site ID); b) Inggris semua; c) biarkan |
+| ID | Pertanyaan | Pilihan | Keputusan |
+| --- | --- | --- | --- |
+| D-1 | Label akademik ("Proyek Kerja Praktek · Universitas Dian Nusantara", "SIMULASI · DATA FIKTIF", kop PDF) tetap tampil? | a) tetap di semua tempat; b) cukup di footer login; c) hapus semua | **b)** cukup di footer login |
+| D-2 | Nama teknis ikut diganti? (alamat worker, nama database, cookie) | a) hanya yang tampil; b) paket + cookie; c) semua, termasuk alamat dan database | **b)** paket + cookie |
+| D-3 | Akun pengguna | a) tetap satu akun `setio`; b) satu akun umum mis. `helpdesk`; c) akun per orang + menu pengguna | **c)** akun per orang + menu pengguna |
+| D-4 | Perlu nyaman dipakai di HP? | a) cukup laptop; b) HP juga | **b)** HP juga |
+| D-5 | "VSAT & M2M" tetap disebut? | a) ya, sebagai subjudul; b) tidak | **a)** ya, sebagai subjudul |
+| D-6 | Format nomor NPR | a) `NPR/2026/11/0001` per bulan input; b) per bulan gangguan; c) biarkan | **a)** `NPR/2026/11/0001` per bulan input |
+| D-7 | PDF TT untuk teknisi | a) cukup tambah logo; b) kop + tabel + tanda tangan | **b)** kop + tabel + tanda tangan |
+| D-8 | Bahasa label | a) Indonesia, istilah kerja tetap (NPR, TT, Gamas, Pending, Site ID); b) Inggris semua; c) biarkan | **a)** Indonesia, istilah kerja tetap |
 
 ---
 
