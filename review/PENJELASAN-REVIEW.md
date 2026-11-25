@@ -201,18 +201,149 @@ Ada dua hal yang perlu diperhatikan:
 
 ## Keputusan yang perlu diambil
 
-Sebelum perbaikan dikerjakan, ada delapan pertanyaan yang perlu dijawab:
+Ada delapan hal yang tidak bisa diputuskan dari sisi teknis saja, karena jawabannya bergantung
+pada cara aplikasi ini akan dipakai. Setiap pertanyaan di bawah ini dilengkapi maksudnya, akibat
+tiap pilihan, dan usulan.
 
-| No. | Pertanyaan | Pilihan |
+### D-1. Tulisan "proyek akademik" dan "data fiktif" masih perlu ditampilkan?
+
+**Maksudnya:** aplikasi sekarang berulang kali menulis "Proyek Kerja Praktek · Universitas Dian
+Nusantara", "Simulasi", dan "Data fiktif", sampai 10 kali, termasuk di kop PDF untuk teknisi.
+
+- **a) Tetap di semua tempat.** Tidak ada yang diubah, tapi kesan berlebihannya tetap ada.
+- **b) Cukup sekali, di bagian bawah halaman login.** Nama kampus tetap tercantum, tapi tidak
+  mengganggu saat bekerja.
+- **c) Hapus semua.** Aplikasi tampil seperti aplikasi kantor pada umumnya.
+
+**Yang perlu dipertimbangkan:** apakah kampus atau perusahaan meminta penanda seperti ini, dan
+apakah aplikasi akan dipakai sungguhan di kantor.
+
+**Usulan:** b.
+
+### D-2. Nama "monitoring-vsat" di bagian dalam program ikut diganti?
+
+**Maksudnya:** selain nama yang terlihat pengguna, ada nama-nama yang hanya dipakai di dalam
+program:
+
+- nama paket: label proyek di dalam kode, seperti nama map;
+- nama cookie: nama "tiket masuk" yang disimpan browser setelah login;
+- nama worker: menentukan alamat website online, misalnya `monitoring-vsat.namaakun.workers.dev`;
+- nama database: tempat semua data disimpan di Cloudflare.
+
+Pilihannya:
+
+- **a) Hanya yang terlihat pengguna.** Keempat nama di atas dibiarkan.
+- **b) Nama paket dan cookie ikut diganti.** Tanpa risiko. Pengguna cukup login ulang satu kali.
+- **c) Semua diganti.** Alamat website berubah dan alamat lama tidak bisa dibuka lagi. Data juga
+  harus dipindahkan ke database baru.
+
+**Yang perlu dipertimbangkan:** apakah aplikasi sudah pernah diunggah ke Cloudflare dan alamatnya
+dipakai atau dibagikan ke orang lain.
+
+**Usulan:** c jika belum pernah dipakai online, b jika sudah.
+
+### D-3. Akun pengguna
+
+**Maksudnya:** sekarang hanya ada satu akun, atas nama mahasiswa (`setio`), dan password contohnya
+tertulis di dokumen panduan.
+
+- **a) Tetap satu akun pribadi.** Tidak ada perubahan.
+- **b) Satu akun umum, misalnya "helpdesk".** Nama pribadi hilang dari aplikasi. Kekurangannya,
+  tidak tercatat siapa yang membuat atau mengubah NPR.
+- **c) Akun per orang, ditambah menu untuk mengelola pengguna.** Setiap catatan tercatat atas
+  nama pembuatnya. Ini pekerjaan paling besar dari ketiga pilihan.
+
+**Yang perlu dipertimbangkan:** berapa orang yang akan memakai aplikasi, dan apakah kantor perlu
+tahu siapa mencatat apa.
+
+**Usulan:** b. Pilih c jika aplikasi akan dipakai beberapa helpdesk secara bergantian.
+
+### D-4. Aplikasi perlu nyaman dipakai di HP?
+
+**Maksudnya:** sekarang aplikasi bisa dibuka di HP, tapi menunya terpotong dan tabel harus
+digeser ke samping.
+
+- **a) Cukup laptop.** Tidak ada pekerjaan tambahan. Tampilan HP dibiarkan seperti sekarang.
+- **b) HP juga.** Menu dirapikan menjadi satu tombol, dan daftar NPR tampil sebagai kartu yang
+  mudah digulir. Pekerjaannya sedang.
+
+**Yang perlu dipertimbangkan:** apakah helpdesk atau teknisi akan membuka aplikasi dari HP,
+misalnya saat piket di luar jam kantor atau di lapangan.
+
+**Usulan:** b.
+
+### D-5. Tulisan "VSAT & M2M" tetap ada?
+
+**Maksudnya:** nama lama aplikasi menyebut dua jenis layanan. VSAT adalah koneksi internet lewat
+satelit, dan M2M adalah koneksi lewat kartu SIM seluler untuk mesin seperti ATM. Nama baru,
+Network Problem Report, tidak menyebut jenis layanan.
+
+- **a) Ya, sebagai keterangan kecil di bawah nama aplikasi.** Pengguna langsung tahu cakupannya.
+- **b) Tidak.** Nama aplikasi berlaku untuk jaringan jenis apa pun.
+
+**Yang perlu dipertimbangkan:** apakah helpdesk hanya menangani dua layanan ini, atau ada layanan
+lain yang mungkin ikut dicatat.
+
+**Usulan:** a, kecuali ada layanan lain.
+
+### D-6. Format nomor NPR
+
+**Maksudnya:** nomor sekarang berupa 16 angka acak, misalnya `NPR/2026/11/1795619811268455`.
+Usulannya diganti menjadi nomor urut, misalnya `NPR/2026/11/0001`. Yang perlu diputuskan adalah
+bulan mana yang dipakai di nomor itu. Contoh: gangguan terjadi 30 Oktober, tapi baru dicatat
+2 November.
+
+- **a) Bulan saat dicatat:** `NPR/2026/11/...`. Paling sederhana, dan nomor selalu berurutan sesuai
+  waktu pencatatan.
+- **b) Bulan saat gangguan terjadi:** `NPR/2026/10/...`. Cocok dengan laporan SLA bulanan, tapi
+  NPR bulan lalu bisa muncul belakangan.
+- **c) Dibiarkan** 16 angka acak seperti sekarang.
+
+**Yang perlu dipertimbangkan:** bagaimana kantor biasanya mengelompokkan laporan gangguan.
+
+**Usulan:** a, kecuali kantor biasa mengelompokkan menurut bulan gangguan.
+
+### D-7. PDF Trouble Ticket untuk teknisi
+
+**Maksudnya:** PDF ini diserahkan ke teknisi lapangan. Isinya sekarang hanya baris-baris teks
+polos, dan di bagian atasnya tertulis "SIMULASI AKADEMIK - DATA FIKTIF".
+
+- **a) Cukup ditambah logo.** Cepat, tapi isinya tetap teks polos.
+- **b) Dibuat seperti dokumen resmi:** kop dengan logo dan nama perusahaan, data lokasi dalam
+  tabel, kotak catatan, dan tempat tanda tangan teknisi dan helpdesk. Pekerjaannya lebih banyak.
+
+**Yang perlu dipertimbangkan:** apakah PDF ini akan dicetak dan ditandatangani. Jika kantor sudah
+punya format TT di kertas, sebaiknya PDF mengikuti format itu.
+
+**Usulan:** b.
+
+### D-8. Bahasa label
+
+**Maksudnya:** label di aplikasi bercampur, misalnya "Address" dan "Submit NPR" di dekat "Catatan
+awal gangguan" dan "Simpan tindakan".
+
+- **a) Bahasa Indonesia, istilah kerja tetap.** NPR, TT, Gamas, Pending, dan Site ID tidak
+  diterjemahkan. Contoh: Address menjadi Alamat, Submit NPR menjadi Simpan NPR, Logout menjadi
+  Keluar.
+- **b) Bahasa Inggris semua.** Seragam, tapi berbeda dari bahasa sehari-hari di kantor.
+- **c) Dibiarkan** campur seperti sekarang.
+
+**Yang perlu dipertimbangkan:** bahasa yang dipakai helpdesk sehari-hari.
+
+**Usulan:** a.
+
+### Ringkasan pilihan
+
+| No. | Pertanyaan | Usulan |
 | --- | --- | --- |
-| D-1 | Tulisan "Proyek Kerja Praktek" dan "data fiktif" tetap ditampilkan? | di semua tempat / cukup di halaman login / dihapus |
-| D-2 | Nama teknis di sistem online ikut diganti? | hanya yang terlihat pengguna / sebagian / semuanya |
-| D-3 | Akun pengguna | tetap satu akun pribadi / satu akun umum "helpdesk" / akun per orang |
-| D-4 | Aplikasi perlu nyaman dipakai di HP? | cukup laptop / HP juga |
-| D-5 | Tulisan "VSAT & M2M" tetap ada? | ya / tidak |
-| D-6 | Format nomor NPR | urut per bulan input / urut per bulan gangguan / dibiarkan |
-| D-7 | PDF untuk teknisi | cukup ditambah logo / kop, tabel, dan tempat tanda tangan |
-| D-8 | Bahasa label | Indonesia, istilah kerja tetap / Inggris semua / dibiarkan |
+| D-1 | Tulisan proyek akademik dan data fiktif | b) cukup sekali di halaman login |
+| D-2 | Nama di bagian dalam program | c jika belum online, b jika sudah |
+| D-3 | Akun pengguna | b) satu akun umum "helpdesk" |
+| D-4 | Nyaman di HP | b) HP juga |
+| D-5 | Tulisan "VSAT & M2M" | a) tetap, sebagai keterangan kecil |
+| D-6 | Nomor NPR | a) nomor urut, bulan saat dicatat |
+| D-7 | PDF untuk teknisi | b) seperti dokumen resmi |
+| D-8 | Bahasa label | a) Indonesia, istilah kerja tetap |
 
 ## Langkah berikutnya
 
