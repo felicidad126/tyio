@@ -4,7 +4,7 @@ Tanggal: 25 November 2026
 Branch: `Rev-NPR-Tyio` (tidak di-merge ke `main`)
 Dasar: [REVIEW-NPR.md](REVIEW-NPR.md) dan keputusan pengguna di bawah ini.
 
-Status: **rencana, belum dikerjakan.** Kode program belum ada di repo dan belum diubah.
+Status: **rencana, belum dikerjakan.** Keputusan D-1…D-8 dan T-1…T-5 sudah ada; T-6 menyusul. Kode program belum ada di repo dan belum diubah.
 
 ---
 
@@ -28,7 +28,7 @@ Status: **rencana, belum dikerjakan.** Kode program belum ada di repo dan belum 
 | No. | Kebutuhan | Status |
 | --- | --- | --- |
 | P-1 | Unggah ulang `Monitoring_VSAT_Lengkap.zip` | **Belum** |
-| P-2 | Izin meng-commit kode program ke repo ini (repo publik) | **Belum**, lihat bagian 6 |
+| P-2 | Izin meng-commit kode program ke repo ini (repo publik) | **Ya, dengan syarat** (T-1): setelah tahap 2 dan ID database diganti tulisan pengganti |
 | P-3 | Logo berlatar transparan (PNG atau SVG) untuk sidebar dan login yang gelap | Opsional. Jika tidak ada, latar putih dihapus sendiri dari logo yang ada |
 | P-4 | Contoh format TT kertas dari kantor, jika ada | Opsional. Jika tidak ada, dipakai tata letak usulan |
 
@@ -49,7 +49,7 @@ Setiap tahap diakhiri pemeriksaan (bagian 4), satu commit berbahasa Indonesia, l
 | 0 | Persiapan dan kondisi awal | – | kecil |
 | 1 | Perbaikan data: status, nomor, waktu | K-02, K-03 | sedang |
 | 2 | Akun per orang | – | besar |
-| 3 | Struktur kode dan kecepatan | K-01 | besar |
+| 3 | Struktur kode dan kecepatan | K-01 | sedang |
 | 4 | Identitas, warna, dan keterbacaan | U-01, U-02 | sedang |
 | 5 | Menu, Dashboard, dan alur kerja | X-01, X-02 | besar |
 | 6 | Tampilan HP | – | sedang |
@@ -104,7 +104,6 @@ Uji tambahan di `scripts/test-api.mjs`:
 | Temuan | Yang dikerjakan |
 | --- | --- |
 | K-01 | `GET /api/data` diganti endpoint per kebutuhan: daftar NPR dengan paginasi dan filter, detail NPR per id, daftar TT, Gamas, Customer, Remote, dan ringkasan Dashboard. Isi lampiran tidak ikut di daftar; diambil lewat `GET /api/lampiran/:id` saat tautannya diklik |
-| K-06 | `App.tsx` dipecah per halaman (`pages/`) dan komponen bersama (`components/`). Alamat per halaman, mis. `/npr`, `/npr/123`, `/gamas`, `/laporan-sla`. Refresh tetap di halaman yang sama dan tombol Back browser berfungsi |
 | K-07 | `worker/domain.ts` dipecah menjadi `customers.ts`, `remotes.ts`, `nprs.ts`, `gamas.ts`, `sla.ts`, `users.ts`, dengan nama variabel yang jelas |
 | K-08 | `shared/aturan.ts`: batas panjang, jenis berkas lampiran, pola kode customer, dipakai form dan server |
 | K-09 | Satu fungsi `api()` untuk semua permintaan. Jika balasan bukan JSON: "Server sedang tidak bisa dihubungi. Coba lagi beberapa saat." `queueMicrotask` dihapus |
@@ -112,6 +111,11 @@ Uji tambahan di `scripts/test-api.mjs`:
 | K-12 | Grafik 7 hari dihitung sekali di server dengan tanggal WIB |
 
 Hasil hitung SLA dan semua uji API harus sama persis sebelum dan sesudah tahap ini.
+
+`K-06` **tidak dikerjakan** (T-4). `App.tsx` tetap satu berkas dan halaman tetap disimpan di state,
+tanpa alamat per halaman. Akibatnya tetap seperti sekarang: refresh kembali ke Dashboard, tombol
+Back browser keluar dari aplikasi, dan tidak ada tautan langsung ke satu NPR. Perubahan `K-01`
+dibuat di dalam `App.tsx`: setiap halaman mengambil datanya sendiri saat dibuka.
 
 ### Tahap 4. Identitas, warna, dan keterbacaan
 
@@ -222,32 +226,34 @@ Beberapa tahap mengubah struktur database: tabel penghitung nomor (tahap 1), kol
 
 ---
 
-## 6. Pertanyaan yang masih terbuka
+## 6. Pertanyaan lanjutan dan jawabannya
 
-| No. | Pertanyaan | Usulan |
-| --- | --- | --- |
-| T-1 | Boleh meng-commit kode program ke repo ini? Repo publik, dan kode aslinya berisi nama mahasiswa, password demo, dan ID database Cloudflare | Boleh, **setelah** tahap 2 (nama dan password hilang) dan ID database di `wrangler.jsonc` diganti tulisan pengganti, mis. `ISI_ID_DATABASE`. Sebelum itu, perubahan hanya disimpan di folder kerja sesi ini |
-| T-2 | Peran pengguna (D-3) | Dua peran: **admin** (semua menu + kelola pengguna) dan **helpdesk** (semua menu kecuali kelola pengguna) |
-| T-3 | Nomor NPR/TT lama | Tetap seperti aslinya. Nomor urut baru mulai dari `0001` pada bulan berjalan |
-| T-4 | Pecah `App.tsx` dan alamat per halaman (`K-06`) | Ikut dikerjakan di tahap 3, karena `K-01` sudah mengubah cara setiap halaman mengambil data |
-| T-5 | Pustaka tambahan | `react-router` (alamat per halaman), `lucide-react` (ikon), `jspdf-autotable` (tabel PDF), `prettier` (format kode). Tidak ada pustaka lain |
-| T-6 | Temuan yang tidak dikerjakan | Tidak ada. Semua temuan K, U, X, H, dan R masuk rencana. Pemindahan lampiran ke Cloudflare R2 (saran jangka panjang di `K-01`) **tidak** dikerjakan |
+| No. | Pertanyaan | Usulan | Keputusan |
+| --- | --- | --- | --- |
+| T-1 | Boleh meng-commit kode program ke repo ini? Repo publik, dan kode aslinya berisi nama mahasiswa, password demo, dan ID database Cloudflare | Boleh, **setelah** tahap 2 (nama dan password hilang) dan ID database di `wrangler.jsonc` diganti tulisan pengganti, mis. `ISI_ID_DATABASE`. Sebelum itu, perubahan hanya disimpan di folder kerja sesi ini | **Ya** |
+| T-2 | Peran pengguna (D-3) | Dua peran: **admin** (semua menu + kelola pengguna) dan **helpdesk** (semua menu kecuali kelola pengguna) | **Ya** |
+| T-3 | Nomor NPR/TT lama | Tetap seperti aslinya. Nomor urut baru mulai dari `0001` pada bulan berjalan | **Ya** |
+| T-4 | Pecah `App.tsx` dan alamat per halaman (`K-06`) | Ikut dikerjakan di tahap 3, karena `K-01` sudah mengubah cara setiap halaman mengambil data | **Tidak.** `K-06` tidak dikerjakan |
+| T-5 | Pustaka tambahan | `lucide-react` (ikon), `jspdf-autotable` (tabel PDF), `prettier` (format kode). Tidak ada pustaka lain | **Ya**, tanpa `react-router` karena T-4 tidak |
+| T-6 | Temuan yang tidak dikerjakan | Tidak ada. Semua temuan K, U, X, H, dan R masuk rencana. Pemindahan lampiran ke Cloudflare R2 (saran jangka panjang di `K-01`) **tidak** dikerjakan | **Nanti.** Cakupan diputuskan kemudian |
 
 ---
 
 ## 7. Status temuan
 
-Semua 44 temuan dan R-01…R-07 masuk rencana. Tabel ini menunjukkan tahap pengerjaannya.
+Tabel ini menunjukkan tahap pengerjaan tiap temuan. `K-06` tidak dikerjakan (T-4). Cakupan temuan
+lainnya masih menunggu keputusan T-6; yang sudah pasti hanya yang ditentukan oleh D-1 sampai D-8.
 
 | Tahap | Temuan |
 | --- | --- |
 | 0 | K-07 (format), K-14, H-07 (sebagian) |
 | 1 | K-02, K-03, K-04, K-05, K-11, X-02 (pending_by) |
 | 2 | K-13, R-06 |
-| 3 | K-01, K-06, K-07, K-08, K-09, K-10, K-12 |
+| 3 | K-01, K-07, K-08, K-09, K-10, K-12 |
 | 4 | U-01, U-02, U-03, U-04, U-09, U-10, U-11, R-01 (tampilan), R-04, R-05, R-07, H-09 |
 | 5 | X-01, X-02, X-03, X-04, X-05, X-06, X-08, X-09, U-06, U-07, U-08, H-04 (Dashboard) |
 | 6 | U-05 |
 | 7 | X-07 |
 | 8 | X-10, H-01, H-02, H-03, H-04, H-05, H-06, H-07, H-08, R-01 (dokumen), R-02, R-03 |
 | 9 | Uji akhir |
+| Tidak dikerjakan | K-06 (T-4), pemindahan lampiran ke R2 |
