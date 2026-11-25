@@ -273,6 +273,14 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T161 | **Server mengambil kode lewat deploy key hanya-baca khusus repo ini** (SSH), bukan token akun GitHub | Kunci yang bocor dari server hanya membuka baca satu repo dan bisa dicabut sendiri |
 | T162 | **Uji asap produksi `deploy/scripts/uji-produksi.sh`** (tidak mengubah data): semua service sehat, HTTPS dan `/api/health`, HTTP → HTTPS, HSTS, kompresi, `TYIO_ENV=production`, database/aplikasi tidak dibuka ke host, dan bila akun diberikan: login dengan cookie Secure+HttpOnly, sesi, dan SSE tanpa kompresi. Dijalankan di CI terhadap compose produksi dan di server sesudah memasang/memperbarui | Bukti yang sama di CI dan di server; skrip tidak pernah menulis data produksi (mode produksi dicek dari environment, bukan dengan mencoba seed) |
 
+**Keputusan yang diambil saat ganti nama** (T163–T165 keputusan user 2026-11-25):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T163 | **Nama aplikasi: NETWORK PROBLEM REPORT, nama pendek NPR**, di semua tempat, sebelum dipasang di server | Keputusan user 2026-11-25 |
+| T164 | **Nama teknis ikut diganti** dari `tyio` ke `npr`: paket, variabel lingkungan, image, nama compose, database, dan nama internal lain. Nama repo GitHub tetap kecuali diganti user sendiri | Jawaban user 2026-11-25 ("Termasuk nama teknis"); produksi belum terpasang, jadi tidak ada data yang harus dipindah |
+| T165 | **Logo TM dan nama PT. Tangara Mitrakom** di halaman login, sidebar, dan kaki setiap halaman ("© 2026 PT. Tangara Mitrakom"); ikon aplikasi dan favicon memakai logo TM | Jawaban user 2026-11-25 ("Juga di kaki halaman"); logo dari user |
+
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
 
