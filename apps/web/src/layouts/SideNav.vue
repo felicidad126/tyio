@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SessionUser } from '@npr/shared';
+import { APP_NAME, APP_SHORT_NAME, COMPANY_NAME, type SessionUser } from '@npr/shared';
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLogo from '../components/AppLogo.vue';
@@ -59,12 +59,12 @@ watch(
     <RouterLink
       to="/"
       class="side__brand"
-      aria-label="Tyio NOC, ke Overview"
+      :aria-label="`${APP_SHORT_NAME} ${APP_NAME}, ${COMPANY_NAME}, ke Overview`"
     >
       <AppLogo class="side__logo" />
       <span class="side__brand-text">
-        <span class="side__brand-name">Tyio NOC</span>
-        <span class="side__brand-sub">Portal NOC Terpusat</span>
+        <span class="side__brand-name">{{ APP_SHORT_NAME }}</span>
+        <span class="side__brand-sub">{{ COMPANY_NAME }}</span>
       </span>
     </RouterLink>
 

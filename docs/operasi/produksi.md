@@ -13,7 +13,7 @@ Berkas: [`deploy/compose.prod.yml`](../../deploy/compose.prod.yml),
 | Service | Isi | Dibuka ke luar |
 | --- | --- | --- |
 | `caddy` | Penutup HTTPS (Caddy 2.11.8): sertifikat, HTTP → HTTPS, HSTS, kompresi | Port 80 dan 443 |
-| `app` | Portal NOC (API + web), `NPR_ENV=production` | Tidak; hanya lewat Caddy |
+| `app` | NPR (API + web), `NPR_ENV=production` | Tidak; hanya lewat Caddy |
 | `migrate` | Menjalankan migrasi database setiap kali dinyalakan, lalu berhenti | — |
 | `db` | PostgreSQL 18, data di volume `npr-prod_db-data` | Tidak |
 | `backup` | Backup terenkripsi harian 01:30 WIB ke `deploy/backup/` | — |

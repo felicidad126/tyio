@@ -2,7 +2,7 @@
   "name": "@npr/api",
   "version": "0.0.0",
   "private": true,
-  "description": "API portal NOC (NestJS, monolit modular)",
+  "description": "API Network Problem Report (NestJS, monolit modular)",
   "license": "UNLICENSED",
   "type": "module",
   "files": [

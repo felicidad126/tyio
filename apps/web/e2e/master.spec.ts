@@ -17,7 +17,7 @@ test.describe('data master', () => {
 
     await expect(page).toHaveURL(/\/admin\/master\/kategori/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Data master');
-    await expect(page).toHaveTitle('Data master · Portal NOC Terpusat');
+    await expect(page).toHaveTitle('Data master · Network Problem Report');
     // Menu Admin tetap menyala di halaman turunannya.
     await expect(page.getByRole('navigation', { name: 'Menu utama' }).locator('[aria-current="page"]')).toHaveText(
       'Admin',

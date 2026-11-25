@@ -1,4 +1,4 @@
-# Menjalankan portal NOC
+# Menjalankan NPR (Network Problem Report)
 
 Dokumen ini untuk pengembang (lingkungan lokal) dan operator (staging).
 Produksi (satu server dengan HTTPS, langkah 1.7): [produksi.md](produksi.md).

@@ -3,7 +3,7 @@
 Sesi: https://claude.ai/code/session_01Sh2gyMt7AHtttz59kLT2aA
 Branch: `claude/portal-noc-terpusat` (dibuat dari `main` di `f4b31e6`)
 Hasil utama:
-- [Rencana induk](../../plans/pending/portal-noc-terpusat.md)
+- [Rencana induk](../../plans/pending/network-problem-report.md)
 - [Langkah teknis per rilis](../../plans/pending/langkah-teknis.md)
 
 ## 1. Alur sesi
@@ -73,7 +73,7 @@ Titik periksa pertama dengan user: setelah 0.5 (kerangka terlihat).
 
 > Lanjutkan proyek portal NOC terpusat di repo `felicidad126/tyio`, branch
 > `claude/portal-noc-terpusat`. Baca `docs/sesi/2026-11-16-perencanaan.md`,
-> `plans/pending/portal-noc-terpusat.md`, dan `plans/pending/langkah-teknis.md`.
+> `plans/pending/network-problem-report.md`, dan `plans/pending/langkah-teknis.md`.
 > Kerjakan langkah 0.1 sesuai kriteria terima dan perintah verifikasinya, lalu perbarui
 > tabel Progres.
 

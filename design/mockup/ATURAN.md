@@ -1,6 +1,6 @@
 # Aturan bersama mockup
 
-Berlaku untuk semua layar di `project/`. Sumber keputusan: [rencana induk](../../plans/pending/portal-noc-terpusat.md)
+Berlaku untuk semua layar di `project/`. Sumber keputusan: [rencana induk](../../plans/pending/network-problem-report.md)
 (K1–K25) dan [langkah teknis](../../plans/pending/langkah-teknis.md). Bila mockup dan aturan ini
 berbeda, aturan ini yang benar dan mockup yang diperbaiki.
 
@@ -84,6 +84,9 @@ dengan garis dan lencana merah berisi jumlah remote bermasalah bila ada. Legenda
   Tombol global "Buat NPR" bergaya sekunder: latar putih, garis `#c9d0d9`, teks `#182433`.
 - Tombol yang labelnya mirip tidak boleh bersebelahan (contoh: "Buka Gamas" vs "Tolak saran").
   Aksi yang berdampak ke banyak tiket atau customer meminta konfirmasi yang menyebut akibatnya.
+- **Nama dan logo (T163, T165):** aplikasi bernama "Network Problem Report" (pendek "NPR"), milik
+  PT. Tangara Mitrakom. Logo TM selalu di kotak putih bersudut 8 px (juga di sidebar gelap dan
+  tema gelap). Kaki halaman "© <tahun> PT. Tangara Mitrakom" di login dan setiap halaman.
 - **Badge sidebar:** Alert 9 · Tiket 48 · Gamas 2 (1 aktif + 1 saran).
 - **Area klik:** minimal 32 px di desktop, 44 px di ponsel. Baris tabel yang membuka detail bisa
   diklik di seluruh barisnya; tautan nomor tetap ada untuk keyboard.

@@ -1,4 +1,4 @@
-# Penutup HTTPS di depan portal NOC (produksi satu server, T158). Dipakai deploy/compose.prod.yml;
+# Penutup HTTPS di depan NPR (produksi satu server, T158). Dipakai deploy/compose.prod.yml;
 # nilai {$...} dibaca dari environment container caddy (diisi dari deploy/prod.env).
 #   NPR_HOST  nama host atau IP yang diketik pengguna di peramban
 #   NPR_TLS   internal                          CA milik Caddy (perangkat memasang root CA-nya)

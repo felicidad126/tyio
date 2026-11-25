@@ -2,7 +2,7 @@
   "name": "@npr/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Antarmuka web (PWA) portal NOC",
+  "description": "Antarmuka web (PWA) Network Problem Report",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {

@@ -2,7 +2,7 @@
   "name": "npr",
   "version": "0.0.0",
   "private": true,
-  "description": "Portal NOC terpusat — monorepo (API, web, tipe bersama)",
+  "description": "Network Problem Report (NPR) — monorepo (API, web, tipe bersama)",
   "license": "UNLICENSED",
   "type": "module",
   "packageManager": "pnpm@12.21.0",

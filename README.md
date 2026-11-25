@@ -1,6 +1,6 @@
-# Tyio — Portal NOC Terpusat
+# NPR — Network Problem Report
 
-Rencana: [plans/pending/portal-noc-terpusat.md](plans/pending/portal-noc-terpusat.md) ·
+Rencana: [plans/pending/network-problem-report.md](plans/pending/network-problem-report.md) ·
 Langkah teknis dan progres: [plans/pending/langkah-teknis.md](plans/pending/langkah-teknis.md)
 
 ## Kebutuhan
