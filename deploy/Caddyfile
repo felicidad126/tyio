@@ -4,10 +4,18 @@
 #   NPR_TLS   internal                          CA milik Caddy (perangkat memasang root CA-nya)
 #             admin@perusahaan.co.id            Let's Encrypt (domain publik, port 80/443 terbuka)
 #             /certs/cert.pem /certs/key.pem    berkas sertifikat dari CA kantor (deploy/certs/)
+#   NPR_TRUSTED_PROXIES  proxy di depan Caddy yang dipercaya (T168), mis. private_ranges bila
+#             Caddy hanya dibuka di 127.0.0.1 untuk nginx aaPanel. Bawaan: tidak ada proxy di depan.
 # HTTP di port 80 dialihkan ke HTTPS secara otomatis.
 {
 	# Root CA internal tidak dipasang ke sistem di dalam container (tidak ada gunanya di sana).
 	skip_install_trust
+
+	# X-Forwarded-For dari proxy yang dipercaya diteruskan ke aplikasi; dari klien lain diganti
+	# dengan alamat klien itu sendiri, jadi IP tidak bisa dipalsukan.
+	servers {
+		trusted_proxies static {$NPR_TRUSTED_PROXIES:127.0.0.1/32}
+	}
 }
 
 {$NPR_HOST} {

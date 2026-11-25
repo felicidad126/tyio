@@ -13,6 +13,7 @@ export interface SseEvent {
 
 export interface SseStream {
   status: number;
+  headers: http.IncomingHttpHeaders;
   events: SseEvent[];
   /** Event berikutnya (sejak pemanggilan sebelumnya) yang cocok, atau galat setelah `timeoutMs`. */
   next(type: string, match?: (data: unknown) => boolean, timeoutMs?: number): Promise<SseEvent>;
@@ -82,6 +83,7 @@ export async function openStream(server: http.Server, cookie?: string): Promise<
 
   return {
     status: res.statusCode ?? 0,
+    headers: res.headers,
     events,
     ended,
     close: () => res.destroy(),

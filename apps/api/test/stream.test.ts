@@ -61,6 +61,9 @@ describe('aliran pembaruan langsung', () => {
   it('tersambung lalu berdetak; jeda detak diberitahukan', async () => {
     const stream = await open(await sessionCookie(app.getHttpServer(), emailA));
     expect(stream.status).toBe(200);
+    expect(stream.headers['content-type']).toMatch(/^text\/event-stream/);
+    // nginx di depan aplikasi (T167) tidak menahan pesan di buffer (NestJS mengirim header ini).
+    expect(stream.headers['x-accel-buffering']).toBe('no');
     const hello = await stream.next(STREAM_EVENTS.hello);
     expect((hello.data as StreamHello).heartbeatMs).toBe(HEARTBEAT_MS);
     await stream.next(STREAM_EVENTS.beat);

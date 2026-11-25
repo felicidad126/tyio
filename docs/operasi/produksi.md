@@ -117,6 +117,47 @@ PROD="docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml"
 8. **Firewall:** buka hanya 80/443 (dan SSH untuk admin server). Port database dan aplikasi
    memang tidak dibuka ke host.
 
+## Di belakang nginx aaPanel (atau proxy lain yang sudah memakai port 80/443)
+
+Begitulah server produksi pertama dipasang (T167): nginx aaPanel memegang port 80/443 dan
+sertifikat Let's Encrypt untuk semua situs, lalu meneruskan ke Caddy yang hanya dibuka di
+`127.0.0.1`. Di `deploy/prod.env`:
+
+```bash
+NPR_HTTP_PORT=127.0.0.1:8081
+NPR_HTTPS_PORT=127.0.0.1:8443
+NPR_TLS=internal                  # hanya untuk sambungan nginx → Caddy
+NPR_TRUST_PROXY=2                 # nginx + Caddy (T168)
+NPR_TRUSTED_PROXIES=private_ranges
+```
+
+Tanpa dua baris terakhir aplikasi melihat semua pengguna dengan satu IP (alamat nginx): batas
+20 gagal login per IP mengunci semua orang sekaligus, dan audit mencatat IP yang salah. Dua
+baris itu hanya aman karena Caddy dibuka di `127.0.0.1`, jadi hanya nginx yang bisa
+mengirim `X-Forwarded-For` ke Caddy.
+
+Blok `location /` di konfigurasi situs nginx (aaPanel › Website › situs › Config):
+
+```nginx
+location / {
+    proxy_pass https://127.0.0.1:8443;
+    proxy_ssl_server_name on;
+    proxy_ssl_name revnpr.helonoia.com;        # = NPR_HOST
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_buffering off;                       # aliran pembaruan langsung (SSE)
+    proxy_read_timeout 1h;
+}
+```
+
+`deploy/scripts/uji-produksi.sh` dengan akun memeriksa bahwa IP dari nginx sampai ke aplikasi
+("IP klien dari proxy depan sampai ke aplikasi"). Pemeriksaan dari luar: login dari peramban,
+lalu lihat IP login terakhir di audit (`GET /api/audit?limit=5` dengan sesi admin): harus IP
+publik perangkat Anda, bukan alamat `172.x` atau `127.0.0.1`.
+
 ## Memperbarui ke versi baru
 
 ```bash

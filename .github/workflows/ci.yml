@@ -170,6 +170,12 @@ jobs:
             node dist/modules/users/create-user.js --email uji@noc.npr.test --name "Uji Produksi" --role admin
           UJI_EMAIL=uji@noc.npr.test UJI_PASSWORD="$UJI_PASSWORD" NPR_ENV_FILE="$PROD_ENV" \
             deploy/scripts/uji-produksi.sh
+          # Mode di belakang proxy lain (mis. nginx aaPanel, T168): Caddy mempercayai alamat
+          # jaringan Docker dan aplikasi menghitung dua proxy; IP dari proxy depan harus sampai.
+          printf 'NPR_TRUST_PROXY=2\nNPR_TRUSTED_PROXIES=private_ranges\n' >> "$PROD_ENV"
+          $PROD up -d --wait --no-build
+          UJI_EMAIL=uji@noc.npr.test UJI_PASSWORD="$UJI_PASSWORD" NPR_ENV_FILE="$PROD_ENV" \
+            deploy/scripts/uji-produksi.sh
 
       # Langkah-langkah terakhir hanya bila stack sempat dinyalakan; bila build gagal atau run
       # dibatalkan lebih awal, tidak ada yang perlu dibaca atau dibersihkan.
