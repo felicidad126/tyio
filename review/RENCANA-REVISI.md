@@ -4,7 +4,16 @@ Tanggal: 25 November 2026
 Branch: `Rev-NPR-Tyio` (tidak di-merge ke `main`)
 Dasar: [REVIEW-NPR.md](REVIEW-NPR.md) dan keputusan pengguna di bawah ini.
 
-Status: **rencana, belum dikerjakan.** Keputusan D-1…D-8 dan T-1…T-5 sudah ada; T-6 menyusul. Kode program belum ada di repo dan belum diubah.
+Status: keputusan D-1…D-8 dan T-1…T-5 sudah ada; T-6 menyusul. Pengerjaan dimulai 25 November 2026.
+
+| Tahap | Status | Hasil uji |
+| --- | --- | --- |
+| 0. Persiapan | Selesai | build, lint, setup lulus; uji API 20/20 (sama dengan saat review) |
+| 1. Perbaikan data | Selesai | build, lint, setup lulus; uji API 30/30 |
+| 2. Akun per orang | Selesai | build, lint, setup lulus; uji API 42/42; migrasi diuji pada database lama dan database kosong |
+| 3–9 | Belum | – |
+
+Kode program ada di folder `monitoring-vsat/` (di-commit setelah syarat T-1 terpenuhi). Kode program belum ada di repo dan belum diubah.
 
 ---
 

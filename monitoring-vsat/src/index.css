@@ -1,0 +1,51 @@
+* {
+  box-sizing: border-box;
+}
+:root {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  color: #1b2b45;
+  background: #f3f6fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  margin: 0;
+  min-width: 360px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #52b7ff;
+  outline-offset: 3px;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+#root {
+  min-height: 100vh;
+}
+a {
+  color: #1467ce;
+}
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
