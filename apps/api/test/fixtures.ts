@@ -110,6 +110,8 @@ export async function insertRemote(
     province?: string;
     active?: boolean;
     zone?: 'WIB' | 'WITA' | 'WIT';
+    latitude?: number;
+    longitude?: number;
   } = {},
 ): Promise<{ id: string; code: string; name: string; networkId: string }> {
   const networkId = overrides.networkId ?? (await insertMasterValue(dataSource, 'jarkom', tenantId)).id;
@@ -117,8 +119,8 @@ export async function insertRemote(
   const name = overrides.name ?? `Remote ${code}`;
   const rows = (await operatorQuery(
     dataSource,
-    `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, city, active, province)
-     VALUES ($1, $2, $3, $4, $7, $5, $6, $8) RETURNING id`,
+    `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, city, active, province, latitude, longitude)
+     VALUES ($1, $2, $3, $4, $7, $5, $6, $8, $9, $10) RETURNING id`,
     [
       tenantId,
       code,
@@ -128,6 +130,8 @@ export async function insertRemote(
       overrides.active ?? true,
       overrides.zone ?? 'WIB',
       overrides.province ?? null,
+      overrides.latitude ?? null,
+      overrides.longitude ?? null,
     ],
   )) as Array<{ id: string }>;
   const id = rows[0]?.id;

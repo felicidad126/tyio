@@ -225,3 +225,17 @@ Setiap angka Overview harus sama persis dengan daftar yang dibuka darinya. Karen
   database ber-collation seperti CI:
   `CREATE DATABASE tyio_coll ... LOCALE_PROVIDER icu ICU_LOCALE 'en-US' LOCALE 'C.UTF-8'` lalu
   `TEST_DATABASE_URL=postgres://tyio:tyio@localhost:5432/tyio_coll pnpm test`.
+
+## 11. Peta remote (langkah 2.3)
+
+Angka peta harus sama dengan daftar remote yang dibuka darinya (T143, T144). Karena itu
+`RemotesService.map()` dan `list()` memakai **satu** pembuat query, `filtered(scope, kriteria)`:
+cakupan customer, saringan customer/jarkom/status/kata kunci, dan `hasCoordinates`.
+
+- Saringan baru untuk remote: tambahkan ke `RemoteCriteria` dan `filtered()` (serta
+  `parseFilters` di controller), jangan ke query peta saja. Uji `remote-map.test.ts` membandingkan
+  titik dan angka tanpa koordinat dengan `total` daftar untuk beberapa kombinasi saringan.
+- "NPR berjalan" per titik = NPR yang belum Ditutup (T145), sama dengan "Semua terbuka" di antrean;
+  uji membandingkannya dengan `total` `GET /api/tickets?remoteId=…`.
+- Garis pulau peta (`apps/web/src/pages/remotes/map/indonesia.json`, T147) dibuat ulang dengan
+  `apps/web/scripts/peta-indonesia.mjs`; sumber, versi, dan perintahnya ada di kepala skrip.

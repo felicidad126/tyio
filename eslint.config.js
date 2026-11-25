@@ -25,6 +25,7 @@ export default defineConfig(
       'packages/shared/**/*.ts',
       'apps/web/*.config.ts',
       'apps/web/e2e/**/*.ts',
+      'apps/web/scripts/**/*.mjs',
     ],
     languageOptions: { globals: globals.node },
   },

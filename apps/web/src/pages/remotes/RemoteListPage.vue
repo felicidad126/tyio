@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { IconFileSpreadsheet, IconSearch } from '@tabler/icons-vue';
+import { IconFileSpreadsheet, IconList, IconMap, IconSearch, IconX } from '@tabler/icons-vue';
 import type { MasterValue, RemotePage, TenantSummary } from '@tyio/shared';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue';
+import { type RouteLocationRaw, useRoute, useRouter } from 'vue-router';
 import PageHeader from '../../components/PageHeader.vue';
 import { useSessionStore } from '../../stores/session';
-import { remoteApi } from './remote-api';
+import { type RemoteMapQuery, remoteApi } from './remote-api';
 
 // Daftar remote (langkah 1.2): cari dan saring ribuan remote. Semua saringan tersimpan di
 // alamat halaman, jadi bisa dibagikan dan tetap ada setelah kembali dari halaman remote.
+// Tampilan Peta (langkah 2.3, T140, `?tampilan=peta`) memakai saringan yang sama; peta hanya
+// memuat remote aktif atau nonaktif (bawaan aktif). `?koordinat=tidak|ada` menyaring daftar
+// menurut ada/tidaknya koordinat (tautan "remote tanpa koordinat" dari peta, T143).
+
+// Leaflet dan garis pulau hanya dimuat saat peta dibuka.
+const RemoteMap = defineAsyncComponent(() => import('./map/RemoteMap.vue'));
 
 const route = useRoute();
 const router = useRouter();
@@ -23,14 +29,19 @@ const loading = ref(true);
 const error = ref('');
 
 const one = (value: unknown) => (typeof value === 'string' ? value : '');
+const isMap = computed(() => route.query.tampilan === 'peta');
 const filters = computed(() => ({
   q: one(route.query.q),
   customer: one(route.query.customer),
   jarkom: one(route.query.jarkom),
   status: one(route.query.status),
+  koordinat: ['ada', 'tidak'].includes(one(route.query.koordinat)) ? one(route.query.koordinat) : '',
   page: Math.max(1, Number(one(route.query.page)) || 1),
 }));
-const filtered = computed(() => !!(filters.value.q || filters.value.customer || filters.value.jarkom || filters.value.status));
+const filtered = computed(
+  () =>
+    !!(filters.value.q || filters.value.customer || filters.value.jarkom || filters.value.status || filters.value.koordinat),
+);
 const customerName = (id: string) => customers.value.find((customer) => customer.id === id)?.name ?? '';
 const showCustomer = computed(() => customers.value.length > 1 && !filters.value.customer);
 
@@ -43,7 +54,7 @@ watch(search, (value) => {
 onBeforeUnmount(() => clearTimeout(debounce));
 
 /** Mengganti saringan; halaman kembali ke 1 kecuali yang diganti nomor halaman. */
-function setQuery(change: Partial<Record<'q' | 'customer' | 'jarkom' | 'status' | 'page', string>>): void {
+function setQuery(change: Partial<Record<'q' | 'customer' | 'jarkom' | 'status' | 'koordinat' | 'page', string>>): void {
   const next: Record<string, string> = { ...(route.query as Record<string, string>), ...change };
   if (!('page' in change)) delete next.page;
   if ('customer' in change) delete next.jarkom; // jarkom milik customer tertentu
@@ -57,7 +68,42 @@ function clearFilters(): void {
   void router.replace({ query: {} });
 }
 
+/** Alamat tampilan Daftar atau Peta dengan saringan yang sama. */
+function viewLink(view: 'daftar' | 'peta'): RouteLocationRaw {
+  const next: Record<string, string> = { ...(route.query as Record<string, string>) };
+  delete next.page;
+  delete next.tampilan;
+  if (view === 'peta') {
+    delete next.koordinat; // peta hanya memuat remote berkoordinat
+    next.tampilan = 'peta';
+  }
+  return { query: next };
+}
+
+/** Peta memuat remote aktif kecuali status Nonaktif dipilih (T141). */
+const mapQuery = computed<RemoteMapQuery>(() => ({
+  q: filters.value.q || undefined,
+  tenantId: filters.value.customer || undefined,
+  networkId: filters.value.jarkom || undefined,
+  active: filters.value.status === 'nonaktif' ? 'false' : 'true',
+}));
+const statusValue = computed(() =>
+  isMap.value ? (filters.value.status === 'nonaktif' ? 'nonaktif' : '') : filters.value.status,
+);
+/** Daftar remote yang cocok dengan saringan peta tetapi tanpa koordinat (T143). */
+const withoutCoordinatesLink = computed<RouteLocationRaw>(() => {
+  const query: Record<string, string> = {
+    status: mapQuery.value.active === 'false' ? 'nonaktif' : 'aktif',
+    koordinat: 'tidak',
+  };
+  if (filters.value.q) query.q = filters.value.q;
+  if (filters.value.customer) query.customer = filters.value.customer;
+  if (filters.value.jarkom) query.jarkom = filters.value.jarkom;
+  return { query };
+});
+
 async function load(): Promise<void> {
+  if (isMap.value) return;
   loading.value = true;
   error.value = '';
   try {
@@ -66,6 +112,7 @@ async function load(): Promise<void> {
       tenantId: filters.value.customer || undefined,
       networkId: filters.value.jarkom || undefined,
       active: filters.value.status === 'aktif' ? 'true' : filters.value.status === 'nonaktif' ? 'false' : undefined,
+      hasCoordinates: filters.value.koordinat === 'ada' ? 'true' : filters.value.koordinat === 'tidak' ? 'false' : undefined,
       page: filters.value.page,
     });
   } catch (cause) {
@@ -75,7 +122,7 @@ async function load(): Promise<void> {
   }
 }
 
-watch(filters, () => void load(), { immediate: true, deep: true });
+watch([filters, isMap], () => void load(), { immediate: true, deep: true });
 watch(
   () => filters.value.customer,
   async (customer) => {
@@ -123,6 +170,39 @@ function open(id: string): void {
     </PageHeader>
 
     <div class="card">
+      <div class="card-header remote-views">
+        <nav
+          class="nav nav-segmented"
+          aria-label="Tampilan remote"
+        >
+          <RouterLink
+            :to="viewLink('daftar')"
+            class="nav-link"
+            :class="{ active: !isMap }"
+            :aria-current="isMap ? undefined : 'page'"
+            replace
+          >
+            <IconList
+              size="16"
+              aria-hidden="true"
+            />
+            Daftar
+          </RouterLink>
+          <RouterLink
+            :to="viewLink('peta')"
+            class="nav-link"
+            :class="{ active: isMap }"
+            :aria-current="isMap ? 'page' : undefined"
+            replace
+          >
+            <IconMap
+              size="16"
+              aria-hidden="true"
+            />
+            Peta
+          </RouterLink>
+        </nav>
+      </div>
       <div class="card-body border-bottom filters">
         <div class="filters__search">
           <label
@@ -205,9 +285,24 @@ function open(id: string): void {
             for="saring-status"
           >Status</label>
           <select
+            v-if="isMap"
             id="saring-status"
             class="form-select"
-            :value="filters.status"
+            :value="statusValue"
+            @change="setQuery({ status: ($event.target as HTMLSelectElement).value })"
+          >
+            <option value="">
+              Aktif
+            </option>
+            <option value="nonaktif">
+              Nonaktif
+            </option>
+          </select>
+          <select
+            v-else
+            id="saring-status"
+            class="form-select"
+            :value="statusValue"
             @change="setQuery({ status: ($event.target as HTMLSelectElement).value })"
           >
             <option value="">
@@ -222,9 +317,33 @@ function open(id: string): void {
           </select>
         </div>
       </div>
+      <div
+        v-if="!isMap && filters.koordinat"
+        class="card-body border-bottom py-2 d-flex flex-wrap align-items-center gap-2"
+      >
+        <span>{{ filters.koordinat === 'tidak' ? 'Hanya remote tanpa koordinat' : 'Hanya remote berkoordinat' }}</span>
+        <button
+          type="button"
+          class="btn btn-sm"
+          @click="setQuery({ koordinat: '' })"
+        >
+          <IconX
+            size="16"
+            class="me-1"
+            aria-hidden="true"
+          />
+          Hapus saringan koordinat
+        </button>
+      </div>
+
+      <RemoteMap
+        v-if="isMap"
+        :query="mapQuery"
+        :without-coordinates-link="withoutCoordinatesLink"
+      />
 
       <div
-        v-if="error"
+        v-else-if="error"
         class="card-body text-danger"
         role="alert"
       >
@@ -320,7 +439,7 @@ function open(id: string): void {
       </div>
 
       <div
-        v-if="page && page.total > 0"
+        v-if="!isMap && page && page.total > 0"
         class="card-footer d-flex flex-wrap gap-2 align-items-center"
       >
         <p
@@ -409,6 +528,10 @@ function open(id: string): void {
 
 /* Ponsel: setiap remote menjadi satu blok bertumpuk, tanpa gulir mendatar. */
 @media (max-width: 575.98px) {
+  .remote-views .nav-segmented {
+    --tblr-nav-height: 48px; /* area sentuh 44 px */
+  }
+
   .filters {
     grid-template-columns: 1fr;
   }

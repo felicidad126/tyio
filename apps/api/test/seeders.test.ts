@@ -9,6 +9,7 @@ import {
   SEED_CLOSED_HISTORY,
   SEED_MASTER,
   SEED_REMOTES_PER_TENANT,
+  SEED_REMOTES_WITHOUT_COORDINATES_EVERY,
   SEED_TENANTS,
   SEED_USERS,
   seedRecentClosed,
@@ -117,10 +118,31 @@ describe('seeder tenant dan pengguna', () => {
       })).sort((a, b) => a.code.localeCompare(b.code)),
     );
     const [sample] = (await dataSource.query(
-      `SELECT r.name, n.code AS network, r.time_zone FROM remotes r JOIN master_networks n ON n.id = r.network_id
+      `SELECT r.name, n.code AS network, r.time_zone, r.latitude::float AS latitude, r.longitude::float AS longitude
+         FROM remotes r JOIN master_networks n ON n.id = r.network_id
        WHERE r.code = 'BNA-MKS-0217'`,
-    )) as Array<{ name: string; network: string; time_zone: string }>;
-    expect(sample).toEqual({ name: 'ATM KCP Pasar Sentral', network: 'VSAT', time_zone: 'WITA' });
+    )) as Array<{ name: string; network: string; time_zone: string; latitude: number; longitude: number }>;
+    expect(sample).toEqual({
+      name: 'ATM KCP Pasar Sentral',
+      network: 'VSAT',
+      time_zone: 'WITA',
+      latitude: -5.1349,
+      longitude: 119.4128,
+    });
+    // Peta (2.3): sebagian kecil remote sengaja tanpa koordinat; sisanya di sekitar kotanya,
+    // di dalam kotak Indonesia.
+    const located = (await dataSource.query(
+      `SELECT count(*) FILTER (WHERE r.latitude IS NULL)::int AS without,
+              bool_and(r.latitude BETWEEN -11 AND 6 AND r.longitude BETWEEN 95 AND 141) AS inside
+         FROM remotes r JOIN tenants t ON t.id = r.tenant_id WHERE t.code = ANY($1)`,
+      [SEED_TENANTS.map((tenant) => tenant.code)],
+    )) as Array<{ without: number; inside: boolean }>;
+    expect(located).toEqual([
+      {
+        without: SEED_TENANTS.length * Math.floor(SEED_REMOTES_PER_TENANT / SEED_REMOTES_WITHOUT_COORDINATES_EVERY),
+        inside: true,
+      },
+    ]);
 
     // NPR dummy: sekali saja walau seed diulang, bernomor dari trigger, dibuat Dewi (L1).
     const tickets: Array<{ code: string; count: number }> = await dataSource.query(

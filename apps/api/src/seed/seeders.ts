@@ -107,13 +107,14 @@ export function createSeeders(options: { userPassword: () => string }): Seeder[]
         // Remote yang sudah ada tidak ditimpa: admin mungkin sudah mengubahnya di staging.
         await manager.query(
           `INSERT INTO remotes (tenant_id, code, name, network_id, time_zone, address, city, province,
-                                kanwil, kanca, ip_snmp, ip_lan, manager, online_since, contacts)
+                                kanwil, kanca, ip_snmp, ip_lan, manager, online_since, contacts, latitude, longitude)
            SELECT t.id, x.code, x.name, n.id, x.time_zone, x.address, x.city, x.province,
-                  x.kanwil, x.kanca, x.ip_snmp, x.ip_lan, x.manager, x.online_since, x.contacts
+                  x.kanwil, x.kanca, x.ip_snmp, x.ip_lan, x.manager, x.online_since, x.contacts, x.latitude, x.longitude
            FROM jsonb_to_recordset($1::jsonb) AS x(
                   tenant_code text, network_code text, code text, name text, time_zone text,
                   address text, city text, province text, kanwil text, kanca text,
-                  ip_snmp inet, ip_lan inet, manager text, online_since date, contacts jsonb)
+                  ip_snmp inet, ip_lan inet, manager text, online_since date, contacts jsonb,
+                  latitude numeric, longitude numeric)
            JOIN tenants t ON t.code = x.tenant_code
            JOIN master_networks n ON n.tenant_id = t.id AND n.code = x.network_code
            ON CONFLICT (tenant_id, code) DO NOTHING`,
@@ -448,14 +449,18 @@ export function seedTickets(): Array<Record<string, unknown>> {
 }
 
 /** Kota contoh per wilayah, dengan zona waktunya (mockup: Sulawesi, Sumatera, Kalimantan, Papua). */
+// `at`: titik di daratan dekat kota (lintang, bujur) untuk peta remote (langkah 2.3).
 const SEED_CITIES = [
-  { city: 'Makassar', province: 'Sulawesi Selatan', zone: 'WITA', kanwil: 'Kanwil Makassar' },
-  { city: 'Palu', province: 'Sulawesi Tengah', zone: 'WITA', kanwil: 'Kanwil Makassar' },
-  { city: 'Medan', province: 'Sumatera Utara', zone: 'WIB', kanwil: 'Kanwil Medan' },
-  { city: 'Padang', province: 'Sumatera Barat', zone: 'WIB', kanwil: 'Kanwil Padang' },
-  { city: 'Balikpapan', province: 'Kalimantan Timur', zone: 'WITA', kanwil: 'Kanwil Balikpapan' },
-  { city: 'Jayapura', province: 'Papua', zone: 'WIT', kanwil: 'Kanwil Jayapura' },
+  { city: 'Makassar', province: 'Sulawesi Selatan', zone: 'WITA', kanwil: 'Kanwil Makassar', at: [-5.15, 119.47] },
+  { city: 'Palu', province: 'Sulawesi Tengah', zone: 'WITA', kanwil: 'Kanwil Makassar', at: [-0.95, 119.9] },
+  { city: 'Medan', province: 'Sumatera Utara', zone: 'WIB', kanwil: 'Kanwil Medan', at: [3.56, 98.67] },
+  { city: 'Padang', province: 'Sumatera Barat', zone: 'WIB', kanwil: 'Kanwil Padang', at: [-0.92, 100.44] },
+  { city: 'Balikpapan', province: 'Kalimantan Timur', zone: 'WITA', kanwil: 'Kanwil Balikpapan', at: [-1.2, 116.9] },
+  { city: 'Jayapura', province: 'Papua', zone: 'WIT', kanwil: 'Kanwil Jayapura', at: [-2.58, 140.66] },
 ] as const;
+
+/** Setiap remote seed ke-N tidak punya koordinat, agar peta menampilkan jumlahnya (T143). */
+export const SEED_REMOTES_WITHOUT_COORDINATES_EVERY = 20;
 
 /** Banyaknya remote dummy per customer seed. */
 export const SEED_REMOTES_PER_TENANT = 60;
@@ -472,6 +477,12 @@ export function seedRemotes(): Array<Record<string, unknown>> {
       const number = String(i * 7).padStart(4, '0');
       const cityCode = place.city.slice(0, 3).toUpperCase();
       const kanca = `KCP ${place.city} ${i}`;
+      // Sebaran acak-tetap ±0,06° (±7 km) di sekitar kota: sama setiap kali seed dijalankan.
+      const located = i % SEED_REMOTES_WITHOUT_COORDINATES_EVERY !== 0;
+      const spread = (seed: number) => {
+        const x = Math.sin(seed) * 43_758.5453;
+        return (x - Math.floor(x) - 0.5) * 0.12;
+      };
       remotes.push({
         tenant_code: tenant.code,
         network_code: i % 4 === 0 ? 'VPN' : 'VSAT',
@@ -488,6 +499,8 @@ export function seedRemotes(): Array<Record<string, unknown>> {
         manager: `${tenant.name} ${kanca}`,
         online_since: `20${String(18 + (i % 7)).padStart(2, '0')}-0${(i % 9) + 1}-1${i % 9}`,
         contacts: [{ name: `PIC ${kanca}`, role: 'Kepala Unit', phone: `+62 811-0000-${number}` }],
+        latitude: located ? round6(place.at[0] + spread(i * 37 + tenantIndex * 11)) : null,
+        longitude: located ? round6(place.at[1] + spread(i * 53 + tenantIndex * 7)) : null,
       });
     }
   });
@@ -507,6 +520,10 @@ export function seedRemotes(): Array<Record<string, unknown>> {
     manager: 'Bank Nusa KCP Pasar Sentral',
     online_since: '2023-03-12',
     contacts: [{ name: 'Hendra', role: 'Kepala Unit', phone: '+62 811-0000-0217' }],
+    latitude: -5.1349,
+    longitude: 119.4128,
   });
   return remotes;
 }
+
+const round6 = (value: number) => Math.round(value * 1e6) / 1e6;

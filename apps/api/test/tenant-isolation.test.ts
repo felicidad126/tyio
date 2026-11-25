@@ -11,6 +11,7 @@ import {
   type Overview,
   type RemoteDetail,
   type RemoteImportReport,
+  type RemoteMap,
   type RemotePage,
   type SessionUser,
   STREAM_EVENTS,
@@ -212,6 +213,28 @@ const REMOTE_PROBES: Record<string, (fx: Fixture) => Promise<void>> = {
       .body as RemotePage;
     expect(filtered).toMatchObject({ items: [], total: 0 });
     expect(ids(all.items)).not.toContain(other.id);
+  },
+
+  'GET /api/remote-map': async (fx) => {
+    const own = await insertRemote(fx.dataSource, fx.tenantA.id, { latitude: -5.13, longitude: 119.41 });
+    const other = await insertRemote(fx.dataSource, fx.tenantB.id, { name: own.name, latitude: -5.13, longitude: 119.41 });
+    await insertTicket(fx.dataSource, fx.tenantB.id, { remoteId: other.id });
+
+    const all = (await fx.operatorA.agent.get('/api/remote-map').expect(200)).body as RemoteMap;
+    expect(all.points.map((point) => point[0])).toContain(own.id);
+    expect(all.points.map((point) => point[0])).not.toContain(other.id);
+    const [stored] = (await fx.dataSource.query(
+      'SELECT count(*)::int AS n FROM remotes WHERE tenant_id = $1 AND active AND latitude IS NULL',
+      [fx.tenantA.id],
+    )) as Array<{ n: number }>;
+    expect(all.withoutCoordinates).toBe(stored?.n);
+    // Kata kunci yang cocok dengan remote customer B pun tidak menampilkannya.
+    const search = (await fx.operatorA.agent.get(`/api/remote-map?q=${encodeURIComponent(own.name)}`).expect(200))
+      .body as RemoteMap;
+    expect(search.points.map((point) => point[0])).toEqual([own.id]);
+    const filtered = (await fx.operatorA.agent.get(`/api/remote-map?tenantId=${fx.tenantB.id}`).expect(200))
+      .body as RemoteMap;
+    expect(filtered).toEqual({ points: [], withoutCoordinates: 0 });
   },
 
   'GET /api/remotes/:id': async (fx) => {

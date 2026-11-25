@@ -92,3 +92,26 @@ export interface RemoteImportReport {
   unchanged: number;
   failed: RemoteImportFailure[];
 }
+
+/**
+ * Satu titik di peta remote (langkah 2.3): id, kode, nama, lintang, bujur, dan jumlah NPR
+ * berjalan di remote itu (T141: lebih dari 0 = marker merah). Berbentuk larik agar ribuan
+ * titik tetap ringan dikirim.
+ */
+export type RemoteMapPoint = [
+  id: string,
+  code: string,
+  name: string,
+  latitude: number,
+  longitude: number,
+  openTickets: number,
+];
+
+/**
+ * `GET /api/remote-map`: remote dengan koordinat yang cocok dengan saringan (bawaan remote aktif),
+ * dan banyaknya remote cocok yang belum punya koordinat (T143).
+ */
+export interface RemoteMap {
+  points: RemoteMapPoint[];
+  withoutCoordinates: number;
+}

@@ -19,6 +19,7 @@ import {
   REMOTE_PAGE_SIZE_MAX,
   type RemoteDetail,
   type RemoteImportReport,
+  type RemoteMap,
   type RemotePage,
   XLSX_MIME,
 } from '@tyio/shared';
@@ -30,7 +31,12 @@ import { CurrentActor } from '../auth/auth-request.js';
 import { RequireRole } from '../auth/roles.guard.js';
 import { isUuid, readTenantId } from '../master/master-input.js';
 import { TENANT_NOT_FOUND_MESSAGE } from '../tenants/tenants.controller.js';
-import { REMOTE_NOT_FOUND_MESSAGE, type RemoteFilters, RemotesService } from './remotes.service.js';
+import {
+  REMOTE_NOT_FOUND_MESSAGE,
+  type RemoteCriteria,
+  type RemoteFilters,
+  RemotesService,
+} from './remotes.service.js';
 
 /** Daftar dan halaman remote: semua peran membaca, dalam cakupan customer-nya. */
 @Controller('remotes')
@@ -40,7 +46,8 @@ export class RemotesController {
 
   /**
    * `?q=` mencari kode, nama, kota, provinsi, kanwil, kanca, pengelola, dan IP;
-   * `?tenantId=`, `?networkId=`, `?active=true|false` menyaring; `?page=`, `?pageSize=`.
+   * `?tenantId=`, `?networkId=`, `?active=true|false`, `?hasCoordinates=true|false` (2.3)
+   * menyaring; `?page=`, `?pageSize=`.
    */
   @Get()
   @Header('Cache-Control', 'no-store')
@@ -59,6 +66,33 @@ export class RemotesController {
     const remote = isUuid(id) ? await this.remotes.get(scope, id.toLowerCase()) : null;
     if (!remote) throw new NotFoundException(REMOTE_NOT_FOUND_MESSAGE);
     return remote;
+  }
+}
+
+/**
+ * Peta remote (langkah 2.3, T140–T143): semua peran, dalam cakupan customer-nya. Saringan sama
+ * dengan daftar remote (`q`, `tenantId`, `networkId`, `active`); bawaan hanya remote aktif.
+ */
+@Controller('remote-map')
+@TenantScoped()
+export class RemoteMapController {
+  constructor(private readonly remotes: RemotesService) {}
+
+  @Get()
+  @Header('Cache-Control', 'no-store')
+  async map(@CurrentScope() scope: TenantScope, @Query() query: Record<string, unknown>): Promise<RemoteMap> {
+    if (query.page !== undefined || query.pageSize !== undefined || query.hasCoordinates !== undefined) {
+      throw new BadRequestException('Peta tidak memakai page, pageSize, atau hasCoordinates.');
+    }
+    const filters = parseFilters(query);
+    if (filters === null) return { points: [], withoutCoordinates: 0 };
+    const criteria: RemoteCriteria = {
+      q: filters.q,
+      tenantId: filters.tenantId,
+      networkId: filters.networkId,
+      active: filters.active ?? true,
+    };
+    return this.remotes.map(scope, criteria);
   }
 }
 
@@ -111,7 +145,7 @@ export class RemoteImportController {
 }
 
 function parseFilters(query: Record<string, unknown>): RemoteFilters | null {
-  const { q, tenantId, networkId, active, page, pageSize } = query;
+  const { q, tenantId, networkId, active, hasCoordinates, page, pageSize } = query;
   const filters: RemoteFilters = { page: 1, pageSize: REMOTE_PAGE_SIZE_DEFAULT };
 
   if (q !== undefined) {
@@ -126,6 +160,12 @@ function parseFilters(query: Record<string, unknown>): RemoteFilters | null {
   if (active !== undefined && active !== '') {
     if (active !== 'true' && active !== 'false') throw new BadRequestException('active harus true atau false.');
     filters.active = active === 'true';
+  }
+  if (hasCoordinates !== undefined && hasCoordinates !== '') {
+    if (hasCoordinates !== 'true' && hasCoordinates !== 'false') {
+      throw new BadRequestException('hasCoordinates harus true atau false.');
+    }
+    filters.hasCoordinates = hasCoordinates === 'true';
   }
   filters.page = positiveInt(page, 'page', 1, 100_000) ?? 1;
   filters.pageSize = positiveInt(pageSize, 'pageSize', 1, REMOTE_PAGE_SIZE_MAX) ?? REMOTE_PAGE_SIZE_DEFAULT;

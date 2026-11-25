@@ -4,13 +4,14 @@ import {
   type RemoteContact,
   type RemoteDetail,
   type RemoteImportReport,
+  type RemoteMap,
   type RemotePage,
   type RemoteSummary,
   type RemoteZone,
 } from '@tyio/shared';
 import { readSheet } from 'read-excel-file/node';
 import writeXlsxFile from 'write-excel-file/node';
-import type { DataSource, EntityManager } from 'typeorm';
+import type { DataSource, EntityManager, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import { type AuditActor, applyAuditActor } from '../../common/audit/audit-context.js';
 import { applyTenantScope, scopeIncludes, type TenantScope } from '../../common/tenant/tenant-scope.js';
 import { isInUseError, postgresError } from '../master/master-input.js';
@@ -26,11 +27,17 @@ import {
 
 export const REMOTE_NOT_FOUND_MESSAGE = 'Remote tidak ditemukan.';
 
-export interface RemoteFilters {
+/** Saringan remote yang sama untuk daftar dan peta (langkah 2.3). */
+export interface RemoteCriteria {
   q?: string;
   tenantId?: string;
   networkId?: string;
   active?: boolean;
+  /** `false` = hanya remote yang belum punya koordinat (T143). */
+  hasCoordinates?: boolean;
+}
+
+export interface RemoteFilters extends RemoteCriteria {
   page: number;
   pageSize: number;
 }
@@ -74,28 +81,7 @@ export class RemotesService {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async list(scope: TenantScope, filters: RemoteFilters): Promise<RemotePage> {
-    const query = applyTenantScope(
-      this.dataSource
-        .createQueryBuilder()
-        .from('remotes', 'r')
-        .innerJoin('master_networks', 'n', 'n.id = r.network_id'),
-      scope,
-      'r.tenant_id',
-    );
-    if (filters.tenantId) query.andWhere('r.tenant_id = :tenantId', { tenantId: filters.tenantId });
-    if (filters.networkId) query.andWhere('r.network_id = :networkId', { networkId: filters.networkId });
-    if (filters.active !== undefined) query.andWhere('r.active = :active', { active: filters.active });
-    if (filters.q) {
-      // Huruf %, _, dan \ di kata kunci dicari apa adanya, bukan sebagai pola.
-      const pattern = `%${filters.q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
-      query.andWhere(
-        `(r.code ILIKE :pattern OR r.name ILIKE :pattern OR r.city ILIKE :pattern OR r.province ILIKE :pattern
-          OR r.kanwil ILIKE :pattern OR r.kanca ILIKE :pattern OR r.manager ILIKE :pattern
-          OR host(r.ip_snmp) LIKE :pattern OR host(r.ip_lan) LIKE :pattern)`,
-        { pattern },
-      );
-    }
-
+    const query = this.filtered(scope, filters);
     const total = await query.clone().select('count(*)::int', 'total').getRawOne<{ total: number }>();
     const rows = await query
       .select(SUMMARY_COLUMNS)
@@ -110,6 +96,67 @@ export class RemotesService {
       page: filters.page,
       pageSize: filters.pageSize,
     };
+  }
+
+  /**
+   * Peta remote (langkah 2.3): remote yang cocok dengan saringan dan punya koordinat, beserta
+   * jumlah NPR berjalan (T141), dan banyaknya remote cocok tanpa koordinat (T143). Saringannya
+   * sama dengan daftar, jadi angka di peta sama dengan jumlah di daftar.
+   */
+  async map(scope: TenantScope, criteria: RemoteCriteria): Promise<RemoteMap> {
+    const missing = await this.filtered(scope, { ...criteria, hasCoordinates: false })
+      .select('count(*)::int', 'n')
+      .getRawOne<{ n: number }>();
+    const rows = await this.filtered(scope, { ...criteria, hasCoordinates: true })
+      .leftJoin(
+        (sub: SelectQueryBuilder<ObjectLiteral>) =>
+          sub
+            .from('tickets', 'tk')
+            .select('tk.remote_id', 'remote_id')
+            .addSelect('count(*)::int', 'open')
+            .where(`tk.status <> 'ditutup'`)
+            .groupBy('tk.remote_id'),
+        'o',
+        'o.remote_id = r.id',
+      )
+      .select(['r.id AS id', 'r.code AS code', 'r.name AS name', 'r.latitude AS latitude', 'r.longitude AS longitude'])
+      .addSelect('coalesce(o.open, 0)::int', 'open')
+      .orderBy('r.code')
+      .addOrderBy('r.tenant_id')
+      .getRawMany<{ id: string; code: string; name: string; latitude: string; longitude: string; open: number }>();
+    return {
+      points: rows.map((row) => [row.id, row.code, row.name, Number(row.latitude), Number(row.longitude), row.open]),
+      withoutCoordinates: missing?.n ?? 0,
+    };
+  }
+
+  /** Remote dalam cakupan customer pengguna (T9) yang cocok dengan saringan; alias `r` dan `n`. */
+  private filtered(scope: TenantScope, criteria: RemoteCriteria): SelectQueryBuilder<ObjectLiteral> {
+    const query = applyTenantScope(
+      this.dataSource
+        .createQueryBuilder()
+        .from('remotes', 'r')
+        .innerJoin('master_networks', 'n', 'n.id = r.network_id'),
+      scope,
+      'r.tenant_id',
+    );
+    if (criteria.tenantId) query.andWhere('r.tenant_id = :tenantId', { tenantId: criteria.tenantId });
+    if (criteria.networkId) query.andWhere('r.network_id = :networkId', { networkId: criteria.networkId });
+    if (criteria.active !== undefined) query.andWhere('r.active = :active', { active: criteria.active });
+    if (criteria.hasCoordinates !== undefined) {
+      query.andWhere(criteria.hasCoordinates ? 'r.latitude IS NOT NULL' : 'r.latitude IS NULL');
+    }
+    if (criteria.q) {
+      // Huruf %, _, dan \ di kata kunci dicari apa adanya, bukan sebagai pola.
+      const pattern = `%${criteria.q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+      query.andWhere(
+        `(r.code ILIKE :pattern OR r.name ILIKE :pattern OR r.city ILIKE :pattern OR r.province ILIKE :pattern
+          OR r.kanwil ILIKE :pattern OR r.kanca ILIKE :pattern OR r.manager ILIKE :pattern
+          OR host(r.ip_snmp) LIKE :pattern OR host(r.ip_lan) LIKE :pattern)`,
+        { pattern },
+      );
+    }
+    return query;
   }
 
   async get(scope: TenantScope, id: string): Promise<RemoteDetail | null> {
