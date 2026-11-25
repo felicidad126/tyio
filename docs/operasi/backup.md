@@ -1,7 +1,9 @@
 # Backup dan restore
 
-Untuk operator staging dan (kelak) produksi. Skrip ada di [`deploy/scripts/`](../../deploy/scripts/);
-service `backup` ada di [`deploy/compose.staging.yml`](../../deploy/compose.staging.yml).
+Untuk operator staging dan produksi. Skrip ada di [`deploy/scripts/`](../../deploy/scripts/);
+service `backup` ada di [`deploy/compose.staging.yml`](../../deploy/compose.staging.yml) dan
+[`deploy/compose.prod.yml`](../../deploy/compose.prod.yml) (berkas `tyio-produksi-<waktu>.tar.gpg`;
+di produksi ganti `$STAGING` dengan `$PROD` dari [produksi.md](produksi.md)).
 
 ## Ringkasnya
 
@@ -123,7 +125,8 @@ yang ada tidak pernah tertimpa. Perubahan setelah waktu backup hilang (lihat RPO
 
 - **Salinan di lokasi kedua** di Indonesia (POJK 11/2022: pusat data dan pusat pemulihan bencana
   di Indonesia). Sampai itu ada, backup hanya ada di server yang sama dengan database.
-- Backup dan replika database di **produksi** (rencana R-B: server utama + cadangan).
+- ~~Replika database di produksi~~: produksi satu server tanpa replika (T155); backup harian
+  tetap berjalan di sana (service `backup` di `deploy/compose.prod.yml`).
 - **Peringatan** ke operator bila backup gagal (sekarang hanya status `unhealthy`); bersama
   pemantauan server atau notifikasi R5.
 - Latihan restore di server staging sungguhan.

@@ -1,7 +1,7 @@
 # Menjalankan portal NOC
 
 Dokumen ini untuk pengembang (lingkungan lokal) dan operator (staging).
-Produksi menyusul di langkah 1.7.
+Produksi (satu server dengan HTTPS, langkah 1.7): [produksi.md](produksi.md).
 
 ## Bentuk aplikasi
 

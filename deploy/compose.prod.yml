@@ -1,0 +1,116 @@
+# Produksi satu server (langkah 1.7, disederhanakan T155): aplikasi, PostgreSQL, backup harian
+# terenkripsi, dan Caddy sebagai penutup HTTPS. Image dibangun di server dari commit yang sudah
+# lolos CI (tanpa registry, T157). Panduan lengkap: docs/operasi/produksi.md.
+#   TYIO_IMAGE=tyio-app:$(git rev-parse --short HEAD) \
+#     docker compose --env-file deploy/prod.env -f deploy/compose.prod.yml up -d --build --wait
+# Isi deploy/prod.env dari deploy/prod.env.example (berkas .env tidak pernah masuk git).
+name: tyio-prod
+
+x-app: &app
+  image: ${TYIO_IMAGE:-tyio-app:lokal}
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+  environment:
+    TYIO_ENV: production
+    DATABASE_URL: postgres://tyio:${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}@db:5432/tyio
+    # HTTPS ditutup Caddy di depan aplikasi: cookie sesi Secure, dan satu proxy dipercaya agar
+    # IP klien (pembatasan login) dan host asli (pemeriksaan origin) terbaca benar.
+    SESSION_COOKIE_SECURE: 'true'
+    TRUST_PROXY: '1'
+
+services:
+  db:
+    image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tyio
+      POSTGRES_PASSWORD: ${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}
+      POSTGRES_DB: tyio
+      TZ: UTC
+    # Tanpa port ke host: database hanya bisa dicapai dari jaringan internal compose.
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U tyio -d tyio]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *app
+    command: [node, dist/db/migrate.js, up]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Tanpa port ke host: hanya Caddy yang menjangkau aplikasi.
+  app:
+    <<: *app
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Penutup HTTPS (T158). Nama host dan sumber sertifikat dari deploy/prod.env:
+  # internal (CA milik Caddy), email (Let's Encrypt), atau berkas sertifikat di deploy/certs/.
+  caddy:
+    image: caddy:2.11.8-alpine@sha256:f6228111e5fafa1a5238258d0858e103f10599b8d1659a146e7726681a002bb9
+    restart: unless-stopped
+    ports:
+      - ${TYIO_HTTP_PORT:-80}:80
+      - ${TYIO_HTTPS_PORT:-443}:443
+    environment:
+      TYIO_HOST: ${TYIO_HOST:?TYIO_HOST wajib diisi (nama host atau IP server)}
+      TYIO_TLS: ${TYIO_TLS:-internal}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${TYIO_CERT_DIR:-./certs}:/certs:ro
+      # Sertifikat dan CA internal disimpan di volume agar tidak berganti setiap restart.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:2019/config/]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Backup terenkripsi harian (langkah 0.6, docs/operasi/backup.md). Server hanya memegang kunci
+  # PUBLIK backup.
+  backup:
+    image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+    restart: unless-stopped
+    entrypoint: [/scripts/backup-terjadwal.sh]
+    environment:
+      PGHOST: db
+      PGUSER: tyio
+      PGPASSWORD: ${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}
+      PGDATABASE: tyio
+      BACKUP_DIR: /backup
+      BACKUP_PUBLIC_KEY: /kunci/backup-public.asc
+      BACKUP_LABEL: produksi
+      BACKUP_TIME_UTC: ${TYIO_BACKUP_TIME_UTC:-18:30}
+      BACKUP_RETENTION_DAYS: ${TYIO_BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./scripts:/scripts:ro
+      - ${TYIO_BACKUP_DIR:-./backup}:/backup
+      - ${TYIO_BACKUP_PUBLIC_KEY:?TYIO_BACKUP_PUBLIC_KEY wajib diisi (kunci publik backup, lihat docs/operasi/backup.md)}:/kunci/backup-public.asc:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # "unhealthy" bila tidak ada backup dalam 26 jam terakhir.
+    healthcheck:
+      test: [CMD, /scripts/backup-sehat.sh]
+      interval: 5m
+      timeout: 10s
+      retries: 1
+      start_period: 2m
+      start_interval: 5s
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:
