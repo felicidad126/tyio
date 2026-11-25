@@ -3,7 +3,7 @@
 # sekali). Memulihkan satu backup ke server PostgreSQL BERSIH lalu membuktikan isinya cocok.
 # Keluar 0 bila cocok; selain itu bukan 0.
 #
-#   BACKUP_DIR=/srv/tyio/backup BACKUP_PRIVATE_KEY=/aman/backup-private.asc \
+#   BACKUP_DIR=/srv/npr/backup BACKUP_PRIVATE_KEY=/aman/backup-private.asc \
 #     deploy/scripts/latihan-restore.sh [berkas.tar.gpg]
 #
 # Tanpa argumen: backup terbaru di BACKUP_DIR.
@@ -39,7 +39,7 @@ record() {
 
 if [[ -n "${RESTORE_SERVER_URL:-}" ]]; then
   require_commands psql pg_restore gpg tar diff
-  database="tyio_latihan_$(date -u +%Y%m%d%H%M%S)_$$"
+  database="npr_latihan_$(date -u +%Y%m%d%H%M%S)_$$"
   admin=("${PSQL_ARGS[@]}" "$RESTORE_SERVER_URL")
   log "Server bersih: database sementara $database di RESTORE_SERVER_URL"
   psql "${admin[@]}" -c "CREATE DATABASE $database" || die "database sementara gagal dibuat"
@@ -62,7 +62,7 @@ require_commands docker
 compose_file="$script_dir/../compose.staging.yml"
 image=$(grep -m1 -oE 'postgres:[^[:space:]]+@sha256:[0-9a-f]{64}' "$compose_file") ||
   die "image PostgreSQL tidak ditemukan di $compose_file"
-container="tyio-latihan-restore-$$"
+container="npr-latihan-restore-$$"
 mounts=(-v "$script_dir:/scripts:ro" -v "$backup_file:/latihan/backup.tar.gpg:ro" -v "$key_file:/latihan/kunci.asc:ro")
 passphrase_env=()
 if [[ -n "${BACKUP_KEY_PASSPHRASE_FILE:-}" ]]; then

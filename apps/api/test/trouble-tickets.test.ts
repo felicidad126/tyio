@@ -8,7 +8,7 @@ import {
   type TicketTimeline,
   type TroubleTicketPage,
   TT_NUMBER_PATTERN,
-} from '@tyio/shared';
+} from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

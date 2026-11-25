@@ -10,7 +10,7 @@ import {
   OVERVIEW_PERIODS,
   TICKET_STATUS_LABELS,
   type TicketStatus,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { type RouteLocationRaw, useRoute, useRouter } from 'vue-router';
 import LiveStatus from '../../components/LiveStatus.vue';

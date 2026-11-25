@@ -24,7 +24,7 @@ const list = (values: readonly string[]) => values.map((value) => `'${value}'`).
  * - Status, mulai gangguan, dan nomor tiket customer di `tickets` hanya berubah lewat entri
  *   linimasa: trigger `apply_ticket_action` mengunci baris NPR, memeriksa bahwa `status_from`
  *   sama dengan status sekarang dan perpindahannya sah (`ticket_status_transition_allowed`,
- *   sama dengan `isTicketTransitionAllowed` di @tyio/shared), lalu memperbarui NPR. UPDATE
+ *   sama dengan `isTicketTransitionAllowed` di @npr/shared), lalu memperbarui NPR. UPDATE
  *   langsung pada kolom itu ditolak (`tickets_changes_via_timeline`).
  * - Setiap NPR mendapat entri `dibuat` dari trigger `created_action` (juga NPR yang sudah ada),
  *   jadi linimasa selalu lengkap apa pun jalur pembuatnya.

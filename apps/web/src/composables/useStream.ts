@@ -1,4 +1,4 @@
-import { STREAM_EVENTS, type StreamHello, type TicketChangeEvent } from '@tyio/shared';
+import { STREAM_EVENTS, type StreamHello, type TicketChangeEvent } from '@npr/shared';
 import { onBeforeUnmount, reactive, readonly } from 'vue';
 import { ApiError, apiRequest } from '../api';
 

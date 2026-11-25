@@ -1,5 +1,5 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import type { HealthResponse, HealthState } from '@tyio/shared';
+import type { HealthResponse, HealthState } from '@npr/shared';
 import { DataSource } from 'typeorm';
 
 @Injectable()

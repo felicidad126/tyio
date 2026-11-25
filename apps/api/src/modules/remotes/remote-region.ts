@@ -1,7 +1,7 @@
-import { REMOTE_REGION_OTHER, REMOTE_REGION_PROVINCES } from '@tyio/shared';
+import { REMOTE_REGION_OTHER, REMOTE_REGION_PROVINCES } from '@npr/shared';
 
 // Wilayah remote dari provinsinya (T113) di SQL, dari daftar yang sama dengan `remoteRegionOf`
-// di @tyio/shared. Dipakai Overview untuk mengelompokkan dan antrean untuk saringan `region`,
+// di @npr/shared. Dipakai Overview untuk mengelompokkan dan antrean untuk saringan `region`,
 // jadi angka per wilayah dan daftar yang dibuka selalu memakai pemetaan yang sama.
 
 const SAFE_KEY = /^[a-z]+$/;
@@ -14,7 +14,7 @@ for (const [region, keys] of Object.entries(REMOTE_REGION_PROVINCES)) {
   }
 }
 
-/** Ejaan provinsi yang dirapikan di SQL, sama dengan `provinceKey` di @tyio/shared. */
+/** Ejaan provinsi yang dirapikan di SQL, sama dengan `provinceKey` di @npr/shared. */
 export function provinceKeySql(column: string): string {
   return `regexp_replace(regexp_replace(lower(coalesce(${column}, '')), '^\\s*(provinsi|prov\\.?)\\s+', ''), '[^a-z]', '', 'g')`;
 }

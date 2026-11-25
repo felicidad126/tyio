@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { TenantSummary } from '@tyio/shared';
+import type { TenantSummary } from '@npr/shared';
 import type { Repository } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';
 import { Tenant } from './tenant.entity.js';

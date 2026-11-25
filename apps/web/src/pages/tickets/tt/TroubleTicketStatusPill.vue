@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TROUBLE_TICKET_STATUS_LABELS, type TroubleTicketStatus } from '@tyio/shared';
+import { TROUBLE_TICKET_STATUS_LABELS, type TroubleTicketStatus } from '@npr/shared';
 
 // Label status TT, teks dan warna persis ATURAN.md §3 ("Menunggu SD" oranye, "Ditutup" abu).
 defineProps<{ status: TroubleTicketStatus }>();

@@ -20,7 +20,7 @@ test.describe('login', () => {
 
     await expect(page).toHaveURL('/');
     await expect(accountButton(page, USER)).toBeVisible();
-    const cookie = (await context.cookies()).find((c) => c.name === 'tyio_sesi');
+    const cookie = (await context.cookies()).find((c) => c.name === 'npr_sesi');
     expect(cookie).toMatchObject({ httpOnly: true, sameSite: 'Strict', path: '/api' });
 
     // Sesi bertahan saat halaman dimuat ulang.
@@ -31,7 +31,7 @@ test.describe('login', () => {
     await page.getByRole('button', { name: 'Keluar' }).click();
 
     await expect(page).toHaveURL('/masuk');
-    expect((await context.cookies()).some((c) => c.name === 'tyio_sesi')).toBe(false);
+    expect((await context.cookies()).some((c) => c.name === 'npr_sesi')).toBe(false);
     await page.goto('/');
     await expect(page).toHaveURL('/masuk');
   });

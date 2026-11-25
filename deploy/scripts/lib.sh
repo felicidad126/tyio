@@ -56,9 +56,9 @@ stop_gpg() {
 # shellcheck disable=SC2034
 PSQL_ARGS=(-X -q -A -t -F $'\t' -v ON_ERROR_STOP=1)
 
-# Berkas backup terbaru di folder (nama tyio-*.tar.gpg); kosong bila tidak ada.
+# Berkas backup terbaru di folder (nama npr-*.tar.gpg); kosong bila tidak ada.
 newest_backup() {
   local dir="$1"
-  find "$dir" -maxdepth 1 -type f -name 'tyio-*.tar.gpg' -printf '%T@ %p\n' 2>/dev/null |
+  find "$dir" -maxdepth 1 -type f -name 'npr-*.tar.gpg' -printf '%T@ %p\n' 2>/dev/null |
     sort -rn | head -n 1 | cut -d' ' -f2-
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import 'leaflet/dist/leaflet.css';
-import type { RemoteMap, RemoteMapPoint } from '@tyio/shared';
+import type { RemoteMap, RemoteMapPoint } from '@npr/shared';
 import * as L from 'leaflet';
 import Supercluster, { type ClusterFeature, type PointFeature } from 'supercluster';
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef, watch } from 'vue';

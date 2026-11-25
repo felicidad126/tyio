@@ -1,5 +1,5 @@
 import { BadRequestException, Controller, Get, Header, Query } from '@nestjs/common';
-import { AUDIT_PAGE_DEFAULT, AUDIT_PAGE_MAX, type AuditPage } from '@tyio/shared';
+import { AUDIT_PAGE_DEFAULT, AUDIT_PAGE_MAX, type AuditPage } from '@npr/shared';
 import { RequireRole } from '../../modules/auth/roles.guard.js';
 import { CurrentScope, TenantScoped } from '../tenant/tenancy.js';
 import type { TenantScope } from '../tenant/tenant-scope.js';

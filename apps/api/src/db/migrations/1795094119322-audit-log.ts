@@ -6,7 +6,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
  * - `audit_log` hanya bisa ditambah: UPDATE, DELETE, dan TRUNCATE ditolak database.
  * - Setiap tabel data memakai trigger `audit` yang mencatat setiap INSERT/UPDATE/DELETE
  *   beserta siapa, dari mana, dan apa yang berubah. Perubahan tanpa konteks audit
- *   (setelan transaksi `tyio.source`) ditolak, jadi tidak ada jalur tulis yang lupa dicatat.
+ *   (setelan transaksi `npr.source`) ditolak, jadi tidak ada jalur tulis yang lupa dicatat.
  * - Tabel baru diaudit dengan `SELECT audit_enable('nama_tabel', 'tenant_id')`.
  */
 export class AuditLog1795094119322 implements MigrationInterface {
@@ -61,7 +61,7 @@ export class AuditLog1795094119322 implements MigrationInterface {
       CREATE FUNCTION audit_row_change() RETURNS trigger
       LANGUAGE plpgsql AS $$
       DECLARE
-        src text := nullif(current_setting('tyio.source', true), '');
+        src text := nullif(current_setting('npr.source', true), '');
         tenant_column text := nullif(TG_ARGV[0], '');
         hidden text[] := coalesce(TG_ARGV[1:], '{}');
         old_row jsonb;
@@ -70,9 +70,9 @@ export class AuditLog1795094119322 implements MigrationInterface {
         diff jsonb;
       BEGIN
         IF src IS NULL THEN
-          RAISE EXCEPTION 'Perubahan % pada tabel % ditolak: tidak ada konteks audit (tyio.source).', TG_OP, TG_TABLE_NAME
+          RAISE EXCEPTION 'Perubahan % pada tabel % ditolak: tidak ada konteks audit (npr.source).', TG_OP, TG_TABLE_NAME
             USING ERRCODE = 'insufficient_privilege',
-                  HINT = 'Tulis lewat auditedTransaction(), atau SET LOCAL tyio.source dan tyio.actor_label.';
+                  HINT = 'Tulis lewat auditedTransaction(), atau SET LOCAL npr.source dan npr.actor_label.';
         END IF;
 
         IF TG_OP <> 'INSERT' THEN old_row := to_jsonb(OLD); END IF;
@@ -99,9 +99,9 @@ export class AuditLog1795094119322 implements MigrationInterface {
           (source, actor_user_id, actor_label, client_ip, action, table_name, row_id, tenant_id, changes)
         VALUES (
           src,
-          nullif(current_setting('tyio.actor_user_id', true), '')::uuid,
-          nullif(current_setting('tyio.actor_label', true), ''),
-          nullif(current_setting('tyio.client_ip', true), ''),
+          nullif(current_setting('npr.actor_user_id', true), '')::uuid,
+          nullif(current_setting('npr.actor_label', true), ''),
+          nullif(current_setting('npr.client_ip', true), ''),
           lower(TG_OP),
           TG_TABLE_NAME,
           row_data ->> 'id',

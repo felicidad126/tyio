@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconSearch } from '@tabler/icons-vue';
-import type { TroubleTicketPage, TroubleTicketQueueItem } from '@tyio/shared';
+import type { TroubleTicketPage, TroubleTicketQueueItem } from '@npr/shared';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { debounced, useStream } from '../../../composables/useStream';

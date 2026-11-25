@@ -12,7 +12,7 @@ export function dataSourceOptions(
 ): DataSourceOptions {
   const connectionSettings = ['-c timezone=UTC'];
   if (options.auditSource) {
-    connectionSettings.push(`-c tyio.source=${options.auditSource}`, '-c tyio.actor_label=migrate');
+    connectionSettings.push(`-c npr.source=${options.auditSource}`, '-c npr.actor_label=migrate');
   }
   return {
     type: 'postgres',

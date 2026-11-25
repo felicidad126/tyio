@@ -2,7 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
  * Pembaruan langsung (langkah 2.2): setiap entri linimasa baru memberi tahu aplikasi lewat
- * `pg_notify('tyio_perubahan', …)`. Setiap perubahan NPR dan TT lewat linimasa (T71, T72,
+ * `pg_notify('npr_perubahan', …)`. Setiap perubahan NPR dan TT lewat linimasa (T71, T72,
  * T86, T102, T104), jadi satu trigger ini mencakup semua jalur tulis: API, seed, dan
  * perbaikan manual di psql. Pemberitahuan dikirim saat transaksi commit; transaksi yang batal
  * tidak memberi tahu apa pun. Isinya hanya customer, NPR, dan jenis entri.
@@ -14,7 +14,7 @@ export class TicketChangeNotify1795600000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE FUNCTION notify_ticket_change() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN
-        PERFORM pg_notify('tyio_perubahan', json_build_object(
+        PERFORM pg_notify('npr_perubahan', json_build_object(
           'tenantId', NEW.tenant_id, 'ticketId', NEW.ticket_id, 'kind', NEW.kind)::text);
         RETURN NULL;
       END;

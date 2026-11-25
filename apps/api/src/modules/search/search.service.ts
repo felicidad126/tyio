@@ -7,7 +7,7 @@ import type {
   SearchTroubleTicketHit,
   TicketStatus,
   TroubleTicketStatus,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { DataSource } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';
 

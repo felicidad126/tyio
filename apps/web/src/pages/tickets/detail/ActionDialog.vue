@@ -18,7 +18,7 @@ import {
   type TicketDetail,
   type TicketStatus,
   type TicketTimeline,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { ApiError } from '../../../api';
 import { ticketApi } from '../ticket-api';

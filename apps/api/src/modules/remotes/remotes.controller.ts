@@ -22,7 +22,7 @@ import {
   type RemoteMap,
   type RemotePage,
   XLSX_MIME,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { Request } from 'express';
 import type { AuditActor } from '../../common/audit/audit-context.js';
 import { CurrentScope, NoTenantData, TenantScoped } from '../../common/tenant/tenancy.js';

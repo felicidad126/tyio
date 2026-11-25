@@ -31,7 +31,7 @@ seconds_until_next_run() {
 
 log "Penjadwal backup aktif: setiap hari $BACKUP_TIME_UTC UTC ke $BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
-if [[ -z "$(find "$BACKUP_DIR" -maxdepth 1 -name 'tyio-*.tar.gpg' -mmin -1440 -print -quit)" ]]; then
+if [[ -z "$(find "$BACKUP_DIR" -maxdepth 1 -name 'npr-*.tar.gpg' -mmin -1440 -print -quit)" ]]; then
   log "Belum ada backup dalam 24 jam terakhir; membuat backup sekarang"
   run_backup
 fi

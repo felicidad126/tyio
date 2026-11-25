@@ -1,8 +1,8 @@
 {
-  "name": "@tyio/web",
+  "name": "@npr/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Antarmuka web (PWA) portal NOC",
+  "description": "Antarmuka web (PWA) Network Problem Report",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
@@ -13,7 +13,7 @@
   "dependencies": {
     "@tabler/core": "1.7.3",
     "@tabler/icons-vue": "3.50.0",
-    "@tyio/shared": "workspace:*",
+    "@npr/shared": "workspace:*",
     "leaflet": "1.9.4",
     "pinia": "4.1.0",
     "supercluster": "9.1.0",

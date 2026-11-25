@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import AppFooter from '../components/AppFooter.vue';
 import { canOpen } from '../navigation';
 import ForbiddenNotice from '../pages/forbidden/ForbiddenNotice.vue';
 import { useSessionStore } from '../stores/session';
@@ -51,6 +52,7 @@ watch(
         <RouterView v-if="allowed" />
         <ForbiddenNotice v-else />
       </main>
+      <AppFooter class="shell__footer" />
     </div>
   </div>
 </template>
@@ -77,6 +79,10 @@ watch(
   max-width: 1240px;
   margin: 0 auto;
   padding: 24px 24px 40px;
+}
+
+.shell__footer {
+  margin-top: auto;
 }
 
 .shell__content:focus {

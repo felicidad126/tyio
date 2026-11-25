@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RemoteDetail } from '@tyio/shared';
+import type { RemoteDetail } from '@npr/shared';
 
 // Data lokasi, jaringan, dan kontak remote, hanya-baca (langkah 1.3: "terisi otomatis dan
 // hanya-baca"). Data remote diubah admin lewat impor, bukan dari tiket.

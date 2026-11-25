@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type RemoteTicketHistoryPage, type RemoteZone, TICKET_CLOSE_CAUSE_LABELS } from '@tyio/shared';
+import { type RemoteTicketHistoryPage, type RemoteZone, TICKET_CLOSE_CAUSE_LABELS } from '@npr/shared';
 import { computed, ref, watch } from 'vue';
 import TicketStatusPill from '../tickets/TicketStatusPill.vue';
 import TroubleTicketStatusPill from '../tickets/tt/TroubleTicketStatusPill.vue';

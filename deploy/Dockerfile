@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Satu image berisi API dan hasil build web (R-A: satu aplikasi yang di-deploy).
-# Dibangun dari akar repo:  docker build -f deploy/Dockerfile -t tyio-app .
+# Dibangun dari akar repo:  docker build -f deploy/Dockerfile -t npr-app .
 # Satu image dipakai untuk tiga peran: migrasi, seed, dan aplikasi.
 #
 # Jaringan dengan proxy pemeriksa TLS (proxy kantor): berikan sertifikat CA-nya lewat
@@ -18,7 +18,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 RUN --mount=type=secret,id=extra_ca \
-    --mount=type=cache,id=tyio-pnpm-store,target=/root/.local/share/pnpm/store \
+    --mount=type=cache,id=npr-pnpm-store,target=/root/.local/share/pnpm/store \
     if [ -s /run/secrets/extra_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca; fi \
  && npm install -g --no-audit --no-fund "$(node -p "require('./package.json').packageManager")" \
  && pnpm install --frozen-lockfile
@@ -26,10 +26,10 @@ RUN --mount=type=secret,id=extra_ca \
 COPY . .
 # Build semua paket, lalu kumpulkan API + dependensi produksinya saja ke /out.
 RUN --mount=type=secret,id=extra_ca \
-    --mount=type=cache,id=tyio-pnpm-store,target=/root/.local/share/pnpm/store \
+    --mount=type=cache,id=npr-pnpm-store,target=/root/.local/share/pnpm/store \
     if [ -s /run/secrets/extra_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca; fi \
  && pnpm build \
- && pnpm --filter @tyio/api deploy --prod /out \
+ && pnpm --filter @npr/api deploy --prod /out \
  && cp -r apps/web/dist /out/public
 
 FROM ${NODE_IMAGE} AS runtime

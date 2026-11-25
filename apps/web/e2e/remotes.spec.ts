@@ -26,7 +26,7 @@ test.describe('daftar dan halaman remote', () => {
 
     await rows(page).first().getByRole('link', { name: 'BNA-MKS-0217' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('ATM KCP Pasar Sentral');
-    await expect(page).toHaveTitle('BNA-MKS-0217 · ATM KCP Pasar Sentral · Portal NOC Terpusat');
+    await expect(page).toHaveTitle('BNA-MKS-0217 · ATM KCP Pasar Sentral · Network Problem Report');
     const location = page.getByRole('region', { name: 'Lokasi', exact: true });
     await expect(location).toContainText('Kanwil Makassar / KCP Pasar Sentral');
     await expect(location).toContainText('WITA (UTC+8)');

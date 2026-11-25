@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconPhone } from '@tabler/icons-vue';
-import { APP_NAME, type RemoteDetail, type RemoteZone, type TicketSummary } from '@tyio/shared';
+import { APP_NAME, type RemoteDetail, type RemoteZone, type TicketSummary } from '@npr/shared';
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PageHeader from '../../components/PageHeader.vue';

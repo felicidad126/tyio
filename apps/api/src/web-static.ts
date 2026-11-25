@@ -1,5 +1,5 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { API_PREFIX } from '@tyio/shared';
+import { API_PREFIX } from '@npr/shared';
 import type { NextFunction, Request, Response } from 'express';
 import { extname, join, resolve } from 'node:path';
 

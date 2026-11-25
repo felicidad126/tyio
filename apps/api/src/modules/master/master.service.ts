@@ -10,7 +10,7 @@ import {
   type MasterValue,
   type UpdateCustomer,
   type UpdateMasterValue,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { DataSource, EntityManager } from 'typeorm';
 import { type AuditActor, auditedTransaction } from '../../common/audit/audit-context.js';
 import { applyTenantScope, scopeIncludes, type TenantScope } from '../../common/tenant/tenant-scope.js';

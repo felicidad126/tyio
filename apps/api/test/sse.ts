@@ -31,7 +31,7 @@ async function baseUrl(server: http.Server): Promise<string> {
 export async function sessionCookie(server: http.Server, email: string): Promise<string> {
   const res = await request(server).post('/api/auth/login').send({ email, password: TEST_PASSWORD });
   if (res.status !== 200) throw new Error(`Login uji gagal: ${res.status}`);
-  const cookie = ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((value) => value.startsWith('tyio_sesi='));
+  const cookie = ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((value) => value.startsWith('npr_sesi='));
   if (!cookie) throw new Error('Cookie sesi tidak ada.');
   return cookie.split(';')[0] ?? '';
 }

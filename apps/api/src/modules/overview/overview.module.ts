@@ -1,5 +1,5 @@
 import { BadRequestException, Controller, Get, Header, Module, Query } from '@nestjs/common';
-import { isOverviewPeriod, type Overview, OVERVIEW_PERIOD_DEFAULT, OVERVIEW_PERIODS } from '@tyio/shared';
+import { isOverviewPeriod, type Overview, OVERVIEW_PERIOD_DEFAULT, OVERVIEW_PERIODS } from '@npr/shared';
 import { CurrentScope, TenantScoped } from '../../common/tenant/tenancy.js';
 import type { TenantScope } from '../../common/tenant/tenant-scope.js';
 import { CurrentUser } from '../auth/auth-request.js';

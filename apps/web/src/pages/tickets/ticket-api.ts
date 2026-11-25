@@ -17,7 +17,7 @@ import type {
   TicketTimeline,
   TroubleTicketCopied,
   TroubleTicketPage,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { ApiError, apiMultipart, apiRequest } from '../../api';
 import type { QueueApiKey } from './list/queue-query';
 

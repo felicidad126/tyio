@@ -1,25 +1,33 @@
 <template>
-  <!-- Logo dari mockup: menara pemancar (ikon Tabler building-broadcast-tower) di kotak biru.
-       Sama dengan public/favicon.svg dan ikon PWA. -->
-  <svg
-    viewBox="0 0 34 34"
+  <!-- Logo PT. Tangara Mitrakom (T165) di kotak putih, agar tetap jelas di sidebar gelap dan
+       tema gelap. Sama dengan ikon aplikasi dan favicon (public/). -->
+  <span
+    class="app-logo"
     aria-hidden="true"
   >
-    <rect
-      width="34"
-      height="34"
-      rx="8"
-      fill="#066fd1"
-    />
-    <g
-      transform="translate(7 7) scale(0.8333)"
-      fill="none"
-      stroke="#ffffff"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+    <img
+      src="/logo-tm.png"
+      alt=""
+      width="256"
+      height="256"
     >
-      <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16.6 13.9a5 5 0 1 0 -9.2 0 M20.3 15.5a9 9 0 1 0 -16.6 0 M9 21l3 -9l3 9 M10 19h4" />
-    </g>
-  </svg>
+  </span>
 </template>
+
+<style scoped>
+.app-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.app-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+</style>

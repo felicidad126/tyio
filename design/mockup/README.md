@@ -1,6 +1,6 @@
-# Mockup Portal NOC (Design canvas)
+# Mockup NPR — Network Problem Report (Design canvas)
 
-Mockup layar portal NOC sebagai bahan diskusi dengan user dan acuan saat membangun `apps/web`.
+Mockup layar NPR sebagai bahan diskusi dengan user dan acuan saat membangun `apps/web`.
 Ini bukan kode aplikasi: tidak ada yang di sini dipakai oleh build, lint, atau CI.
 
 - **Lihat dan coba:** kanvas di claude.ai — https://claude.ai/artifact/LP7P65zUiut6aiBnZhEBhQ

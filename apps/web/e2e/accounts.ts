@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 // Akun dummy dari seed (apps/api/src/seed/seeders.ts). Di dev kata sandinya bawaan seed;
 // di staging/CI isi E2E_USER_PASSWORD dengan SEED_USER_PASSWORD yang dipakai saat seed.
-export const PASSWORD = process.env.E2E_USER_PASSWORD ?? 'sandi-dev-tyio';
+export const PASSWORD = process.env.E2E_USER_PASSWORD ?? 'sandi-dev-npr';
 
 export interface Account {
   email: string;

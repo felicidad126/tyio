@@ -1,6 +1,6 @@
-# Tyio — Portal NOC Terpusat
+# NPR — Network Problem Report
 
-Rencana: [plans/pending/portal-noc-terpusat.md](plans/pending/portal-noc-terpusat.md) ·
+Rencana: [plans/pending/network-problem-report.md](plans/pending/network-problem-report.md) ·
 Langkah teknis dan progres: [plans/pending/langkah-teknis.md](plans/pending/langkah-teknis.md)
 
 ## Kebutuhan
@@ -36,10 +36,10 @@ pnpm dev:down         # hentikan stack dev (dev:reset juga menghapus datanya)
 ```
 
 Urutan pada clone baru: `pnpm install` → `pnpm dev:up` → `pnpm build` → `pnpm test`.
-Uji API butuh Postgres asli (database `tyio_test`) dan hasil build `packages/shared/dist`.
+Uji API butuh Postgres asli (database `npr_test`) dan hasil build `packages/shared/dist`.
 
 Akun dummy untuk login di lokal: `dewi@noc.example` (L1), `arif@noc.example` (L2),
-`admin@noc.example` (admin), kata sandi `sandi-dev-tyio`.
+`admin@noc.example` (admin), kata sandi `sandi-dev-npr`.
 
 Cara menjalankan, variabel lingkungan, akun, staging, dan jaringan kantor dengan proxy TLS:
 [docs/operasi/menjalankan.md](docs/operasi/menjalankan.md).
@@ -55,5 +55,5 @@ Cara menjalankan, variabel lingkungan, akun, staging, dan jaringan kantor dengan
   kurang dari 1 hari dan memblokir install script dependensi; izinkan per paket lewat
   `allowBuilds` di `pnpm-workspace.yaml` hanya bila memang perlu.
 - **Rahasia tidak pernah masuk repo.** Berkas `.env*`, `*.env`, dan `deploy/certs/` diabaikan
-  git; hanya contoh `*.env.example` yang boleh di-commit. Kredensial `tyio`/`tyio` di
+  git; hanya contoh `*.env.example` yang boleh di-commit. Kredensial `npr`/`npr` di
   `deploy/compose.dev.yml` khusus Postgres dev lokal yang terikat ke 127.0.0.1.

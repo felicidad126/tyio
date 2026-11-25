@@ -6,7 +6,7 @@ import {
   type RemotePage,
   REMOTE_IMPORT_MAX_BYTES,
   XLSX_MIME,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { readSheet } from 'read-excel-file/node';
 import request from 'supertest';
 import { DataSource } from 'typeorm';

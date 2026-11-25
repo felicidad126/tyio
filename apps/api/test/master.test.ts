@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { CustomerRecord, MasterKind, MasterValue } from '@tyio/shared';
+import type { CustomerRecord, MasterKind, MasterValue } from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

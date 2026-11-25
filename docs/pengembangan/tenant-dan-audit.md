@@ -148,7 +148,7 @@ VALUES (...);  -- trigger apply_ticket_action memeriksa status_from = status sek
 - Penanggung berganti lewat entri `ambil` (`assignee_id` = penanggung baru); trigger mengisi
   `assignee_from_id` dengan penanggung sebelumnya. Lewat API: `TicketActionsService.take`.
 - Perpindahan yang sah ada di dua tempat yang diuji sama: `isTicketTransitionAllowed`
-  (`@tyio/shared`) dan `ticket_status_transition_allowed` (database). Ubah keduanya bersama.
+  (`@npr/shared`) dan `ticket_status_transition_allowed` (database). Ubah keduanya bersama.
 - Aturan yang bergantung peran (buka kembali hanya L2/admin) dan penutupan (1.6, §9) dijaga di
   `TicketActionsService`; jalur penulis baru (alert R6, API R7, Gamas R3) wajib memakainya.
 - Lampiran disimpan di database (T70) bersama entrinya dalam satu transaksi; isinya
@@ -166,7 +166,7 @@ linimasa NPR. Jangan mengisi `number`, `remote_id`, atau `network_id` sendiri.
 - Setiap "Salin ringkasan TT" menambah entri `tt_disalin` (K25) lewat
   `TroubleTicketsService.markCopied`; jumlah salin dihitung dari entri itu.
 - Status TT baru (Hasil masuk di R3) ditambahkan lewat migrasi baru pada
-  `trouble_tickets_status_valid` dan `TROUBLE_TICKET_STATUSES` di `@tyio/shared`. Ditutup
+  `trouble_tickets_status_valid` dan `TROUBLE_TICKET_STATUSES` di `@npr/shared`. Ditutup
   (1.6) lewat linimasa, lihat §9.
 
 ## 9. Penutupan NPR dan TT (langkah 1.6)
@@ -189,7 +189,7 @@ VALUES (..., 'tt_ditutup', 'Teknisi SD mengganti modem; remote up 14:40', now(),
   Trigger `apply_ticket_action` menyalin penyebab, penyelesaian, waktu, dan penutup ke `tickets`
   (`close_cause`, `resolution`, `closed_at`, `closed_by`) dan mengosongkannya saat NPR dibuka
   kembali. Daftar penyebab ada di dua tempat yang harus sama: `TICKET_CLOSE_CAUSES`
-  (`@tyio/shared`) dan CHECK `*_close_cause_valid` (migrasi `ticket-close`).
+  (`@npr/shared`) dan CHECK `*_close_cause_valid` (migrasi `ticket-close`).
 - **K21 dijaga database** dari peran penulis entri (`users.role` milik `created_by`): NPR yang
   punya TT, walau TT-nya sudah ditutup, dan entri `tt_ditutup` hanya oleh L2/admin. **T99:** NPR
   tidak bisa ditutup selama masih ada TT yang belum ditutup; pesannya menyebut nomor TT itu.
@@ -217,14 +217,14 @@ Setiap angka Overview harus sama persis dengan daftar yang dibuka darinya. Karen
   dimasukkan ke `allCounts`.
 - Batas hari menurut WIB (T109) hanya di `tickets/list/wib-day.ts`: `wibDateSql` (tanggal dari
   waktu) dan `wibDayStartSql` (awal hari dari tanggal). Jangan menulis `AT TIME ZONE` sendiri.
-- Wilayah (T113): pemetaan provinsi → wilayah di `@tyio/shared` (`REMOTE_REGION_PROVINCES`), SQL-nya
+- Wilayah (T113): pemetaan provinsi → wilayah di `@npr/shared` (`REMOTE_REGION_PROVINCES`), SQL-nya
   dirangkai dari daftar yang sama (`remotes/remote-region.ts`). Ejaan baru cukup ditambah ke daftar;
   uji memeriksa SQL dan TypeScript sama untuk setiap ejaan.
 - Nama yang digabung lintas customer (kategori, T114) dipilih dengan `COLLATE "C"`: tanpa itu
   hasilnya ikut collation database dan berbeda antara lokal (C.UTF-8) dan CI (en_US). Uji lokal di
   database ber-collation seperti CI:
-  `CREATE DATABASE tyio_coll ... LOCALE_PROVIDER icu ICU_LOCALE 'en-US' LOCALE 'C.UTF-8'` lalu
-  `TEST_DATABASE_URL=postgres://tyio:tyio@localhost:5432/tyio_coll pnpm test`.
+  `CREATE DATABASE npr_coll ... LOCALE_PROVIDER icu ICU_LOCALE 'en-US' LOCALE 'C.UTF-8'` lalu
+  `TEST_DATABASE_URL=postgres://npr:npr@localhost:5432/npr_coll pnpm test`.
 
 ## 11. Peta remote (langkah 2.3)
 

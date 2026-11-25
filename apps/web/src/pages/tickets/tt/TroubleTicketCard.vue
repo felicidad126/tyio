@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconCheck, IconCircleCheck, IconCopy } from '@tabler/icons-vue';
-import { isRole, ROLE_LABELS, type RemoteZone, type TroubleTicket } from '@tyio/shared';
+import { isRole, ROLE_LABELS, type RemoteZone, type TroubleTicket } from '@npr/shared';
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import { ticketApi } from '../ticket-api';
 import { formatZoned } from '../zoned-time';

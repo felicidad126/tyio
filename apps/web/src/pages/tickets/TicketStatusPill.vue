@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TICKET_STATUS_LABELS, type TicketStatus } from '@tyio/shared';
+import { TICKET_STATUS_LABELS, type TicketStatus } from '@npr/shared';
 
 // Label status NPR dengan teks dan warna persis ATURAN.md §3. Warna tidak pernah sendirian:
 // labelnya selalu tertulis.

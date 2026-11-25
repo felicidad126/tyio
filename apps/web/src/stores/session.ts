@@ -1,4 +1,4 @@
-import type { LoginRequest, SessionUser } from '@tyio/shared';
+import type { LoginRequest, SessionUser } from '@npr/shared';
 import { defineStore } from 'pinia';
 import { computed, shallowRef } from 'vue';
 import { ApiError, apiRequest } from '../api';

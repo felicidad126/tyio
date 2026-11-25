@@ -12,7 +12,7 @@ import {
   type TicketDetail,
   type TicketStatus,
   type TicketSummary,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { DataSource, EntityManager, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import { type AuditActor, auditedTransaction } from '../../common/audit/audit-context.js';
 import { applyTenantScope, type TenantScope } from '../../common/tenant/tenant-scope.js';

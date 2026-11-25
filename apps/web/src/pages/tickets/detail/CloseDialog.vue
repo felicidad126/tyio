@@ -8,7 +8,7 @@ import {
   type TicketDetail,
   type TicketTimeline,
   type TroubleTicket,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import { ticketApi } from '../ticket-api';
 

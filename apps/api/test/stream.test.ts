@@ -1,5 +1,5 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { STREAM_EVENTS, type StreamHello, type TicketChangeEvent, type TicketDetail } from '@tyio/shared';
+import { STREAM_EVENTS, type StreamHello, type TicketChangeEvent, type TicketDetail } from '@npr/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

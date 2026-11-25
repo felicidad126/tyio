@@ -19,7 +19,7 @@ import {
   PASSWORD_MAX_LENGTH,
   type LoginRequest,
   type SessionUser,
-} from '@tyio/shared';
+} from '@npr/shared';
 import type { Request, Response } from 'express';
 import { NoTenantData, TenantScoped } from '../../common/tenant/tenancy.js';
 import { APP_CONFIG } from '../../config.module.js';

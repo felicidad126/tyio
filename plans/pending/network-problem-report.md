@@ -1,4 +1,4 @@
-# Portal NOC Terpusat (Tyio) — Rencana
+# Network Problem Report (NPR) — Rencana
 
 Ticket: belum ada (tracker belum ditentukan)
 Status: **Rekomendasi bagian 5 dan urutan rilis bagian 8 DISETUJUI.** Langkah teknis per rilis: [langkah-teknis.md](langkah-teknis.md).

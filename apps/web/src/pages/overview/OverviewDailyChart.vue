@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OVERVIEW_DAY_ZONE, type OverviewCount, type OverviewDaily } from '@tyio/shared';
+import { OVERVIEW_DAY_ZONE, type OverviewCount, type OverviewDaily } from '@npr/shared';
 import { computed, ref } from 'vue';
 import { queueLocation } from '../tickets/list/queue-query';
 import { seriesColor, seriesSlots } from './series';

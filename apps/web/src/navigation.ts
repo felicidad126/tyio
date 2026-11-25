@@ -7,7 +7,7 @@ import {
   IconMapPin,
   IconTicket,
 } from '@tabler/icons-vue';
-import type { Role } from '@tyio/shared';
+import type { Role } from '@npr/shared';
 import type { Component } from 'vue';
 
 // Satu daftar menu untuk sidebar, rute, judul halaman, dan hak akses per peran.

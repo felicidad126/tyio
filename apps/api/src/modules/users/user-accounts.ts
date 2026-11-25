@@ -5,7 +5,7 @@ import {
   ROLES,
   isRole,
   type Role,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { type EntityManager, In } from 'typeorm';
 import { Tenant } from '../tenants/tenant.entity.js';
 import { hashPassword } from './password.js';

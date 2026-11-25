@@ -1,0 +1,27 @@
+# Penutup HTTPS di depan NPR (produksi satu server, T158). Dipakai deploy/compose.prod.yml;
+# nilai {$...} dibaca dari environment container caddy (diisi dari deploy/prod.env).
+#   NPR_HOST  nama host atau IP yang diketik pengguna di peramban
+#   NPR_TLS   internal                          CA milik Caddy (perangkat memasang root CA-nya)
+#             admin@perusahaan.co.id            Let's Encrypt (domain publik, port 80/443 terbuka)
+#             /certs/cert.pem /certs/key.pem    berkas sertifikat dari CA kantor (deploy/certs/)
+# HTTP di port 80 dialihkan ke HTTPS secara otomatis.
+{
+	# Root CA internal tidak dipasang ke sistem di dalam container (tidak ada gunanya di sana).
+	skip_install_trust
+}
+
+{$NPR_HOST} {
+	tls {$NPR_TLS:internal}
+
+	# Kompresi HTML/JS/CSS/JSON (mis. peta remote ±0,5 MB, T144). Aliran pembaruan langsung
+	# (SSE, langkah 2.2) tidak dikompresi agar setiap pesan langsung terkirim.
+	@kompres not path /api/stream
+	encode @kompres zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	reverse_proxy app:3000
+}

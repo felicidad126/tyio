@@ -1,5 +1,5 @@
 import { Controller, Get, NotFoundException, Param, ParseUUIDPipe } from '@nestjs/common';
-import type { TenantSummary } from '@tyio/shared';
+import type { TenantSummary } from '@npr/shared';
 import { CurrentScope, TenantScoped } from '../../common/tenant/tenancy.js';
 import type { TenantScope } from '../../common/tenant/tenant-scope.js';
 import { TenantsService, toTenantSummary } from './tenants.service.js';

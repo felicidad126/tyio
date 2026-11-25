@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
-import { TICKET_ATTACHMENT_MAX_BYTES, TICKET_ATTACHMENT_NAME_MAX_LENGTH, TICKET_ATTACHMENT_TYPES } from '@tyio/shared';
+import { TICKET_ATTACHMENT_MAX_BYTES, TICKET_ATTACHMENT_NAME_MAX_LENGTH, TICKET_ATTACHMENT_TYPES } from '@npr/shared';
 
 /** Satu berkas dari bagian `lampiran` permintaan multipart (multer, penyimpanan memori). */
 export interface UploadedPart {

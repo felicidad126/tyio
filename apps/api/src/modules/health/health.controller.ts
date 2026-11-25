@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import type { HealthResponse } from '@tyio/shared';
+import type { HealthResponse } from '@npr/shared';
 import { NoTenantData } from '../../common/tenant/tenancy.js';
 import { Public } from '../auth/auth-request.js';
 import { HealthService } from './health.service.js';

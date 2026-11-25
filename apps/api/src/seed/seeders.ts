@@ -1,5 +1,5 @@
-import { PASSWORD_MIN_LENGTH, type Role } from '@tyio/shared';
-import type { TyioEnv } from '../config.js';
+import { PASSWORD_MIN_LENGTH, type Role } from '@npr/shared';
+import type { NprEnv } from '../config.js';
 import { saveUser } from '../modules/users/user-accounts.js';
 import type { Seeder } from './seed.js';
 
@@ -42,13 +42,13 @@ export const SEED_MASTER = {
 } as const;
 
 /** Kata sandi semua akun dummy di lingkungan development dan test. Bukan rahasia. */
-export const DEV_SEED_PASSWORD = 'sandi-dev-tyio';
+export const DEV_SEED_PASSWORD = 'sandi-dev-npr';
 
 /**
  * Kata sandi akun dummy: dari SEED_USER_PASSWORD bila diisi; bawaan hanya di development
  * dan test. Staging wajib mengisinya, karena staging bisa dibuka orang lain.
  */
-export function seedUserPassword(env: TyioEnv, source: NodeJS.ProcessEnv = process.env): string {
+export function seedUserPassword(env: NprEnv, source: NodeJS.ProcessEnv = process.env): string {
   const fromEnv = source.SEED_USER_PASSWORD;
   if (fromEnv) {
     if (fromEnv.length < PASSWORD_MIN_LENGTH) {

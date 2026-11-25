@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ROLE_LABELS } from '@tyio/shared';
+import { ROLE_LABELS } from '@npr/shared';
 import { computed } from 'vue';
 import PageHeader from '../../components/PageHeader.vue';
 import { useSessionStore } from '../../stores/session';

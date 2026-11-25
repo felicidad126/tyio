@@ -119,7 +119,7 @@ test.describe('buat NPR', () => {
     await expect(incident).toContainText('Remote Down / SNMP NOC');
     await expect(incident).toContainText(/\d{2}:\d{2} WITA · Dewi A\./);
     await expect(incident).toContainText(`Ping gagal 100% (uji ${run})`);
-    await expect(page).toHaveTitle(`${number} · Portal NOC Terpusat`);
+    await expect(page).toHaveTitle(`${number} · Network Problem Report`);
 
     // Halaman remote menampilkan NPR terbuka itu.
     await incident.getByRole('link', { name: remote.name }).click();

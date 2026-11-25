@@ -1,4 +1,4 @@
-import type { TicketQueueFilter } from '@tyio/shared';
+import type { TicketQueueFilter } from '@npr/shared';
 import type { LocationQuery, RouteLocationRaw } from 'vue-router';
 
 // Saringan antrean NPR di dua bentuk: parameter `GET /api/tickets` (TicketQueueFilter) dan

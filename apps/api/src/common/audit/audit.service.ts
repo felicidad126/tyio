@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { AuditEntry, AuditPage } from '@tyio/shared';
+import type { AuditEntry, AuditPage } from '@npr/shared';
 import { DataSource, type Repository } from 'typeorm';
 import { applyTenantScope, type TenantScope } from '../tenant/tenant-scope.js';
 import type { AuditActor } from './audit-context.js';

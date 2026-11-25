@@ -1,33 +1,33 @@
 # Lingkungan staging: menjalankan image yang sudah dibangun dan diuji CI, tidak membangun sendiri.
 #   docker compose --env-file deploy/staging.env -f deploy/compose.staging.yml up -d --wait
 # Isi deploy/staging.env dari deploy/staging.env.example (berkas .env tidak pernah masuk git).
-name: tyio-staging
+name: npr-staging
 
 x-app: &app
-  image: ${TYIO_IMAGE:?TYIO_IMAGE wajib diisi dengan image hasil CI}
+  image: ${NPR_IMAGE:?NPR_IMAGE wajib diisi dengan image hasil CI}
   pull_policy: missing
   environment:
-    TYIO_ENV: staging
-    DATABASE_URL: postgres://tyio:${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}@db:5432/tyio
+    NPR_ENV: staging
+    DATABASE_URL: postgres://npr:${NPR_DB_PASSWORD:?NPR_DB_PASSWORD wajib diisi}@db:5432/npr
     # Cookie sesi hanya dikirim lewat HTTPS (atau http://localhost). Lihat staging.env.example.
-    SESSION_COOKIE_SECURE: ${TYIO_SESSION_COOKIE_SECURE:-true}
+    SESSION_COOKIE_SECURE: ${NPR_SESSION_COOKIE_SECURE:-true}
     # Jumlah reverse proxy di depan aplikasi; kosong = langsung diakses.
-    TRUST_PROXY: ${TYIO_TRUST_PROXY:-}
+    TRUST_PROXY: ${NPR_TRUST_PROXY:-}
 
 services:
   db:
     image: postgres:18-trixie@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tyio
-      POSTGRES_PASSWORD: ${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}
-      POSTGRES_DB: tyio
+      POSTGRES_USER: npr
+      POSTGRES_PASSWORD: ${NPR_DB_PASSWORD:?NPR_DB_PASSWORD wajib diisi}
+      POSTGRES_DB: npr
       TZ: UTC
     # Tanpa port ke host: database hanya bisa dicapai dari jaringan internal compose.
     volumes:
       - db-data:/var/lib/postgresql
     healthcheck:
-      test: [CMD-SHELL, pg_isready -U tyio -d tyio]
+      test: [CMD-SHELL, pg_isready -U npr -d npr]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
     ports:
       # Bawaan hanya 127.0.0.1. TLS dan akses dari jaringan lain menunggu keputusan hosting.
-      - ${TYIO_APP_BIND:-127.0.0.1}:${TYIO_APP_PORT:-8080}:3000
+      - ${NPR_APP_BIND:-127.0.0.1}:${NPR_APP_PORT:-8080}:3000
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -57,18 +57,18 @@ services:
     entrypoint: [/scripts/backup-terjadwal.sh]
     environment:
       PGHOST: db
-      PGUSER: tyio
-      PGPASSWORD: ${TYIO_DB_PASSWORD:?TYIO_DB_PASSWORD wajib diisi}
-      PGDATABASE: tyio
+      PGUSER: npr
+      PGPASSWORD: ${NPR_DB_PASSWORD:?NPR_DB_PASSWORD wajib diisi}
+      PGDATABASE: npr
       BACKUP_DIR: /backup
       BACKUP_PUBLIC_KEY: /kunci/backup-public.asc
       BACKUP_LABEL: staging
-      BACKUP_TIME_UTC: ${TYIO_BACKUP_TIME_UTC:-18:30}
-      BACKUP_RETENTION_DAYS: ${TYIO_BACKUP_RETENTION_DAYS:-30}
+      BACKUP_TIME_UTC: ${NPR_BACKUP_TIME_UTC:-18:30}
+      BACKUP_RETENTION_DAYS: ${NPR_BACKUP_RETENTION_DAYS:-30}
     volumes:
       - ./scripts:/scripts:ro
-      - ${TYIO_BACKUP_DIR:-./backup}:/backup
-      - ${TYIO_BACKUP_PUBLIC_KEY:?TYIO_BACKUP_PUBLIC_KEY wajib diisi (kunci publik backup, lihat docs/operasi/backup.md)}:/kunci/backup-public.asc:ro
+      - ${NPR_BACKUP_DIR:-./backup}:/backup
+      - ${NPR_BACKUP_PUBLIC_KEY:?NPR_BACKUP_PUBLIC_KEY wajib diisi (kunci publik backup, lihat docs/operasi/backup.md)}:/kunci/backup-public.asc:ro
     depends_on:
       migrate:
         condition: service_completed_successfully

@@ -1,13 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { Inject, Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
-import type { TicketChangeEvent } from '@tyio/shared';
+import type { TicketChangeEvent } from '@npr/shared';
 import pg from 'pg';
 import { Subject } from 'rxjs';
 import { APP_CONFIG } from '../../config.module.js';
 import type { AppConfig } from '../../config.js';
 
 /** Kanal `pg_notify` dari trigger `notify_change` di `ticket_actions` (migrasi ticket-change-notify). */
-export const CHANGE_CHANNEL = 'tyio_perubahan';
+export const CHANGE_CHANNEL = 'npr_perubahan';
 
 export type TicketChange = { type: 'ticket'; event: TicketChangeEvent } | { type: 'resync' };
 
@@ -30,7 +30,7 @@ export class TicketChangesService implements OnModuleInit, OnModuleDestroy {
   private retryTimer: NodeJS.Timeout | undefined;
 
   /** Nama sambungan di `pg_stat_activity` (uji memutusnya untuk menguji sambung ulang). */
-  readonly listenerName = `tyio-stream-${randomBytes(4).toString('hex')}`;
+  readonly listenerName = `npr-stream-${randomBytes(4).toString('hex')}`;
   readonly changes$ = this.subject.asObservable();
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}

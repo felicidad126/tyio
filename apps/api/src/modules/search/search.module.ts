@@ -1,5 +1,5 @@
 import { BadRequestException, Controller, Get, Header, Module, Query } from '@nestjs/common';
-import { type GlobalSearchResult, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from '@tyio/shared';
+import { type GlobalSearchResult, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from '@npr/shared';
 import { CurrentScope, TenantScoped } from '../../common/tenant/tenancy.js';
 import type { TenantScope } from '../../common/tenant/tenant-scope.js';
 import { SearchService } from './search.service.js';

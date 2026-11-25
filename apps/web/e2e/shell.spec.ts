@@ -19,6 +19,35 @@ const menu = (page: Page) => page.getByRole('navigation', { name: 'Menu utama' }
 /** Teks tautan menu; Tiket diikuti angka NPR berjalan (T130), mis. "Tiket12". */
 const menuText = (label: string) => (label === 'Tiket' ? /^Tiket\d*$/ : label);
 
+// Nama aplikasi, logo, dan pemilik (T163, T165).
+test('nama Network Problem Report, logo TM, dan PT. Tangara Mitrakom di login, sidebar, dan kaki halaman', async ({
+  page,
+  request,
+}) => {
+  const year = new Date().getFullYear();
+  const logoLoaded = (scope: ReturnType<Page['locator']>) =>
+    scope.locator('img[src="/logo-tm.png"]').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0);
+
+  await page.goto('/masuk');
+  const login = page.getByRole('main');
+  await expect(login.getByRole('heading', { level: 1 })).toHaveText('Network Problem Report');
+  await expect(login.getByText('PT. Tangara Mitrakom', { exact: true })).toBeVisible();
+  await expect(page.getByRole('contentinfo')).toHaveText(`© ${year} PT. Tangara Mitrakom`);
+  expect(await logoLoaded(login)).toBe(true);
+  const favicon = await page.locator('link[rel="icon"]').getAttribute('href');
+  const icon = await request.get(new URL(favicon ?? '', page.url()).toString());
+  expect(icon.headers()['content-type']).toBe('image/png');
+
+  await loginAs(page, ACCOUNTS.l1);
+  const brand = page.getByRole('link', { name: 'NPR Network Problem Report, PT. Tangara Mitrakom, ke Overview' });
+  await expect(brand).toHaveText(/^NPR\s*PT\. Tangara Mitrakom$/);
+  expect(await logoLoaded(brand)).toBe(true);
+  for (const path of ['/', '/tiket', '/remote']) {
+    await page.goto(path);
+    await expect(page.getByRole('contentinfo')).toHaveText(`© ${year} PT. Tangara Mitrakom`);
+  }
+});
+
 test.describe('menu sesuai peran', () => {
   const cases: Array<{ account: Account; items: string[] }> = [
     { account: ACCOUNTS.l1, items: WORK_MENU },
@@ -36,7 +65,7 @@ test.describe('menu sesuai peran', () => {
 
         await expect(page).toHaveURL(PATHS[label] ?? '');
         await expect(page.getByRole('heading', { level: 1 })).toHaveText(label);
-        await expect(page).toHaveTitle(`${label} · Portal NOC Terpusat`);
+        await expect(page).toHaveTitle(`${label} · Network Problem Report`);
         // Tepat satu menu menyala (Overview di path kosong pernah ikut menyala di semua halaman).
         await expect(menu(page).locator('[aria-current="page"]')).toHaveText(menuText(label));
         await expect(menu(page).locator('.is-active')).toHaveText(menuText(label));
@@ -160,8 +189,8 @@ test.describe('aplikasi bisa dipasang (PWA)', () => {
     expect(res.status()).toBe(200);
     const manifest = await res.json();
     expect(manifest).toMatchObject({
-      name: 'Portal NOC Terpusat',
-      short_name: 'Tyio NOC',
+      name: 'Network Problem Report',
+      short_name: 'NPR',
       start_url: '/',
       display: 'standalone',
       lang: 'id',
@@ -209,7 +238,7 @@ test.describe('aplikasi bisa dipasang (PWA)', () => {
     await context.setOffline(true);
     await page.reload();
     // Tanpa jaringan sesi tidak bisa diperiksa, jadi yang tampil halaman login dari cache.
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Portal NOC Terpusat');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Network Problem Report');
     await context.setOffline(false);
   });
 });

@@ -1,4 +1,4 @@
-import type { Overview } from '@tyio/shared';
+import type { Overview } from '@npr/shared';
 import { apiRequest } from '../../api';
 
 // Overview (langkah 2.1). Cakupan customer diperiksa server; setiap angka membawa saringan

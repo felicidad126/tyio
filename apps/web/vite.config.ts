@@ -15,12 +15,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo-tm.png'],
       manifest: {
         id: '/',
-        name: 'Portal NOC Terpusat',
-        short_name: 'Tyio NOC',
-        description: 'Portal NOC: alert, tiket NPR/TT, Gamas, dan remote dalam satu tempat.',
+        // Sama dengan APP_NAME dan APP_SHORT_NAME di @npr/shared (T163); diuji di shell.spec.ts.
+        name: 'Network Problem Report',
+        short_name: 'NPR',
+        description: 'Network Problem Report (NPR) PT. Tangara Mitrakom: tiket NPR dan TT, remote, dan ringkasan NOC.',
         lang: 'id',
         dir: 'ltr',
         start_url: '/',
@@ -45,12 +46,12 @@ export default defineConfig({
     }),
   ],
   server: {
-    // `pnpm --filter @tyio/web dev`: permintaan /api diteruskan ke API yang sedang jalan,
+    // `pnpm --filter @npr/web dev`: permintaan /api diteruskan ke API yang sedang jalan,
     // bawaan stack dev dari `pnpm dev:up`. Satu origin, sama seperti di image.
     // Header Host tidak diganti (changeOrigin: false) agar pemeriksaan origin di API
     // (SameOriginGuard) melihat host yang sama dengan header Origin dari peramban.
     proxy: {
-      '/api': { target: process.env.TYIO_API_URL ?? 'http://localhost:8080', changeOrigin: false },
+      '/api': { target: process.env.NPR_API_URL ?? 'http://localhost:8080', changeOrigin: false },
     },
   },
 });

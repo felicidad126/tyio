@@ -1,7 +1,7 @@
 import { type INestApplication, RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants.js';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
-import { API_PREFIX } from '@tyio/shared';
+import { API_PREFIX } from '@npr/shared';
 import { TENANCY_KEY, type Tenancy } from '../src/common/tenant/tenancy.js';
 import { IS_PUBLIC_KEY } from '../src/modules/auth/auth-request.js';
 

@@ -1,5 +1,5 @@
 import { Controller, Inject, Module, type MessageEvent, Req, Sse } from '@nestjs/common';
-import { STREAM_EVENTS, type StreamBeat, type StreamHello, type TicketChangeEvent } from '@tyio/shared';
+import { STREAM_EVENTS, type StreamBeat, type StreamHello, type TicketChangeEvent } from '@npr/shared';
 import { concatMap, filter, from, interval, map, merge, type Observable, of, Subject, takeUntil, tap } from 'rxjs';
 import { APP_CONFIG } from '../../config.module.js';
 import type { AppConfig } from '../../config.js';

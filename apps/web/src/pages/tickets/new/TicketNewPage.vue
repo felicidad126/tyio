@@ -7,7 +7,7 @@ import {
   TICKET_DESCRIPTION_MAX_LENGTH,
   TICKET_STARTED_MAX_AGE_DAYS,
   type TicketSummary,
-} from '@tyio/shared';
+} from '@npr/shared';
 import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageHeader from '../../../components/PageHeader.vue';

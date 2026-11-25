@@ -1,4 +1,4 @@
-import { APP_NAME, type Role, type SessionUser } from '@tyio/shared';
+import { APP_NAME, type Role, type SessionUser } from '@npr/shared';
 import type { Component } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import { setUnauthorizedHandler } from '../api';

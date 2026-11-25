@@ -1,4 +1,9 @@
-export const APP_NAME = 'Portal NOC Terpusat';
+/** Nama aplikasi (T163): judul halaman, login, dan nama saat dipasang (PWA). */
+export const APP_NAME = 'Network Problem Report';
+/** Nama pendek (T163): sidebar dan ikon aplikasi. */
+export const APP_SHORT_NAME = 'NPR';
+/** Pemilik aplikasi (T165): login, sidebar, dan kaki halaman. */
+export const COMPANY_NAME = 'PT. Tangara Mitrakom';
 
 /** Semua endpoint API berada di bawah prefix ini; sisanya milik aplikasi web. */
 export const API_PREFIX = 'api';

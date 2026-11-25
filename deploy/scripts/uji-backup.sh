@@ -18,10 +18,10 @@ require_commands psql pg_dump pg_restore gpg tar diff
 url_for() { echo "${BASH_REMATCH[1]}/$1${BASH_REMATCH[4]}"; }
 
 suffix="$(date -u +%Y%m%d%H%M%S)_$$"
-source_db="tyio_uji_sumber_$suffix"
+source_db="npr_uji_sumber_$suffix"
 source_url=$(url_for "$source_db")
 work=$(mktemp -d)
-keys=$(mktemp -d /tmp/tyio-uji-kunci.XXXXXX)
+keys=$(mktemp -d /tmp/npr-uji-kunci.XXXXXX)
 admin=("${PSQL_ARGS[@]}" "$UJI_SERVER_URL")
 writer_pid=""
 cleanup() {
@@ -64,9 +64,9 @@ expect_failure() {
 make_key() {
   local name="$1"
   GNUPGHOME="$keys/gnupg" gpg --batch --quiet --passphrase '' \
-    --quick-gen-key "Tyio Uji $name <uji-$name@tyio.invalid>" future-default default never 2>/dev/null
+    --quick-gen-key "NPR Uji $name <uji-$name@npr.invalid>" future-default default never 2>/dev/null
   local fpr
-  fpr=$(GNUPGHOME="$keys/gnupg" gpg --list-keys --with-colons "uji-$name@tyio.invalid" | awk -F: '/^fpr/ { print $10; exit }')
+  fpr=$(GNUPGHOME="$keys/gnupg" gpg --list-keys --with-colons "uji-$name@npr.invalid" | awk -F: '/^fpr/ { print $10; exit }')
   GNUPGHOME="$keys/gnupg" gpg --armor --export "$fpr" >"$keys/$name-public.asc"
   GNUPGHOME="$keys/gnupg" gpg --batch --pinentry-mode loopback --passphrase '' --armor \
     --export-secret-keys "$fpr" >"$keys/$name-private.asc"
@@ -101,7 +101,7 @@ CREATE TABLE remotes (
 CREATE TABLE kejadian (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, catatan text);
 CREATE FUNCTION tolak_tanpa_konteks() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF coalesce(current_setting('tyio.source', true), '') = '' THEN
+  IF coalesce(current_setting('npr.source', true), '') = '' THEN
     RAISE EXCEPTION 'tanpa konteks';
   END IF;
   RETURN NEW;
@@ -147,7 +147,7 @@ GNUPGHOME="$keys/gnupg" gpg --batch --quiet --pinentry-mode loopback --passphras
   tar -C "$work/ubah" -xf -
 awk -F'\t' 'BEGIN { OFS = "\t" } $1 == "remotes" { $2 = $2 + 1 } { print }' "$work/ubah/manifest.tsv" >"$work/ubah/m" &&
   mv "$work/ubah/m" "$work/ubah/manifest.tsv"
-tar -C "$work/ubah" -cf - tyio.dump manifest.tsv info.txt |
+tar -C "$work/ubah" -cf - npr.dump manifest.tsv info.txt |
   GNUPGHOME="$keys/gnupg" gpg --batch --quiet --trust-model always --recipient-file "$keys/utama-public.asc" \
     --encrypt --output "$work/beda.tar.gpg"
 check "isi yang tidak cocok dengan manifest terdeteksi" expect_failure "TIDAK COCOK" drill "$work/beda.tar.gpg"
@@ -158,12 +158,12 @@ check "restore ke database berisi ditolak" expect_failure "tidak kosong" \
 
 # 7. Backup lama dihapus setelah backup baru berhasil; yang baru tetap ada.
 mkdir -p "$work/c"
-touch -d '40 days ago' "$work/c/tyio-uji-20000101T000000Z.tar.gpg"
-touch -d '2 days ago' "$work/c/tyio-uji-20000102T000000Z.tar.gpg"
+touch -d '40 days ago' "$work/c/npr-uji-20000101T000000Z.tar.gpg"
+touch -d '2 days ago' "$work/c/npr-uji-20000102T000000Z.tar.gpg"
 run_backup "$source_url" "$work/c" >/dev/null
 check "backup lebih dari 30 hari dihapus, yang lebih baru disimpan" bash -c "
-  [[ ! -e '$work/c/tyio-uji-20000101T000000Z.tar.gpg' && -e '$work/c/tyio-uji-20000102T000000Z.tar.gpg' ]] &&
-  (( \$(find '$work/c' -name 'tyio-uji-*.tar.gpg' | wc -l) == 2 ))"
+  [[ ! -e '$work/c/npr-uji-20000101T000000Z.tar.gpg' && -e '$work/c/npr-uji-20000102T000000Z.tar.gpg' ]] &&
+  (( \$(find '$work/c' -name 'npr-uji-*.tar.gpg' | wc -l) == 2 ))"
 
 # 8. Berkas backup hanya bisa dibaca pemiliknya.
 check "berkas backup bermode 600" bash -c "[[ \$(stat -c %a '$first') == 600 ]]"
