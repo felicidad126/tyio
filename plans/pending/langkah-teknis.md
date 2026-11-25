@@ -260,6 +260,13 @@ Langkah 1.4 dikerjakan di branch `claude/blissful-knuth-v3zkyn` (jawaban user 20
 | T153 | **Seed: remote dummy diberi koordinat acak-tetap ±0,06° di daratan dekat kotanya; setiap remote ke-20 tanpa koordinat** (12 dari 241). Remote seed yang sudah ada di database tidak diubah (tetap `ON CONFLICT DO NOTHING`); database dev lama perlu dibuat ulang untuk melihat titik seed | Peta dan T143 terlihat di staging; data yang mungkin sudah diubah admin tidak ditimpa |
 | T154 | **Uji kelancaran ribuan titik di uji layar `map`:** jawaban API diganti 5.000 titik buatan; lokal tampil ±0,3 detik, 16 penanda, tugas terpanjang <0,1 detik. Batas uji dibuat longgar (5 detik, 150 penanda, tugas 0,5 detik) agar tidak rapuh di CI | Kriteria "lancar dengan ribuan titik"; data API asli untuk 5.000 remote sudah diuji di 1.2 |
 
+**Keputusan yang diambil saat 1.7 disederhanakan** (T155–T156 keputusan user 2026-11-25):
+
+| # | Keputusan | Alasan |
+| --- | --- | --- |
+| T155 | **1.7 tanpa High Availability: produksi di satu server milik user.** Tidak ada server kedua, replika database, atau latihan failover; backup harian terenkripsi dan latihan restore (0.6) tetap berlaku | Keputusan user 2026-11-25 ("tidak perlu rumit sampai produksi High Availability") |
+| T156 | **Pemasangan dijalankan agen browser milik user** dengan prompt serah-terima yang disiapkan di sesi ini; sesi cloud ini tidak bisa SSH ke server. Hasil dan kebutuhan dari server dilaporkan balik oleh user | Keputusan user 2026-11-25 |
+
 Perintah verifikasi yang dipakai di bawah: `pnpm test:api <pola>` (uji API),
 `pnpm e2e <berkas>` (uji layar), `pnpm lint`, `pnpm build`.
 
@@ -349,8 +356,8 @@ Selesai bila: satu gangguan tercatat dari awal sampai ditutup tanpa sistem lama.
 - Berkas: `apps/api/src/db/migrations/1795540000000-ticket-close.ts`, `apps/web/src/pages/tickets/detail/CloseDialog.vue`, `apps/web/src/pages/remotes/RemoteTicketHistory.vue`
 - Menunggu: 1.4
 
-**1.7 Produksi pertama (M)**
-- Terima: dua server dengan replika database; latihan pindah ke server cadangan berhasil; pemantauan dari luar aktif; TLS di semua koneksi.
+**1.7 Produksi pertama (M)** — disederhanakan menjadi satu server tanpa HA (T155)
+- Terima (T155): satu server; aplikasi, database, dan backup harian terenkripsi berjalan; HTTPS di depan aplikasi; uji asap produksi lulus di server. ~~Dua server dengan replika database; latihan pindah ke server cadangan; pemantauan dari luar~~ dihapus.
 - Verifikasi: `deploy/scripts/latihan-failover.sh` + uji asap di produksi
 - Berkas: `deploy/compose.prod.yml`, `docs/operasi/{rilis,failover}.md`
 - Menunggu: 0.6, 1.6 · **Butuh: server produksi**
