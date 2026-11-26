@@ -235,6 +235,10 @@ nama bank fiktif):
   demonya. **Harus dijalankan sebelum data asli mulai dicatat.**
 - `review/uji/isi-data-uji.mjs` dihapus karena sudah digantikan `demo.js`.
 
+`REVIEW-NPR.md` (baris 230 dan 628) masih memuat password demo lama dari kode asli, sebagai
+bukti temuan. Pengguna sudah memastikan akun di server tidak memakai password itu (27 November
+2026), jadi teksnya dibiarkan. Tidak perlu ditanyakan lagi.
+
 Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 - Pengguna boleh melihat isi cadangan pukul 14:51 bila ingin memastikan customer dan remote yang
   hilang antara 14:51 dan 18:09. Kemungkinan besar itu data uji yang sengaja dihapus.
