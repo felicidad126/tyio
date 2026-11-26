@@ -2,21 +2,22 @@
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
 percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
-commit `e60a767`, dipasang otomatis (build ulang) oleh cron pembaruan; lihat bagian 6.
+commit `6f8da70`, dipasang otomatis (build ulang) oleh cron pembaruan; lihat bagian 6.
 
-## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 03.05 WIB)
+## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 04.00 WIB)
 
 Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan terpasang di server.
 
 **Langkah pertama sesi baru:**
 
 1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
-   dengan `origin`. Saat serah terima, HEAD = commit "Catat pemecahan bundel dan pemasangan
-   otomatis pertama" (atau yang lebih baru dari sesi lain).
-2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"e60a767"}`.
-   Commit dokumen sesudahnya dipasang tanpa build, jadi versinya tetap `e60a767`.
+   dengan `origin`. Saat serah terima, HEAD = commit "Catat review UI/UX dan paket C" (atau yang
+   lebih baru dari sesi lain).
+2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"6f8da70"}`.
+   Commit dokumen sesudahnya dipasang tanpa build, jadi versinya tetap `6f8da70`.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
-   branch `Rev-NPR-Tyio`. Run #1–#8 hijau. Run untuk commit serah terima ini belum dicek saat
+   branch `Rev-NPR-Tyio`. Run #1–#13 hijau, kecuali #12 yang dibatalkan push berikutnya
+   (`cancel-in-progress`, wajar). Run untuk commit serah terima ini belum dicek saat
    menulis.
 4. Tanyakan pengguna apa yang ingin dikerjakan.
 
@@ -28,6 +29,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 | Commit | Isi | Bukti |
 |---|---|---|
+| `de98db7`, `6f8da70` | Review UI/UX paket C (rapikan kecil): warna durasi seragam dan durasi di kartu HP, Pending kosong untuk NPR Closed (daftar dan detail), "selisih … poin persen" di SLA, judul "TT Gamas", telepon PIC `tel:`, Data Site di antara Riwayat dan form di HP, "(opsional)", `aria-label` dropdown, ring fokus 2 px, angka+satuan durasi tidak terpisah, konfirmasi Batal NPR Baru, tombol × pencarian, filter Status "Aktif (belum Closed)" | Uji browser 53/53, `test:api` 51/51. Terpasang otomatis 03.55 WIB |
 | `e60a767` | Bundel dipecah per halaman (`components/halaman.tsx`, chunk React terpisah, penjaga 500 KB di CI); grafik Dashboard di atas NPR Aktif | Uji browser 45/45, `test:api` 50/50. JS awal di server 652 → 420 KB (188 → 132 KB gzip). Terpasang otomatis 03.00 WIB, 3,5 menit setelah CI hijau |
 | `d3299dd` | Kategori pending hanya TM dan Customer: "Belum Dikategorikan" dihapus, NPR baru Pending TM, pengingat saat pindah ke Pending Customer, migrasi `0003` | `test:api` 50/50, uji browser 42/42 (laptop dan Pixel 7). Migrasi diuji pada database buatan kode lama: SLA tidak berubah. Server: terpasang lewat agent 02.30 WIB, log "Migrasi dijalankan: 0003_pending_tm.sql", cek h–k lulus |
 | `e94efc4` | `review/uji/uji-browser.cjs`; lima pemeriksaan yang tertunda | Lulus lokal, lalu lulus di server (agent, `PROMPT-DATA-DEMO.md` a–h) |
@@ -205,7 +207,7 @@ yang job ini lulus, jadi **jangan mengganti nama job** tanpa mengganti `NAMA_CEK
 `perbarui-otomatis.sh`. Workflow proyek lama `ci.yml` dimatikan untuk branch ini lewat
 `branches-ignore`; dulu selalu gagal di branch ini karena memeriksa proyek lama. Run pertama
 (commit `fe417ad`, 27 November 2026) lulus dalam 2 menit 40 detik: uji browser 38/38, `test:api`
-49/49, image Docker sehat dengan versi commit. Sejak `e60a767`: uji browser 45/45, `test:api` 50/50.
+49/49, image Docker sehat dengan versi commit. Sejak `6f8da70`: uji browser 53/53, `test:api` 51/51.
 
 Pemeriksaan yang sama bisa dijalankan lokal dari folder `monitoring-vsat/`:
 
@@ -213,7 +215,7 @@ Pemeriksaan yang sama bisa dijalankan lokal dari folder `monitoring-vsat/`:
 npx tsc -b && npm run lint && npx prettier --check src
 npm run build && npm run build:server
 npm run setup                     # database lokal wrangler
-TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> npm run test:api   # harus 50/50
+TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> npm run test:api   # harus 51/51
 ```
 
 Server lokal untuk uji, dengan database uji yang terpisah:
@@ -231,7 +233,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   ```bash
   DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 45/45
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 53/53
   ```
 
   `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
@@ -240,10 +242,13 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   Gangguan Terakhir di Remote (1920 px), kategori pending hanya TM atau Customer beserta
   pengingat Pending Customer (laptop dan HP, form tidak dikirim), grafik Dashboard di atas NPR
   Aktif (1366 dan 1920 px), berkas halaman yang hilang (chunk SLA diblokir: unduhan latar tidak
-  memuat ulang, membuka halaman memuat ulang sekali lalu pesan), serta kartu di HP. Tangkapan
-  layar dan PDF disimpan di `UJI_OUT`.
-- **Hasil terakhir (27 November 2026, `e60a767`):**
-  - `uji-browser.cjs` 45/45 di atas data demo, tanpa galat konsol, lalu `test:api` 50/50.
+  memuat ulang, membuka halaman memuat ulang sekali lalu pesan), paket C review UI/UX (warna
+  durasi, filter Aktif, tombol × pencarian, konfirmasi Batal, `tel:` PIC, dropdown bernama, Pending
+  kosong di NPR Closed, durasi di kartu HP, Data Site di HP), serta kartu di HP. Tangkapan layar
+  dan PDF disimpan di `UJI_OUT`. Durasi memakai spasi tak terpisah (`\u00a0`) antara angka dan
+  satuan; di regex uji pakai `\s`, bukan spasi biasa.
+- **Hasil terakhir (27 November 2026, `6f8da70`):**
+  - `uji-browser.cjs` 53/53 di atas data demo, tanpa galat konsol, lalu `test:api` 51/51.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
 - **Folder `server/` tidak dicek `tsc -b`** (tidak ada di tsconfig mana pun, hanya di-build
@@ -261,8 +266,9 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `e60a767`, sehat. Dipasang otomatis 27 November 2026 pukul 03.00
-  WIB (build ulang, pertama kali lewat cron), 3,5 menit setelah CI hijau. Sebelumnya `dc554a4`
+- **Commit yang berjalan:** `6f8da70`, sehat. Dipasang otomatis 27 November 2026 pukul 03.55
+  WIB, 4 menit setelah CI hijau. Pemasangan otomatis dengan build pertama: `e60a767` pukul 03.00
+  WIB. Sebelumnya `dc554a4`
   dipasang manual lewat agent pukul 02.30 WIB karena migrasi `0003` (cadangan
   `npr-20261127-0230.sqlite`).
 - **Cek dari sesi Claude:** `curl -s https://kp.helonoia.com/api/health` bisa dijalankan dari
@@ -369,8 +375,24 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 - Dokumen diagram laporan KP sudah disesuaikan dengan kategori pending dan pemuatan halaman
   (`9da89d7`). `PROMPT-UJI-BROWSER.md` ditulis ulang sesuai tampilan sekarang (label, kategori
   pending, alamat per halaman, HP); semua langkahnya sudah dicoba di server lokal berisi data demo.
-  Temuan kecil yang belum dikerjakan: kotak Pending di detail NPR yang sudah Closed masih bertulis
-  "Menunggu tindakan TM".
+  Kotak Pending di detail NPR Closed sudah diperbaiki (`6f8da70`). Prompt itu belum memuat
+  langkah untuk perubahan paket C (filter Aktif, tombol ×, konfirmasi Batal, `tel:`).
+
+**Review UI/UX 27 November 2026** (dari pengguna, akun Admin, desktop ±1500 px dan HP 375 px).
+Semua temuan Tinggi sudah dicocokkan dengan kode dan memang ada. Pengguna memilih paket C saja;
+paket lain menunggu keputusan:
+
+| Paket | Temuan | Status |
+|---|---|---|
+| A. Data benar | T4: tab Close masih menampilkan Status Remote dan "Pending oleh", "Kembali Online" terisi jam sekarang, tombol generik "Simpan Tindakan", catatan info di bawah; tab Eskalasi masih menampilkan pilihan Pending lama (server tetap menyimpan TM). T1: NPR Baru tidak memperingatkan site yang masih punya NPR aktif (`npr_aktif` sudah ada di data remote) | Belum. **Jangan** ikuti saran "setel Status Remote ke normal/online" saat Close: nilai itu menimpa kolom Gangguan NPR. Lebih tepat sembunyikan |
+| B. Navigasi | T3: baris tabel `<tr onClick>`, tidak bisa buka tab baru atau dipakai keyboard (pakai pola `<a>` seperti sidebar). T2: filter, cari, urutan, halaman hilang saat Back (hanya `?kondisi=` di alamat; `param` hanya satu nilai). S1: buka TT pindah ke menu NPR | Belum |
+| C. Rapikan kecil | S4, S5 sebagian, R3, R4, R5, R6, R8, R9, R10 | Selesai (`de98db7`, `6f8da70`). R8 tooltip site Gamas sudah ada sebelumnya |
+| D. Fitur baru | S2 (hubungan NPR–Gamas–Remote), S3 (rincian SLA per site; catatan "belum dihitung SLA" di NPR tanpa TT), S6 (satukan cara menutup NPR dan Gamas), R1 (skeleton), R2 (cari Site ID di NPR Baru), R7 (huruf 12 → 13–14 px) | Belum; bahas satu per satu |
+
+Catatan dari review yang sengaja tidak diikuti: "17,29% di bawah target" salah hitung (selisih
+poin persen, bukan persen), jadi ditulis "selisih 17,29 poin persen". Kolom "Pending" tetap
+bernama Pending (istilah kerja pengguna, keputusan P-1). Status bahasa Inggris (Open, Pending,
+Closed) vs Gamas "Ditangani" belum diubah (D-8: istilah kerja tetap).
 
 ## 8. Dokumen lain di `review/`
 
