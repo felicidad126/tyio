@@ -1,6 +1,6 @@
 # Redesain Tampilan NPR: Catatan Serah Terima
 
-Status: **prototipe selesai untuk semua halaman**. Prototipe belum dipindahkan ke aplikasi.
+Status: **sudah dipindahkan ke aplikasi** dengan opsi (a) Tailwind + shadcn/ui (lihat bagian 6). Prototipe tetap disimpan sebagai acuan.
 
 - Prototipe: [`../redesain-npr/`](../redesain-npr/). Buka `redesain-npr/redesain-npr.html` di browser.
 - Aplikasi yang akan diubah: [`../monitoring-vsat/`](../monitoring-vsat/).
@@ -67,7 +67,7 @@ Semua halaman daftar memakai komponen yang sama dari `src/components/tabel.tsx`.
 
 Isian tanggal di semua form bisa **diketik** (dd/mm/yyyy, garis miring otomatis) **atau dipilih dari kalender**. Bulan dipilih dari dropdown, tahun diketik. Jam memakai format 24 jam WIB, misalnya `0905` menjadi `09:05`.
 
-## 5. Yang perlu disiapkan saat dipindahkan ke aplikasi
+## 5. Yang perlu disiapkan saat dipindahkan ke aplikasi (sudah dikerjakan, lihat bagian 6)
 
 Beberapa angka di prototipe dihitung dari data contoh di browser. Di aplikasi asli, angka ini perlu dihitung di server:
 
@@ -80,11 +80,30 @@ Beberapa angka di prototipe dihitung dari data contoh di browser. Di aplikasi as
 | Pengguna | NPR dicatat, TT dibuat, tindakan bulan ini, tindakan terakhir | Hitung dari `actions` dan `nprs` berdasarkan `user_id`. |
 | Laporan SLA | Ringkasan (rata-rata, jumlah di bawah target, total downtime) | Bisa dihitung dari `rows` yang sudah dikirim `/api/sla`. |
 
-## 6. Keputusan yang belum diambil
+## 6. Pemindahan ke aplikasi (opsi a: Tailwind + shadcn/ui)
 
-**Cara memindahkan desain ke `monitoring-vsat`:**
+Keputusan: **opsi (a)**. Tampilan `monitoring-vsat` sekarang memakai komponen yang sama dengan prototipe.
 
-- **(a) Tailwind + shadcn/ui**, sama dengan prototipe. Kode komponen bisa dipakai hampir langsung dan hasilnya paling mirip. Kekurangannya, perubahan besar di `App.tsx` dan `App.css` serta dependensi bertambah.
-- **(b) Tetap memakai CSS yang ada** (`App.css`). Dependensinya sama seperti sekarang, tapi setiap komponen dan detail (kalender, dropdown, popover) harus ditulis ulang.
+| Bagian | Isi |
+|---|---|
+| Fondasi | Tailwind 3.4 (`tailwind.config.cjs`, `postcss.config.js`), komponen shadcn/ui yang dipakai saja (`src/components/ui/`), alias `@/` di `vite.config.ts` dan `tsconfig.app.json`. Huruf Plus Jakarta Sans dan JetBrains Mono disajikan sendiri lewat `@fontsource` (tidak memanggil Google Fonts). |
+| Kerangka | `src/App.tsx`: cek sesi, sidebar, breadcrumb, menu akun, fungsi `kirim` bersama (`src/lib/app.ts`), notifikasi sonner. |
+| Halaman | `src/pages/`: Login, Ganti Password, Dashboard, NPR (daftar, baru, detail), Trouble Ticket, Gamas, Laporan SLA, Customer dan Remote (`Master.tsx`), Pengguna. |
+| Tipe data | `src/lib/tipe.ts`, sesuai respons `/api/*`. |
+| Dihapus | `src/App.css`, `src/komponen.tsx`, `src/Pengguna.tsx` lama. |
 
-Setelah pemindahan, jalankan pemeriksaan yang sama seperti tahap sebelumnya: build, lint, setup, test:api, dan browser (laptop dan HP). Setelah itu buat prompt pembaruan server untuk kp.helonoia.com.
+Perubahan server (tanpa migrasi database):
+
+- `GET /api/nprs`: parameter `urut` (`nomor`, `customer`, `gangguan`, `mulai`, `status`, `pending`) dan `arah` (`naik`/`turun`). Hanya nilai dari daftar tetap yang dipakai, nilai lain diabaikan.
+- `GET /api/master`: per customer `npr_aktif` dan `npr_bulan_ini`; per remote juga NPR terakhir (`npr_terakhir_*`).
+- `GET /api/users`: `npr_dicatat`, `tt_dibuat`, `tindakan_bulan_ini`, `tindakan_terakhir_*`.
+- `GET /api/gamas`: `site_ids`. `GET /api/dashboard`: Gamas aktif ikut `started_at` dan `site_count`.
+
+Trouble Ticket, Gamas, SLA, Customer, Remote, dan Pengguna dikirim server sekaligus (maks. 500 baris), jadi cari, filter, urut, dan halaman dikerjakan di browser. Hanya daftar NPR yang dibagi per halaman di server.
+
+Hasil pemeriksaan:
+- `tsc`, lint, Prettier, build, dan `setup` lolos.
+- `test:api` lolos 49/49.
+- Uji browser di server lokal mencakup login, tambah customer/remote, NPR baru, Problem, Eskalasi, Report Teknisi dengan lampiran, Close, PDF TT dan Gamas, Ekspor CSV, TT Gamas baru dan tutup, SLA, Customer → Remote, tambah dan nonaktifkan akun, serta Ganti Password. Hasilnya lolos, dan HP tidak melebar.
+
+Pembaruan server: lihat [`PROMPT-PERBARUI-SERVER.md`](PROMPT-PERBARUI-SERVER.md).

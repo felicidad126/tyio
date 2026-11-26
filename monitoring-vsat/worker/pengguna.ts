@@ -118,10 +118,28 @@ export async function pengguna(
   if (user.peran !== "admin") gagal("Menu ini hanya untuk admin.", 403);
 
   if (path === "/api/users" && request.method === "GET") {
+    // Angka aktivitas per akun, dihitung dari riwayat NPR dan TT Gamas.
+    const bulan = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 7);
     const hasil = await db
       .prepare(
-        "SELECT id, username, full_name, peran, aktif, created_at FROM users WHERE password_hash <> '!' ORDER BY aktif DESC, full_name",
+        `WITH tindakan AS (
+           SELECT a.user_id, a.occurred_at AS at, a.kind AS jenis, n.number AS ref
+             FROM actions a JOIN nprs n ON n.id = a.npr_id
+           UNION ALL
+           SELECT g.user_id, g.occurred_at, 'Perkembangan Gamas', m.number
+             FROM gamas_actions g JOIN gamas m ON m.id = g.gamas_id
+         )
+         SELECT u.id, u.username, u.full_name, u.peran, u.aktif, u.created_at,
+           (SELECT COUNT(*) FROM nprs n WHERE n.user_id = u.id) AS npr_dicatat,
+           (SELECT COUNT(*) FROM actions a WHERE a.user_id = u.id AND a.kind = 'Eskalasi Service') AS tt_dibuat,
+           (SELECT COUNT(*) FROM tindakan t WHERE t.user_id = u.id
+             AND strftime('%Y-%m', t.at, '+7 hours') = ?) AS tindakan_bulan_ini,
+           (SELECT jenis FROM tindakan t WHERE t.user_id = u.id ORDER BY t.at DESC LIMIT 1) AS tindakan_terakhir_jenis,
+           (SELECT ref FROM tindakan t WHERE t.user_id = u.id ORDER BY t.at DESC LIMIT 1) AS tindakan_terakhir_ref,
+           (SELECT at FROM tindakan t WHERE t.user_id = u.id ORDER BY t.at DESC LIMIT 1) AS tindakan_terakhir_at
+         FROM users u WHERE u.password_hash <> '!' ORDER BY u.aktif DESC, u.full_name`,
       )
+      .bind(bulan)
       .all();
     return { users: hasil.results };
   }

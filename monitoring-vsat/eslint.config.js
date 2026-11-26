@@ -19,4 +19,10 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Pustaka komponen bersama (shadcn/ui dan komponen NPR) sengaja juga
+    // mengekspor fungsi bantu (mis. buttonVariants, waktu, urutkan).
+    files: ["src/components/**/*.{ts,tsx}"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
 ]);

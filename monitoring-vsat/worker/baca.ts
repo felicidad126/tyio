@@ -70,7 +70,24 @@ async function daftarNpr(db: DB, q: URLSearchParams) {
     syarat.push(KONDISI[kondisi]);
   }
   const where = syarat.length ? `WHERE ${syarat.join(" AND ")}` : "";
-  const urut = q.get("urut") === "terlama" ? "n.started_at ASC" : "n.id DESC";
+  // Urutan dari kepala kolom tabel. Nilai lain diabaikan (aman dari injeksi
+  // karena hanya kolom di daftar ini yang dipakai).
+  const KOLOM_URUT: Record<string, string> = {
+    nomor: "n.number",
+    customer: "c.name",
+    gangguan: "n.remote_status",
+    mulai: "n.started_at",
+    status:
+      "CASE n.status WHEN 'OPEN' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'ESKALASI' THEN 2 ELSE 3 END",
+    pending: "CASE n.pending_by WHEN '' THEN 'zzz' ELSE n.pending_by END",
+  };
+  const arah = q.get("arah") === "naik" ? "ASC" : "DESC";
+  const urut =
+    q.get("urut") === "terlama"
+      ? "n.started_at ASC"
+      : KOLOM_URUT[q.get("urut") ?? ""]
+        ? `${KOLOM_URUT[q.get("urut")!]} ${arah}, n.id DESC`
+        : "n.id DESC";
 
   // Ekspor CSV mengambil semua hasil filter sekaligus (dibatasi 5.000 baris).
   const ekspor = q.get("ekspor") === "1";
@@ -151,7 +168,9 @@ async function dashboard(db: DB) {
       )
       .bind(awal),
     db.prepare(
-      "SELECT id, number, location, status FROM gamas WHERE status <> 'CLOSED' ORDER BY started_at",
+      `SELECT id, number, location, status, started_at,
+         (SELECT COUNT(*) FROM gamas_sites s WHERE s.gamas_id = gamas.id) AS site_count
+       FROM gamas WHERE status <> 'CLOSED' ORDER BY started_at`,
     ),
     db.prepare(
       `SELECT ${KOLOM_NPR} ${SUMBER_NPR} WHERE ${KONDISI.aktif} ORDER BY n.started_at ASC LIMIT 10`,
@@ -198,7 +217,9 @@ async function daftarGamas(db: DB) {
   const hasil = await db
     .prepare(
       `SELECT g.id, g.number, g.location, g.notes, g.started_at, g.online_at, g.closed_at, g.status, g.report,
-         (SELECT COUNT(*) FROM gamas_sites s WHERE s.gamas_id = g.id) AS site_count
+         (SELECT COUNT(*) FROM gamas_sites s WHERE s.gamas_id = g.id) AS site_count,
+         (SELECT GROUP_CONCAT(r.site_id, ', ') FROM gamas_sites s JOIN remotes r ON r.id = s.remote_id
+           WHERE s.gamas_id = g.id) AS site_ids
        FROM gamas g ORDER BY g.id DESC LIMIT 500`,
     )
     .all();
@@ -232,11 +253,35 @@ async function detailGamas(db: DB, id: number) {
 }
 
 async function master(db: DB) {
+  // Angka ringkas per customer dan per remote untuk tabel Data Master.
+  // "Bulan ini" memakai bulan WIB berjalan.
+  const bulan = tanggalWIB().slice(0, 7);
   const [customers, remotes] = await db.batch([
-    db.prepare(
-      "SELECT c.*, (SELECT COUNT(*) FROM remotes r WHERE r.customer_id = c.id) AS remote_count FROM customers c ORDER BY c.name",
-    ),
-    db.prepare("SELECT * FROM remotes ORDER BY site_id"),
+    db
+      .prepare(
+        `SELECT c.*,
+           (SELECT COUNT(*) FROM remotes r WHERE r.customer_id = c.id) AS remote_count,
+           (SELECT COUNT(*) FROM nprs n JOIN remotes r ON r.id = n.remote_id
+             WHERE r.customer_id = c.id AND n.status <> 'CLOSED') AS npr_aktif,
+           (SELECT COUNT(*) FROM nprs n JOIN remotes r ON r.id = n.remote_id
+             WHERE r.customer_id = c.id AND strftime('%Y-%m', n.started_at, '+7 hours') = ?) AS npr_bulan_ini
+         FROM customers c ORDER BY c.name`,
+      )
+      .bind(bulan),
+    db
+      .prepare(
+        `SELECT r.*,
+           (SELECT COUNT(*) FROM nprs n WHERE n.remote_id = r.id AND n.status <> 'CLOSED') AS npr_aktif,
+           (SELECT COUNT(*) FROM nprs n WHERE n.remote_id = r.id
+             AND strftime('%Y-%m', n.started_at, '+7 hours') = ?) AS npr_bulan_ini,
+           t.number AS npr_terakhir_number, t.status AS npr_terakhir_status,
+           t.remote_status AS npr_terakhir_gangguan, t.started_at AS npr_terakhir_mulai,
+           t.online_at AS npr_terakhir_online
+         FROM remotes r
+         LEFT JOIN nprs t ON t.id = (SELECT id FROM nprs WHERE remote_id = r.id ORDER BY started_at DESC, id DESC LIMIT 1)
+         ORDER BY r.site_id`,
+      )
+      .bind(bulan),
   ]);
   return { customers: customers.results, remotes: remotes.results };
 }
