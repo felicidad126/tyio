@@ -366,10 +366,11 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
   `max-age=60` tanpa ETag (aplikasi mengirim `max-age=31536000, immutable`). Browser mengunduh
   ulang JS setiap lewat 60 detik. Perbaikannya di pengaturan situs aaPanel (cache/expires reverse
   proxy), lewat agent, bila pengguna setuju.
-- Dokumen diagram laporan KP tertinggal sejak `d3299dd`: `DIAGRAM-NPR.md` baris 128 dan 177,
-  serta `gambar/diagram/05b-enumerasi` (.drawio/.svg/.png) masih menyebut "kosong (belum
-  dikategorikan)" dan "Pending … (wajib)". Milik sesi diagram; perbarui dan render ulang bila
-  diminta.
+- Dokumen diagram laporan KP sudah disesuaikan dengan kategori pending dan pemuatan halaman
+  (`9da89d7`). `PROMPT-UJI-BROWSER.md` ditulis ulang sesuai tampilan sekarang (label, kategori
+  pending, alamat per halaman, HP); semua langkahnya sudah dicoba di server lokal berisi data demo.
+  Temuan kecil yang belum dikerjakan: kotak Pending di detail NPR yang sudah Closed masih bertulis
+  "Menunggu tindakan TM".
 
 ## 8. Dokumen lain di `review/`
 
