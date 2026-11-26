@@ -1,8 +1,8 @@
 # Serah terima sesi Claude Code: NPR (Network Problem Report)
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
-percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`, commit `3630739` (juga
-yang berjalan di server).
+percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
+commit `b00aa54`; commit sesudahnya hanya dokumen.
 
 ## 1. Proyek singkat
 
@@ -166,12 +166,17 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `3630739`, sehat (diperbarui 27 November 2026 pukul 00.47 WIB).
-  Cadangan sebelum pembaruan: `npr-20261127-0047.sqlite`.
+- **Commit yang berjalan:** `b00aa54`, sehat (diperbarui 27 November 2026 pukul 01.05 WIB,
+  pemeriksaan a–d lulus). Cadangan sebelum pembaruan: `npr-20261127-0105.sqlite`.
 - **Data:** berisi **data demo sementara** sejak 27 November 2026 pukul 00.48 WIB, dicatat atas
   nama akun admin "mimin": 6 customer, 20 remote, 50 NPR, 19 TT, 4 Gamas. Belum ada data asli.
   Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo **harus
   dihapus** (`review/PROMPT-DATA-DEMO.md` bagian B) sebelum data asli mulai dicatat.
+- **Sudah dicoba pengguna lain:** sejak 27 November pukul 01.02 WIB, akun helpdesk lain menambah
+  tindakan di NPR demo dan menutup satu NPR demo. Itu wajar untuk masa percobaan. Semua
+  NPR di site demo, termasuk tindakan mereka, ikut terhapus oleh `--hapus`. NPR yang dicatat di
+  customer asli tidak ikut terhapus, tetapi nomornya akan melanjutkan nomor demo
+  (mis. `NPR/2026/11/0027`), bukan mulai dari 0001.
 - **Cara pembaruan:** Claude tidak punya akses langsung ke server. Pembaruan dikerjakan agent
   browser milik pengguna lewat Terminal aaPanel, memakai prompt `review/PROMPT-PERBARUI-SERVER.md`:
   1. cadangan;
