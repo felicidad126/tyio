@@ -77,6 +77,7 @@ const KONFIG = {
     .edgeLabel rect.background, .edgeLabel .label rect { fill: #ffffff !important; opacity: 1 !important; }
     .edgeLabel text, .edgeLabel .label text, .edgeLabel tspan { fill: #14213d !important; }
     .cluster-label text, .cluster-label tspan { font-weight: bold; }
+    .cluster-label text { paint-order: stroke; stroke: #fafbfc; stroke-width: 6px; stroke-linejoin: round; }
     g.node circle.outer-circle { fill: #ffffff !important; stroke: #14213d !important; stroke-width: 1.5px; }
     g.node circle.inner-circle { fill: #14213d !important; stroke: #14213d !important; }
     .edgeTerminals text { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; font-size: 13px; }
@@ -180,6 +181,27 @@ for (const [i, b] of blok.entries()) {
           const label = root.querySelector(":scope > g.edgeLabels");
           if (label) root.appendChild(label);
         }
+        // Judul kelompok (subgraph) juga dipindah ke lapisan paling atas,
+        // dengan posisi yang dihitung ulang, supaya garis yang lewat di
+        // belakangnya tidak menutupi teks.
+        const svgEl = wadah.querySelector("svg");
+        const lapisan = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "g",
+        );
+        lapisan.setAttribute("class", "judul-kelompok");
+        for (const judul of svgEl.querySelectorAll("g.cluster-label")) {
+          const m = svgEl
+            .getScreenCTM()
+            .inverse()
+            .multiply(judul.getScreenCTM());
+          judul.setAttribute(
+            "transform",
+            `matrix(${m.a} ${m.b} ${m.c} ${m.d} ${m.e} ${m.f})`,
+          );
+          lapisan.appendChild(judul);
+        }
+        if (lapisan.childNodes.length) svgEl.appendChild(lapisan);
         // Ukuran asli dari viewBox, bukan lebar 100%.
         const el = wadah.querySelector("svg");
         const [, , w, h] = el.getAttribute("viewBox").split(/\s+/).map(Number);

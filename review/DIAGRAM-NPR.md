@@ -2,7 +2,7 @@
 
 Dokumen ini berisi diagram perancangan aplikasi NPR (Network Problem Report) untuk laporan Kerja
 Praktek di PT. Tangara Mitrakom. Semua isi diagram diambil dari kode di folder `monitoring-vsat/`
-pada branch `Rev-NPR-Tyio` (commit `95e957e`), bukan dari ingatan atau dokumen lama. Bila dokumen
+pada branch `Rev-NPR-Tyio` (commit `b00aa54`), bukan dari ingatan atau dokumen lama. Bila dokumen
 review berbeda dengan kode, diagram mengikuti kode dan perbedaannya dicatat di
 [bagian 6](#6-perbedaan-dokumen-dan-kode).
 
@@ -1104,6 +1104,7 @@ flowchart TB
     sMigrasi["migrasi.ts<br/>schema.sql dan migrations/"]
     sSetup["setup.ts<br/>admin pertama, reset password"]
     sCadangan["cadangan.ts<br/>salinan database"]
+    sDemo["demo.ts<br/>isi atau hapus data demo"]
   end
 
   cf["Cloudflare Workers dan D1<br/>(wrangler.jsonc)"]
@@ -1141,9 +1142,14 @@ flowchart TB
   sSetup --> sD1
   sD1 --> db
   sCadangan --> db
+  sDemo -->|"memanggil domain()"| wDomain
+  sDemo --> sMigrasi
+  sDemo --> sD1
 ```
 
-Garis putus-putus adalah jalur Cloudflare. Di Docker, `server/main.ts` mengirim alamat `/api/*` ke
+`demo.ts` adalah perintah terminal untuk mengisi data demo lewat `domain()` yang sama dengan API,
+jadi nomor, status, dan SLA data demo dihitung dengan aturan yang sama. Garis putus-putus adalah jalur
+Cloudflare. Di Docker, `server/main.ts` mengirim alamat `/api/*` ke
 `worker/index.ts` dan alamat lain ke berkas tampilan hasil build (`index.html` untuk alamat halaman).
 
 ---
@@ -1223,4 +1229,4 @@ hurufnya ikut kecil.
 | 04a sampai 04e (sequence) | 1252 sampai 1534 lebar | Satu halaman penuh |
 | 05a-class-domain | 985 × 2011 | Satu halaman penuh |
 | 05b dan 05c (enumerasi) | sekitar 830 × 300 | Selebar teks |
-| 05d-modul | 1014 × 1321 | Satu halaman penuh |
+| 05d-modul | 1241 × 1341 | Satu halaman penuh |
