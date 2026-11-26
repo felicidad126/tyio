@@ -421,6 +421,12 @@ check(
     active.rows.every((row) => row.status !== "CLOSED"),
   "NPR list filters active NPRs for the dashboard",
 );
+const statusActive = await get("/api/nprs?status=AKTIF&per=100");
+check(
+  statusActive.total === active.total &&
+    statusActive.rows.every((row) => row.status !== "CLOSED"),
+  "status filter AKTIF lists every NPR that is not closed",
+);
 const dashboard = await get("/api/dashboard");
 check(
   dashboard.grafik.length === 7 &&

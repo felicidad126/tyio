@@ -491,11 +491,11 @@ export function LaporanSla() {
                           </span>
                           {!capai && (
                             <div className="mt-0.5 pl-4 text-xs text-muted-foreground tabular-nums">
-                              kurang{" "}
+                              selisih{" "}
                               {(target - r.sla).toLocaleString("id-ID", {
                                 maximumFractionDigits: 2,
                               })}{" "}
-                              poin
+                              poin persen
                             </div>
                           )}
                         </td>

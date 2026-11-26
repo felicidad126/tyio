@@ -457,11 +457,11 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
   const selNpr = await teksSel();
   const semuaSel = [...selDashboard, ...selNpr];
   cek(
-    semuaSel.length > 0 && !semuaSel.some((t) => /(^|\n)0 jam/.test(t)),
+    semuaSel.length > 0 && !semuaSel.some((t) => /(^|\n)0\sjam/.test(t)),
     'Dashboard dan daftar NPR: tidak ada durasi "0 jam"',
     semuaSel
       .flatMap((t) => t.split("\n"))
-      .filter((t) => /\d menit/.test(t))
+      .filter((t) => /\d\smenit/.test(t))
       .slice(0, 3)
       .join("; ") || "tidak ada durasi di bawah 1 jam",
   );
@@ -544,21 +544,34 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
   await page.goto(BASE + "/npr");
   await page.waitForSelector("table tbody tr");
   await page.waitForTimeout(400);
-  const kolomPending = await page.$$eval("table thead th", (th) =>
-    th.findIndex((t) => t.innerText.trim().startsWith("Pending")),
-  );
+  const indeksKolom = (judul) =>
+    page.$$eval(
+      "table thead th",
+      (th, j) => th.findIndex((t) => t.innerText.trim().startsWith(j)),
+      judul,
+    );
+  const kolomPending = await indeksKolom("Pending");
+  const kolomStatus = await indeksKolom("Status");
+  // [status, pending] per baris. NPR Closed tidak menampilkan pihak yang
+  // ditunggu ("—"); NPR lain hanya TM atau Customer.
   const nilaiPending = await page.$$eval(
     "table tbody tr",
-    (tr, i) => tr.map((r) => r.children[i]?.innerText.trim()),
-    kolomPending,
+    (tr, [i, j]) =>
+      tr.map((r) => [
+        r.children[j]?.innerText.trim(),
+        r.children[i]?.innerText.trim(),
+      ]),
+    [kolomPending, kolomStatus],
   );
   const teksNpr = await page.locator("main").innerText();
   cek(
     !/Belum Dikategorikan|Belum Dipilih/.test(teksDashboard + teksNpr) &&
-      nilaiPending.length > 0 &&
-      nilaiPending.every((v) => v === "TM" || v === "Customer"),
-    'Dashboard dan daftar NPR tanpa "Belum Dikategorikan"; kolom Pending hanya TM atau Customer',
-    [...new Set(nilaiPending)].join(", "),
+      nilaiPending.some(([st]) => st === "Closed") &&
+      nilaiPending.every(([st, v]) =>
+        st === "Closed" ? v === "—" : v === "TM" || v === "Customer",
+      ),
+    'Dashboard dan daftar NPR tanpa "Belum Dikategorikan"; Pending hanya TM atau Customer, kosong untuk NPR Closed',
+    [...new Set(nilaiPending.map(([st, v]) => `${st}:${v}`))].join(", "),
   );
   // Sel status berisi persis "Open" (teks baris tersambung tanpa spasi).
   await page
@@ -611,8 +624,8 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     return (
       baris.length === 3 &&
       !baris[1].includes("·") &&
-      /^(Selesai dalam \d+ (menit|jam|hari)|Masih aktif$)/.test(baris[2]) &&
-      !/(^|\s)0 jam/.test(t)
+      /^(Selesai dalam \d+\s(menit|jam|hari)|Masih aktif$)/.test(baris[2]) &&
+      !/(^|\s)0\sjam/.test(t)
     );
   });
   cek(
@@ -700,6 +713,113 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
   );
   await ctxGagal.close();
 
+  // 10. Rapikan kecil dari review UI/UX (paket C).
+  // a. Daftar NPR: durasi berjalan 24 jam atau lebih berwarna (sama dengan
+  //    Dashboard), di bawah 24 jam abu-abu.
+  await page.goto(BASE + "/npr");
+  await page.waitForSelector("table tbody tr");
+  await page.waitForTimeout(400);
+  const durasiBerjalan = await page.$$eval("table tbody td div", (d) =>
+    d
+      .filter((x) => /berjalan$/.test(x.innerText.trim()))
+      .map((x) => [
+        x.innerText.trim(),
+        /text-(rose|amber)-700/.test(x.className),
+      ]),
+  );
+  cek(
+    durasiBerjalan.some(([t]) => /hari/.test(t)) &&
+      durasiBerjalan.every(([t, warna]) => /hari/.test(t) === warna),
+    "Daftar NPR: durasi berjalan 24 jam atau lebih berwarna",
+    durasiBerjalan
+      .slice(0, 3)
+      .map(
+        ([t, w]) => `${t.replaceAll("\u00a0", " ")}${w ? " (berwarna)" : ""}`,
+      )
+      .join("; "),
+  );
+  // b. Filter Status "Aktif (belum Closed)" (disaring di server).
+  await page.getByRole("button", { name: /^Filter/ }).click();
+  await page.getByRole("combobox").filter({ hasText: "Semua Status" }).click();
+  await page.getByRole("option", { name: "Aktif (belum Closed)" }).click();
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(800);
+  const statusAktif = await page.$$eval(
+    "table tbody tr",
+    (tr, j) => tr.map((r) => r.children[j]?.innerText.trim()),
+    await indeksKolom("Status"),
+  );
+  cek(
+    statusAktif.length > 0 && !statusAktif.includes("Closed"),
+    "Filter Status Aktif: hanya NPR yang belum Closed",
+    [...new Set(statusAktif)].join(", "),
+  );
+  // c. Tombol × menghapus pencarian.
+  await page.goto(BASE + "/npr");
+  const kotakCari = page.getByPlaceholder("Cari NPR, TT, Site, atau Lokasi");
+  await kotakCari.fill("zzz-tidak-ada");
+  await page.waitForTimeout(600);
+  await page.getByRole("button", { name: "Hapus pencarian" }).click();
+  await page.waitForTimeout(600);
+  cek(
+    (await kotakCari.inputValue()) === "" &&
+      (await page.getByRole("button", { name: "Hapus pencarian" }).count()) ===
+        0 &&
+      (await page.locator("table tbody tr").count()) > 1,
+    "Tombol × menghapus pencarian",
+  );
+  // d. Batal di NPR Baru: tanpa isian langsung kembali; dengan isian minta
+  //    konfirmasi, dan "Lanjut Mengisi" tidak membuang isian.
+  await page.goto(BASE + "/npr/baru");
+  await page.getByRole("button", { name: "Batal" }).click();
+  await page.waitForTimeout(400);
+  const kosongLangsung = new URL(page.url()).pathname === "/npr";
+  await page.goto(BASE + "/npr/baru");
+  await page.locator("textarea[name=notes]").fill("Uji batal");
+  await page.getByRole("button", { name: "Batal" }).click();
+  const dialogBatal = await page
+    .getByText("Buang isian NPR baru?")
+    .isVisible()
+    .catch(() => false);
+  await page.waitForTimeout(300); // tunggu animasi dialog
+  await page.screenshot({ path: path.join(OUT, "laptop-npr-batal.png") });
+  await page.getByRole("button", { name: "Lanjut Mengisi" }).click();
+  const isianTetap =
+    (await page.locator("textarea[name=notes]").inputValue()) === "Uji batal";
+  await page.getByRole("button", { name: "Batal" }).click();
+  await page.getByRole("button", { name: "Buang Isian" }).click();
+  await page.waitForTimeout(400);
+  cek(
+    kosongLangsung &&
+      dialogBatal &&
+      isianTetap &&
+      new URL(page.url()).pathname === "/npr",
+    "Batal NPR Baru: konfirmasi hanya bila sudah ada isian",
+  );
+  // e. Detail NPR: telepon PIC bisa diketuk, dropdown form punya nama untuk
+  //    pembaca layar.
+  await page
+    .locator("table tbody tr")
+    .filter({ has: page.locator("td", { hasText: /^Open$/ }) })
+    .first()
+    .click();
+  await page.waitForURL(/\/npr\/\d+$/);
+  await page.waitForTimeout(600);
+  const tel = await page
+    .locator('a[href^="tel:"]')
+    .first()
+    .getAttribute("href");
+  const namaDropdown = await Promise.all(
+    ["Status Remote", "Pending oleh"].map((n) =>
+      page.getByRole("combobox", { name: n }).count(),
+    ),
+  );
+  cek(
+    /^tel:\+?\d{6,}$/.test(tel ?? "") && namaDropdown.every((n) => n === 1),
+    "Detail NPR: telepon PIC berupa link tel:, dropdown bernama",
+    tel ?? "tanpa link",
+  );
+
   // ---------- HP: Pixel 7 ----------
   const hp = await browser.newContext({
     ...devices["Pixel 7"],
@@ -726,6 +846,13 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     `${jumlahKartu} kartu`,
   );
   cek(await tanpaGeserHorizontal(p), "Daftar NPR di HP tanpa geser horizontal");
+  const isiKartu = await kartu.evaluateAll((k) => k.map((x) => x.innerText));
+  cek(
+    isiKartu.length > 1 &&
+      isiKartu.every((t) => /(berjalan|Selesai dalam)/.test(t)),
+    "Kartu NPR di HP menampilkan durasi",
+    (isiKartu[0] ?? "").split("\n").pop()?.replaceAll("\u00a0", " "),
+  );
   await p.screenshot({ path: path.join(OUT, "hp-npr.png") });
   const teksKartu = (await kartu.first().innerText()).split("\n")[0];
   await kartu.first().click();
@@ -764,6 +891,23 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     "Pengingat Pending Customer di HP tanpa geser horizontal",
   );
   await p.screenshot({ path: path.join(OUT, "hp-npr-pengingat.png") });
+  // Data Site (telepon PIC) di antara Riwayat dan form di HP.
+  // Posisi relatif saja: halaman bisa sedang tergulir (y negatif).
+  const atasHp = async (judul) =>
+    (await p.locator("h2", { hasText: judul }).first().boundingBox())?.y ??
+    null;
+  const urutanHp = [
+    await atasHp("Riwayat Tindakan"),
+    await atasHp("Data Site"),
+    await atasHp("Tambah Tindakan"),
+  ];
+  cek(
+    urutanHp.every((y) => y !== null) &&
+      urutanHp[0] < urutanHp[1] &&
+      urutanHp[1] < urutanHp[2],
+    "HP: Data Site di antara Riwayat dan form tindakan",
+    urutanHp.map(Math.round).join(" < "),
+  );
 
   // Dari Dashboard di HP: pilihan urutan (di panel Filter) sesuai urutan
   // yang tampil.

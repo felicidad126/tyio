@@ -48,7 +48,8 @@ async function daftarNpr(db: DB, q: URLSearchParams) {
     nilai.push(Number(customer));
   }
   const status = q.get("status");
-  if (status) {
+  if (status === "AKTIF") syarat.push(KONDISI_AKTIF);
+  else if (status) {
     syarat.push("n.status = ?");
     nilai.push(status);
   }
@@ -78,7 +79,7 @@ async function daftarNpr(db: DB, q: URLSearchParams) {
     mulai: "n.started_at",
     status:
       "CASE n.status WHEN 'OPEN' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'ESKALASI' THEN 2 ELSE 3 END",
-    pending: "n.pending_by",
+    pending: "CASE n.status WHEN 'CLOSED' THEN 'zzz' ELSE n.pending_by END",
   };
   const arah = q.get("arah") === "naik" ? "ASC" : "DESC";
   const urut =

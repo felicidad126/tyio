@@ -132,9 +132,20 @@ export function Toolbar({
           value={cari}
           onChange={(e) => onCari(e.target.value)}
           placeholder={placeholder}
-          className="h-9 pl-9"
+          className="h-9 pl-9 pr-9"
           aria-label={placeholder}
         />
+        {cari && (
+          <button
+            type="button"
+            onClick={() => onCari("")}
+            aria-label="Hapus pencarian"
+            title="Hapus pencarian"
+            className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-4" />
+          </button>
+        )}
       </div>
       {children && (
         <Popover>

@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Panel, StatusBadge, lama, waktu } from "@/components/npr";
+import {
+  PageHeader,
+  Panel,
+  StatusBadge,
+  lama,
+  waktu,
+  warnaDurasi,
+} from "@/components/npr";
 import { useApp } from "@/lib/app";
-import type { Dashboard as DataDashboard, NprRow } from "@/lib/tipe";
+import type { Dashboard as DataDashboard } from "@/lib/tipe";
 import { cn } from "@/lib/utils";
 import { useMuat } from "@/useMuat";
-
-const jamBerjalan = (n: NprRow) =>
-  (Date.now() - Date.parse(n.started_at)) / 3600_000;
 
 // Ringkasan: satu strip bersekat empat. Angka diberi warna hanya jika
 // perlu perhatian.
@@ -367,7 +371,6 @@ export function Dashboard() {
                     </thead>
                     <tbody className="divide-y">
                       {terlama.map((n) => {
-                        const jam = jamBerjalan(n);
                         return (
                           <tr
                             key={n.id}
@@ -394,11 +397,7 @@ export function Dashboard() {
                             <td
                               className={cn(
                                 "whitespace-nowrap px-3 py-3 font-semibold tabular-nums",
-                                jam > 48
-                                  ? "text-rose-700"
-                                  : jam >= 24
-                                    ? "text-amber-700"
-                                    : "",
+                                warnaDurasi(n.started_at),
                               )}
                             >
                               {lama(n.started_at)}
@@ -418,7 +417,6 @@ export function Dashboard() {
                 {/* HP: daftar kartu */}
                 <ul className="divide-y md:hidden">
                   {terlama.map((n) => {
-                    const jam = jamBerjalan(n);
                     return (
                       <li key={n.id}>
                         <button
@@ -432,11 +430,7 @@ export function Dashboard() {
                             <span
                               className={cn(
                                 "text-sm font-semibold tabular-nums",
-                                jam > 48
-                                  ? "text-rose-700"
-                                  : jam >= 24
-                                    ? "text-amber-700"
-                                    : "",
+                                warnaDurasi(n.started_at),
                               )}
                             >
                               {lama(n.started_at)}

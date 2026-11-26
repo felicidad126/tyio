@@ -106,7 +106,7 @@ const judulHalaman: Record<Page, string> = {
   "npr-baru": "NPR Baru",
   "npr-detail": "Detail",
   tt: "Trouble Ticket",
-  gamas: "Trouble Ticket Gamas",
+  gamas: "TT Gamas",
   "gamas-detail": "Detail",
   sla: "Laporan SLA",
   customer: "Customer",

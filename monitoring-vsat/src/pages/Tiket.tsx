@@ -67,6 +67,7 @@ const LABEL_STATUS: Record<string, string> = {
   PENDING: "Pending",
   ESKALASI: "Eskalasi",
   CLOSED: "Closed",
+  AKTIF: "Aktif (belum Closed)",
 };
 const LABEL_REPORT: Record<string, string> = {
   menunggu: "Menunggu Report",
@@ -150,7 +151,10 @@ export function TroubleTicket() {
             .includes(q) &&
           (instruksi === "semua" || t.instruction === instruksi) &&
           (report === "semua" || (report === "sudah") === !!t.report) &&
-          (status === "semua" || n.status === status) &&
+          (status === "semua" ||
+            (status === "AKTIF"
+              ? n.status !== "CLOSED"
+              : n.status === status)) &&
           (!dari || tgl >= dari) &&
           (!sampai || tgl <= sampai)
         );
@@ -252,6 +256,7 @@ export function TroubleTicket() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="semua">Semua Status</SelectItem>
+                <SelectItem value="AKTIF">{LABEL_STATUS.AKTIF}</SelectItem>
                 {URUTAN_STATUS.map((s) => (
                   <SelectItem key={s} value={s}>
                     {LABEL_STATUS[s]}

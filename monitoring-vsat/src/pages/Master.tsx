@@ -23,6 +23,7 @@ import {
   EmptyState,
   FieldLabel,
   PageHeader,
+  Telepon,
   lama,
   waktu,
 } from "@/components/npr";
@@ -792,8 +793,8 @@ export function RemotePage() {
                       </td>
                       <td className="px-4 py-3">
                         <div>{r.pic_name}</div>
-                        <div className="text-xs text-muted-foreground tabular-nums">
-                          {r.pic_phone}
+                        <div className="text-xs">
+                          <Telepon nomor={r.pic_phone} />
                         </div>
                       </td>
                       {(() => {
@@ -889,8 +890,7 @@ export function RemotePage() {
                   <dl className="mt-2 grid grid-cols-[52px_1fr] gap-x-2 gap-y-0.5 text-xs">
                     <dt className="text-muted-foreground">PIC</dt>
                     <dd>
-                      {r.pic_name} ·{" "}
-                      <span className="tabular-nums">{r.pic_phone}</span>
+                      {r.pic_name} · <Telepon nomor={r.pic_phone} />
                     </dd>
                     <dt className="text-muted-foreground">IP LAN</dt>
                     <dd className="font-mono">{r.ip_lan}</dd>
@@ -971,7 +971,7 @@ export function RemotePage() {
                 <div>
                   <FieldLabel>Customer</FieldLabel>
                   <Select name="customer_id" required>
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Customer">
                       <SelectValue placeholder="Pilih Customer" />
                     </SelectTrigger>
                     <SelectContent>
@@ -986,6 +986,7 @@ export function RemotePage() {
                 <div>
                   <FieldLabel>Jarkom</FieldLabel>
                   <ToggleGroup
+                    aria-label="Jarkom"
                     type="single"
                     value={jarkomBaru}
                     onValueChange={(v) => v && setJarkomBaru(v)}

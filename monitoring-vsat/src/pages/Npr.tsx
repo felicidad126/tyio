@@ -28,9 +28,19 @@ import {
   PageHeader,
   Panel,
   StatusBadge,
+  Telepon,
   lama,
   waktu,
+  warnaDurasi,
 } from "@/components/npr";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   BarisRingkasan,
   KepalaUrut,
@@ -81,7 +91,22 @@ const LABEL_STATUS: Record<string, string> = {
   PENDING: "Pending",
   ESKALASI: "Eskalasi",
   CLOSED: "Closed",
+  AKTIF: "Aktif (belum Closed)",
 };
+
+/** Durasi di daftar NPR: berwarna bila masih berjalan 24 jam atau lebih. */
+function teksDurasi(n: NprRow) {
+  if (n.status === "CLOSED")
+    return {
+      teks: `Selesai dalam ${lama(n.started_at, n.online_at ?? n.closed_at)}`,
+      kelas: "text-muted-foreground",
+    };
+  const warna = warnaDurasi(n.started_at);
+  return {
+    teks: `${lama(n.started_at)} berjalan`,
+    kelas: warna ? `font-medium ${warna}` : "text-muted-foreground",
+  };
+}
 
 const PILIHAN_URUT: { value: string; label: string; urut: Urut<KolomUrut> }[] =
   [
@@ -283,7 +308,7 @@ export function NprList() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {["semua", ...URUTAN_STATUS].map((s) => (
+                {["semua", "AKTIF", ...URUTAN_STATUS].map((s) => (
                   <SelectItem key={s} value={s}>
                     {s === "semua" ? "Semua Status" : LABEL_STATUS[s]}
                   </SelectItem>
@@ -487,17 +512,15 @@ export function NprList() {
                         <div className="tabular-nums">
                           {waktu(n.started_at)}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {n.status === "CLOSED"
-                            ? `Selesai dalam ${lama(n.started_at, n.online_at ?? n.closed_at)}`
-                            : `${lama(n.started_at)} berjalan`}
+                        <div className={cn("text-xs", teksDurasi(n).kelas)}>
+                          {teksDurasi(n).teks}
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={n.status} />
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {n.pending_by || "—"}
+                        {(n.status !== "CLOSED" && n.pending_by) || "—"}
                       </td>
                       <td className="px-4 py-3">
                         <p className="line-clamp-2 text-muted-foreground">
@@ -524,15 +547,26 @@ export function NprList() {
                       </span>
                       <StatusBadge status={n.status} />
                     </div>
-                    <div className="mt-1.5 text-sm font-medium">
-                      {n.customer_name}
+                    <div className="mt-1.5 flex items-baseline justify-between gap-2">
+                      <span className="truncate text-sm font-medium">
+                        {n.customer_name}
+                      </span>
+                      {n.status !== "CLOSED" && n.pending_by && (
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          Pending {n.pending_by}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {n.site_id} · {n.remote_status} · {n.jarkom}
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{waktu(n.started_at)}</span>
-                      <span>{n.pending_by && `Pending ${n.pending_by}`}</span>
+                    <div className="mt-2 flex items-baseline justify-between gap-2 text-xs">
+                      <span className="text-muted-foreground">
+                        {waktu(n.started_at)}
+                      </span>
+                      <span className={cn("text-right", teksDurasi(n).kelas)}>
+                        {teksDurasi(n).teks}
+                      </span>
                     </div>
                   </button>
                 </li>
@@ -649,6 +683,8 @@ const Kosong = () => (
 
 export function NprBaru() {
   const { go, api, kirim, sibuk } = useApp();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [konfirmasiBatal, setKonfirmasiBatal] = useState(false);
   const master = useMuat<Master>("/api/master", api, 0);
   const customers = master.data?.customers ?? [];
   const remotes = master.data?.remotes ?? [];
@@ -673,8 +709,8 @@ export function NprBaru() {
           site ? (
             <>
               {site.pic_name}
-              <div className="font-normal text-muted-foreground tabular-nums">
-                {site.pic_phone}
+              <div className="font-normal">
+                <Telepon nomor={site.pic_phone} />
               </div>
             </>
           ) : (
@@ -689,6 +725,17 @@ export function NprBaru() {
       ]}
     />
   );
+
+  // Batal hanya minta konfirmasi bila sudah ada isian yang akan hilang.
+  function batal() {
+    const catatan = formRef.current?.elements.namedItem("notes");
+    const terisi =
+      !!customer ||
+      !!remote ||
+      (catatan instanceof HTMLTextAreaElement && catatan.value.trim() !== "");
+    if (terisi) setKonfirmasiBatal(true);
+    else go("npr");
+  }
 
   async function simpan(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -712,6 +759,7 @@ export function NprBaru() {
     <>
       <PageHeader title="NPR Baru" desc="Catat gangguan baru pada site ATM." />
       <form
+        ref={formRef}
         className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
         onSubmit={simpan}
       >
@@ -720,6 +768,7 @@ export function NprBaru() {
             <div>
               <FieldLabel>Jarkom</FieldLabel>
               <ToggleGroup
+                aria-label="Jarkom"
                 type="single"
                 value={jarkom}
                 onValueChange={(v) => {
@@ -751,7 +800,7 @@ export function NprBaru() {
                     setRemote("");
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Customer">
                     <SelectValue
                       placeholder={master.data ? "Pilih Customer" : "Memuat…"}
                     />
@@ -772,7 +821,7 @@ export function NprBaru() {
                   onValueChange={setRemote}
                   disabled={!customer || !pilihan.length}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Remote / Site ID">
                     <SelectValue
                       placeholder={
                         customer
@@ -812,7 +861,7 @@ export function NprBaru() {
               <div>
                 <FieldLabel>Jenis Gangguan</FieldLabel>
                 <Select value={jenis} onValueChange={setJenis}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Jenis Gangguan">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -857,7 +906,7 @@ export function NprBaru() {
                 type="button"
                 variant="outline"
                 className="flex-1 bg-white sm:flex-none"
-                onClick={() => go("npr")}
+                onClick={batal}
               >
                 Batal
               </Button>
@@ -891,6 +940,25 @@ export function NprBaru() {
           </p>
         </Panel>
       </form>
+
+      <Dialog open={konfirmasiBatal} onOpenChange={setKonfirmasiBatal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Buang isian NPR baru?</DialogTitle>
+            <DialogDescription>
+              Customer, site, dan catatan yang sudah diisi akan hilang.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setKonfirmasiBatal(false)}>
+              Lanjut Mengisi
+            </Button>
+            <Button variant="destructive" onClick={() => go("npr")}>
+              Buang Isian
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -976,7 +1044,7 @@ function PilihPending({ awal, jenis }: { awal: string; jenis: Jenis }) {
       <div>
         <FieldLabel>Pending oleh</FieldLabel>
         <Select name="pending_by" value={nilai} onValueChange={setNilai}>
-          <SelectTrigger>
+          <SelectTrigger aria-label="Pending oleh">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -1159,9 +1227,16 @@ export function NprDetail() {
         ))}
       </dl>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-5">
-          <Panel title="Riwayat Tindakan" desc="Urut dari yang pertama dicatat">
+      {/* Di HP kolom kiri "dilebur" (contents) supaya Data Site dan TT bisa
+          berada di antara Riwayat dan form, dekat dengan telepon PIC. Di
+          laptop tetap dua kolom. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="contents lg:block lg:min-w-0 lg:space-y-5">
+          <Panel
+            title="Riwayat Tindakan"
+            desc="Urut dari yang pertama dicatat"
+            className="order-1 min-w-0"
+          >
             <ol className="relative space-y-5 before:absolute before:bottom-1 before:left-[7px] before:top-1 before:w-px before:bg-border">
               {actions.map((a, i) => (
                 <li key={a.id} className="relative pl-7">
@@ -1204,7 +1279,7 @@ export function NprDetail() {
           </Panel>
 
           {n.status !== "CLOSED" ? (
-            <Panel title="Tambah Tindakan">
+            <Panel title="Tambah Tindakan" className="order-3 min-w-0">
               <form
                 className="space-y-4"
                 onSubmit={simpan}
@@ -1213,6 +1288,7 @@ export function NprDetail() {
                 <div>
                   <FieldLabel>Tindakan</FieldLabel>
                   <ToggleGroup
+                    aria-label="Tindakan"
                     type="single"
                     value={jenisAktif}
                     onValueChange={(v) => v && setJenis(v as Jenis)}
@@ -1240,7 +1316,7 @@ export function NprDetail() {
                   <div>
                     <FieldLabel>Status Remote</FieldLabel>
                     <Select name="remote_status" defaultValue={n.remote_status}>
-                      <SelectTrigger>
+                      <SelectTrigger aria-label="Status Remote">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1266,7 +1342,7 @@ export function NprDetail() {
                     <div>
                       <FieldLabel>Instruksi</FieldLabel>
                       <Select name="instruction" defaultValue="Maintenance">
-                        <SelectTrigger>
+                        <SelectTrigger aria-label="Instruksi">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1309,7 +1385,7 @@ export function NprDetail() {
                   <Textarea name="notes" rows={3} required maxLength={4000} />
                 </label>
                 <div>
-                  <FieldLabel hint="JPG, PNG, atau PDF, maks. 500 KB">
+                  <FieldLabel hint="JPG, PNG, atau PDF, maks. 500 KB" opsional>
                     Lampiran
                   </FieldLabel>
                   <PilihFile name="attachment" />
@@ -1340,13 +1416,13 @@ export function NprDetail() {
               </form>
             </Panel>
           ) : (
-            <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+            <p className="order-3 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
               NPR ini sudah ditutup. Riwayatnya tidak bisa diubah.
             </p>
           )}
         </div>
 
-        <aside className="space-y-5">
+        <aside className="order-2 min-w-0 space-y-5 lg:order-none">
           {t && (
             <Panel
               title="Trouble Ticket"
@@ -1397,8 +1473,8 @@ export function NprDetail() {
                   "PIC",
                   <>
                     {r.pic_name}
-                    <div className="font-normal text-muted-foreground tabular-nums">
-                      {r.pic_phone}
+                    <div className="font-normal">
+                      <Telepon nomor={r.pic_phone} />
                     </div>
                   </>,
                 ],
