@@ -564,7 +564,7 @@ function nilaiRemote(
 }
 
 export function RemotePage() {
-  const { go, param, kirim, sibuk } = useApp();
+  const { go, param, gantiParam, kirim, sibuk } = useApp();
   const { customers, remotes, slaRemote, target, siap, error } = useMaster();
   const customerById = (id: number) =>
     customers.find((c) => c.id === id) ?? { name: "…" };
@@ -572,9 +572,10 @@ export function RemotePage() {
   const [jarkomBaru, setJarkomBaru] = useState("VSAT");
   const [cari, setCari] = useState("");
   // Dari halaman Customer: langsung tersaring ke customer yang diklik.
-  const [customer, setCustomer] = useState(
-    typeof param === "number" ? String(param) : "semua",
-  );
+  // Saringan customer tersimpan di alamat: /remote?customer=3.
+  const customer = typeof param === "number" ? String(param) : "semua";
+  const setCustomer = (v: string) =>
+    gantiParam(v === "semua" ? undefined : Number(v));
   const [jarkom, setJarkom] = useState("semua");
   const [urut, gantiUrut, setUrut] = useUrut<KolomRemote>({
     kolom: "site",

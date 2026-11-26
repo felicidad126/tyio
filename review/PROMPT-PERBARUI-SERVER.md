@@ -6,6 +6,9 @@ Tujuannya memasang tampilan baru (Tailwind + shadcn/ui) di **kp.helonoia.com**.
 Yang berubah:
 
 - **Tampilan:** seluruh tampilan aplikasi diganti.
+- **Alamat per halaman:** setiap halaman punya alamat sendiri, mis.
+  `kp.helonoia.com/npr/12`. Refresh tetap di halaman yang sama dan tombol Back
+  kembali ke halaman sebelumnya. Tidak ada perubahan server untuk ini.
 - **Server:**
   - Daftar NPR sekarang bisa diurutkan per kolom.
   - Ada angka tambahan untuk Customer, Remote, Pengguna, dan Gamas.
@@ -77,6 +80,15 @@ e. Jika ada NPR ber-TT: buka detailnya, klik "Unduh PDF TT"; berkas PDF
    terunduh dan berisi kop PT. Tangara Mitrakom.
 f. Perkecil jendela browser selebar HP (sekitar 400 px) atau buka di HP:
    menu muncul lewat tombol ☰ dan tabel berubah menjadi kartu.
+g. Alamat per halaman:
+   - Klik menu NPR: alamat browser menjadi https://kp.helonoia.com/npr.
+   - Klik menu Laporan SLA, lalu tekan tombol Back browser: kembali ke NPR,
+     bukan keluar dari aplikasi.
+   - Di Laporan SLA, mundur satu bulan: alamat berakhir ?bulan=YYYY-MM.
+     Tekan F5: bulan yang sama tetap tampil.
+   - Jika ada NPR: buka detailnya (alamat /npr/<angka>), salin alamatnya,
+     buka di tab baru: NPR yang sama langsung tampil.
+   - Buka https://kp.helonoia.com/alamat-asal: kembali ke Dashboard.
 
 LANGKAH 6. Laporan
 Laporkan untuk setiap langkah: berhasil atau tidak, keluaran penting

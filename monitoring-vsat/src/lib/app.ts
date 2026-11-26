@@ -21,6 +21,8 @@ export type AppState = {
   /** Parameter halaman: id NPR/Gamas, kondisi filter dari Dashboard, atau id customer. */
   param?: string | number;
   go: (page: Page, param?: string | number) => void;
+  /** Ganti parameter halaman ini (mis. filter) tanpa menambah riwayat Back. */
+  gantiParam: (param?: string | number) => void;
   user: User;
   api: Api;
   /** Naik setiap ada data yang disimpan; halaman memuat ulang datanya. */

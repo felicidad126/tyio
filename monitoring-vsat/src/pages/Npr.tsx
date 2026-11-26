@@ -125,15 +125,15 @@ type Master = { customers: Customer[]; remotes: Remote[] };
 /* ------------------------------------------------------------------ */
 
 export function NprList() {
-  const { go, param, api, versi, galat } = useApp();
+  const { go, param, gantiParam, api, versi, galat } = useApp();
   const [cari, setCari] = useState("");
   const [customer, setCustomer] = useState("semua");
   const [status, setStatus] = useState("semua");
   const [dari, setDari] = useState("");
   const [sampai, setSampai] = useState("");
-  const [kondisi, setKondisi] = useState(
-    typeof param === "string" && KONDISI[param] ? param : "",
-  );
+  // Kondisi dari Dashboard (mis. "Kritis") tersimpan di alamat: /npr?kondisi=kritis.
+  const kondisi = typeof param === "string" && KONDISI[param] ? param : "";
+  const setKondisi = (v: string) => gantiParam(v || undefined);
   const [urut, gantiUrut, setUrut] = useUrut<KolomUrut>(
     { kolom: "nomor", arah: "turun" },
     ["nomor", "mulai"],

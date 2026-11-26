@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import {
   BarChart3,
   Building2,
@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AppCtx, type AppState, type Page } from "@/lib/app";
+import { keAlamat, lokasiSekarang, type Lokasi } from "@/lib/alamat";
 import type { User } from "@/lib/tipe";
 import { cn } from "@/lib/utils";
 import { namaPeran } from "@/peran";
@@ -153,8 +154,9 @@ function Navigasi({
                 const Icon = m.icon;
                 return (
                   <li key={m.page}>
-                    <button
-                      onClick={() => go(m.page)}
+                    <a
+                      href={keAlamat(m.page)}
+                      onClick={(e) => ikutiTautan(e, () => go(m.page))}
                       aria-current={aktif ? "page" : undefined}
                       className={cn(
                         "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm font-medium transition-colors",
@@ -173,7 +175,7 @@ function Navigasi({
                         strokeWidth={1.9}
                       />
                       {m.label}
-                    </button>
+                    </a>
                   </li>
                 );
               })}
@@ -211,12 +213,13 @@ function Breadcrumb({ page, go }: { page: Page; go: (p: Page) => void }) {
       <span className="hidden lg:inline">{garis}</span>
       {induk && (
         <>
-          <button
-            onClick={() => go(induk)}
+          <a
+            href={keAlamat(induk)}
+            onClick={(e) => ikutiTautan(e, () => go(induk))}
             className="rounded hover:text-foreground hover:underline"
           >
             {judulHalaman[induk]}
-          </button>
+          </a>
           {garis}
         </>
       )}
@@ -228,6 +231,25 @@ function Breadcrumb({ page, go }: { page: Page; go: (p: Page) => void }) {
       </span>
     </nav>
   );
+}
+
+/**
+ * Klik biasa pada tautan menu: pindah halaman tanpa memuat ulang. Ctrl/Cmd/
+ * Shift atau klik tengah dibiarkan ke browser (buka di tab atau jendela baru).
+ */
+function ikutiTautan(e: MouseEvent<HTMLAnchorElement>, pindah: () => void) {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+    return;
+  e.preventDefault();
+  pindah();
+}
+
+/** Lokasi awal dari alamat; alamat yang tidak dikenal kembali ke Dashboard. */
+function lokasiAwal(): Lokasi {
+  const lokasi = lokasiSekarang();
+  if (lokasi) return lokasi;
+  window.history.replaceState(null, "", "/");
+  return { page: "dashboard" };
 }
 
 const inisial = (nama: string) =>
@@ -242,8 +264,7 @@ const inisial = (nama: string) =>
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [memeriksa, setMemeriksa] = useState(true);
-  const [page, setPage] = useState<Page>("dashboard");
-  const [param, setParam] = useState<string | number | undefined>();
+  const [{ page, param }, setLokasi] = useState<Lokasi>(lokasiAwal);
   const [menuHp, setMenuHp] = useState(false);
   const [gantiPassword, setGantiPassword] = useState(false);
   const [versi, setVersi] = useState(0);
@@ -289,11 +310,36 @@ export default function App() {
     };
   }, []);
 
+  // Pindah halaman: alamat browser ikut berganti dan tercatat di riwayat,
+  // supaya tombol Back kembali ke halaman sebelumnya.
   const go = useCallback((p: Page, prm?: string | number) => {
-    setPage(p);
-    setParam(prm);
+    const alamat = keAlamat(p, prm);
+    if (alamat !== window.location.pathname + window.location.search)
+      window.history.pushState(null, "", alamat);
+    setLokasi({ page: p, param: prm });
     setMenuHp(false);
     window.scrollTo({ top: 0 });
+  }, []);
+
+  // Filter yang tercermin di alamat (kondisi NPR, bulan SLA, customer di
+  // Remote) diganti tanpa menambah riwayat, jadi Back tidak berhenti di
+  // setiap perubahan filter.
+  const gantiParam = useCallback(
+    (prm?: string | number) => {
+      window.history.replaceState(null, "", keAlamat(page, prm));
+      setLokasi({ page, param: prm });
+    },
+    [page],
+  );
+
+  // Tombol Back/Forward browser.
+  useEffect(() => {
+    const kembali = () => {
+      setLokasi(lokasiSekarang() ?? { page: "dashboard" });
+      setMenuHp(false);
+    };
+    window.addEventListener("popstate", kembali);
+    return () => window.removeEventListener("popstate", kembali);
   }, []);
 
   // Judul tab mengikuti halaman, mis. "NPR Baru | PT. Tangara Mitrakom".
@@ -346,8 +392,9 @@ export default function App() {
         <Login
           api={api}
           onMasuk={(u) => {
+            // Tetap di alamat yang dibuka, mis. link NPR dari rekan kerja.
             setUser(u);
-            go("dashboard");
+            window.scrollTo({ top: 0 });
           }}
         />
         <Toaster position="top-right" richColors />
@@ -360,6 +407,7 @@ export default function App() {
     page,
     param,
     go,
+    gantiParam,
     user,
     api,
     versi,

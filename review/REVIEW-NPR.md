@@ -59,7 +59,7 @@ Kolom **Perlu?** diisi sesuai keputusan D-1 sampai D-8 (25 November 2026). Yang 
 | K-03 | Tinggi | Status ESKALASI berubah jadi PENDING setelah ada tindakan baru | Ya |
 | K-04 | Sedang | Close Gamas tanpa jam online memakai jam klik; waktu perkembangan Gamas tidak bisa diatur | Ya |
 | K-05 | Sedang | Bulan default laporan SLA pakai UTC, bukan WIB | Ya |
-| K-06 | Sedang | `App.tsx` 2.222 baris dalam satu komponen, tanpa URL per halaman | Tidak (T-4) |
+| K-06 | Sedang | `App.tsx` 2.222 baris dalam satu komponen, tanpa URL per halaman | Ya, setelah pindah tampilan |
 | K-07 | Sedang | `worker/domain.ts` ditulis padat satu baris, sulit dibaca dan dijelaskan | |
 | K-08 | Sedang | Aturan isian beda antara form dan server | |
 | K-09 | Rendah | Pesan error teknis muncul kalau server tidak membalas JSON | |

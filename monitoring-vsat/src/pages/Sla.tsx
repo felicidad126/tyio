@@ -154,8 +154,15 @@ function PilihPeriode({
 }
 
 export function LaporanSla() {
-  const { api, versi } = useApp();
-  const [bulan, setBulan] = useState(bulanIni());
+  const { api, versi, param, gantiParam } = useApp();
+  // Periode tersimpan di alamat (/sla?bulan=2026-10); tanpa itu, bulan ini.
+  const bulan =
+    typeof param === "string" &&
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(param) &&
+    param <= bulanIni()
+      ? param
+      : bulanIni();
+  const setBulan = (b: string) => gantiParam(b === bulanIni() ? undefined : b);
   const [cari, setCari] = useState("");
   const [customer, setCustomer] = useState("semua");
   const [capaian, setCapaian] = useState("semua");

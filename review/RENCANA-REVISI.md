@@ -125,10 +125,15 @@ Uji tambahan di `scripts/test-api.mjs`:
 
 Hasil hitung SLA dan semua uji API harus sama persis sebelum dan sesudah tahap ini.
 
-`K-06` **tidak dikerjakan** (T-4). `App.tsx` tetap satu berkas dan halaman tetap disimpan di state,
-tanpa alamat per halaman. Akibatnya tetap seperti sekarang: refresh kembali ke Dashboard, tombol
-Back browser keluar dari aplikasi, dan tidak ada tautan langsung ke satu NPR. Perubahan `K-01`
-dibuat di dalam `App.tsx`: setiap halaman mengambil datanya sendiri saat dibuka.
+`K-06` **tidak dikerjakan** pada tahap ini (T-4). Perubahan `K-01` dibuat di dalam `App.tsx`:
+setiap halaman mengambil datanya sendiri saat dibuka.
+
+**Pembaruan:** `K-06` akhirnya dikerjakan setelah tampilan dipindah ke Tailwind + shadcn/ui, atas
+permintaan pemilik. `App.tsx` sudah dipecah per halaman ke `src/pages/`, dan alamat per halaman
+dibuat dengan History API bawaan browser, tetap tanpa `react-router` (T-5). Pemetaannya ada di
+`src/lib/alamat.ts`, mis. `/npr`, `/npr/12`, `/npr/baru`, `/gamas/3`, `/sla?bulan=2026-10`,
+`/remote?customer=2`. Refresh tetap di halaman yang sama, tombol Back kembali ke halaman
+sebelumnya, dan link satu NPR bisa dikirim ke rekan kerja.
 
 ### Tahap 4. Identitas, warna, dan keterbacaan
 
@@ -269,4 +274,5 @@ lainnya masih menunggu keputusan T-6; yang sudah pasti hanya yang ditentukan ole
 | 7 | X-07 |
 | 8 | X-10, H-01, H-02, H-03, H-04, H-05, H-06, H-07, H-08, R-01 (dokumen), R-02, R-03 |
 | 9 | Uji akhir |
-| Tidak dikerjakan | K-06 (T-4), pemindahan lampiran ke R2 |
+| Tidak dikerjakan | Pemindahan lampiran ke R2 |
+| Setelah pindah tampilan | K-06 (alamat per halaman, tanpa `react-router`) |
