@@ -53,7 +53,8 @@ Build pertama memerlukan beberapa menit dan akses internet ke registry npm.
 docker compose exec app node dist/server/setup.js
 ```
 
-Isi username, nama lengkap, dan password (minimal 12 karakter). Akun lain
+Isi username, nama lengkap, dan password (minimal 12 karakter). Password
+tidak tampil di layar dan diminta dua kali. Akun lain
 dibuat lewat menu Pengguna di aplikasi. Tambahkan `--contoh` jika ingin data
 bank dan site contoh untuk percobaan.
 

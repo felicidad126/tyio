@@ -39,13 +39,73 @@ function hashPassword(password: string) {
   const hash = pbkdf2Sync(password, salt, 100000, 32, "sha256").toString("hex");
   return { hash, salt };
 }
+// Membaca password tanpa menampilkannya di layar. Tidak dipangkas, karena
+// spasi di awal atau akhir adalah bagian dari password.
+async function bacaRahasia(pertanyaan: string): Promise<string> {
+  terminal?.close();
+  terminal = undefined;
+  const input = process.stdin;
+  if (!input.isTTY) {
+    // Tanpa terminal (mis. input dari pipa): baca satu baris apa adanya.
+    const rl = createInterface({ input });
+    process.stdout.write(pertanyaan);
+    for await (const baris of rl) {
+      rl.close();
+      return baris.replace(/\r$/, "");
+    }
+    return "";
+  }
+  process.stdout.write(pertanyaan);
+  input.setRawMode(true);
+  input.resume();
+  input.setEncoding("utf8");
+  return new Promise((selesai) => {
+    let isi = "";
+    const baca = (potongan: string) => {
+      for (const huruf of potongan) {
+        if (huruf === "\r" || huruf === "\n") {
+          input.setRawMode(false);
+          input.pause();
+          input.off("data", baca);
+          process.stdout.write("\n");
+          selesai(isi);
+          return;
+        }
+        if (huruf === "\u0003") {
+          input.setRawMode(false);
+          process.stdout.write("\n");
+          process.exit(130);
+        }
+        if (huruf === "\u007f" || huruf === "\b") {
+          if (isi.length) {
+            isi = isi.slice(0, -1);
+            process.stdout.write("\b \b");
+          }
+        } else if (huruf >= " ") {
+          isi += huruf;
+          process.stdout.write("*");
+        }
+      }
+    };
+    input.on("data", baca);
+  });
+}
+
+// Password diketik dua kali supaya salah ketik langsung ketahuan.
 async function passwordBaru(label: string) {
-  const password = await tanya(
-    `${label} (minimal ${PANJANG_MIN_PASSWORD} karakter; terlihat di layar): `,
-    "NPR_ADMIN_PASSWORD",
-  );
+  const dariEnv = process.env.NPR_ADMIN_PASSWORD;
+  const password =
+    dariEnv ??
+    (await bacaRahasia(
+      `${label} (minimal ${PANJANG_MIN_PASSWORD} karakter, tidak tampil di layar): `,
+    ));
   if (password.length < PANJANG_MIN_PASSWORD)
     berhenti(`Password minimal ${PANJANG_MIN_PASSWORD} karakter.`);
+  if (dariEnv === undefined) {
+    const ulang = await bacaRahasia("Ulangi password: ");
+    if (ulang !== password)
+      berhenti("Password tidak sama. Jalankan perintah ini lagi.");
+  }
   return password;
 }
 
@@ -62,10 +122,9 @@ if (contoh) {
 }
 
 if (reset) {
-  const username = await tanya(
-    "Username yang password-nya diganti: ",
-    "NPR_ADMIN_USERNAME",
-  );
+  const username = (
+    await tanya("Username yang password-nya diganti: ", "NPR_ADMIN_USERNAME")
+  ).toLowerCase();
   const akun = await db
     .prepare("SELECT id FROM users WHERE username = ?")
     .bind(username)

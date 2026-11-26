@@ -118,7 +118,9 @@ export default {
       const user = await env.DB.prepare(
         "SELECT * FROM users WHERE username = ?",
       )
-        .bind(body.username.trim())
+        // Username selalu disimpan dengan huruf kecil, jadi "Mimin" dan
+        // "mimin" dianggap sama.
+        .bind(body.username.trim().toLowerCase())
         .first<UserRow>();
 
       // Tetap lakukan hashing meskipun username tidak ditemukan.
