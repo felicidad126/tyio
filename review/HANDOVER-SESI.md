@@ -1,8 +1,8 @@
 # Serah terima sesi Claude Code: NPR (Network Problem Report)
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
-percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Kode aplikasi terakhir
-berubah di commit `9741ddc`; sesudahnya hanya dokumen dan skrip uji di `review/`.
+percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`, commit `3630739` (juga
+yang berjalan di server).
 
 ## 1. Proyek singkat
 
@@ -165,11 +165,12 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `9741ddc`, sehat. Cadangan terakhir dibuat sebelum pembaruan:
-  `npr-20261126-1838.sqlite`.
-- **Data:** masih kosong (0 NPR, 0 TT). Pengguna memutuskan mengisi **data demo sementara**
-  lewat `review/PROMPT-DATA-DEMO.md` (perbarui ke commit terbaru, lalu `demo.js`). Tanyakan
-  apakah sudah dijalankan.
+- **Commit yang berjalan:** `3630739`, sehat (diperbarui 27 November 2026 pukul 00.47 WIB).
+  Cadangan sebelum pembaruan: `npr-20261127-0047.sqlite`.
+- **Data:** berisi **data demo sementara** sejak 27 November 2026 pukul 00.48 WIB, dicatat atas
+  nama akun admin "mimin": 6 customer, 20 remote, 50 NPR, 19 TT, 4 Gamas. Belum ada data asli.
+  Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo **harus
+  dihapus** (`review/PROMPT-DATA-DEMO.md` bagian B) sebelum data asli mulai dicatat.
 - **Cara pembaruan:** Claude tidak punya akses langsung ke server. Pembaruan dikerjakan agent
   browser milik pengguna lewat Terminal aaPanel, memakai prompt `review/PROMPT-PERBARUI-SERVER.md`:
   1. cadangan;
@@ -186,8 +187,9 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 
 ## 7. Yang belum selesai atau perlu dicek
 
-Pemeriksaan berikut tertunda karena data di server masih kosong. Semuanya sudah **lulus di
-server lokal dengan data uji** (27 November 2026, `uji-browser.cjs`):
+Pemeriksaan berikut dulu tertunda karena data di server masih kosong. Semuanya sudah lulus di
+server lokal (`uji-browser.cjs`) dan **di kp.helonoia.com dengan data demo** (laporan agent
+browser 27 November 2026, pemeriksaan a–h `PROMPT-DATA-DEMO.md`, tanpa error konsol):
 - urutan kolom "No. NPR" (naik, turun, dan halaman 2 melanjutkan urutan);
 - Unduh PDF TT dan PDF Gamas (dari daftar, detail, dan kartu HP; isi PDF dicek: kop, tabel,
   tanda tangan);
@@ -195,7 +197,8 @@ server lokal dengan data uji** (27 November 2026, `uji-browser.cjs`):
 - link `/npr/<id>` dibuka di tab baru, juga tanpa sesi (setelah login langsung ke NPR itu);
 - `/sla?bulan=…` lalu F5.
 
-Pengguna sudah diberi daftar cek manual. Laporannya dari server dengan data asli tetap ditunggu.
+Sisa: tampilan HP di server dicek agent di bingkai selebar 400 px, bukan HP sungguhan. Di lokal
+sudah lulus dengan emulasi Pixel 7. Pengguna disarankan mengecek sekali di HP sungguhan.
 
 Sudah diperbaiki atas permintaan pengguna: daftar NPR dari Dashboard (`/npr?kondisi=…`) tanpa
 urutan yang dipilih tetap terlama dulu, tetapi panahnya sekarang di "Mulai ↑" (dulu "No. NPR ↓"),
