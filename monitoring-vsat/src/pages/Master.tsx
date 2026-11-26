@@ -809,12 +809,25 @@ export function RemotePage() {
                                       · {st.terakhir.number}
                                     </span>
                                   </div>
+                                  {/* Jam dan lama gangguan di baris sendiri:
+                                      titik pemisah tepat setelah jam (11.09 ·)
+                                      terbaca seperti salah ketik. */}
                                   <div className="text-xs text-muted-foreground">
-                                    {waktu(st.terakhir.started_at)} ·{" "}
-                                    {st.terakhir.status === "CLOSED"
-                                      ? `selesai dalam ${lama(st.terakhir.started_at, st.terakhir.online_at)}`
-                                      : "masih aktif"}
+                                    {waktu(st.terakhir.started_at)}
                                   </div>
+                                  {st.terakhir.status === "CLOSED" ? (
+                                    <div className="text-xs text-muted-foreground">
+                                      Selesai dalam{" "}
+                                      {lama(
+                                        st.terakhir.started_at,
+                                        st.terakhir.online_at,
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs font-medium text-amber-700">
+                                      Masih aktif
+                                    </div>
+                                  )}
                                 </>
                               ) : (
                                 <span className="text-muted-foreground">

@@ -134,8 +134,12 @@ export function NprList() {
   // Kondisi dari Dashboard (mis. "Kritis") tersimpan di alamat: /npr?kondisi=kritis.
   const kondisi = typeof param === "string" && KONDISI[param] ? param : "";
   const setKondisi = (v: string) => gantiParam(v || undefined);
+  // Dari Dashboard (ada kondisi) tanpa urutan yang dipilih: yang paling lama
+  // terganggu dulu, dan panahnya tampil di kolom Mulai (↑).
   const [urut, gantiUrut, setUrut] = useUrut<KolomUrut>(
-    { kolom: "nomor", arah: "turun" },
+    kondisi
+      ? { kolom: "mulai", arah: "naik" }
+      : { kolom: "nomor", arah: "turun" },
     ["nomor", "mulai"],
   );
   const [per, setPer] = useState("25");
@@ -156,11 +160,7 @@ export function NprList() {
   const query = new URLSearchParams({
     halaman: String(halaman),
     per,
-    // Dari Dashboard tanpa urutan yang dipilih: yang paling lama terganggu dulu.
-    urut:
-      kondisi && urut.kolom === "nomor" && urut.arah === "turun"
-        ? "terlama"
-        : urut.kolom,
+    urut: urut.kolom,
     arah: urut.arah,
     ...(cariTunda && { cari: cariTunda }),
     ...(customer !== "semua" && { customer }),
@@ -1148,7 +1148,7 @@ export function NprDetail() {
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                     <span className="text-sm font-semibold">{a.kind}</span>
                     <span className="text-xs text-muted-foreground">
-                      {waktu(a.occurred_at)} · {a.created_by}
+                      {waktu(a.occurred_at)} oleh {a.created_by}
                     </span>
                   </div>
                   <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed">

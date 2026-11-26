@@ -1,7 +1,8 @@
 # Serah terima sesi Claude Code: NPR (Network Problem Report)
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
-percakapan lama. Keadaan per 26 November 2026, commit `9741ddc` di branch `Rev-NPR-Tyio`.
+percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`, commit `3630739` (juga
+yang berjalan di server).
 
 ## 1. Proyek singkat
 
@@ -99,7 +100,7 @@ riwayat Back.
 | Berkas | Isi |
 |---|---|
 | `worker/` | API (Cloudflare Workers + D1): `index.ts` (rute), `baca.ts` (query baca), `domain.ts` (hitung SLA), `pengguna.ts` (akun), `sandi.ts` |
-| `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts` |
+| `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts`, `demo.ts` (data demo, lihat bagian 7) |
 | `migrations/` | Migrasi database. Belum ada migrasi baru sejak `0002` |
 | `scripts/` | `setup.mjs`, `test-api.mjs` |
 
@@ -132,12 +133,28 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 
 **Uji browser** memakai Playwright (Chromium sudah terpasang, `require('playwright')`).
 - **Lebar layar:** laptop 1366×820, HP perangkat "Pixel 7".
-- **Skrip uji:** skrip sesi lalu ada di scratchpad dan hilang bersama container, jadi buat ulang
-  bila perlu.
-- **Hasil terakhir:**
-  - Uji lengkap 31/32. Satu yang gagal, "sort Status (server)", gagal karena database uji
-    hanya punya 1 NPR, bukan bug.
-  - Uji alamat 21/21.
+- **Skrip uji di `review/uji/`** (akun diambil dari variabel lingkungan, sama seperti `test:api`):
+
+  ```bash
+  DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
+  TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 37/37
+  ```
+
+  `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
+  panah saat dibuka dari Dashboard), link `/npr/<id>` di tab baru dan tanpa sesi, PDF TT dan
+  Gamas, `/sla?bulan=…` lalu F5, durasi di bawah 1 jam, riwayat "jam oleh nama", kolom
+  Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Tangkapan layar dan PDF disimpan di
+  `UJI_OUT`.
+- **Hasil terakhir (27 November 2026):**
+  - `uji-browser.cjs` 37/37 di atas data demo, lalu `test:api` 49/49. "Urut Status
+    (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
+  - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
+    Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
+- **Folder `server/` tidak dicek `tsc -b`** (tidak ada di tsconfig mana pun, hanya di-build
+  Vite). Cek manual dengan tsconfig sementara (`types: ["node"]` + `worker-configuration.d.ts`,
+  include `server`, `worker`, `shared`). Satu galat lama: `server/main.ts:122` (3 argumen ke
+  `worker.fetch`). Tidak mengganggu build.
 - **Catatan menulis skrip uji:**
   - Menu sidebar dan breadcrumb sekarang berupa `<a>`, bukan `<button>`.
   - Toast sonner yang terbaru ada di urutan pertama (`.first()`).
@@ -149,9 +166,12 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `9741ddc`, sehat. Cadangan terakhir dibuat sebelum pembaruan:
-  `npr-20261126-1838.sqlite`.
-- **Data:** masih kosong (0 NPR, 0 TT).
+- **Commit yang berjalan:** `3630739`, sehat (diperbarui 27 November 2026 pukul 00.47 WIB).
+  Cadangan sebelum pembaruan: `npr-20261127-0047.sqlite`.
+- **Data:** berisi **data demo sementara** sejak 27 November 2026 pukul 00.48 WIB, dicatat atas
+  nama akun admin "mimin": 6 customer, 20 remote, 50 NPR, 19 TT, 4 Gamas. Belum ada data asli.
+  Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo **harus
+  dihapus** (`review/PROMPT-DATA-DEMO.md` bagian B) sebelum data asli mulai dicatat.
 - **Cara pembaruan:** Claude tidak punya akses langsung ke server. Pembaruan dikerjakan agent
   browser milik pengguna lewat Terminal aaPanel, memakai prompt `review/PROMPT-PERBARUI-SERVER.md`:
   1. cadangan;
@@ -168,14 +188,47 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 
 ## 7. Yang belum selesai atau perlu dicek
 
-Pemeriksaan berikut tertunda karena data di server masih kosong:
-- urutan kolom "No. NPR";
-- Unduh PDF TT dan PDF Gamas;
+Pemeriksaan berikut dulu tertunda karena data di server masih kosong. Semuanya sudah lulus di
+server lokal (`uji-browser.cjs`) dan **di kp.helonoia.com dengan data demo** (laporan agent
+browser 27 November 2026, pemeriksaan a–h `PROMPT-DATA-DEMO.md`, tanpa error konsol):
+- urutan kolom "No. NPR" (naik, turun, dan halaman 2 melanjutkan urutan);
+- Unduh PDF TT dan PDF Gamas (dari daftar, detail, dan kartu HP; isi PDF dicek: kop, tabel,
+  tanda tangan);
 - kartu NPR di HP;
-- link `/npr/<id>` dibuka di tab baru;
+- link `/npr/<id>` dibuka di tab baru, juga tanpa sesi (setelah login langsung ke NPR itu);
 - `/sla?bulan=…` lalu F5.
 
-Pengguna sudah diberi daftar cek manual. Tunggu laporannya setelah data asli masuk.
+Sisa: tampilan HP di server dicek agent di bingkai selebar 400 px, bukan HP sungguhan. Di lokal
+sudah lulus dengan emulasi Pixel 7. Pengguna disarankan mengecek sekali di HP sungguhan.
+
+Sudah diperbaiki atas permintaan pengguna: daftar NPR dari Dashboard (`/npr?kondisi=…`) tanpa
+urutan yang dipilih tetap terlama dulu, tetapi panahnya sekarang di "Mulai ↑" (dulu "No. NPR ↓"),
+dan pilihan urutan di HP tertulis "Mulai Gangguan, Terlama". `useUrut` sekarang memakai urutan
+awal selama pengguna belum memilih, dan urutan awal itu boleh berubah. Sekalian membereskan bug
+lama: dulu "No. NPR terbaru" tidak bisa dipilih selama filter Dashboard aktif. Server masih
+menerima `urut=terlama` supaya tab lama yang belum dimuat ulang tidak rusak.
+
+Juga atas permintaan pengguna (tangkapan layar kolom Gangguan Terakhir):
+- `lama()` di `components/npr.tsx` menulis durasi di bawah 1 jam dalam menit ("48 menit"),
+  bukan "0 jam". Berlaku di Dashboard, daftar dan detail NPR, Gamas, dan Remote.
+- Tanda "·" tetap dipakai di antara label pendek, tetapi tidak lagi tepat setelah jam
+  ("11.09 ·" terbaca seperti salah ketik; strip terbaca seperti rentang waktu):
+  - riwayat NPR dan Gamas: "22 Nov 2026, 21.02 oleh Admin Uji";
+  - Gangguan Terakhir di Remote: jam dan "Selesai dalam …" / "Masih aktif" (oranye) di baris
+    sendiri.
+
+**Data demo** (`server/demo.ts`, atas permintaan pengguna, keputusan: di server, sementara,
+nama bank fiktif):
+- `node dist/server/demo.js` mengisi 6 customer bank fiktif (Swastamita, Lembayung, Pramudita,
+  Baskara, Sagara, Jenggala), 20 remote, 50 NPR (40 Closed, 4 Eskalasi, 4 Pending, 2 Open),
+  19 TT, dan 4 Gamas sejak awal bulan lalu.
+- Data masuk lewat `domain()` yang sama dengan API. `Date.now` dimundurkan ke waktu tiap
+  kejadian, jadi nomor mengikuti bulan kejadian (gangguan Oktober = `NPR/2026/10/…`).
+- Menolak berjalan bila sudah ada NPR atau Gamas. Mencadangkan database lebih dulu.
+- `--hapus` menghapus data demo saja (dikenali dari kode + nama customer demo), menyetel ulang
+  penghitung nomor, dan membiarkan akun serta data lain. Gamas campuran hanya kehilangan site
+  demonya. **Harus dijalankan sebelum data asli mulai dicatat.**
+- `review/uji/isi-data-uji.mjs` dihapus karena sudah digantikan `demo.js`.
 
 Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 - Pengguna boleh melihat isi cadangan pukul 14:51 bila ingin memastikan customer dan remote yang
@@ -192,7 +245,8 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 | `RENCANA-REVISI.md` | Keputusan D-1…D-8, T-1…T-6, dan tahap pengerjaan |
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
 | `DIAGRAM-NPR.md` | Diagram perancangan untuk laporan KP (ERD, use case, activity, sequence, class, modul) dalam Mermaid. Gambar PNG/SVG dan skrip render di `gambar/diagram/` |
-| `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server |
+| `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server, data demo |
+| `uji/` | Uji browser Playwright `uji-browser.cjs` (lihat bagian 5) |
 
 Prototipe desain ada di `redesain-npr/`. Jalankan `npm run bundel` di sana untuk menghasilkan
 `redesain-npr.html`. Prototipe ini sudah dipindahkan ke aplikasi; folder ini disimpan sebagai
