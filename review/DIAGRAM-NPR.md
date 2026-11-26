@@ -2,7 +2,8 @@
 
 Dokumen ini berisi diagram perancangan aplikasi NPR (Network Problem Report) untuk laporan Kerja
 Praktek di PT. Tangara Mitrakom. Semua isi diagram diambil dari kode di folder `monitoring-vsat/`
-pada branch `Rev-NPR-Tyio` (commit `b00aa54`), bukan dari ingatan atau dokumen lama. Bila dokumen
+pada branch `Rev-NPR-Tyio` (kode aplikasi commit `e60a767`, versi yang berjalan di server), bukan
+dari ingatan atau dokumen lama. Bila dokumen
 review berbeda dengan kode, diagram mengikuti kode dan perbedaannya dicatat di
 [bagian 6](#6-perbedaan-dokumen-dan-kode).
 
@@ -65,10 +66,13 @@ satu customer memiliki nol atau banyak remote, dan setiap remote milik tepat sat
 setiap ujung garis juga dijelaskan di kotak "Keterangan ujung garis" di kiri bawah gambar. Setiap
 garis ditarik dari baris kolom FK ke tabel yang ditunjuknya.
 
-Struktur di bawah adalah keadaan akhir setelah `schema.sql`, `migrations/0001_nomor_urut.sql`, dan
-`migrations/0002_pengguna.sql` dijalankan. Migrasi 0002 menghapus kolom teks `created_by` di
-`nprs`, `actions`, `gamas`, dan `gamas_actions`, lalu menggantinya dengan `user_id` yang menunjuk ke
-tabel `users`.
+Struktur di bawah adalah keadaan akhir setelah `schema.sql` dan tiga migrasi dijalankan:
+
+- `0001_nomor_urut.sql` menambah tabel `penghitung_nomor`.
+- `0002_pengguna.sql` menghapus kolom teks `created_by` di `nprs`, `actions`, `gamas`, dan
+  `gamas_actions`, lalu menggantinya dengan `user_id` yang menunjuk ke tabel `users`.
+- `0003_pending_tm.sql` hanya mengubah data, bukan struktur: `pending_by` yang kosong di `nprs` dan
+  `actions` diubah menjadi `TM`.
 
 ![Gambar 1. ERD aplikasi NPR](gambar/diagram/01-erd.png)
 
@@ -125,7 +129,7 @@ tetapi di tabel berikut.
 | `remotes.jarkom` | `VSAT`, `M2M` | `CHECK` di skema dan `worker/domain.ts` |
 | `nprs.remote_status`, `actions.remote_status` | `ATM Offline`, `Remote Down`, `Remote Idle`, `Relokasi`, `Reposisi`, `Maintenance`, `Preventive Maintenance`, `Other` | `worker/domain.ts` |
 | `nprs.status` | `OPEN` (baru), `PENDING`, `ESKALASI`, `CLOSED` | `worker/domain.ts` |
-| `nprs.pending_by`, `actions.pending_by` | kosong (belum dikategorikan), `TM`, `Customer` | `worker/domain.ts` |
+| `nprs.pending_by`, `actions.pending_by` | `TM`, `Customer`. NPR baru langsung `TM`; data lama yang kosong diubah menjadi `TM` oleh migrasi 0003 | `worker/domain.ts` |
 | `actions.kind` | `Create NPR`, `Problem`, `Eskalasi Service`, `Report Teknisi`, `Close` | `worker/domain.ts` |
 | `tickets.instruction` | `Maintenance`, `Preventive Maintenance` | `CHECK` di skema dan `worker/domain.ts` |
 | `gamas.status` | `OPEN` (baru), `IN PROGRESS`, `CLOSED` | `worker/domain.ts` |
@@ -135,7 +139,7 @@ tetapi di tabel berikut.
 Catatan:
 
 - `nprs.pending_by` di `schema.sql` punya nilai bawaan `'Customer'`, tetapi kode selalu mengisi
-  kosong saat NPR dibuat. Jadi nilai bawaan itu tidak pernah terpakai.
+  `'TM'` saat NPR dibuat. Jadi nilai bawaan itu tidak pernah terpakai.
 - Akun arsip (dibuat migrasi 0002 untuk nama pencatat lama) memakai `password_hash = '!'` dan
   `aktif = 0`. Akun ini tidak bisa login dan tidak tampil di menu Pengguna.
 
@@ -171,10 +175,10 @@ penyimpanan juga ditolak bila sesi habis (pengguna diminta login lagi).
 | UC-01 Login | Helpdesk, Admin | Punya akun aktif yang dibuat admin | 1) Buka alamat aplikasi. 2) Sistem memeriksa sesi; bila belum login, form Login tampil. 3) Isi username dan password, klik Masuk. 4) Sistem mencocokkan password, membuat sesi 8 jam, dan mengirim cookie. 5) Halaman yang dibuka tampil. | Sesi masih berlaku: langsung masuk tanpa form. Username atau password salah: "Username atau password salah." Akun nonaktif: "Akun ini sudah dinonaktifkan. Hubungi admin." Lebih dari 20 percobaan dari satu IP dalam 15 menit: diminta mencoba lagi 15 menit kemudian. |
 | UC-02 Keluar | Helpdesk, Admin | Sudah login | 1) Buka menu akun, pilih Keluar. 2) Sistem menghapus sesi dan cookie. 3) Form Login tampil. | Permintaan gagal (mis. jaringan putus): pesan galat, tetap di halaman. |
 | UC-03 Ganti password sendiri | Helpdesk, Admin | Sudah login | 1) Menu akun, pilih Ganti Password. 2) Isi password lama, password baru (minimal 12 karakter), dan ulangi password baru. 3) Simpan. 4) Sistem menyimpan password baru dan mengakhiri sesi lain milik akun itu. | Password lama salah, atau password baru kurang dari 12 karakter: ditolak dengan pesan. |
-| UC-04 Lihat Dashboard | Helpdesk, Admin | Sudah login | 1) Buka Dashboard. 2) Sistem menampilkan jumlah NPR aktif, kritis (lebih dari 2 hari), aging (1 sampai 2 hari), menunggu report, pending per kategori, grafik NPR 7 hari, Gamas aktif, dan 10 NPR aktif terlama. 3) Klik kartu untuk membuka daftar NPR yang sudah tersaring. | Data gagal dimuat: pesan galat. |
+| UC-04 Lihat Dashboard | Helpdesk, Admin | Sudah login | 1) Buka Dashboard. 2) Sistem menampilkan jumlah NPR aktif, kritis (lebih dari 2 hari), aging (1 sampai 2 hari), menunggu report, jumlah Pending TM dan Pending Customer, grafik NPR 7 hari, Gamas aktif, dan 10 NPR aktif terlama. 3) Klik kartu untuk membuka daftar NPR yang sudah tersaring. | Data gagal dimuat: pesan galat. |
 | UC-05 Cari, lihat, dan ekspor NPR | Helpdesk, Admin | Sudah login | 1) Buka menu NPR. 2) Cari, saring (customer, status, tanggal, kondisi), urutkan, dan pindah halaman. Semua dikerjakan server. 3) Buka detail NPR: data site, TT, riwayat tindakan, lampiran. 4) Ekspor CSV (maksimal 5.000 baris). | Tidak ada hasil: tampil keadaan kosong. NPR tidak ditemukan: pesan "NPR tidak ditemukan." |
-| UC-06 Buat NPR | Helpdesk, Admin | Remote sudah terdaftar (UC-17) | 1) Klik NPR Baru. 2) Pilih jarkom, customer, dan remote. 3) Pilih jenis gangguan, isi mulai gangguan (WIB) dan catatan. 4) Simpan. 5) Sistem memberi nomor `NPR/YYYY/MM/0001`, status OPEN, pending kosong, dan mencatat tindakan Create NPR. 6) Detail NPR terbuka. | Mulai gangguan di masa depan: ditolak. Remote tidak ditemukan: ditolak. |
-| UC-07 Catat Problem | Helpdesk, Admin | NPR belum CLOSED | 1) Di detail NPR pilih Problem. 2) Pilih Pending Customer atau Pending TM (wajib), status remote, waktu tindakan, catatan, dan lampiran bila perlu. 3) Simpan. 4) Status menjadi PENDING, atau tetap ESKALASI bila NPR sudah punya TT. | Kategori pending kosong, waktu mendahului riwayat terakhir atau di masa depan, lampiran bukan PNG/JPEG/WebP/PDF atau lebih dari 500 KB: ditolak. |
+| UC-06 Buat NPR | Helpdesk, Admin | Remote sudah terdaftar (UC-17) | 1) Klik NPR Baru. 2) Pilih jarkom, customer, dan remote. 3) Pilih jenis gangguan, isi mulai gangguan (WIB) dan catatan. 4) Simpan. 5) Sistem memberi nomor `NPR/YYYY/MM/0001`, status OPEN, Pending TM, dan mencatat tindakan Create NPR. 6) Detail NPR terbuka. | Mulai gangguan di masa depan: ditolak. Remote tidak ditemukan: ditolak. |
+| UC-07 Catat Problem | Helpdesk, Admin | NPR belum CLOSED | 1) Di detail NPR pilih Problem. 2) Isi status remote, waktu tindakan, catatan, dan lampiran bila perlu. Pilihan "Pending oleh" terisi kategori saat ini (NPR baru: Pending TM). 3) Simpan. 4) Status menjadi PENDING, atau tetap ESKALASI bila NPR sudah punya TT. | Pindah ke Pending Customer: form menampilkan pengingat bahwa pilihan ini hanya untuk penyebab di luar jaringan yang sudah dicek teknisi, dengan temuan di catatan dan bukti di lampiran (lampiran tidak diwajibkan sistem). Kategori selain TM atau Customer, waktu mendahului riwayat terakhir atau di masa depan, lampiran bukan PNG/JPEG/WebP/PDF atau lebih dari 500 KB: ditolak. |
 | UC-08 Eskalasi Service menjadi TT | Helpdesk, Admin | NPR belum CLOSED dan belum punya TT | 1) Pilih Eskalasi Service. 2) Pilih instruksi Maintenance atau Preventive Maintenance, isi catatan NOC dan waktu. 3) Klik Kirim TT. 4) Sistem membuat TT bernomor `TT/YYYY/MM/0001`; status NPR menjadi ESKALASI dan pending menjadi TM. 5) Tombol Unduh PDF TT muncul. | NPR sudah punya TT: pilihan Eskalasi tidak tampil, dan server menolak dengan 409. |
 | UC-09 Catat Report Teknisi | Helpdesk, Admin (isi dari Teknisi) | NPR punya TT dan belum CLOSED | 1) Teknisi melaporkan hasil kerja kepada helpdesk di luar aplikasi. 2) Pilih Report Teknisi, isi nama teknisi dan isi report. 3) Simpan. 4) Report tersimpan di TT; status tetap ESKALASI. | NPR belum punya TT: pilihan tidak tampil, dan server menolak. |
 | UC-10 Close NPR | Helpdesk, Admin | NPR belum CLOSED. Bila punya TT, report teknisi sudah dicatat | 1) Pilih Close. 2) Isi waktu tindakan, waktu kembali online, dan catatan. 3) Simpan. 4) Status menjadi CLOSED; waktu online dan waktu tutup tersimpan; riwayat tidak bisa diubah lagi. | NPR tanpa TT: boleh langsung Close. Ada TT tanpa report: tombol Simpan terkunci dan server menolak. Waktu online di luar rentang mulai gangguan sampai waktu Close: ditolak. |
@@ -221,6 +225,12 @@ Satu NPR dimulai dari pencatatan gangguan dan berakhir saat Close. Di antaranya 
 mencatat Problem berkali-kali. Bila perlu teknisi, helpdesk melakukan Eskalasi Service, yang
 membuat TT. Setelah teknisi melapor, helpdesk mencatat Report Teknisi. NPR tanpa TT boleh langsung
 Close; NPR dengan TT baru bisa Close setelah report teknisi tercatat.
+
+Kategori pending hanya Pending TM dan Pending Customer. NPR baru langsung Pending TM, karena
+gangguan dianggap masalah jaringan sampai ada bukti pengecekan teknisi. Pending Customer hanya untuk
+penyebab di luar jaringan (mis. listrik lokasi padam, mesin ATM rusak, arah antena terhalang gedung
+atau pohon). Saat helpdesk memindah NPR ke Pending Customer, form menampilkan pengingat untuk
+menulis temuan di catatan dan melampirkan bukti.
 
 Aturan yang berlaku untuk semua tindakan (tidak digambar satu per satu supaya diagram tetap
 terbaca): waktu tindakan tidak boleh di masa depan dan tidak boleh mendahului tindakan terakhir,
@@ -375,8 +385,8 @@ Perubahan status NPR menurut `worker/domain.ts`:
 
 | Tindakan | Status sesudahnya | Pending sesudahnya |
 |---|---|---|
-| Create NPR | OPEN | kosong |
-| Problem | PENDING, atau tetap ESKALASI bila NPR punya TT | TM atau Customer (wajib dipilih) |
+| Create NPR | OPEN | TM |
+| Problem | PENDING, atau tetap ESKALASI bila NPR punya TT | TM atau Customer (bawaan: kategori saat ini) |
 | Eskalasi Service | ESKALASI | TM |
 | Report Teknisi | ESKALASI | sesuai pilihan (form terisi kategori saat ini) |
 | Close | CLOSED | sesuai pilihan (form terisi kategori saat ini) |
@@ -388,6 +398,11 @@ atau "memanggil". Aplikasi bisa berjalan di dua tempat dengan kode API yang sama
 lewat Docker (dipakai di server produksi) atau Cloudflare Workers. Kotak bergaris putus-putus di
 dalam Server Docker hanya pengelompokan: "Akses database" dipakai oleh `main.ts` dan oleh perintah
 terminal.
+
+Sejak commit `e60a767`, halaman aplikasi dimuat terpisah lewat `components/halaman.tsx`
+(`React.lazy`), supaya berkas JavaScript yang diunduh saat membuka Login atau Dashboard kecil.
+Halaman Login dan dialog Ganti Password tetap di berkas utama karena selalu dipakai. Dua detik
+setelah login, halaman lain diunduh di latar saat browser senggang, jadi pindah menu tetap cepat.
 
 ![Gambar 5.3. Diagram modul](gambar/diagram/05c-modul.png)
 
@@ -412,12 +427,13 @@ Diagram di atas mengikuti kode. Perbedaan yang ditemukan saat mencocokkan dokume
 | 4 | `review/RENCANA-REVISI.md` (tahap 2, Database) | Kolom `created_by` di NPR, tindakan, TT, dan Gamas diganti id pengguna | `user_id` ditambahkan ke `nprs`, `actions`, `gamas`, dan `gamas_actions`. Tabel `tickets` tidak punya `created_by` maupun `user_id`; pembuat TT diketahui dari tindakan `Eskalasi Service` | Kode: `tickets` tanpa FK ke `users` |
 | 5 | `review/REDESAIN-NPR.md` (tabel Pengguna) | Angka di menu Pengguna dihitung dari `actions` dan `nprs` | "Tindakan bulan ini" dan "Tindakan terakhir" juga menghitung `gamas_actions` (perkembangan Gamas) | Kode (UC-18) |
 | 6 | `monitoring-vsat/PANDUAN-MULAI.md` (daftar berkas) | `schema.sql`: tabel aplikasi | `schema.sql` hanya versi awal. Tabel `penghitung_nomor` ada di migrasi 0001; kolom `peran`, `aktif`, dan `user_id` ada di migrasi 0002; kolom `created_by` di `schema.sql` dihapus oleh migrasi 0002 | Kode: ERD memakai keadaan setelah migrasi |
+| 7 | `review/RENCANA-REVISI.md` (X-02 sebagian), `review/PROMPT-UJI-BROWSER.md` (langkah NPR baru dan kartu Dashboard) | NPR baru dibuat tanpa kategori pending ("Belum dikategorikan") sampai helpdesk memilih | Sejak `d3299dd` (keputusan P-1 di `review/HANDOVER-SESI.md` bagian 3), NPR baru langsung Pending TM dan "Belum Dikategorikan" dihapus dari form, daftar, dan Dashboard. Dokumen lama itu belum diperbarui | Kode |
 
 Perbedaan kecil di dalam kode sendiri (bukan antara dokumen dan kode), dicatat supaya tidak
 membingungkan saat membaca diagram:
 
 - `schema.sql` memberi `nprs.pending_by` nilai bawaan `'Customer'`, tetapi `POST /api/nprs` selalu
-  mengisi kosong. Diagram memakai perilaku kode (pending kosong saat NPR dibuat).
+  mengisi `'TM'`. Diagram memakai perilaku kode (Pending TM saat NPR dibuat).
 - Form Close NPR mewajibkan waktu kembali online, tetapi server memakai waktu Close bila `online_at`
   tidak dikirim. Untuk Close Gamas, server ikut mewajibkannya. Diagram mengikuti alur form.
 - Form lampiran menerima JPG, PNG, dan PDF, sedangkan server juga menerima WebP.
