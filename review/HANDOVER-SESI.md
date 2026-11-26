@@ -138,7 +138,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   ```bash
   DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 37/37
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 38/38
   ```
 
   `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
@@ -147,7 +147,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Tangkapan layar dan PDF disimpan di
   `UJI_OUT`.
 - **Hasil terakhir (27 November 2026):**
-  - `uji-browser.cjs` 37/37 di atas data demo, lalu `test:api` 49/49. "Urut Status
+  - `uji-browser.cjs` 38/38 di atas data demo, lalu `test:api` 49/49. "Urut Status
     (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
@@ -221,6 +221,8 @@ Juga atas permintaan pengguna (tangkapan layar kolom Gangguan Terakhir):
   - riwayat NPR dan Gamas: "22 Nov 2026, 21.02 oleh Admin Uji";
   - Gangguan Terakhir di Remote: jam dan "Selesai dalam …" / "Masih aktif" (oranye) di baris
     sendiri.
+  - Baris status riwayat NPR "Remote Down · Pending TM" sekarang satu teks, sehingga jarak kiri
+    dan kanan titik sama (dulu 8 px dan 2 px karena jarak flex).
 
 **Data demo** (`server/demo.ts`, atas permintaan pengguna, keputusan: di server, sementara,
 nama bank fiktif):

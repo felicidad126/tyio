@@ -480,6 +480,44 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     'Riwayat NPR: jam lalu "oleh" nama, tanpa titik pemisah',
     riwayatNpr[0],
   );
+  // Jarak kiri dan kanan titik di "Remote Down · Pending TM" diukur per huruf.
+  const jarakTitik = await page.$$eval("ol > li", (lis) =>
+    lis
+      .map((li) => {
+        const baris = [...li.querySelectorAll("div")].find((d) =>
+          d.textContent.includes("· Pending"),
+        );
+        if (!baris) return null;
+        const huruf = [];
+        const jalan = document.createTreeWalker(baris, NodeFilter.SHOW_TEXT);
+        while (jalan.nextNode()) {
+          const n = jalan.currentNode;
+          for (let i = 0; i < n.length; i++) {
+            if (/\s/.test(n.data[i])) continue;
+            const r = document.createRange();
+            r.setStart(n, i);
+            r.setEnd(n, i + 1);
+            huruf.push({ c: n.data[i], k: r.getBoundingClientRect() });
+          }
+        }
+        const i = huruf.findIndex((h) => h.c === "·");
+        if (i < 1 || i >= huruf.length - 1) return null;
+        const bulat = (x) => Math.round(x * 10) / 10;
+        return [
+          bulat(huruf[i].k.left - huruf[i - 1].k.right),
+          bulat(huruf[i + 1].k.left - huruf[i].k.right),
+        ];
+      })
+      .filter(Boolean),
+  );
+  cek(
+    jarakTitik.length > 0 &&
+      jarakTitik.every(([kiri, kanan]) => Math.abs(kiri - kanan) <= 1),
+    "Riwayat NPR: jarak kiri dan kanan titik sama",
+    jarakTitik.length
+      ? `kiri ${jarakTitik[0][0]} px, kanan ${jarakTitik[0][1]} px`
+      : "baris tidak ditemukan",
+  );
   await page.goto(BASE + "/gamas");
   await page.waitForSelector("table tbody tr");
   await page.locator("table tbody tr").first().click();
