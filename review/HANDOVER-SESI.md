@@ -2,11 +2,13 @@
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
 percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
-commit `6a7d070` dan sejak itu memperbarui diri otomatis (bagian 6).
+commit `6a7d070` dan sejak itu memperbarui diri otomatis (bagian 6), kecuali commit `d3299dd`
+yang berisi migrasi dan menunggu pembaruan manual.
 
-## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 02.10 WIB)
+## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 02.30 WIB)
 
-Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit dan di-push.
+Semua sudah di-commit dan di-push. Satu hal menunggu pengguna: pembaruan server manual untuk
+commit `d3299dd` (migrasi `0003`, lihat bagian 6).
 
 **Langkah pertama sesi baru:**
 
@@ -14,8 +16,10 @@ Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit dan di-push.
    dengan `origin`. Saat serah terima, HEAD = commit "Serah terima ke sesi baru: bagian Mulai di
    sini" (atau yang lebih baru dari sesi lain).
 2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"6a7d070"}`.
+   Setelah pembaruan manual `d3299dd`: versi `d3299dd` atau commit kode yang lebih baru.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
-   branch `Rev-NPR-Tyio`. Run #1–#4 hijau. Run #5 (commit serah terima) belum dicek saat menulis.
+   branch `Rev-NPR-Tyio`. Run #1–#5 hijau. Run untuk `d3299dd` dan commit dokumen sesudahnya
+   dicek di akhir sesi (lihat laporan di percakapan).
 4. Tanyakan pengguna apa yang ingin dikerjakan.
 
 **Sesi Claude lain juga push ke branch ini** (diagram laporan KP: `review/DIAGRAM-NPR.md`,
@@ -26,6 +30,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 | Commit | Isi | Bukti |
 |---|---|---|
+| `d3299dd` | Kategori pending hanya TM dan Customer: "Belum Dikategorikan" dihapus, NPR baru Pending TM, pengingat saat pindah ke Pending Customer, migrasi `0003` | `test:api` 50/50, uji browser 42/42 (laptop dan Pixel 7). Migrasi diuji pada database buatan kode lama: SLA tidak berubah |
 | `e94efc4` | `review/uji/uji-browser.cjs`; lima pemeriksaan yang tertunda | Lulus lokal, lalu lulus di server (agent, `PROMPT-DATA-DEMO.md` a–h) |
 | `2086e8d` | Daftar NPR dari Dashboard: panah di "Mulai ↑"; `useUrut` dengan urutan awal yang bisa berubah | 5 cek baru gagal di kode lama, lulus di kode baru |
 | `3630739` | Data demo `server/demo.ts` (isi dan `--hapus`) | Lokal: isi, tolak isi ulang, hapus, Gamas campuran. Server: terisi 00.48 WIB |
@@ -42,8 +47,12 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
   `tail -20 /var/log/npr-perbarui.log` dan `cat /var/lib/npr-perbarui/cek-terakhir`.
 - Pemasangan commit dokumen di server tidak terlihat dari health (versinya tetap).
 - Tampilan di HP sungguhan. Agent memakai bingkai 400 px; lokal dan CI memakai emulasi Pixel 7.
+- Migrasi `0003` di server (menunggu pembaruan manual).
 
 **Menunggu pengguna:**
+
+- Pembaruan server manual untuk `d3299dd`: `PROMPT-PERBARUI-SERVER.md` beserta tambahan di
+  bagian 6. Pembaruan otomatis menolak commit ini karena ada perubahan di `migrations/`.
 
 - Kapan data demo dihapus (`PROMPT-DATA-DEMO.md` bagian B). Harus sebelum data asli dicatat;
   tim perlu diberi tahu dulu karena akun lain sudah mencoba data demo.
@@ -55,8 +64,12 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
   GitHub API tidak bisa dipanggil langsung (pakai alat MCP github), tetapi `kp.helonoia.com` bisa
   di-`curl`.
 - Nilai `kondisi` yang sah: `aktif`, `kritis`, `aging`, `menunggu_report`, `pending_tm`,
-  `pending_customer`, `belum_kategori`. Nilai lain diabaikan tanpa pesan; uji pernah keliru karena
-  memakai `closed`.
+  `pending_customer`. `belum_kategori` dihapus di `d3299dd`. Nilai lain diabaikan tanpa pesan; uji
+  pernah keliru karena memakai `closed`.
+- Di Playwright, `textContent` baris tabel tersambung tanpa spasi ("berjalanOpenTM"), jadi regex
+  `\bOpen\b` pada baris tidak cocok. Cari sel atau badge yang isinya persis: `/^Open$/`.
+- Bulan berjalan di Laporan SLA dihitung sampai saat diminta. Membandingkan SLA bulan berjalan dari
+  dua waktu berbeda selalu berselisih pada NPR yang masih aktif; bandingkan bulan yang sudah lewat.
 - Uji browser butuh lebih dari 25 NPR supaya halaman 2 ada. Pakai data demo (50 NPR).
 - Dua server lokal yang membuat database baru yang sama pada saat bersamaan menghasilkan
   "database is locked". Ini artefak uji, bukan bug.
@@ -127,6 +140,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 | T-6 | Temuan di luar D-1…D-8 tidak dikerjakan |
 | K-06 | Awalnya tidak dikerjakan (T-4). Akhirnya dikerjakan atas permintaan pengguna (commit `9741ddc`) |
 | UI | Opsi a: Tailwind 3.4 + shadcn/ui, dipindah dari prototipe `redesain-npr/` |
+| P-1 | 27 November 2026, menggantikan X-02 bagian kategori. Pending hanya **Pending TM** (provider) dan **Pending Customer**. NPR baru langsung Pending TM, karena web ini milik TM. Pending Customer hanya bila penyebabnya di luar jaringan dan ada bukti pengecekan teknisi, mis. arah antena terhalang gedung atau pohon. Bukti cukup diingatkan di form, tidak diwajibkan sistem. Aturan SLA tetap: hanya NPR dengan TT Maintenance. "Reposisi Antena" yang biasa diajukan customer cukup ditulis di catatan, tidak jadi pilihan baru |
 
 Rincian keputusan ada di `review/RENCANA-REVISI.md`. Temuan review ada di `review/REVIEW-NPR.md`.
 
@@ -170,7 +184,7 @@ riwayat Back.
 |---|---|
 | `worker/` | API (Cloudflare Workers + D1): `index.ts` (rute), `baca.ts` (query baca), `domain.ts` (hitung SLA), `pengguna.ts` (akun), `sandi.ts` |
 | `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts`, `demo.ts` (data demo, lihat bagian 7) |
-| `migrations/` | Migrasi database. Belum ada migrasi baru sejak `0002` |
+| `migrations/` | Migrasi database. `0003_pending_tm.sql` (kategori kosong menjadi TM) adalah yang terbaru |
 | `scripts/` | `setup.mjs`, `test-api.mjs`, `perbarui-otomatis.sh` (pembaruan otomatis di server, lihat bagian 6) dan ujinya `uji-perbarui-otomatis.sh` |
 
 Catatan perilaku:
@@ -192,7 +206,7 @@ yang job ini lulus, jadi **jangan mengganti nama job** tanpa mengganti `NAMA_CEK
 `perbarui-otomatis.sh`. Workflow proyek lama `ci.yml` dimatikan untuk branch ini lewat
 `branches-ignore`; dulu selalu gagal di branch ini karena memeriksa proyek lama. Run pertama
 (commit `fe417ad`, 27 November 2026) lulus dalam 2 menit 40 detik: uji browser 38/38, `test:api`
-49/49, image Docker sehat dengan versi commit.
+49/49, image Docker sehat dengan versi commit. Sejak `d3299dd`: uji browser 42/42, `test:api` 50/50.
 
 Pemeriksaan yang sama bisa dijalankan lokal dari folder `monitoring-vsat/`:
 
@@ -200,7 +214,7 @@ Pemeriksaan yang sama bisa dijalankan lokal dari folder `monitoring-vsat/`:
 npx tsc -b && npm run lint && npx prettier --check src
 npm run build && npm run build:server
 npm run setup                     # database lokal wrangler
-TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> npm run test:api   # harus 49/49
+TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> npm run test:api   # harus 50/50
 ```
 
 Server lokal untuk uji, dengan database uji yang terpisah:
@@ -218,17 +232,17 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   ```bash
   DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 38/38
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 42/42
   ```
 
   `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
   panah saat dibuka dari Dashboard), link `/npr/<id>` di tab baru dan tanpa sesi, PDF TT dan
   Gamas, `/sla?bulan=…` lalu F5, durasi di bawah 1 jam, riwayat "jam oleh nama", kolom
-  Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Tangkapan layar dan PDF disimpan di
-  `UJI_OUT`.
-- **Hasil terakhir (27 November 2026):**
-  - `uji-browser.cjs` 38/38 di atas data demo, lalu `test:api` 49/49. "Urut Status
-    (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
+  Gangguan Terakhir di Remote (1920 px), kategori pending hanya TM atau Customer beserta
+  pengingat Pending Customer (laptop dan HP, form tidak dikirim), serta kartu di HP. Tangkapan
+  layar dan PDF disimpan di `UJI_OUT`.
+- **Hasil terakhir (27 November 2026, `d3299dd`):**
+  - `uji-browser.cjs` 42/42 di atas data demo, tanpa galat konsol, lalu `test:api` 50/50.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
 - **Folder `server/` tidak dicek `tsc -b`** (tidak ada di tsconfig mana pun, hanya di-build
@@ -271,6 +285,39 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   - **Manual lewat agent browser** (`review/PROMPT-PERBARUI-SERVER.md`) hanya untuk perubahan
     besar: `migrations/`, `schema.sql`, `Dockerfile`, `docker-compose.yml`, atau pesan commit
     berisi `[manual]`. Tambahkan di bawah prompt apa yang berubah dan apa yang dicek.
+  - **Pembaruan manual yang menunggu: `d3299dd`** (migrasi `0003`). Berikan
+    `PROMPT-PERBARUI-SERVER.md` ke agent browser, lalu tempel tambahan ini di bawahnya. Bila
+    gagal dan perlu kembali ke commit lama, data hasil migrasi tetap terbaca kode lama (kode lama
+    menerima TM dan Customer).
+
+    ```text
+    TAMBAHAN UNTUK PEMBARUAN INI (commit d3299dd, "Kategori pending hanya
+    Pending TM dan Pending Customer"):
+
+    Yang berubah: kategori pending NPR tinggal dua, Pending TM dan Pending
+    Customer. "Belum Dikategorikan" dihapus dan NPR baru langsung Pending TM.
+    Migrasi database 0003_pending_tm.sql berjalan sendiri saat container baru
+    menyala: NPR dan riwayat yang kategorinya kosong menjadi TM. Cadangan di
+    LANGKAH 2 wajib berhasil sebelum lanjut.
+
+    Tambahan di LANGKAH 4, setelah health sehat:
+      cd /opt/monitoring-vsat/monitoring-vsat
+      docker compose logs app 2>&1 | grep -i migrasi
+    Harapan: ada baris "Migrasi dijalankan: 0003_pending_tm.sql". Bila ada
+    "Migrasi ... gagal", jangan lanjut ke LANGKAH 5; laporkan apa adanya.
+
+    Tambahan di LANGKAH 5 (tetap tanpa mengubah data):
+    h. Dashboard, panel "Pihak yang Ditunggu": hanya Pending TM dan Pending
+       Customer, dan jumlah keduanya sama dengan angka NPR Aktif. Tidak ada
+       tulisan "Belum Dikategorikan" atau "Belum Dipilih" di Dashboard
+       maupun di daftar NPR.
+    i. Daftar NPR: kolom Pending hanya berisi TM atau Customer.
+    j. Buka satu NPR berstatus Open. Kotak Pending berisi "Pending TM". Di
+       Tambah Tindakan, ubah "Pending oleh" menjadi Pending Customer: muncul
+       kotak kuning berisi pengingat bukti pengecekan teknisi. Kembalikan ke
+       Pending TM dan JANGAN klik Simpan Tindakan.
+    k. Laporan SLA bulan lalu terbuka normal tanpa pesan merah.
+    ```
   - **Status pemasangan otomatis:** terpasang 27 November 2026 sekitar pukul 01.55 WIB. Tugas
     cron aaPanel "NPR pembaruan otomatis" (Shell Script, tiap 5 menit, user root). Cron terbukti
     berjalan (`cek-terakhir` 02.00.01 WIB). Crontab juga berisi tugas lain (aaPanel dan pihak
