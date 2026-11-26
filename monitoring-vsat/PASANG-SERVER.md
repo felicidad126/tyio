@@ -111,9 +111,41 @@ Agar berjalan otomatis setiap hari, tambahkan perintah pertama di menu
 
 ## 7. Memperbarui aplikasi
 
+### Otomatis (disarankan)
+
+Setiap push ke branch `Rev-NPR-Tyio` diperiksa workflow **NPR** di GitHub
+Actions: cek tipe, lint, build, uji API, uji browser dengan data demo, dan
+build image Docker. Server memeriksa GitHub setiap 5 menit dan memasang commit
+baru yang lulus: cadangan database, `git pull`, build ulang, lalu
+`/api/health` harus sehat dan menunjukkan commit baru. Bila tidak sehat, server
+kembali ke commit sebelumnya.
+
+Pasang sekali di menu **Cron** aaPanel (jenis Shell Script, setiap 5 menit):
+
 ```sh
+/opt/monitoring-vsat/monitoring-vsat/scripts/perbarui-otomatis.sh
+```
+
+- Coba tanpa mengubah apa pun: tambahkan `--coba`.
+- Catatan kejadian: `/var/log/npr-perbarui.log`. Waktu cek terakhir:
+  `/var/lib/npr-perbarui/cek-terakhir`.
+- Commit yang terpasang: `curl -s http://127.0.0.1:3000/api/health` menampilkan
+  `{"ok":true,"versi":"<commit>"}`.
+- Jeda sementara: `mkdir -p /var/lib/npr-perbarui && touch /var/lib/npr-perbarui/jeda`.
+  Lanjutkan dengan `rm /var/lib/npr-perbarui/jeda`.
+- **Tidak dipasang otomatis** (perlu cara manual di bawah): perubahan di
+  `migrations/`, `schema.sql`, `Dockerfile`, `docker-compose.yml`, atau commit
+  yang pesannya berisi `[manual]`. Log mencatat "Perlu pembaruan lewat agent
+  browser".
+
+### Manual
+
+```sh
+mkdir -p /var/lib/npr-perbarui && touch /var/lib/npr-perbarui/jeda
 cd /opt/monitoring-vsat && git pull --ff-only
-cd monitoring-vsat && docker compose up -d --build
+cd monitoring-vsat && docker compose exec -T app node dist/server/cadangan.js
+NPR_VERSI=$(git rev-parse --short=7 HEAD) docker compose up -d --build
+rm /var/lib/npr-perbarui/jeda
 ```
 
 Perubahan struktur database (folder `migrations/`) dijalankan otomatis saat

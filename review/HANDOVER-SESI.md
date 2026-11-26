@@ -1,8 +1,8 @@
 # Serah terima sesi Claude Code: NPR (Network Problem Report)
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
-percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`, commit `3630739` (juga
-yang berjalan di server).
+percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
+commit `b00aa54`; commit sesudahnya hanya dokumen.
 
 ## 1. Proyek singkat
 
@@ -102,7 +102,7 @@ riwayat Back.
 | `worker/` | API (Cloudflare Workers + D1): `index.ts` (rute), `baca.ts` (query baca), `domain.ts` (hitung SLA), `pengguna.ts` (akun), `sandi.ts` |
 | `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts`, `demo.ts` (data demo, lihat bagian 7) |
 | `migrations/` | Migrasi database. Belum ada migrasi baru sejak `0002` |
-| `scripts/` | `setup.mjs`, `test-api.mjs` |
+| `scripts/` | `setup.mjs`, `test-api.mjs`, `perbarui-otomatis.sh` (pembaruan otomatis di server, lihat bagian 6) dan ujinya `uji-perbarui-otomatis.sh` |
 
 Catatan perilaku:
 - **Data per halaman:**
@@ -114,7 +114,18 @@ Catatan perilaku:
 
 ## 5. Perintah pemeriksaan
 
-Jalankan dari folder `monitoring-vsat/`:
+**CI GitHub:** `.github/workflows/npr.yml`, job **"Periksa NPR"**, berjalan di setiap push ke
+`Rev-NPR-Tyio`. Isinya: `tsc -b`, lint, Prettier (`src`, `server`, `review/uji`), shellcheck dan
+`uji-perbarui-otomatis.sh`, build, server uji dengan data demo, `uji-browser.cjs`, `test:api`, lalu
+build image Docker dan cek `/api/health`. Ringkasan hasil uji ada di halaman run. Setelah push,
+cek hasilnya (`mcp__github__actions_list`, `branch: Rev-NPR-Tyio`). Server hanya memasang commit
+yang job ini lulus, jadi **jangan mengganti nama job** tanpa mengganti `NAMA_CEK` di
+`perbarui-otomatis.sh`. Workflow proyek lama `ci.yml` dimatikan untuk branch ini lewat
+`branches-ignore`; dulu selalu gagal di branch ini karena memeriksa proyek lama. Run pertama
+(commit `fe417ad`, 27 November 2026) lulus dalam 2 menit 40 detik: uji browser 38/38, `test:api`
+49/49, image Docker sehat dengan versi commit.
+
+Pemeriksaan yang sama bisa dijalankan lokal dari folder `monitoring-vsat/`:
 
 ```bash
 npx tsc -b && npm run lint && npx prettier --check src
@@ -138,7 +149,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   ```bash
   DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 37/37
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 38/38
   ```
 
   `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
@@ -147,7 +158,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Tangkapan layar dan PDF disimpan di
   `UJI_OUT`.
 - **Hasil terakhir (27 November 2026):**
-  - `uji-browser.cjs` 37/37 di atas data demo, lalu `test:api` 49/49. "Urut Status
+  - `uji-browser.cjs` 38/38 di atas data demo, lalu `test:api` 49/49. "Urut Status
     (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
@@ -166,19 +177,29 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `3630739`, sehat (diperbarui 27 November 2026 pukul 00.47 WIB).
-  Cadangan sebelum pembaruan: `npr-20261127-0047.sqlite`.
+- **Commit yang berjalan:** `b00aa54`, sehat (diperbarui 27 November 2026 pukul 01.05 WIB,
+  pemeriksaan a–d lulus). Cadangan sebelum pembaruan: `npr-20261127-0105.sqlite`.
 - **Data:** berisi **data demo sementara** sejak 27 November 2026 pukul 00.48 WIB, dicatat atas
   nama akun admin "mimin": 6 customer, 20 remote, 50 NPR, 19 TT, 4 Gamas. Belum ada data asli.
   Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo **harus
   dihapus** (`review/PROMPT-DATA-DEMO.md` bagian B) sebelum data asli mulai dicatat.
-- **Cara pembaruan:** Claude tidak punya akses langsung ke server. Pembaruan dikerjakan agent
-  browser milik pengguna lewat Terminal aaPanel, memakai prompt `review/PROMPT-PERBARUI-SERVER.md`:
-  1. cadangan;
-  2. `git pull --ff-only`;
-  3. `docker compose up -d --build`;
-  4. cek health;
-  5. pemeriksaan browser a–g.
+- **Sudah dicoba pengguna lain:** sejak 27 November pukul 01.02 WIB, akun helpdesk lain menambah
+  tindakan di NPR demo dan menutup satu NPR demo. Itu wajar untuk masa percobaan. Semua
+  NPR di site demo, termasuk tindakan mereka, ikut terhapus oleh `--hapus`. NPR yang dicatat di
+  customer asli tidak ikut terhapus, tetapi nomornya akan melanjutkan nomor demo
+  (mis. `NPR/2026/11/0027`), bukan mulai dari 0001.
+- **Cara pembaruan:** Claude tidak punya akses langsung ke server.
+  - **Otomatis** (dipasang sekali lewat `review/PROMPT-PASANG-CD.md`): cron aaPanel menjalankan
+    `scripts/perbarui-otomatis.sh` tiap 5 menit. Commit baru yang job "Periksa NPR"-nya lulus
+    dipasang: cadangan, `git merge --ff-only`, build dengan `NPR_VERSI`, lalu `/api/health` harus
+    menunjukkan commit baru. Bila tidak sehat, server kembali ke commit lama dan commit itu tidak
+    dicoba lagi. Log: `/var/log/npr-perbarui.log`; tanda cron hidup:
+    `/var/lib/npr-perbarui/cek-terakhir`; jeda: berkas `/var/lib/npr-perbarui/jeda`.
+  - **Manual lewat agent browser** (`review/PROMPT-PERBARUI-SERVER.md`) hanya untuk perubahan
+    besar: `migrations/`, `schema.sql`, `Dockerfile`, `docker-compose.yml`, atau pesan commit
+    berisi `[manual]`. Tambahkan di bawah prompt apa yang berubah dan apa yang dicek.
+  - **Status pemasangan otomatis:** prompt sudah dibuat, belum dijalankan di server. Tanyakan
+    pengguna. Sampai terpasang, `/api/health` di server masih menjawab `{"ok":true}` tanpa versi.
 - **Reset password akun** (pengguna mengetik sendiri password barunya):
 
   ```bash
@@ -216,6 +237,8 @@ Juga atas permintaan pengguna (tangkapan layar kolom Gangguan Terakhir):
   - riwayat NPR dan Gamas: "22 Nov 2026, 21.02 oleh Admin Uji";
   - Gangguan Terakhir di Remote: jam dan "Selesai dalam …" / "Masih aktif" (oranye) di baris
     sendiri.
+  - Baris status riwayat NPR "Remote Down · Pending TM" sekarang satu teks, sehingga jarak kiri
+    dan kanan titik sama (dulu 8 px dan 2 px karena jarak flex).
 
 **Data demo** (`server/demo.ts`, atas permintaan pengguna, keputusan: di server, sementara,
 nama bank fiktif):
@@ -229,6 +252,10 @@ nama bank fiktif):
   penghitung nomor, dan membiarkan akun serta data lain. Gamas campuran hanya kehilangan site
   demonya. **Harus dijalankan sebelum data asli mulai dicatat.**
 - `review/uji/isi-data-uji.mjs` dihapus karena sudah digantikan `demo.js`.
+
+`REVIEW-NPR.md` (baris 230 dan 628) masih memuat password demo lama dari kode asli, sebagai
+bukti temuan. Pengguna sudah memastikan akun di server tidak memakai password itu (27 November
+2026), jadi teksnya dibiarkan. Tidak perlu ditanyakan lagi.
 
 Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 - Pengguna boleh melihat isi cadangan pukul 14:51 bila ingin memastikan customer dan remote yang
@@ -245,7 +272,7 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 | `RENCANA-REVISI.md` | Keputusan D-1…D-8, T-1…T-6, dan tahap pengerjaan |
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
 | `DIAGRAM-NPR.md` | Diagram perancangan untuk laporan KP (ERD, use case, activity, sequence, class, modul). Sumber draw.io (`.drawio`), PNG, SVG, dan skrip ekspor `render-drawio.mjs` di `gambar/diagram/` |
-| `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server, data demo |
+| `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, pasang pembaruan otomatis (`PASANG-CD`), perbarui server manual, data demo |
 | `uji/` | Uji browser Playwright `uji-browser.cjs` (lihat bagian 5) |
 
 Prototipe desain ada di `redesain-npr/`. Jalankan `npm run bundel` di sana untuk menghasilkan

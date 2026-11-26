@@ -1155,8 +1155,12 @@ export function NprDetail() {
                     {a.notes}
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>{a.remote_status}</span>
-                    {a.pending_by && <span>· Pending {a.pending_by}</span>}
+                    {/* Satu teks, supaya jarak di kiri dan kanan titik sama
+                        (jarak flex hanya untuk tombol lampiran). */}
+                    <span>
+                      {a.remote_status}
+                      {a.pending_by && ` · Pending ${a.pending_by}`}
+                    </span>
                     {a.attachment_name && (
                       <button
                         onClick={() => void unduhLampiran(a)}
