@@ -1,7 +1,8 @@
 # Serah terima sesi Claude Code: NPR (Network Problem Report)
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
-percakapan lama. Keadaan per 26 November 2026, commit `9741ddc` di branch `Rev-NPR-Tyio`.
+percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Kode aplikasi terakhir
+berubah di commit `9741ddc`; sesudahnya hanya dokumen dan skrip uji di `review/`.
 
 ## 1. Proyek singkat
 
@@ -132,12 +133,24 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 
 **Uji browser** memakai Playwright (Chromium sudah terpasang, `require('playwright')`).
 - **Lebar layar:** laptop 1366×820, HP perangkat "Pixel 7".
-- **Skrip uji:** skrip sesi lalu ada di scratchpad dan hilang bersama container, jadi buat ulang
-  bila perlu.
-- **Hasil terakhir:**
-  - Uji lengkap 31/32. Satu yang gagal, "sort Status (server)", gagal karena database uji
-    hanya punya 1 NPR, bukan bug.
-  - Uji alamat 21/21.
+- **Skrip uji di `review/uji/`** (akun diambil dari variabel lingkungan, sama seperti `test:api`):
+
+  ```bash
+  node dist/server/setup.js --contoh            # dengan DB_PATH database uji
+  TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
+    node ../review/uji/isi-data-uji.mjs          # 30 NPR, TT, 3 Gamas; hanya mau ke 127.0.0.1
+  TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 26/26
+  ```
+
+  `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi`, link `/npr/<id>` di tab
+  baru dan tanpa sesi, PDF TT dan Gamas, `/sla?bulan=…` lalu F5, serta kartu di HP. Tangkapan
+  layar dan PDF disimpan di `UJI_OUT`.
+- **Hasil terakhir (27 November 2026):**
+  - `uji-browser.cjs` 26/26, dari database baru. "Urut Status (server)" yang dulu gagal karena
+    hanya ada 1 NPR sekarang lulus.
+  - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
+    Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
 - **Catatan menulis skrip uji:**
   - Menu sidebar dan breadcrumb sekarang berupa `<a>`, bukan `<button>`.
   - Toast sonner yang terbaru ada di urutan pertama (`.first()`).
@@ -168,16 +181,22 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 
 ## 7. Yang belum selesai atau perlu dicek
 
-Pemeriksaan berikut tertunda karena data di server masih kosong:
-- urutan kolom "No. NPR";
-- Unduh PDF TT dan PDF Gamas;
+Pemeriksaan berikut tertunda karena data di server masih kosong. Semuanya sudah **lulus di
+server lokal dengan data uji** (27 November 2026, `uji-browser.cjs` 26/26):
+- urutan kolom "No. NPR" (naik, turun, dan halaman 2 melanjutkan urutan);
+- Unduh PDF TT dan PDF Gamas (dari daftar, detail, dan kartu HP; isi PDF dicek: kop, tabel,
+  tanda tangan);
 - kartu NPR di HP;
-- link `/npr/<id>` dibuka di tab baru;
+- link `/npr/<id>` dibuka di tab baru, juga tanpa sesi (setelah login langsung ke NPR itu);
 - `/sla?bulan=…` lalu F5.
 
-Pengguna sudah diberi daftar cek manual. Tunggu laporannya setelah data asli masuk.
+Pengguna sudah diberi daftar cek manual. Laporannya dari server dengan data asli tetap ditunggu.
 
 Catatan lain yang terbuka (dikerjakan hanya bila diminta):
+- Bila daftar NPR dibuka dari Dashboard (`/npr?kondisi=…`) tanpa memilih urutan, baris
+  diurutkan dari gangguan terlama (sengaja, lihat `Npr.tsx`). Tetapi panah di kepala tabel tetap
+  menunjuk "No. NPR ↓", jadi tidak sesuai dengan urutan yang tampil. Sudah dilaporkan ke
+  pengguna, belum diubah.
 - Pengguna boleh melihat isi cadangan pukul 14:51 bila ingin memastikan customer dan remote yang
   hilang antara 14:51 dan 18:09. Kemungkinan besar itu data uji yang sengaja dihapus.
 - Tanda "—" untuk sel kosong di tabel masih dipakai. Ganti bila pengguna menganggapnya AI slop.
@@ -192,6 +211,7 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 | `RENCANA-REVISI.md` | Keputusan D-1…D-8, T-1…T-6, dan tahap pengerjaan |
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
 | `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server |
+| `uji/` | Skrip pengisi data uji dan uji browser Playwright (lihat bagian 5) |
 
 Prototipe desain ada di `redesain-npr/`. Jalankan `npm run bundel` di sana untuk menghasilkan
 `redesain-npr.html`. Prototipe ini sudah dipindahkan ke aplikasi; folder ini disimpan sebagai
