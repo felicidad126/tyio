@@ -15,6 +15,8 @@ Status: keputusan D-1…D-8 dan T-1…T-6 sudah ada. Pengerjaan dimulai 25 Novem
 | Sisa yang ditentukan D-1…D-8 (U-05, X-07, X-10, H-05, R-01…R-07) | Belum | – |
 | Temuan lain (T-6) | Tidak dikerjakan | – |
 
+Terpasang di server sendiri: **https://kp.helonoia.com** (Docker `npr-kp-app-1` di 127.0.0.1:3000, reverse proxy aaPanel, Let's Encrypt, cadangan harian lewat cron aaPanel). Langkahnya di `monitoring-vsat/PASANG-SERVER.md`.
+
 Kode program ada di folder `monitoring-vsat/` (di-commit setelah syarat T-1 terpenuhi). Kode program belum ada di repo dan belum diubah.
 
 ---
