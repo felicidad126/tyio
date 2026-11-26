@@ -1,6 +1,6 @@
 # Aturan simulasi SLA
 
-Ini aturan untuk demonstrasi tugas Kerja Praktek, bukan kontrak SLA resmi PT Tangara Mitrakom. Target perbandingan disetel 99,5% pada backend.
+Ini aturan untuk demonstrasi tugas Kerja Praktek, bukan kontrak SLA resmi PT. Tangara Mitrakom. Target perbandingan disetel 99,5% pada backend.
 
 - Periode adalah bulan kalender WIB (UTC+7). Bulan lampau memakai seluruh bulan; bulan berjalan hanya sampai saat laporan diminta. Bulan depan menghasilkan total 0 dan persentase kosong, bukan dianggap 100%.
 - Rumus: `(total menit periode - downtime tanggung jawab TM) / total menit periode × 100`.

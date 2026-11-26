@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo Monitoring VSAT - Persiapan dan jalankan web lokal
+echo NPR - Persiapan dan jalankan web lokal
 where node >nul 2>nul
 if errorlevel 1 (
   echo Node.js belum tersedia. Instal Node.js LTS lalu buka kembali file ini.

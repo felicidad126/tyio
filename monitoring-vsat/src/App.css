@@ -11,13 +11,15 @@ button {
 button:hover:not(:disabled) {
   background: #eff5ff;
 }
+/* Warna utama dari logo PT. Tangara Mitrakom: navy #032459. Biru muda
+   logo (#53e9fa) hanya untuk aksen, tidak untuk teks di latar terang. */
 .primary {
-  background: #1768d0;
+  background: #032459;
   color: #fff;
-  border-color: #1768d0;
+  border-color: #032459;
 }
 .primary:hover:not(:disabled) {
-  background: #1056b0;
+  background: #0b3a80;
 }
 .ghost {
   background: transparent;
@@ -59,7 +61,7 @@ button:hover:not(:disabled) {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: #0d1930;
+  background: #032459;
   color: #fff;
 }
 .login-page {
@@ -68,7 +70,7 @@ button:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background-color: #0d1930;
+  background-color: #032459;
   background-image:
     radial-gradient(ellipse at 15% 20%, #183c6255, transparent 55%),
     linear-gradient(#ffffff05 1px, transparent 1px),
@@ -95,6 +97,31 @@ button:hover:not(:disabled) {
   align-items: center;
   gap: 14px;
   margin-bottom: 72px;
+}
+/* Logo asli berlatar putih, ditaruh di kotak putih supaya terlihat di
+   latar navy. */
+.logo-tile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #fff;
+}
+.logo-tile img {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+.side-brand .logo-tile {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+.side-brand .logo-tile img {
+  width: 34px;
+  height: 34px;
 }
 .brand-icon {
   display: grid;
@@ -227,7 +254,7 @@ button:hover:not(:disabled) {
   width: 235px;
   position: fixed;
   inset: 0 auto 0 0;
-  background: #0e1c33;
+  background: #032459;
   color: #b5c2d7;
   display: flex;
   flex-direction: column;
@@ -283,11 +310,12 @@ button:hover:not(:disabled) {
   font-size: 18px;
 }
 .sidebar nav button.active {
-  background: #1b65bf;
+  background: rgb(255 255 255 / 12%);
+  box-shadow: inset 3px 0 0 #53e9fa;
   color: white;
 }
 .sidebar nav button.active span {
-  color: #c2e6ff;
+  color: #53e9fa;
 }
 .sidebar nav button:hover {
   background: #19314f;

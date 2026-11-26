@@ -6,6 +6,7 @@ import { Field } from "./komponen";
 import { GantiPassword, HalamanPengguna } from "./Pengguna";
 import { namaPeran, type Peran } from "./peran";
 import { useMuat, useTunda } from "./useMuat";
+import logoTm from "./aset/logo-tm.png";
 
 type User = { id: number; username: string; full_name: string; peran: Peran };
 type Customer = {
@@ -800,13 +801,15 @@ function App() {
         <div className="login-layout">
           <section className="intro">
             <div className="brand">
-              <span className="brand-icon">TM</span>
+              <span className="logo-tile">
+                <img src={logoTm} alt="Logo PT. Tangara Mitrakom" />
+              </span>
               <div>
-                <strong>PT. Tangara Mitrakom</strong>
-                <span>Monitoring & Pelaporan Gangguan</span>
+                <strong>Network Problem Report</strong>
+                <span>PT. Tangara Mitrakom</span>
               </div>
             </div>
-            <span className="intro-label">HELPDESK · VSAT & M2M</span>
+            <span className="intro-label">Helpdesk VSAT & M2M</span>
             <h1>
               Pantau gangguan.
               <br />
@@ -853,11 +856,10 @@ function App() {
                 {busy ? "Memeriksa akun…" : "Masuk ke Dashboard →"}
               </button>
             </form>
-            <div className="login-foot">Sistem Monitoring Jaringan ATM</div>
           </section>
         </div>
         <footer className="page-footer">
-          Proyek Kerja Praktek · Universitas Dian Nusantara
+          Proyek Kerja Praktek, Universitas Dian Nusantara
         </footer>
         <dialog
           ref={loginDialog}
@@ -890,9 +892,11 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="side-brand">
-          <span className="brand-icon">TM</span>
+          <span className="logo-tile">
+            <img src={logoTm} alt="Logo PT. Tangara Mitrakom" />
+          </span>
           <div>
-            <strong>MONITORING</strong>
+            <strong>NPR</strong>
             <small>PT. Tangara Mitrakom</small>
           </div>
         </div>
@@ -916,9 +920,7 @@ function App() {
             ))}
         </nav>
         <div className="side-bottom">
-          <span className="online-dot" /> VSAT & M2M
-          <br />
-          <small>Proyek akademik · data dummy</small>
+          <span className="online-dot" /> Helpdesk VSAT & M2M
         </div>
       </aside>
       <div className="main-shell">
@@ -966,7 +968,6 @@ function App() {
                   : "Pencatatan terpusat untuk pekerjaan helpdesk."}
               </p>
             </div>
-            <span className="demo-tag">SIMULASI · DATA FIKTIF</span>
           </div>
           {(error || loadError) && (
             <div className="alert error" role="alert">
@@ -1749,8 +1750,7 @@ function App() {
                       </div>
                       <div className="form-note">
                         Nomor final ditetapkan saat disimpan agar tidak terjadi
-                        nomor tiket ganda. Seluruh data lokasi dan kontak
-                        merupakan data dummy.
+                        nomor tiket ganda.
                       </div>
                       <div className="form-footer">
                         <button
@@ -1983,7 +1983,7 @@ function App() {
                     </div>
                   </div>
                   <div className="form-note">
-                    <strong>Aturan simulasi akademik</strong>
+                    <strong>Aturan perhitungan SLA</strong>
                     <p>
                       SLA = (waktu periode − downtime TM) ÷ waktu periode ×
                       100%. TT Maintenance dihitung, Preventive Maintenance dan
@@ -1991,8 +1991,8 @@ function App() {
                       per site; waktu yang tumpang tindih tidak digandakan.
                       Waktu pemulihan menggunakan waktu kembali online, bukan
                       waktu administrasi penutupan. Periode berjalan dihitung
-                      sampai saat ini. Target simulasi:{" "}
-                      {sla.data?.target ?? 99.5}%.
+                      sampai saat ini. Target: {sla.data?.target ?? 99.5}%. TM =
+                      PT. Tangara Mitrakom.
                     </p>
                   </div>
                   {sla.loading && !sla.data ? (
@@ -2188,7 +2188,6 @@ function App() {
           )}
         </main>
         <footer className="app-footer">
-          Proyek Kerja Praktek · Universitas Dian Nusantara{" "}
           <span>Seluruh waktu ditampilkan dalam WIB</span>
         </footer>
       </div>
@@ -2271,7 +2270,7 @@ function App() {
                           pattern="[A-Za-z0-9]+"
                         />
                       </Field>
-                      <Field label="Nama bank dummy">
+                      <Field label="Nama bank">
                         <input name="name" required maxLength={100} />
                       </Field>
                     </>
@@ -2308,17 +2307,17 @@ function App() {
                       <Field label="Province">
                         <input name="province" required />
                       </Field>
-                      <Field label="IP LAN dummy">
+                      <Field label="IP LAN">
                         <input
                           name="ip_lan"
                           required
                           placeholder="192.0.2.10"
                         />
                       </Field>
-                      <Field label="Nama pengelola / PIC dummy">
+                      <Field label="Nama PIC">
                         <input name="pic_name" required />
                       </Field>
-                      <Field label="Telepon dummy">
+                      <Field label="Telepon PIC">
                         <input
                           name="pic_phone"
                           required

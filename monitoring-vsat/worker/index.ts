@@ -36,7 +36,7 @@ function json(data: unknown, status = 200, headers: HeadersInit = {}) {
 function sessionCookie(request: Request, value: string, maxAge: number) {
   const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
 
-  return `vsat_session=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure}`;
+  return `npr_session=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure}`;
 }
 
 function getSessionId(request: Request) {
@@ -45,8 +45,8 @@ function getSessionId(request: Request) {
   return cookies
     .split(";")
     .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith("vsat_session="))
-    ?.slice("vsat_session=".length);
+    .find((cookie) => cookie.startsWith("npr_session="))
+    ?.slice("npr_session=".length);
 }
 
 export default {
