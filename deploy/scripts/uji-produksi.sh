@@ -6,7 +6,8 @@
 #   deploy/scripts/uji-produksi.sh
 #
 # Dijalankan dari akar repo. NPR_ENV_FILE = berkas env (bawaan deploy/prod.env).
-# Login dan aliran pembaruan langsung ikut diperiksa bila UJI_EMAIL dan UJI_PASSWORD diisi
+# Login, IP klien yang dicatat (T168), dan aliran pembaruan langsung ikut diperiksa bila
+# UJI_EMAIL dan UJI_PASSWORD diisi
 # (akun yang sudah ada; kata sandi lewat environment, bukan argumen):
 #   read -rs UJI_PASSWORD && export UJI_PASSWORD UJI_EMAIL=admin@perusahaan.co.id
 # UJI_CACERT = berkas root CA bila sertifikat dari CA kantor yang belum dipercaya server ini.
@@ -96,13 +97,31 @@ if [[ -n "${UJI_EMAIL:-}" && -n "${UJI_PASSWORD:-}" ]]; then
     local text=${1//\\/\\\\}
     printf '%s' "${text//\"/\\\"}"
   }
+  # IP contoh (TEST-NET-3) di X-Forwarded-For, seolah dikirim proxy di depan Caddy.
+  forwarded_ip=203.0.113.9
   code=$(printf '{"email":"%s","password":"%s"}' "$(json_escape "$UJI_EMAIL")" "$(json_escape "$UJI_PASSWORD")" |
     curl "${curl_opts[@]}" -c "$work/jar" -D "$work/login" -o /dev/null -w '%{http_code}' \
-      -H 'Content-Type: application/json' --data-binary @- "$base/api/auth/login" || true)
+      -H 'Content-Type: application/json' -H "X-Forwarded-For: $forwarded_ip" \
+      --data-binary @- "$base/api/auth/login" || true)
   if [[ "$code" == 200 ]] && grep -qi '^set-cookie:.*secure' "$work/login" && grep -qi '^set-cookie:.*httponly' "$work/login"; then
     pass "login; cookie sesi Secure dan HttpOnly"
   else
     fail "login: HTTP $code"
+  fi
+  # IP yang dicatat audit untuk login tadi (dibaca langsung dari database, tanpa menulis).
+  # Tanpa proxy di depan Caddy (TRUST_PROXY=1) IP kiriman klien tidak boleh dipercaya; di belakang
+  # proxy (TRUST_PROXY=2, mis. nginx aaPanel) IP dari proxy itu harus sampai ke aplikasi.
+  proxies=$("${compose[@]}" exec -T app printenv TRUST_PROXY 2>/dev/null || true)
+  email_sql=${UJI_EMAIL//\'/\'\'}
+  logged_ip=$("${compose[@]}" exec -T db psql -U npr -d npr -Atc \
+    "SELECT coalesce(client_ip, '') FROM audit_log WHERE action = 'login' AND actor_label = '$email_sql' ORDER BY id DESC LIMIT 1" \
+    2>/dev/null || true)
+  if [[ "${proxies:-1}" == 1 && -n "$logged_ip" && "$logged_ip" != *"$forwarded_ip"* ]]; then
+    pass "IP palsu dari klien tidak dipercaya (tercatat $logged_ip)"
+  elif [[ "${proxies:-1}" != 1 && "$logged_ip" == *"$forwarded_ip"* ]]; then
+    pass "IP klien dari proxy depan sampai ke aplikasi (TRUST_PROXY=$proxies)"
+  else
+    fail "IP klien di audit: '${logged_ip}' (TRUST_PROXY=${proxies:-?}, dikirim $forwarded_ip)"
   fi
   code=$(curl "${curl_opts[@]}" -b "$work/jar" -o /dev/null -w '%{http_code}' "$base/api/auth/me" || true)
   if [[ "$code" == 200 ]]; then pass "sesi terbaca (/api/auth/me)"; else fail "/api/auth/me: HTTP $code"; fi

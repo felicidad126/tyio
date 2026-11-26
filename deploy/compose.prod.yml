@@ -14,10 +14,11 @@ x-app: &app
   environment:
     NPR_ENV: production
     DATABASE_URL: postgres://npr:${NPR_DB_PASSWORD:?NPR_DB_PASSWORD wajib diisi}@db:5432/npr
-    # HTTPS ditutup Caddy di depan aplikasi: cookie sesi Secure, dan satu proxy dipercaya agar
-    # IP klien (pembatasan login) dan host asli (pemeriksaan origin) terbaca benar.
+    # HTTPS ditutup Caddy di depan aplikasi: cookie sesi Secure, dan proxy dipercaya agar IP klien
+    # (pembatasan login, audit) dan host asli (pemeriksaan origin) terbaca benar. Jumlah proxy:
+    # 1 = hanya Caddy; 2 = Caddy di belakang proxy lain, mis. nginx aaPanel (T168).
     SESSION_COOKIE_SECURE: 'true'
-    TRUST_PROXY: '1'
+    TRUST_PROXY: ${NPR_TRUST_PROXY:-1}
 
 services:
   db:
@@ -63,6 +64,7 @@ services:
     environment:
       NPR_HOST: ${NPR_HOST:?NPR_HOST wajib diisi (nama host atau IP server)}
       NPR_TLS: ${NPR_TLS:-internal}
+      NPR_TRUSTED_PROXIES: ${NPR_TRUSTED_PROXIES:-127.0.0.1/32}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ${NPR_CERT_DIR:-./certs}:/certs:ro
