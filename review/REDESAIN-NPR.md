@@ -62,7 +62,7 @@ Semua halaman daftar memakai komponen yang sama dari `src/components/tabel.tsx`.
 | Customer | Tabel dengan kolom berkelompok: Remote (Total/VSAT/M2M), NPR (Aktif/Bulan Ini), dan SLA. Klik baris membuka Remote yang tersaring. |
 | Remote | Tabel dengan jarak antar-kolom seragam (±32 px). Kolom angka muncul dari 1660 px, Gangguan Terakhir dari 1880 px. Form tambah dibagi 3 bagian. |
 | Pengguna | Tabel tanpa avatar dan tanpa pil. Status memakai kotak kecil. Kolom NPR Dicatat, TT Dibuat, Tindakan Bulan Ini, dan Tindakan Terakhir. Peran dipilih dengan tombol. |
-| Login | Panel navy ramping berisi daftar modul, pesan gagal di atas tombol, petunjuk lupa password. |
+| Login | Panel navy ramping berisi daftar modul, pesan gagal di atas tombol, petunjuk lupa password ("Chat mimin yaa."). |
 | Ganti Password | Tombol tampilkan password dan syarat yang dicentang sambil mengetik. Tombol simpan aktif hanya jika semua syarat terpenuhi. |
 
 Isian tanggal di semua form bisa **diketik** (dd/mm/yyyy, garis miring otomatis) **atau dipilih dari kalender**. Bulan dipilih dari dropdown, tahun diketik. Jam memakai format 24 jam WIB, misalnya `0905` menjadi `09:05`.

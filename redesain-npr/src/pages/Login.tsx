@@ -97,7 +97,7 @@ export function Login({ onMasuk }: { onMasuk: () => void }) {
           <Button type="submit" className="mt-6 h-10 w-full">Masuk</Button>
 
           <p className="mt-5 text-sm text-muted-foreground">
-            Lupa password? Minta admin melakukan reset password di menu Pengguna.
+            Lupa password? <span className="font-medium text-foreground">Chat mimin yaa.</span>
           </p>
           <p className="mt-6 border-t pt-4 text-xs text-muted-foreground">
             Prototipe: isi password <span className="font-mono">salah</span> untuk melihat pesan gagal.
