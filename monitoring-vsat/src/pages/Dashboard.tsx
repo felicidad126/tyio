@@ -318,7 +318,22 @@ export function Dashboard() {
       />
 
       <div className="mt-5 grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Kolom kiri: grafik di atas daftar NPR Aktif, supaya bagian atas
+            Dashboard berisi visualisasi (di layar ≥1536 px sejajar dengan
+            panel Pihak yang Ditunggu). */}
         <div className="grid min-w-0 gap-5">
+          <Panel
+            title="NPR Masuk per Hari"
+            desc="7 hari terakhir, menurut tanggal mulai gangguan (WIB)"
+          >
+            {grafik.some((d) => d.nilai > 0) ? (
+              <GrafikHarian data={grafik} />
+            ) : (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Belum ada NPR dalam 7 hari terakhir.
+              </p>
+            )}
+          </Panel>
           <Panel
             title="NPR Aktif"
             desc="Urut dari yang paling lama terganggu"
@@ -455,18 +470,6 @@ export function Dashboard() {
                   <Plus className="size-4" /> NPR Baru
                 </Button>
               </div>
-            )}
-          </Panel>
-          <Panel
-            title="NPR Masuk per Hari"
-            desc="7 hari terakhir, menurut tanggal mulai gangguan (WIB)"
-          >
-            {grafik.some((d) => d.nilai > 0) ? (
-              <GrafikHarian data={grafik} />
-            ) : (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                Belum ada NPR dalam 7 hari terakhir.
-              </p>
             )}
           </Panel>
         </div>

@@ -3,7 +3,9 @@
 // link /npr/<id> di tab baru, PDF TT dan Gamas, /sla?bulan=… lalu F5,
 // durasi di bawah 1 jam dalam menit, riwayat "jam oleh nama", kolom
 // Gangguan Terakhir di Remote (1920 px), kategori pending hanya TM atau
-// Customer beserta pengingat Pending Customer, serta kartu di HP. Jalankan pada
+// Customer beserta pengingat Pending Customer, grafik Dashboard di atas NPR
+// Aktif, berkas halaman yang hilang setelah pembaruan server, serta kartu di
+// HP. Jalankan pada
 // database uji yang sudah diisi data demo (DB_PATH=<db-uji> node
 // dist/server/demo.js).
 //
@@ -619,7 +621,84 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     `${isiTerakhir.length} site; contoh: ${(isiTerakhir.find((t) => /menit/.test(t)) ?? isiTerakhir[0] ?? "").replaceAll("\n", " / ")}`,
   );
   await page.screenshot({ path: path.join(OUT, "laptop-remote-1920.png") });
+
+  // 8. Dashboard: grafik "NPR Masuk per Hari" di atas daftar NPR Aktif. Di
+  // 1920 px grafik sejajar dengan panel Pihak yang Ditunggu di kolom kanan.
+  const atasPanel = async (judul) =>
+    (await page.locator("h2", { hasText: judul }).first().boundingBox())?.y ??
+    -1;
+  await page.goto(BASE + "/");
+  await page.locator("h2", { hasText: "NPR Masuk per Hari" }).waitFor();
+  const lebar = {
+    grafik: await atasPanel("NPR Masuk per Hari"),
+    aktif: await atasPanel("NPR Aktif"),
+    pihak: await atasPanel("Pihak yang Ditunggu"),
+  };
+  await page.screenshot({ path: path.join(OUT, "laptop-dashboard-1920.png") });
   await page.setViewportSize({ width: 1366, height: 820 });
+  await page.waitForTimeout(300);
+  const laptop = {
+    grafik: await atasPanel("NPR Masuk per Hari"),
+    aktif: await atasPanel("NPR Aktif"),
+  };
+  await page.screenshot({
+    path: path.join(OUT, "laptop-dashboard.png"),
+    fullPage: true,
+  });
+  cek(
+    lebar.grafik >= 0 &&
+      lebar.grafik < lebar.aktif &&
+      Math.abs(lebar.grafik - lebar.pihak) <= 2 &&
+      laptop.grafik >= 0 &&
+      laptop.grafik < laptop.aktif,
+    "Dashboard: grafik di atas NPR Aktif (1920 px sejajar Pihak yang Ditunggu)",
+    `1920: grafik ${lebar.grafik}, NPR Aktif ${lebar.aktif}, Pihak ${lebar.pihak}; 1366: grafik ${laptop.grafik}, NPR Aktif ${laptop.aktif}`,
+  );
+
+  // 9. Berkas halaman versi lama sudah tidak ada (server baru diperbarui).
+  // a. Unduhan halaman di latar yang gagal tidak memuat ulang Dashboard
+  //    (isian form tidak boleh hilang).
+  // b. Membuka halaman itu: muat ulang otomatis sekali, lalu pesan dengan
+  //    tombol Muat ulang, bukan layar kosong.
+  // Konteks terpisah supaya galat 404 buatan tidak tercampur dengan galat
+  // konsol yang dilaporkan.
+  const ctxGagal = await browser.newContext({
+    viewport: { width: 1366, height: 820 },
+  });
+  const pg = await ctxGagal.newPage();
+  await masuk(pg);
+  const polaSla = /\/assets\/Sla-[^/]+\.js$/;
+  await pg.route(polaSla, (r) => r.fulfill({ status: 404, body: "" }));
+  let jumlahMuat = 0;
+  pg.on("load", () => jumlahMuat++);
+  await pg.goto(BASE + "/");
+  await pg.waitForTimeout(5000);
+  const muatDashboard = jumlahMuat;
+  const dashboardTetap = await pg
+    .locator("h2", { hasText: "NPR Aktif" })
+    .isVisible();
+  jumlahMuat = 0;
+  await pg.goto(BASE + "/sla");
+  await pg.waitForTimeout(4000);
+  const pesanGagal = await pg.getByText("Halaman gagal dimuat").isVisible();
+  const muatSla = jumlahMuat; // sebelum tombol Muat ulang diklik
+  await pg.screenshot({ path: path.join(OUT, "laptop-gagal-muat.png") });
+  await pg.unroute(polaSla);
+  await pg.getByRole("button", { name: "Muat ulang" }).click();
+  await pg
+    .locator("h1", { hasText: "Laporan SLA" })
+    .waitFor({ timeout: 10000 });
+  cek(
+    muatDashboard === 1 && dashboardTetap,
+    "Unduhan halaman di latar gagal: Dashboard tidak dimuat ulang",
+    `${muatDashboard} kali dimuat`,
+  );
+  cek(
+    muatSla === 2 && pesanGagal,
+    "Berkas halaman hilang: muat ulang sekali, lalu pesan; tombol Muat ulang memulihkan",
+    `${muatSla} kali dimuat sebelum tombol`,
+  );
+  await ctxGagal.close();
 
   // ---------- HP: Pixel 7 ----------
   const hp = await browser.newContext({

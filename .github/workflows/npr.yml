@@ -58,7 +58,15 @@ jobs:
           bash scripts/uji-perbarui-otomatis.sh
 
       - name: Build
-        run: npm run build && npm run build:server
+        run: |
+          npm run build && npm run build:server
+          # Vite hanya memberi peringatan bila ada berkas JS lebih dari 500 KB;
+          # di sini peringatan itu menggagalkan CI supaya tidak terlewat.
+          besar="$(find dist/client/assets -name '*.js' -size +500000c)"
+          if [ -n "$besar" ]; then
+            echo "::error::Berkas JS lebih dari 500 KB: $besar"
+            exit 1
+          fi
 
       # Akun uji dengan password acak per run; tidak ada rahasia di repo.
       - name: Jalankan server uji dengan data demo

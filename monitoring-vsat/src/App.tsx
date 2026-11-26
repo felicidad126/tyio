@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+  type MouseEvent,
+} from "react";
 import {
   BarChart3,
   Building2,
@@ -31,14 +37,24 @@ import { cn } from "@/lib/utils";
 import { namaPeran } from "@/peran";
 import logoTm from "@/aset/logo-tm.png";
 import { Login } from "@/pages/Login";
-import { Dashboard } from "@/pages/Dashboard";
-import { NprBaru, NprDetail, NprList } from "@/pages/Npr";
-import { TroubleTicket } from "@/pages/Tiket";
-import { GamasDetail, GamasList } from "@/pages/Gamas";
-import { LaporanSla } from "@/pages/Sla";
-import { CustomerPage, RemotePage } from "@/pages/Master";
-import { PenggunaPage } from "@/pages/Pengguna";
 import { GantiPassword } from "@/pages/GantiPassword";
+// Halaman lain dimuat terpisah (lihat components/halaman.tsx).
+import {
+  BatasHalaman,
+  CustomerPage,
+  Dashboard,
+  GamasDetail,
+  GamasList,
+  LaporanSla,
+  MemuatHalaman,
+  NprBaru,
+  NprDetail,
+  NprList,
+  PenggunaPage,
+  RemotePage,
+  TroubleTicket,
+  useUnduhSemuaHalaman,
+} from "@/components/halaman";
 
 type ItemMenu = {
   page: Page;
@@ -342,6 +358,8 @@ export default function App() {
     return () => window.removeEventListener("popstate", kembali);
   }, []);
 
+  useUnduhSemuaHalaman(!!user);
+
   // Judul tab mengikuti halaman, mis. "NPR Baru | PT. Tangara Mitrakom".
   useEffect(() => {
     const judul = !user ? "Masuk" : judulTab[page];
@@ -494,24 +512,28 @@ export default function App() {
           </header>
 
           <main className="w-full px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pt-7">
-            {page === "dashboard" && <Dashboard />}
-            {page === "npr" && <NprList />}
-            {page === "npr-baru" && <NprBaru />}
-            {page === "npr-detail" && <NprDetail />}
-            {page === "tt" && <TroubleTicket />}
-            {page === "gamas" && <GamasList />}
-            {page === "gamas-detail" && <GamasDetail />}
-            {page === "sla" && <LaporanSla />}
-            {page === "customer" && <CustomerPage />}
-            {page === "remote" && <RemotePage />}
-            {page === "pengguna" &&
-              (admin ? (
-                <PenggunaPage />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Menu ini hanya untuk admin.
-                </p>
-              ))}
+            <BatasHalaman key={page}>
+              <Suspense fallback={<MemuatHalaman />}>
+                {page === "dashboard" && <Dashboard />}
+                {page === "npr" && <NprList />}
+                {page === "npr-baru" && <NprBaru />}
+                {page === "npr-detail" && <NprDetail />}
+                {page === "tt" && <TroubleTicket />}
+                {page === "gamas" && <GamasList />}
+                {page === "gamas-detail" && <GamasDetail />}
+                {page === "sla" && <LaporanSla />}
+                {page === "customer" && <CustomerPage />}
+                {page === "remote" && <RemotePage />}
+                {page === "pengguna" &&
+                  (admin ? (
+                    <PenggunaPage />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Menu ini hanya untuk admin.
+                    </p>
+                  ))}
+              </Suspense>
+            </BatasHalaman>
           </main>
         </div>
 
