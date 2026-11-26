@@ -96,6 +96,12 @@ const judulHalaman: Record<Page, string> = {
   remote: "Remote",
   pengguna: "Pengguna",
 };
+/** Judul tab browser: halaman detail diberi nama lengkap. */
+const judulTab: Record<Page, string> = {
+  ...judulHalaman,
+  "npr-detail": "Detail NPR",
+  "gamas-detail": "Detail TT Gamas",
+};
 /** Halaman turunan: ditampilkan di bawah induknya pada breadcrumb. */
 const indukHalaman: Partial<Record<Page, Page>> = {
   "npr-baru": "npr",
@@ -289,6 +295,12 @@ export default function App() {
     setMenuHp(false);
     window.scrollTo({ top: 0 });
   }, []);
+
+  // Judul tab mengikuti halaman, mis. "NPR Baru | PT. Tangara Mitrakom".
+  useEffect(() => {
+    const judul = !user ? "Masuk" : judulTab[page];
+    document.title = `${judul} | PT. Tangara Mitrakom`;
+  }, [user, page]);
 
   async function kirim<T = { id?: number }>(
     path: string,
