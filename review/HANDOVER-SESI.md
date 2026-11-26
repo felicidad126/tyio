@@ -100,7 +100,7 @@ riwayat Back.
 | Berkas | Isi |
 |---|---|
 | `worker/` | API (Cloudflare Workers + D1): `index.ts` (rute), `baca.ts` (query baca), `domain.ts` (hitung SLA), `pengguna.ts` (akun), `sandi.ts` |
-| `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts` |
+| `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts`, `demo.ts` (data demo, lihat bagian 7) |
 | `migrations/` | Migrasi database. Belum ada migrasi baru sejak `0002` |
 | `scripts/` | `setup.mjs`, `test-api.mjs` |
 
@@ -136,9 +136,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Skrip uji di `review/uji/`** (akun diambil dari variabel lingkungan, sama seperti `test:api`):
 
   ```bash
-  node dist/server/setup.js --contoh            # dengan DB_PATH database uji
-  TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    node ../review/uji/isi-data-uji.mjs          # 30 NPR, TT, 3 Gamas; hanya mau ke 127.0.0.1
+  DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
     UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 33/33
   ```
@@ -148,10 +146,14 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   Gamas, `/sla?bulan=…` lalu F5, serta kartu di HP. Tangkapan layar dan PDF disimpan di
   `UJI_OUT`.
 - **Hasil terakhir (27 November 2026):**
-  - `uji-browser.cjs` 33/33 dari database baru, setelah `test:api` 49/49. "Urut Status
+  - `uji-browser.cjs` 33/33 di atas data demo, juga setelah `test:api` 49/49. "Urut Status
     (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
+- **Folder `server/` tidak dicek `tsc -b`** (tidak ada di tsconfig mana pun, hanya di-build
+  Vite). Cek manual dengan tsconfig sementara (`types: ["node"]` + `worker-configuration.d.ts`,
+  include `server`, `worker`, `shared`). Satu galat lama: `server/main.ts:122` (3 argumen ke
+  `worker.fetch`). Tidak mengganggu build.
 - **Catatan menulis skrip uji:**
   - Menu sidebar dan breadcrumb sekarang berupa `<a>`, bukan `<button>`.
   - Toast sonner yang terbaru ada di urutan pertama (`.first()`).
@@ -165,7 +167,9 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
 - **Commit yang berjalan:** `9741ddc`, sehat. Cadangan terakhir dibuat sebelum pembaruan:
   `npr-20261126-1838.sqlite`.
-- **Data:** masih kosong (0 NPR, 0 TT).
+- **Data:** masih kosong (0 NPR, 0 TT). Pengguna memutuskan mengisi **data demo sementara**
+  lewat `review/PROMPT-DATA-DEMO.md` (perbarui ke commit terbaru, lalu `demo.js`). Tanyakan
+  apakah sudah dijalankan.
 - **Cara pembaruan:** Claude tidak punya akses langsung ke server. Pembaruan dikerjakan agent
   browser milik pengguna lewat Terminal aaPanel, memakai prompt `review/PROMPT-PERBARUI-SERVER.md`:
   1. cadangan;
@@ -200,6 +204,19 @@ awal selama pengguna belum memilih, dan urutan awal itu boleh berubah. Sekalian 
 lama: dulu "No. NPR terbaru" tidak bisa dipilih selama filter Dashboard aktif. Server masih
 menerima `urut=terlama` supaya tab lama yang belum dimuat ulang tidak rusak.
 
+**Data demo** (`server/demo.ts`, atas permintaan pengguna, keputusan: di server, sementara,
+nama bank fiktif):
+- `node dist/server/demo.js` mengisi 6 customer bank fiktif (Swastamita, Lembayung, Pramudita,
+  Baskara, Sagara, Jenggala), 20 remote, 50 NPR (40 Closed, 4 Eskalasi, 4 Pending, 2 Open),
+  19 TT, dan 4 Gamas sejak awal bulan lalu.
+- Data masuk lewat `domain()` yang sama dengan API. `Date.now` dimundurkan ke waktu tiap
+  kejadian, jadi nomor mengikuti bulan kejadian (gangguan Oktober = `NPR/2026/10/…`).
+- Menolak berjalan bila sudah ada NPR atau Gamas. Mencadangkan database lebih dulu.
+- `--hapus` menghapus data demo saja (dikenali dari kode + nama customer demo), menyetel ulang
+  penghitung nomor, dan membiarkan akun serta data lain. Gamas campuran hanya kehilangan site
+  demonya. **Harus dijalankan sebelum data asli mulai dicatat.**
+- `review/uji/isi-data-uji.mjs` dihapus karena sudah digantikan `demo.js`.
+
 Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 - Pengguna boleh melihat isi cadangan pukul 14:51 bila ingin memastikan customer dan remote yang
   hilang antara 14:51 dan 18:09. Kemungkinan besar itu data uji yang sengaja dihapus.
@@ -214,8 +231,8 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 | `PENJELASAN-REVIEW.md` | Penjelasan review untuk pembaca awam |
 | `RENCANA-REVISI.md` | Keputusan D-1…D-8, T-1…T-6, dan tahap pengerjaan |
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
-| `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server |
-| `uji/` | Skrip pengisi data uji dan uji browser Playwright (lihat bagian 5) |
+| `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server, data demo |
+| `uji/` | Uji browser Playwright `uji-browser.cjs` (lihat bagian 5) |
 
 Prototipe desain ada di `redesain-npr/`. Jalankan `npm run bundel` di sana untuk menghasilkan
 `redesain-npr.html`. Prototipe ini sudah dipindahkan ke aplikasi; folder ini disimpan sebagai

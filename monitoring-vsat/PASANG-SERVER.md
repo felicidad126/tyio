@@ -64,6 +64,24 @@ Ganti password satu akun dari terminal (misalnya admin lupa password):
 docker compose exec app node dist/server/setup.js --reset-password
 ```
 
+### Data demo
+
+Untuk mencoba aplikasi sebelum data asli masuk: 6 customer bank fiktif,
+20 remote, sekitar 50 NPR (Open, Pending, Eskalasi, Closed) dengan kasus
+gangguan yang umum, TT, dan 4 TT Gamas, sejak awal bulan lalu.
+
+```sh
+docker compose exec -T app node dist/server/demo.js          # isi
+docker compose exec -T app node dist/server/demo.js --hapus  # hapus
+```
+
+- Pengisian hanya berjalan bila database belum berisi NPR atau TT Gamas.
+- Data dicatat atas nama akun admin pertama.
+- `--hapus` menghapus customer demo beserta remote, NPR, TT, dan Gamas-nya,
+  lalu nomor dokumen kembali mulai dari 0001. Akun pengguna dan data lain
+  tidak ikut terhapus. Jalankan sebelum data asli mulai dicatat.
+- Kedua perintah membuat cadangan lebih dulu di `/data/cadangan/`.
+
 ## 5. Situs di aaPanel
 
 1. DNS: buat A record untuk subdomain, mengarah ke IP server.

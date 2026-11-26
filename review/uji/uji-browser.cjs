@@ -1,7 +1,8 @@
 // Uji browser NPR dengan data: urut No. NPR dan Status, filter kondisi
 // (termasuk urutan dan panah saat dibuka dari Dashboard),
 // link /npr/<id> di tab baru, PDF TT dan Gamas, /sla?bulan=… lalu F5,
-// serta kartu di HP. Jalankan setelah isi-data-uji.mjs.
+// serta kartu di HP. Jalankan pada database uji yang sudah diisi data demo
+// (DB_PATH=<db-uji> node dist/server/demo.js).
 //
 //   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> \
 //     TEST_PASSWORD=<sandi> UJI_OUT=<folder-hasil> node review/uji/uji-browser.cjs
