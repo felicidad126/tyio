@@ -2,24 +2,23 @@
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
 percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
-commit `6a7d070` dan sejak itu memperbarui diri otomatis (bagian 6), kecuali commit `d3299dd`
-yang berisi migrasi dan menunggu pembaruan manual.
+commit `dc554a4` (dipasang manual lewat agent karena ada migrasi) dan memperbarui diri otomatis
+untuk commit berikutnya (bagian 6).
 
 ## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 02.30 WIB)
 
-Semua sudah di-commit dan di-push. Satu hal menunggu pengguna: pembaruan server manual untuk
-commit `d3299dd` (migrasi `0003`, lihat bagian 6).
+Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan terpasang di server.
 
 **Langkah pertama sesi baru:**
 
 1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
-   dengan `origin`. Saat serah terima, HEAD = commit "Serah terima ke sesi baru: bagian Mulai di
-   sini" (atau yang lebih baru dari sesi lain).
-2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"6a7d070"}`.
-   Setelah pembaruan manual `d3299dd`: versi `d3299dd` atau commit kode yang lebih baru.
+   dengan `origin`. Saat serah terima, HEAD = commit "Catat pemasangan kategori pending di
+   server" (atau yang lebih baru dari sesi lain).
+2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"dc554a4"}`.
+   Commit dokumen sesudahnya dipasang tanpa build, jadi versinya tetap `dc554a4`.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
-   branch `Rev-NPR-Tyio`. Run #1–#5 hijau. Run untuk `d3299dd` dan commit dokumen sesudahnya
-   dicek di akhir sesi (lihat laporan di percakapan).
+   branch `Rev-NPR-Tyio`. Run #1–#6 hijau. Run untuk commit serah terima ini belum dicek saat
+   menulis.
 4. Tanyakan pengguna apa yang ingin dikerjakan.
 
 **Sesi Claude lain juga push ke branch ini** (diagram laporan KP: `review/DIAGRAM-NPR.md`,
@@ -30,7 +29,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 | Commit | Isi | Bukti |
 |---|---|---|
-| `d3299dd` | Kategori pending hanya TM dan Customer: "Belum Dikategorikan" dihapus, NPR baru Pending TM, pengingat saat pindah ke Pending Customer, migrasi `0003` | `test:api` 50/50, uji browser 42/42 (laptop dan Pixel 7). Migrasi diuji pada database buatan kode lama: SLA tidak berubah |
+| `d3299dd` | Kategori pending hanya TM dan Customer: "Belum Dikategorikan" dihapus, NPR baru Pending TM, pengingat saat pindah ke Pending Customer, migrasi `0003` | `test:api` 50/50, uji browser 42/42 (laptop dan Pixel 7). Migrasi diuji pada database buatan kode lama: SLA tidak berubah. Server: terpasang lewat agent 02.30 WIB, log "Migrasi dijalankan: 0003_pending_tm.sql", cek h–k lulus |
 | `e94efc4` | `review/uji/uji-browser.cjs`; lima pemeriksaan yang tertunda | Lulus lokal, lalu lulus di server (agent, `PROMPT-DATA-DEMO.md` a–h) |
 | `2086e8d` | Daftar NPR dari Dashboard: panah di "Mulai ↑"; `useUrut` dengan urutan awal yang bisa berubah | 5 cek baru gagal di kode lama, lulus di kode baru |
 | `3630739` | Data demo `server/demo.ts` (isi dan `--hapus`) | Lokal: isi, tolak isi ulang, hapus, Gamas campuran. Server: terisi 00.48 WIB |
@@ -47,16 +46,12 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
   `tail -20 /var/log/npr-perbarui.log` dan `cat /var/lib/npr-perbarui/cek-terakhir`.
 - Pemasangan commit dokumen di server tidak terlihat dari health (versinya tetap).
 - Tampilan di HP sungguhan. Agent memakai bingkai 400 px; lokal dan CI memakai emulasi Pixel 7.
-- Migrasi `0003` di server (menunggu pembaruan manual).
 
 **Menunggu pengguna:**
 
-- Pembaruan server manual untuk `d3299dd`: `PROMPT-PERBARUI-SERVER.md` beserta tambahan di
-  bagian 6. Pembaruan otomatis menolak commit ini karena ada perubahan di `migrations/`.
-
 - Kapan data demo dihapus (`PROMPT-DATA-DEMO.md` bagian B). Harus sebelum data asli dicatat;
   tim perlu diberi tahu dulu karena akun lain sudah mencoba data demo.
-- Cek sekali di HP sungguhan.
+- Cek sekali di HP sungguhan. Sekalian lihat pengingat Pending Customer di form tindakan.
 
 **Pelajaran teknis (supaya tidak ditemukan ulang):**
 
@@ -260,9 +255,10 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `6a7d070`, sehat (dipasang 27 November 2026 pukul 01.51 WIB lewat
-  `PROMPT-PASANG-CD.md`). Cadangan sebelum pemasangan: `npr-20261127-0151.sqlite`. Commit
-  sesudahnya dipasang otomatis.
+- **Commit yang berjalan:** `dc554a4`, sehat (dipasang manual 27 November 2026 pukul 02.30 WIB
+  lewat agent dengan `PROMPT-PERBARUI-SERVER.md`, karena ada migrasi `0003`). Cadangan sebelum
+  pemasangan: `npr-20261127-0230.sqlite`. Titik kembali bila perlu rollback: `afe0843` (kode
+  sama dengan `6a7d070`). Commit sesudahnya dipasang otomatis.
 - **Cek dari sesi Claude:** `curl -s https://kp.helonoia.com/api/health` bisa dijalankan dari
   container Claude dan menampilkan `{"ok":true,"versi":"<commit>"}`. Commit yang hanya mengubah
   dokumen dipasang tanpa build, jadi versinya tetap commit build terakhir.
@@ -285,39 +281,12 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   - **Manual lewat agent browser** (`review/PROMPT-PERBARUI-SERVER.md`) hanya untuk perubahan
     besar: `migrations/`, `schema.sql`, `Dockerfile`, `docker-compose.yml`, atau pesan commit
     berisi `[manual]`. Tambahkan di bawah prompt apa yang berubah dan apa yang dicek.
-  - **Pembaruan manual yang menunggu: `d3299dd`** (migrasi `0003`). Berikan
-    `PROMPT-PERBARUI-SERVER.md` ke agent browser, lalu tempel tambahan ini di bawahnya. Bila
-    gagal dan perlu kembali ke commit lama, data hasil migrasi tetap terbaca kode lama (kode lama
-    menerima TM dan Customer).
-
-    ```text
-    TAMBAHAN UNTUK PEMBARUAN INI (commit d3299dd, "Kategori pending hanya
-    Pending TM dan Pending Customer"):
-
-    Yang berubah: kategori pending NPR tinggal dua, Pending TM dan Pending
-    Customer. "Belum Dikategorikan" dihapus dan NPR baru langsung Pending TM.
-    Migrasi database 0003_pending_tm.sql berjalan sendiri saat container baru
-    menyala: NPR dan riwayat yang kategorinya kosong menjadi TM. Cadangan di
-    LANGKAH 2 wajib berhasil sebelum lanjut.
-
-    Tambahan di LANGKAH 4, setelah health sehat:
-      cd /opt/monitoring-vsat/monitoring-vsat
-      docker compose logs app 2>&1 | grep -i migrasi
-    Harapan: ada baris "Migrasi dijalankan: 0003_pending_tm.sql". Bila ada
-    "Migrasi ... gagal", jangan lanjut ke LANGKAH 5; laporkan apa adanya.
-
-    Tambahan di LANGKAH 5 (tetap tanpa mengubah data):
-    h. Dashboard, panel "Pihak yang Ditunggu": hanya Pending TM dan Pending
-       Customer, dan jumlah keduanya sama dengan angka NPR Aktif. Tidak ada
-       tulisan "Belum Dikategorikan" atau "Belum Dipilih" di Dashboard
-       maupun di daftar NPR.
-    i. Daftar NPR: kolom Pending hanya berisi TM atau Customer.
-    j. Buka satu NPR berstatus Open. Kotak Pending berisi "Pending TM". Di
-       Tambah Tindakan, ubah "Pending oleh" menjadi Pending Customer: muncul
-       kotak kuning berisi pengingat bukti pengecekan teknisi. Kembalikan ke
-       Pending TM dan JANGAN klik Simpan Tindakan.
-    k. Laporan SLA bulan lalu terbuka normal tanpa pesan merah.
-    ```
+  - **Pembaruan manual terakhir: `d3299dd`** (migrasi `0003`), selesai 27 November 2026 pukul
+    02.30 WIB. Log server mencatat "Commit dc554a4 berisi perubahan besar … Perlu pembaruan lewat
+    agent browser", jadi aturan perubahan besar terbukti bekerja. Agent memakai
+    `PROMPT-PERBARUI-SERVER.md` ditambah catatan khusus: cek baris "Migrasi dijalankan" di
+    `docker compose logs app`, lalu cek tampilan yang berubah. Pola ini bisa dipakai lagi untuk
+    migrasi berikutnya.
   - **Status pemasangan otomatis:** terpasang 27 November 2026 sekitar pukul 01.55 WIB. Tugas
     cron aaPanel "NPR pembaruan otomatis" (Shell Script, tiap 5 menit, user root). Cron terbukti
     berjalan (`cek-terakhir` 02.00.01 WIB). Crontab juga berisi tugas lain (aaPanel dan pihak
