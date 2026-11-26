@@ -249,6 +249,7 @@ Catatan lain yang terbuka (dikerjakan hanya bila diminta):
 | `PENJELASAN-REVIEW.md` | Penjelasan review untuk pembaca awam |
 | `RENCANA-REVISI.md` | Keputusan D-1…D-8, T-1…T-6, dan tahap pengerjaan |
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
+| `DIAGRAM-NPR.md` | Diagram perancangan untuk laporan KP (ERD, use case, activity, sequence, class, modul) dalam Mermaid. Gambar PNG/SVG dan skrip render di `gambar/diagram/` |
 | `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, perbarui server, data demo |
 | `uji/` | Uji browser Playwright `uji-browser.cjs` (lihat bagian 5) |
 
