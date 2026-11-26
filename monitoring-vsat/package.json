@@ -16,7 +16,10 @@
     "password:remote": "node scripts/setup.mjs --remote --reset-password",
     "test:api": "node scripts/test-api.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "build:server": "vite build --config vite.server.config.ts",
+    "start": "node dist/server/main.js",
+    "setup:server": "node dist/server/setup.js"
   },
   "dependencies": {
     "jspdf": "^4.2.1",

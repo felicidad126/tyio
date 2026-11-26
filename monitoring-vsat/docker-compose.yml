@@ -1,0 +1,24 @@
+# Menjalankan NPR di server sendiri.
+#   docker compose up -d --build
+#   docker compose exec app node dist/server/setup.js   (akun admin pertama)
+#   docker compose exec app node dist/server/cadangan.js (cadangan database)
+# Isi berkas .env di folder ini dengan alamat yang dibuka pengguna, mis.:
+#   ALAMAT_PUBLIK=https://npr.contoh.id
+# Aplikasi hanya terbuka di 127.0.0.1:3000; dari luar dibuka lewat Nginx.
+name: npr-kp
+
+services:
+  app:
+    build: .
+    image: npr-kp:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - npr-data:/data
+    environment:
+      TZ: Asia/Jakarta
+      ALAMAT_PUBLIK: ${ALAMAT_PUBLIK:-}
+
+volumes:
+  npr-data:

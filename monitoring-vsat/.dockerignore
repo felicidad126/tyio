@@ -1,0 +1,8 @@
+node_modules
+dist
+.wrangler
+data
+*.md
+MULAI-WINDOWS.cmd
+.git
+.env

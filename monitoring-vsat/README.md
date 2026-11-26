@@ -18,7 +18,19 @@ npm run dev
 
 Saat `npm run setup` pertama kali, Anda diminta membuat akun admin (username, nama lengkap, dan password minimal 12 karakter). Akun lain dibuat oleh admin lewat menu Pengguna. Database baru berisi customer/remote fiktif; NPR dan TT dibuat melalui aplikasi.
 
-## Deployment
+## Server sendiri (Docker)
+
+Untuk server Linux dengan Docker (misalnya dengan aaPanel), aplikasi berjalan sebagai server Node.js dengan database SQLite, tanpa Cloudflare. Langkah lengkapnya di **PASANG-SERVER.md**:
+
+```sh
+echo "ALAMAT_PUBLIK=https://npr.contoh.id" > .env
+docker compose up -d --build
+docker compose exec app node dist/server/setup.js
+```
+
+Tanpa Docker: `npm run build && npm run build:server`, lalu `npm run setup:server` dan `npm start` (Node.js 22.13 atau lebih baru).
+
+## Deployment Cloudflare
 
 ```sh
 npx wrangler login
