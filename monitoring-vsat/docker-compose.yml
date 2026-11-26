@@ -9,7 +9,13 @@ name: npr-kp
 
 services:
   app:
-    build: .
+    # NPR_VERSI: commit yang dibangun, tampil di /api/health. Diisi oleh
+    # scripts/perbarui-otomatis.sh; bila build manual:
+    #   NPR_VERSI=$(git rev-parse --short=7 HEAD) docker compose up -d --build
+    build:
+      context: .
+      args:
+        NPR_VERSI: ${NPR_VERSI:-}
     image: npr-kp:latest
     restart: unless-stopped
     ports:

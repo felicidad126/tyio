@@ -17,6 +17,8 @@ Aturan singkat (rincian di dokumen itu):
 - **Pemeriksaan setelah perubahan:**
   - `tsc -b`, lint, Prettier, build, build:server, `test:api` (49/49).
   - Uji browser di lebar laptop dan HP.
+  - Setelah push, pastikan job "Periksa NPR" (workflow NPR di GitHub Actions) lulus. Server
+    hanya memasang commit yang lulus.
   - Laporkan hasilnya apa adanya.
 - **Server:**
   - Jangan menyentuh container atau situs lain.

@@ -19,6 +19,9 @@ const BATAS_BODY = 2 * 1024 * 1024;
 // Alamat yang dibuka pengguna, mis. https://npr.contoh.id (tanpa garis miring
 // di akhir).
 const ALAMAT_PUBLIK = (process.env.ALAMAT_PUBLIK ?? "").replace(/\/+$/, "");
+// Commit yang terpasang, diisi saat build (NPR_VERSI di docker-compose.yml).
+// Tampil di /api/health supaya hasil pembaruan bisa dicek dari luar.
+const VERSI = process.env.NPR_VERSI ?? "";
 
 const db = new DatabaseD1(DB_PATH);
 const migrasiBaru = await siapkanDatabase(db, FOLDER_SQL);
@@ -103,7 +106,9 @@ const server = createServer(async (req, res) => {
 
     if (pathname === "/api/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end('{"ok":true}');
+      res.end(
+        JSON.stringify(VERSI ? { ok: true, versi: VERSI } : { ok: true }),
+      );
       return;
     }
 

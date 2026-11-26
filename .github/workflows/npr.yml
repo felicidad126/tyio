@@ -1,0 +1,133 @@
+name: NPR
+
+# CI aplikasi NPR (folder monitoring-vsat/) di branch Rev-NPR-Tyio.
+# Server kp.helonoia.com hanya memasang commit yang job "Periksa NPR"-nya lulus
+# (monitoring-vsat/scripts/perbarui-otomatis.sh membaca hasil job ini lewat
+# nama). Jangan mengganti nama job tanpa mengganti NAMA_CEK di skrip itu.
+on:
+  push:
+    branches: [Rev-NPR-Tyio]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  periksa:
+    name: Periksa NPR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        # "bash" eksplisit = bash -eo pipefail, supaya kegagalan sebelum "| tee"
+        # tetap menggagalkan langkah.
+        shell: bash
+        working-directory: monitoring-vsat
+    env:
+      PLAYWRIGHT_VERSI: 1.63.0
+      TEST_BASE_URL: http://127.0.0.1:3100
+      TEST_USERNAME: uji-admin
+    steps:
+      # Action dipin ke SHA commit, sama seperti workflow lain di repo ini.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: monitoring-vsat/package-lock.json
+
+      - name: Pasang dependensi
+        run: npm ci --no-audit --no-fund
+
+      - name: Cek tipe, lint, dan format
+        run: |
+          npx tsc -b
+          npm run lint
+          npx prettier --check src server ../review/uji
+
+      - name: Cek skrip pembaruan server
+        run: |
+          shellcheck -x scripts/*.sh
+          bash scripts/uji-perbarui-otomatis.sh
+
+      - name: Build
+        run: npm run build && npm run build:server
+
+      # Akun uji dengan password acak per run; tidak ada rahasia di repo.
+      - name: Jalankan server uji dengan data demo
+        run: |
+          TEST_PASSWORD="$(openssl rand -hex 16)"
+          echo "::add-mask::$TEST_PASSWORD"
+          echo "TEST_PASSWORD=$TEST_PASSWORD" >> "$GITHUB_ENV"
+          export DB_PATH="$RUNNER_TEMP/npr/npr.sqlite"
+          mkdir -p "$RUNNER_TEMP/npr"
+          NPR_ADMIN_USERNAME="$TEST_USERNAME" NPR_ADMIN_NAMA="Admin Uji" \
+            NPR_ADMIN_PASSWORD="$TEST_PASSWORD" node dist/server/setup.js
+          node dist/server/demo.js
+          PORT=3100 HOST=127.0.0.1 nohup node dist/server/main.js > "$RUNNER_TEMP/npr/server.log" 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -fsS "$TEST_BASE_URL/api/health" && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/npr/server.log"
+          exit 1
+
+      # Playwright dipasang di folder terpisah supaya package.json aplikasi dan
+      # image Docker tidak ikut berubah.
+      - name: Pasang Playwright dan Chromium
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir -p pw && cd pw
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "playwright@$PLAYWRIGHT_VERSI"
+          npx playwright install --with-deps chromium
+
+      - name: Uji browser (laptop, 1920 px, dan HP)
+        run: |
+          NODE_PATH="$RUNNER_TEMP/pw/node_modules" UJI_OUT="$RUNNER_TEMP/hasil-uji" \
+            node ../review/uji/uji-browser.cjs | tee "$RUNNER_TEMP/uji-browser.txt"
+
+      - name: Uji API
+        run: npm run test:api | tee "$RUNNER_TEMP/uji-api.txt"
+
+      # Image dibangun dengan Dockerfile yang sama seperti di server, lalu
+      # dijalankan sampai /api/health menunjukkan commit ini.
+      - name: Build image Docker dan cek health
+        run: |
+          VERSI="${GITHUB_SHA::7}"
+          docker build --build-arg NPR_VERSI="$VERSI" -t npr-kp:ci .
+          docker run -d --name npr-ci -p 127.0.0.1:3200:3000 npr-kp:ci
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3200/api/health | grep -q "\"versi\":\"$VERSI\""; then
+              docker rm -f npr-ci > /dev/null
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs npr-ci
+          exit 1
+
+      - name: Log server uji bila gagal
+        if: failure()
+        run: cat "$RUNNER_TEMP/npr/server.log" || true
+
+      - name: Ringkasan
+        if: always()
+        run: |
+          {
+            echo "### Uji browser"
+            echo '```'
+            cat "$RUNNER_TEMP/uji-browser.txt" 2> /dev/null || echo "(tidak berjalan)"
+            echo '```'
+            echo "### Uji API"
+            echo '```'
+            tail -n 3 "$RUNNER_TEMP/uji-api.txt" 2> /dev/null || echo "(tidak berjalan)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
