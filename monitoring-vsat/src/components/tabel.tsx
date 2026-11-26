@@ -28,15 +28,21 @@ export type Chip = { label: string; hapus: () => void };
 /**
  * Status urutan tabel. Klik kolom yang sama membalik arah; klik kolom lain
  * memakai arah awal kolom itu (kolom waktu/nomor biasanya mulai dari terbaru).
+ *
+ * Selama pengguna belum memilih urutan, `awal` yang berlaku. `awal` boleh
+ * berubah antar-render (mis. daftar NPR dari Dashboard: terlama dulu), dan
+ * panah di kepala kolom selalu mengikuti urutan yang benar-benar dipakai.
  */
 export function useUrut<K extends string>(awal: Urut<K>, mulaiTurun: K[] = []) {
-  const [urut, setUrut] = useState<Urut<K>>(awal);
+  const [pilihan, setPilihan] = useState<Urut<K> | null>(null);
+  const urut = pilihan ?? awal;
   const ganti = (kolom: K) =>
-    setUrut((u) =>
-      u.kolom === kolom
-        ? { kolom, arah: u.arah === "naik" ? "turun" : "naik" }
+    setPilihan(
+      urut.kolom === kolom
+        ? { kolom, arah: urut.arah === "naik" ? "turun" : "naik" }
         : { kolom, arah: mulaiTurun.includes(kolom) ? "turun" : "naik" },
     );
+  const setUrut = (u: Urut<K>) => setPilihan(u);
   return [urut, ganti, setUrut] as const;
 }
 

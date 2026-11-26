@@ -140,15 +140,16 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
     node ../review/uji/isi-data-uji.mjs          # 30 NPR, TT, 3 Gamas; hanya mau ke 127.0.0.1
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 26/26
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 33/33
   ```
 
-  `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi`, link `/npr/<id>` di tab
-  baru dan tanpa sesi, PDF TT dan Gamas, `/sla?bulan=…` lalu F5, serta kartu di HP. Tangkapan
-  layar dan PDF disimpan di `UJI_OUT`.
+  `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
+  panah saat dibuka dari Dashboard), link `/npr/<id>` di tab baru dan tanpa sesi, PDF TT dan
+  Gamas, `/sla?bulan=…` lalu F5, serta kartu di HP. Tangkapan layar dan PDF disimpan di
+  `UJI_OUT`.
 - **Hasil terakhir (27 November 2026):**
-  - `uji-browser.cjs` 26/26, dari database baru. "Urut Status (server)" yang dulu gagal karena
-    hanya ada 1 NPR sekarang lulus.
+  - `uji-browser.cjs` 33/33 dari database baru, setelah `test:api` 49/49. "Urut Status
+    (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
 - **Catatan menulis skrip uji:**
@@ -182,7 +183,7 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 ## 7. Yang belum selesai atau perlu dicek
 
 Pemeriksaan berikut tertunda karena data di server masih kosong. Semuanya sudah **lulus di
-server lokal dengan data uji** (27 November 2026, `uji-browser.cjs` 26/26):
+server lokal dengan data uji** (27 November 2026, `uji-browser.cjs`):
 - urutan kolom "No. NPR" (naik, turun, dan halaman 2 melanjutkan urutan);
 - Unduh PDF TT dan PDF Gamas (dari daftar, detail, dan kartu HP; isi PDF dicek: kop, tabel,
   tanda tangan);
@@ -192,11 +193,14 @@ server lokal dengan data uji** (27 November 2026, `uji-browser.cjs` 26/26):
 
 Pengguna sudah diberi daftar cek manual. Laporannya dari server dengan data asli tetap ditunggu.
 
+Sudah diperbaiki atas permintaan pengguna: daftar NPR dari Dashboard (`/npr?kondisi=…`) tanpa
+urutan yang dipilih tetap terlama dulu, tetapi panahnya sekarang di "Mulai ↑" (dulu "No. NPR ↓"),
+dan pilihan urutan di HP tertulis "Mulai Gangguan, Terlama". `useUrut` sekarang memakai urutan
+awal selama pengguna belum memilih, dan urutan awal itu boleh berubah. Sekalian membereskan bug
+lama: dulu "No. NPR terbaru" tidak bisa dipilih selama filter Dashboard aktif. Server masih
+menerima `urut=terlama` supaya tab lama yang belum dimuat ulang tidak rusak.
+
 Catatan lain yang terbuka (dikerjakan hanya bila diminta):
-- Bila daftar NPR dibuka dari Dashboard (`/npr?kondisi=…`) tanpa memilih urutan, baris
-  diurutkan dari gangguan terlama (sengaja, lihat `Npr.tsx`). Tetapi panah di kepala tabel tetap
-  menunjuk "No. NPR ↓", jadi tidak sesuai dengan urutan yang tampil. Sudah dilaporkan ke
-  pengguna, belum diubah.
 - Pengguna boleh melihat isi cadangan pukul 14:51 bila ingin memastikan customer dan remote yang
   hilang antara 14:51 dan 18:09. Kemungkinan besar itu data uji yang sengaja dihapus.
 - Tanda "—" untuk sel kosong di tabel masih dipakai. Ganti bila pengguna menganggapnya AI slop.

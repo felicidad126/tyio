@@ -1,4 +1,5 @@
-// Uji browser NPR dengan data: urut No. NPR dan Status, filter kondisi,
+// Uji browser NPR dengan data: urut No. NPR dan Status, filter kondisi
+// (termasuk urutan dan panah saat dibuka dari Dashboard),
 // link /npr/<id> di tab baru, PDF TT dan Gamas, /sla?bulan=… lalu F5,
 // serta kartu di HP. Jalankan setelah isi-data-uji.mjs.
 //
@@ -68,6 +69,37 @@ const urutNaik = (a) =>
   a.every((v, i) => i === 0 || a[i - 1].localeCompare(v) <= 0);
 const urutTurun = (a) =>
   a.every((v, i) => i === 0 || a[i - 1].localeCompare(v) >= 0);
+const BULAN_PENDEK = {
+  Jan: 0,
+  Feb: 1,
+  Mar: 2,
+  Apr: 3,
+  Mei: 4,
+  Jun: 5,
+  Jul: 6,
+  Agu: 7,
+  Sep: 8,
+  Okt: 9,
+  Nov: 10,
+  Des: 11,
+};
+// Kolom Mulai ("18 Okt 2026, 00.14") diubah ke angka supaya bisa dibandingkan.
+async function mulaiTabelNpr(page) {
+  await page.waitForTimeout(400);
+  const teks = await page.$$eval("table tbody tr td:nth-child(4)", (td) =>
+    td.map((t) => t.innerText.split("\n")[0].trim()),
+  );
+  return teks.map((t) => {
+    const m = t.match(/^(\d{1,2}) (\w{3}) (\d{4}), (\d{2})\.(\d{2})/);
+    return m ? Date.UTC(+m[3], BULAN_PENDEK[m[2]], +m[1], +m[4], +m[5]) : NaN;
+  });
+}
+const naikAngka = (a) =>
+  a.length > 1 &&
+  a.every((v, i) => !Number.isNaN(v) && (i === 0 || a[i - 1] <= v));
+const turunAngka = (a) =>
+  a.length > 1 &&
+  a.every((v, i) => !Number.isNaN(v) && (i === 0 || a[i - 1] >= v));
 
 async function unduhDanCek(page, pemicu, awalan, nama) {
   const [unduhan] = await Promise.all([
@@ -190,6 +222,62 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
       await page.screenshot({ path: path.join(OUT, "laptop-npr-filter.png") });
   }
   await page.screenshot({ path: path.join(OUT, "laptop-npr.png") });
+
+  // 1d. Dari Dashboard (?kondisi=…) tanpa urutan dipilih: terlama dulu, dan
+  // panah urut tampil di kolom Mulai (↑), bukan di No. NPR.
+  const arahKolom = (teks) =>
+    page.locator("table thead th", { hasText: teks }).getAttribute("aria-sort");
+  const klikKepala = (teks) =>
+    page.locator("table thead th", { hasText: teks }).locator("button").click();
+  await page.goto(BASE + "/npr?kondisi=pending_tm");
+  await page.waitForSelector("table tbody tr");
+  let mulai = await mulaiTabelNpr(page);
+  cek(
+    (await arahKolom("Mulai")) === "ascending" &&
+      (await arahKolom("No. NPR")) === "none" &&
+      naikAngka(mulai),
+    "Dari Dashboard: terlama dulu dan panah di Mulai ↑",
+    `No. NPR ${await arahKolom("No. NPR")}, Mulai ${await arahKolom("Mulai")}, ${mulai.length} baris`,
+  );
+  await page.screenshot({ path: path.join(OUT, "laptop-npr-dashboard.png") });
+  await klikKepala("No. NPR");
+  nomor = await nomorTabelNpr(page);
+  cek(
+    (await arahKolom("No. NPR")) === "descending" &&
+      (await arahKolom("Mulai")) === "none" &&
+      urutTurun(nomor) &&
+      nomor.length > 1,
+    "Dari Dashboard: klik No. NPR memberi nomor terbaru dulu",
+    `${nomor[0]} … ${nomor.at(-1)}`,
+  );
+  await klikKepala("No. NPR");
+  nomor = await nomorTabelNpr(page);
+  cek(
+    (await arahKolom("No. NPR")) === "ascending" && urutNaik(nomor),
+    "Dari Dashboard: klik No. NPR lagi membalik ke nomor terlama dulu",
+    `${nomor[0]} … ${nomor.at(-1)}`,
+  );
+  await page.goto(BASE + "/npr?kondisi=pending_tm");
+  await page.waitForSelector("table tbody tr");
+  await klikKepala("Mulai");
+  mulai = await mulaiTabelNpr(page);
+  cek(
+    (await arahKolom("Mulai")) === "descending" && turunAngka(mulai),
+    "Dari Dashboard: klik Mulai membalik ke gangguan terbaru dulu",
+  );
+  await page.goto(BASE + "/npr?kondisi=pending_tm");
+  await page.waitForSelector("table tbody tr");
+  await page.getByRole("button", { name: "Hapus filter Pending TM" }).click();
+  await page.waitForTimeout(600);
+  nomor = await nomorTabelNpr(page);
+  cek(
+    page.url() === BASE + "/npr" &&
+      (await arahKolom("No. NPR")) === "descending" &&
+      (await arahKolom("Mulai")) === "none" &&
+      urutTurun(nomor),
+    "Hapus filter Dashboard: kembali ke urutan biasa No. NPR ↓",
+    `${page.url().replace(BASE, "")}, ${nomor[0]} … ${nomor.at(-1)}`,
+  );
 
   // 2. Link /npr/<id> dibuka di tab baru
   await page.goto(BASE + "/npr");
@@ -391,6 +479,35 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     path: path.join(OUT, "hp-npr-detail.png"),
     fullPage: true,
   });
+
+  // Dari Dashboard di HP: pilihan urutan (di panel Filter) sesuai urutan
+  // yang tampil.
+  await p.goto(BASE + "/npr?kondisi=pending_tm");
+  await p.waitForTimeout(1000);
+  await p.getByRole("button", { name: /^Filter/ }).click();
+  const pilihUrut = p
+    .locator("label", { hasText: "Urutkan" })
+    .getByRole("combobox");
+  const pilihanAwal = (await pilihUrut.innerText()).trim();
+  cek(
+    pilihanAwal === "Mulai Gangguan, Terlama",
+    "HP dari Dashboard: pilihan urutan sesuai yang tampil",
+    pilihanAwal,
+  );
+  await p.waitForTimeout(400); // tunggu animasi panel Filter selesai
+  await p.screenshot({ path: path.join(OUT, "hp-npr-dashboard.png") });
+  await pilihUrut.click();
+  await p.getByRole("option", { name: "No. NPR, Terbaru" }).click();
+  await p.waitForTimeout(800);
+  await p.keyboard.press("Escape");
+  const nomorKartu = await p.$$eval("ul.divide-y li button", (b) =>
+    b.map((x) => x.innerText.split("\n")[0].trim()),
+  );
+  cek(
+    nomorKartu.length > 1 && urutTurun(nomorKartu),
+    "HP dari Dashboard: No. NPR, Terbaru bisa dipilih",
+    `${nomorKartu[0]} … ${nomorKartu.at(-1)}`,
+  );
 
   await p.goto(BASE + "/tt");
   await p.waitForTimeout(1000);
