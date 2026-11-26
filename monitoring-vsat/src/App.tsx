@@ -257,6 +257,8 @@ function App() {
   const [slaMonth, setSlaMonth] = useState(() => bulanWIB());
   const [closeGamas, setCloseGamas] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // Menu samping di layar sempit (HP) dibuka lewat tombol ☰.
+  const [menuBuka, setMenuBuka] = useState(false);
   // Dinaikkan setelah ada data yang disimpan, supaya tampilan memuat ulang.
   const [versi, setVersi] = useState(0);
   const [versiMaster, setVersiMaster] = useState(0);
@@ -380,6 +382,7 @@ function App() {
 
   function go(next: Page) {
     setPage(next);
+    setMenuBuka(false);
     setSelected(null);
     setSelectedGamas(null);
     setCloseGamas(false);
@@ -650,7 +653,7 @@ function App() {
   const nprTable = (
     <>
       <div className="table-scroll">
-        <table>
+        <table className="tabel-kartu">
           <thead>
             <tr>
               <th>No. NPR / TT</th>
@@ -666,27 +669,29 @@ function App() {
           <tbody>
             {nprRows.map((n) => (
               <tr key={n.id}>
-                <td>
+                <td data-label="No. NPR / TT">
                   <strong className="mono">{n.number}</strong>
                   <small>{n.ticket_number || "Belum ada TT"}</small>
                 </td>
-                <td>
+                <td data-label="Customer / Remote">
                   <strong>{n.customer_name}</strong>
                   <small>
                     {n.site_id} · {n.location}
                   </small>
                 </td>
-                <td>
+                <td data-label="Gangguan">
                   {n.remote_status}
                   <small>{n.jarkom}</small>
                 </td>
-                <td>{dateText(n.started_at)}</td>
-                <td>
+                <td data-label="Mulai · WIB">{dateText(n.started_at)}</td>
+                <td data-label="Status">
                   <Status value={n.status} />
                 </td>
-                <td>{n.pending_by || "—"}</td>
-                <td className="notes-cell">{n.last_action || "—"}</td>
-                <td>
+                <td data-label="Pending">{n.pending_by || "—"}</td>
+                <td data-label="Tindakan terakhir" className="notes-cell">
+                  {n.last_action || "—"}
+                </td>
+                <td data-label="">
                   <button className="text-button" onClick={() => bukaNpr(n.id)}>
                     Detail →
                   </button>
@@ -837,7 +842,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar ${menuBuka ? "buka" : ""}`}>
         <div className="side-brand">
           <span className="logo-tile">
             <img src={logoTm} alt="Logo PT. Tangara Mitrakom" />
@@ -846,9 +851,17 @@ function App() {
             <strong>NPR</strong>
             <small>PT. Tangara Mitrakom</small>
           </div>
+          <button
+            className="menu-toggle"
+            aria-expanded={menuBuka}
+            aria-controls="menu-utama"
+            onClick={() => setMenuBuka((v) => !v)}
+          >
+            <span aria-hidden="true">{menuBuka ? "✕" : "☰"}</span> Menu
+          </button>
         </div>
         <div className="side-caption">WORKSPACE HELPDESK</div>
-        <nav>
+        <nav id="menu-utama" aria-label="Menu utama">
           {menu
             .filter((m) => m.page !== "Pengguna" || user.peran === "admin")
             .map((m) => (
@@ -1416,7 +1429,7 @@ function App() {
                       </button>
                     </div>
                     <div className="table-scroll">
-                      <table>
+                      <table className="tabel-kartu">
                         <thead>
                           <tr>
                             <th>No. NPR</th>
@@ -1430,22 +1443,26 @@ function App() {
                         <tbody>
                           {dashboard.data?.npr_terlama.map((n) => (
                             <tr key={n.id}>
-                              <td>
+                              <td data-label="No. NPR">
                                 <strong className="mono">{n.number}</strong>
                                 <small>{n.remote_status}</small>
                               </td>
-                              <td>
+                              <td data-label="Customer / Remote">
                                 <strong>{n.customer_name}</strong>
                                 <small>
                                   {n.site_id} · {n.location}
                                 </small>
                               </td>
-                              <td>{lamaBerjalan(n.started_at, clock)}</td>
-                              <td>
+                              <td data-label="Lama gangguan">
+                                {lamaBerjalan(n.started_at, clock)}
+                              </td>
+                              <td data-label="Status">
                                 <Status value={n.status} />
                               </td>
-                              <td>{n.pending_by || "Belum dikategorikan"}</td>
-                              <td>
+                              <td data-label="Pending">
+                                {n.pending_by || "Belum dikategorikan"}
+                              </td>
+                              <td data-label="">
                                 <button
                                   className="text-button"
                                   onClick={() => bukaNpr(n.id)}
@@ -1769,7 +1786,7 @@ function App() {
                     />
                   </div>
                   <div className="table-scroll">
-                    <table>
+                    <table className="tabel-kartu">
                       <thead>
                         <tr>
                           <th>No. TT / NPR</th>
@@ -1783,23 +1800,23 @@ function App() {
                       <tbody>
                         {tickets.data?.rows.map((t) => (
                           <tr key={t.id}>
-                            <td>
+                            <td data-label="No. TT / NPR">
                               <strong className="mono">{t.number}</strong>
                               <small>{t.npr_number}</small>
                             </td>
-                            <td>
+                            <td data-label="Remote">
                               {t.site_id}
                               <small>{t.location}</small>
                             </td>
-                            <td>{t.instruction}</td>
-                            <td>
+                            <td data-label="Instruksi">{t.instruction}</td>
+                            <td data-label="Report teknisi">
                               {t.report ? "Sudah diterima" : "Menunggu report"}
                               <small>{t.technician}</small>
                             </td>
-                            <td>
+                            <td data-label="Status NPR">
                               <Status value={t.npr_status} />
                             </td>
-                            <td>
+                            <td data-label="Aksi">
                               <div className="button-group">
                                 <button onClick={() => ticketPdf(t)}>
                                   PDF
@@ -1841,7 +1858,7 @@ function App() {
                     </button>
                   </div>
                   <div className="table-scroll">
-                    <table>
+                    <table className="tabel-kartu">
                       <thead>
                         <tr>
                           <th>No. TT Gamas</th>
@@ -1855,14 +1872,18 @@ function App() {
                       <tbody>
                         {gamasList.data?.rows.map((g) => (
                           <tr key={g.id}>
-                            <td className="mono">{g.number}</td>
-                            <td>{g.location}</td>
-                            <td>{dateText(g.started_at)}</td>
-                            <td>{g.site_count}</td>
-                            <td>
+                            <td data-label="No. TT Gamas" className="mono">
+                              {g.number}
+                            </td>
+                            <td data-label="Lokasi penanganan">{g.location}</td>
+                            <td data-label="Mulai gangguan">
+                              {dateText(g.started_at)}
+                            </td>
+                            <td data-label="Site terdampak">{g.site_count}</td>
+                            <td data-label="Status">
                               <Status value={g.status} />
                             </td>
-                            <td>
+                            <td data-label="Aksi">
                               <div className="button-group">
                                 <button
                                   onClick={() => void gamasPdfDariDaftar(g.id)}
@@ -2024,7 +2045,7 @@ function App() {
                     </button>
                   </div>
                   <div className="table-scroll">
-                    <table>
+                    <table className="tabel-kartu">
                       <thead>
                         <tr>
                           <th>Kode</th>
@@ -2035,11 +2056,15 @@ function App() {
                       <tbody>
                         {customers.map((c) => (
                           <tr key={c.id}>
-                            <td className="mono">{c.code}</td>
-                            <td>
+                            <td data-label="Kode" className="mono">
+                              {c.code}
+                            </td>
+                            <td data-label="Nama Customer">
                               <strong>{c.name}</strong>
                             </td>
-                            <td>{c.remote_count} site</td>
+                            <td data-label="Jumlah Remote">
+                              {c.remote_count} site
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -2086,7 +2111,7 @@ function App() {
                     </select>
                   </div>
                   <div className="table-scroll">
-                    <table>
+                    <table className="tabel-kartu">
                       <thead>
                         <tr>
                           <th>Site ID</th>
@@ -2109,20 +2134,24 @@ function App() {
                           )
                           .map((r) => (
                             <tr key={r.id}>
-                              <td className="mono">{r.site_id}</td>
-                              <td>
+                              <td data-label="Site ID" className="mono">
+                                {r.site_id}
+                              </td>
+                              <td data-label="Customer / Lokasi">
                                 <strong>{customerName(r.customer_id)}</strong>
                                 <small>{r.location}</small>
                               </td>
-                              <td>{r.jarkom}</td>
-                              <td>
+                              <td data-label="Jarkom">{r.jarkom}</td>
+                              <td data-label="Alamat">
                                 {r.address}
                                 <small>
                                   {r.city}, {r.province}
                                 </small>
                               </td>
-                              <td className="mono">{r.ip_lan}</td>
-                              <td>
+                              <td data-label="IP LAN" className="mono">
+                                {r.ip_lan}
+                              </td>
+                              <td data-label="Pengelola / PIC">
                                 {r.pic_name}
                                 <small>{r.pic_phone}</small>
                               </td>

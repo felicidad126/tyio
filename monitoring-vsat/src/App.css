@@ -267,6 +267,9 @@ button:hover:not(:disabled) {
   gap: 10px;
   padding: 0 6px 30px;
 }
+.menu-toggle {
+  display: none;
+}
 .side-brand strong {
   display: block;
   font-size: 15px;
@@ -993,24 +996,47 @@ td small {
     width: 100%;
     padding: 18px;
   }
-  .side-brand {
-    padding: 0 0 15px;
-  }
   .side-caption,
   .side-bottom {
     display: none;
   }
+  /* Menu jadi daftar yang dibuka dengan tombol ☰. */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 12px 16px;
+  }
+  .side-brand {
+    padding: 0;
+  }
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    min-height: 44px;
+    border-color: rgb(255 255 255 / 30%);
+    background: transparent;
+    color: #fff;
+  }
+  .menu-toggle:hover:not(:disabled) {
+    background: rgb(255 255 255 / 10%);
+  }
+  .menu-toggle span {
+    font-size: 18px;
+    line-height: 1;
+  }
   .sidebar nav {
-    display: flex;
-    overflow: auto;
-    gap: 6px;
+    display: none;
+  }
+  .sidebar.buka nav {
+    display: grid;
+    gap: 4px;
+    padding-top: 12px;
   }
   .sidebar nav button {
-    white-space: nowrap;
-    padding: 9px 12px;
-  }
-  .sidebar nav button span {
-    display: none;
+    min-height: 44px;
   }
   .app-shell {
     display: block;
@@ -1112,4 +1138,73 @@ td small {
 }
 td .text-button {
   white-space: nowrap;
+}
+
+/* HP: daftar tampil sebagai kartu, satu kartu per baris data. Label kolom
+   diambil dari atribut data-label. */
+@media (max-width: 640px) {
+  .table-scroll:has(> .tabel-kartu) {
+    overflow: visible;
+  }
+  table.tabel-kartu,
+  .tabel-kartu tbody,
+  .tabel-kartu tr,
+  .tabel-kartu td {
+    display: block;
+    width: 100%;
+  }
+  .tabel-kartu thead {
+    display: none;
+  }
+  /* Isi kartu dua kolom; kolom pertama, catatan, dan tombol selebar
+     kartu. */
+  .tabel-kartu tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 14px;
+    border: 1px solid #e3eaf4;
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    background: #fff;
+  }
+  .tabel-kartu td {
+    border: 0;
+    padding: 7px 0;
+    min-width: 0;
+  }
+  .tabel-kartu td:first-child,
+  .tabel-kartu td.notes-cell,
+  .tabel-kartu td[data-label=""],
+  .tabel-kartu td[data-label="Aksi"] {
+    grid-column: 1 / -1;
+  }
+  .tabel-kartu td:first-child {
+    border-bottom: 1px solid #eef2f8;
+    padding-bottom: 9px;
+    margin-bottom: 2px;
+  }
+  .tabel-kartu td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teks-redup);
+  }
+  .tabel-kartu td[data-label=""]::before {
+    content: none;
+  }
+  .tabel-kartu .button-group {
+    flex-wrap: wrap;
+  }
+  /* Tombol dan isian cukup besar untuk jari. */
+  button,
+  input,
+  select {
+    min-height: 44px;
+  }
+  .filter-chip button {
+    min-height: 32px;
+  }
 }

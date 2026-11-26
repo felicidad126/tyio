@@ -320,7 +320,7 @@ export function HalamanPengguna({
         </div>
       )}
       <div className="table-scroll">
-        <table>
+        <table className="tabel-kartu">
           <thead>
             <tr>
               <th>Nama</th>
@@ -333,20 +333,22 @@ export function HalamanPengguna({
           <tbody>
             {akun.map((a) => (
               <tr key={a.id}>
-                <td>
+                <td data-label="Nama">
                   <strong>{a.full_name}</strong>
                   {a.id === penggunaId && <small>Akun Anda</small>}
                 </td>
-                <td className="mono">{a.username}</td>
-                <td>{namaPeran[a.peran]}</td>
-                <td>
+                <td data-label="Username" className="mono">
+                  {a.username}
+                </td>
+                <td data-label="Peran">{namaPeran[a.peran]}</td>
+                <td data-label="Status">
                   <span
                     className={`status ${a.aktif === 1 ? "status-closed" : "status-pending"}`}
                   >
                     {a.aktif === 1 ? "Aktif" : "Nonaktif"}
                   </span>
                 </td>
-                <td>
+                <td data-label="Aksi">
                   <div className="button-group">
                     <button onClick={() => setForm({ jenis: "ubah", akun: a })}>
                       Ubah

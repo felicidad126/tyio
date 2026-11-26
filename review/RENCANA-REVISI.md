@@ -12,7 +12,7 @@ Status: keputusan D-1…D-8 dan T-1…T-6 sudah ada. Pengerjaan dimulai 25 Novem
 | 1. Perbaikan data | Selesai | build, lint, setup lulus; uji API 30/30 |
 | 2. Akun per orang | Selesai | build, lint, setup lulus; uji API 42/42; migrasi diuji pada database lama dan database kosong |
 | Temuan Tinggi lainnya (K-01, X-01, X-02, U-01, U-02) | Selesai | build, lint, setup lulus; uji API 49/49; dicek di browser 1440 px dan 390 px |
-| Sisa yang ditentukan D-1…D-8 (U-05, X-07, X-10, H-05, R-01…R-07) | Belum | – |
+| Sisa yang ditentukan D-1…D-8 (U-05, X-07, X-10, H-05, R-01…R-07) | Selesai | build, lint lulus; uji API 49/49; dicek di browser 390, 768, dan 1440 px; PDF dicek |
 | Temuan lain (T-6) | Tidak dikerjakan | – |
 
 Terpasang di server sendiri: **https://kp.helonoia.com** (Docker `npr-kp-app-1` di 127.0.0.1:3000, reverse proxy aaPanel, Let's Encrypt, cadangan harian lewat cron aaPanel). Langkahnya di `monitoring-vsat/PASANG-SERVER.md`.
