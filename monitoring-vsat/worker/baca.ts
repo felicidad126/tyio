@@ -179,6 +179,7 @@ async function daftarTicket(db: DB, q: URLSearchParams) {
   const hasil = await db
     .prepare(
       `SELECT t.*, n.number AS npr_number, n.status AS npr_status,
+         n.remote_status, n.started_at AS npr_started_at,
          r.site_id, r.location, r.address, r.city, r.province, r.jarkom, r.ip_lan,
          r.pic_name, r.pic_phone, c.name AS customer_name
        FROM tickets t

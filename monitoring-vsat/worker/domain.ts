@@ -19,6 +19,27 @@ const remoteStatuses = [
 const fail = (message: string): never => {
   throw new ApiError(message);
 };
+// Nama isian yang ditampilkan di pesan error.
+const labelIsian: Record<string, string> = {
+  name: "nama customer",
+  code: "kode customer",
+  jarkom: "jarkom",
+  ip_lan: "IP LAN",
+  site_id: "Site ID",
+  location: "lokasi",
+  address: "alamat",
+  city: "kota",
+  province: "provinsi",
+  pic_name: "nama PIC",
+  pic_phone: "telepon PIC",
+  notes: "catatan",
+  kind: "tindakan",
+  instruction: "instruksi",
+  technician: "nama teknisi",
+  attachment_name: "nama lampiran",
+  attachment_data: "lampiran",
+  report: "report teknisi",
+};
 function text(
   body: Record<string, unknown>,
   key: string,
@@ -28,7 +49,7 @@ function text(
   const v = body[key];
   if (v === undefined && !required) return "";
   if (typeof v !== "string" || v.length > max || (required && !v.trim()))
-    return fail(`Isian ${key} tidak valid.`);
+    return fail(`Isian ${labelIsian[key] ?? key} tidak valid.`);
   return v.trim();
 }
 function num(value: unknown) {
@@ -65,7 +86,7 @@ function nomorBaru(db: DB, jenis: "NPR" | "TT" | "GAMAS") {
 function status(body: Record<string, unknown>, fallback?: string) {
   const s = body.remote_status ?? fallback;
   if (typeof s !== "string" || !remoteStatuses.includes(s))
-    return fail("Remote Status tidak valid.");
+    return fail("Status remote tidak valid.");
   return s;
 }
 async function row<T>(db: DB, sql: string, ...args: (string | number)[]) {
@@ -197,7 +218,7 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
       !["TM", "Customer"].includes(pending) &&
       !(pending === "" && kind !== "Problem")
     )
-      return fail("Category Pending tidak valid.");
+      return fail("Kategori pending tidak valid.");
     const occurred = time(b.occurred_at ?? new Date().toISOString());
     const latest = await row<{ occurred_at: string }>(
       db,
@@ -227,7 +248,7 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
       if (ticket) throw new ApiError("NPR ini sudah memiliki TT.", 409);
       const instruction = text(b, "instruction", 30);
       if (!["Maintenance", "Preventive Maintenance"].includes(instruction))
-        return fail("Instruction tidak valid.");
+        return fail("Instruksi tidak valid.");
       const nomor = nomorBaru(db, "TT");
       statements.push(
         nomor.naikkan,

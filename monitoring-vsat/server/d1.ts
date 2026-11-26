@@ -14,11 +14,14 @@ function nilaiSql(nilai: unknown): Nilai {
 }
 
 export class Statement {
-  constructor(
-    private readonly db: DatabaseD1,
-    readonly sql: string,
-    readonly params: Nilai[] = [],
-  ) {}
+  private readonly db: DatabaseD1;
+  readonly sql: string;
+  readonly params: Nilai[];
+  constructor(db: DatabaseD1, sql: string, params: Nilai[] = []) {
+    this.db = db;
+    this.sql = sql;
+    this.params = params;
+  }
 
   bind(...params: unknown[]) {
     return new Statement(this.db, this.sql, params.map(nilaiSql));

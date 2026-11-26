@@ -7,6 +7,7 @@ import { GantiPassword, HalamanPengguna } from "./Pengguna";
 import { namaPeran, type Peran } from "./peran";
 import { useMuat, useTunda } from "./useMuat";
 import logoTm from "./aset/logo-tm.png";
+import { pdfGamas, pdfTicket, type DataTicket } from "./pdf";
 
 type User = { id: number; username: string; full_name: string; peran: Peran };
 type Customer = {
@@ -162,8 +163,8 @@ const menu: { page: Page; icon: string }[] = [
 // Filter daftar NPR yang dibuka dari kartu dan tautan di Dashboard.
 const kondisiNpr: Record<string, string> = {
   aktif: "NPR aktif",
-  kritis: "Critical >48 jam",
-  aging: "Aging 24–48 jam",
+  kritis: "Kritis >48 jam",
+  aging: "Berjalan 24–48 jam",
   menunggu_report: "Menunggu report teknisi",
   pending_tm: "Pending TM",
   pending_customer: "Pending Customer",
@@ -224,40 +225,6 @@ function csv(name: string, rows: (string | number)[][]) {
   a.click();
   URL.revokeObjectURL(url);
 }
-async function pdf(title: string, number: string, entries: [string, string][]) {
-  const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF();
-  let y = 24;
-  doc.setFontSize(16);
-  doc.text("PT. Tangara Mitrakom", 18, y);
-  y += 9;
-  doc.setFontSize(10);
-  doc.text("SIMULASI AKADEMIK - DATA FIKTIF", 18, y);
-  y += 13;
-  doc.setFontSize(14);
-  doc.text(title, 18, y);
-  y += 8;
-  doc.setFontSize(10);
-  doc.text(number, 18, y);
-  y += 12;
-  for (const [key, value] of entries) {
-    const lines = doc.splitTextToSize(
-      `${key}: ${value || "—"}`,
-      172,
-    ) as string[];
-    for (const line of lines) {
-      if (y > 275) {
-        doc.addPage();
-        y = 22;
-      }
-      doc.text(line, 18, y);
-      y += 6;
-    }
-    y += 3;
-  }
-  doc.save(number.replaceAll("/", "-") + ".pdf");
-}
-
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
@@ -513,7 +480,7 @@ function App() {
           "Jarkom",
           "Jenis Gangguan",
           "Status",
-          "Pending By",
+          "Pending oleh",
           "Mulai WIB",
           "Online WIB",
           "Catatan Terakhir",
@@ -537,35 +504,15 @@ function App() {
       setError((e as Error).message);
     }
   }
-  function ticketPdf(t: TicketPdf) {
-    void pdf("TROUBLE TICKET / KUNJUNGAN TEKNISI", t.number, [
-      ["Referensi NPR", t.npr_number],
-      ["Customer", t.customer_name],
-      ["Instruction", t.instruction],
-      ["Tanggal TT", dateText(t.created_at)],
-      ["Site ID", t.site_id],
-      ["Lokasi", t.location],
-      ["Alamat", t.address],
-      ["Kota / Provinsi", `${t.city} / ${t.province}`],
-      ["Jarkom / IP LAN", `${t.jarkom} / ${t.ip_lan}`],
-      ["PIC", `${t.pic_name} / ${t.pic_phone}`],
-      ["Catatan NOC", t.notes],
-      ["Teknisi", t.technician],
-      ["Report teknisi", t.report],
-    ]).catch(() => setError("PDF gagal dibuat. Silakan coba unduh kembali."));
+  function ticketPdf(t: DataTicket) {
+    pdfTicket(t, user?.full_name ?? "").catch(() =>
+      setError("PDF gagal dibuat. Silakan coba unduh kembali."),
+    );
   }
-  function gamasPdf({ gamas: g, sites }: GamasDetail) {
-    void pdf("TROUBLE TICKET GANGGUAN MASSAL", g.number, [
-      ["Lokasi penanganan", g.location],
-      ["Mulai gangguan", dateText(g.started_at)],
-      ["Catatan", g.notes],
-      [
-        "Remote terdampak",
-        sites.map((r) => `${r.site_id} - ${r.location}`).join("\n"),
-      ],
-      ["Report teknisi", g.report],
-      ["Kembali online", dateText(g.online_at)],
-    ]).catch(() => setError("PDF gagal dibuat. Silakan coba unduh kembali."));
+  function gamasPdf({ gamas, sites }: GamasDetail) {
+    pdfGamas({ ...gamas, sites }, user?.full_name ?? "").catch(() =>
+      setError("PDF gagal dibuat. Silakan coba unduh kembali."),
+    );
   }
   async function gamasPdfDariDaftar(id: number) {
     try {
@@ -853,7 +800,7 @@ function App() {
                 />
               </Field>
               <button className="primary login-button" disabled={busy}>
-                {busy ? "Memeriksa akun…" : "Masuk ke Dashboard →"}
+                {busy ? "Memeriksa akun…" : "Masuk"}
               </button>
             </form>
           </section>
@@ -945,7 +892,7 @@ function App() {
               Ganti password
             </button>
             <button onClick={logout} disabled={busy} className="ghost">
-              Logout
+              Keluar
             </button>
           </div>
         </header>
@@ -1030,7 +977,7 @@ function App() {
                       ],
                       ["Jenis Gangguan", current.remote_status],
                       [
-                        "Pending By",
+                        "Pending oleh",
                         current.pending_by || "Belum dikategorikan",
                       ],
                     ].map(([k, v]) => (
@@ -1054,6 +1001,8 @@ function App() {
                             ...currentRemote,
                             ...currentTicket,
                             npr_number: current.number,
+                            remote_status: current.remote_status,
+                            npr_started_at: current.started_at,
                             customer_name: currentRemote.customer_name ?? "",
                           })
                         }
@@ -1063,7 +1012,7 @@ function App() {
                     </div>
                     <div className="info-grid">
                       <div>
-                        <small>Instruction</small>
+                        <small>Instruksi</small>
                         <strong>{currentTicket.instruction}</strong>
                       </div>
                       <div>
@@ -1119,7 +1068,7 @@ function App() {
                 </section>
                 {current.status !== "CLOSED" && (
                   <section className="panel">
-                    <h2>Add Action NPR</h2>
+                    <h2>Tambah tindakan</h2>
                     <form
                       onSubmit={saveAction}
                       key={`${current.id}-${nprDetail.actions.length}`}
@@ -1139,7 +1088,7 @@ function App() {
                               <option>Close</option>
                             </select>
                           </Field>
-                          <Field label="Remote Status">
+                          <Field label="Status remote">
                             <select
                               name="remote_status"
                               defaultValue={current.remote_status}
@@ -1157,7 +1106,7 @@ function App() {
                               required
                             />
                           </Field>
-                          <Field label="Category Pending">
+                          <Field label="Pending oleh">
                             <select
                               name="pending_by"
                               defaultValue={current.pending_by}
@@ -1179,7 +1128,7 @@ function App() {
                                 ketika dikirim. Catatan berikut diisi
                                 berdasarkan hasil pengecekan NOC.
                               </div>
-                              <Field label="Instruction">
+                              <Field label="Instruksi">
                                 <select name="instruction">
                                   <option>Maintenance</option>
                                   <option>Preventive Maintenance</option>
@@ -1256,7 +1205,7 @@ function App() {
                             {busy
                               ? "Menyimpan…"
                               : kind === "Eskalasi Service"
-                                ? "Send Trouble Ticket"
+                                ? "Kirim TT"
                                 : "Simpan tindakan"}
                           </button>
                         </div>
@@ -1425,19 +1374,19 @@ function App() {
                       ],
                       [
                         "kritis",
-                        "Critical >48 jam",
+                        "Kritis >48 jam",
                         "Perlu perhatian dan tindak lanjut",
                         "red",
                       ],
                       [
                         "aging",
-                        "Aging 24–48 jam",
+                        "Berjalan 24–48 jam",
                         "Pantau perkembangan penanganan",
                         "amber",
                       ],
                       [
                         "menunggu_report",
-                        "Menunggu Report",
+                        "Menunggu report",
                         "TT belum memiliki report teknisi",
                         "green",
                       ],
@@ -1665,7 +1614,7 @@ function App() {
                             ))}
                           </select>
                         </Field>
-                        <Field label="Remote Name / Site ID">
+                        <Field label="Remote / Site ID">
                           <select
                             value={newRemote}
                             onChange={(e) => setNewRemote(e.target.value)}
@@ -1685,16 +1634,16 @@ function App() {
                               ))}
                           </select>
                         </Field>
-                        <Field label="Address">
+                        <Field label="Alamat">
                           <input readOnly value={picked?.address || ""} />
                         </Field>
-                        <Field label="Province">
+                        <Field label="Provinsi">
                           <input readOnly value={picked?.province || ""} />
                         </Field>
-                        <Field label="City">
+                        <Field label="Kota">
                           <input readOnly value={picked?.city || ""} />
                         </Field>
-                        <Field label="Remote Status / Jenis Gangguan">
+                        <Field label="Jenis gangguan">
                           <select
                             value={newCase}
                             onChange={(e) => setNewCase(e.target.value)}
@@ -1712,7 +1661,7 @@ function App() {
                             defaultValue={localNow()}
                           />
                         </Field>
-                        <Field label="NPR Number">
+                        <Field label="Nomor NPR">
                           <input
                             readOnly
                             value={
@@ -1722,7 +1671,7 @@ function App() {
                             }
                           />
                         </Field>
-                        <Field label="Created By">
+                        <Field label="Dibuat oleh">
                           <input readOnly value={user.full_name} />
                         </Field>
                         <Field label="PIC / Kontak">
@@ -1761,7 +1710,7 @@ function App() {
                           Batal
                         </button>
                         <button className="primary">
-                          {busy ? "Menyimpan…" : "Submit NPR"}
+                          {busy ? "Menyimpan…" : "Simpan NPR"}
                         </button>
                       </div>
                     </fieldset>
@@ -1825,7 +1774,7 @@ function App() {
                         <tr>
                           <th>No. TT / NPR</th>
                           <th>Remote</th>
-                          <th>Instruction</th>
+                          <th>Instruksi</th>
                           <th>Report teknisi</th>
                           <th>Status NPR</th>
                           <th>Aksi</th>
@@ -1945,7 +1894,7 @@ function App() {
               {page === "Laporan SLA" && (
                 <section className="panel">
                   <div className="panel-title">
-                    <h2>Service Level Agreement</h2>
+                    <h2>Ketersediaan layanan per site</h2>
                     <div className="button-group">
                       <input
                         type="month"
@@ -2301,10 +2250,10 @@ function App() {
                       <Field label="Alamat" wide>
                         <textarea name="address" required rows={2} />
                       </Field>
-                      <Field label="City">
+                      <Field label="Kota">
                         <input name="city" required />
                       </Field>
-                      <Field label="Province">
+                      <Field label="Provinsi">
                         <input name="province" required />
                       </Field>
                       <Field label="IP LAN">
@@ -2369,7 +2318,7 @@ function App() {
                     {busy
                       ? "Menyimpan…"
                       : modal === "gamas"
-                        ? "Send Trouble Ticket Gamas"
+                        ? "Kirim TT Gamas"
                         : "Simpan"}
                   </button>
                 </div>
