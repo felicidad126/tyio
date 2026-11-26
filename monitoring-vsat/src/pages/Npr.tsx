@@ -1200,13 +1200,16 @@ export function NprDetail() {
                 `Selesai dalam ${lama(n.started_at, n.online_at)}`,
               ]
             : ["Durasi", lama(n.started_at), "Masih berjalan"],
-          [
-            "Pending",
-            n.pending_by && `Pending ${n.pending_by}`,
-            n.pending_by === "Customer"
-              ? "Menunggu bank/lokasi"
-              : "Menunggu tindakan TM",
-          ],
+          // NPR Closed tidak lagi menunggu siapa pun (sama dengan daftar NPR).
+          n.status === "CLOSED"
+            ? ["Pending", "—", "NPR sudah ditutup"]
+            : [
+                "Pending",
+                n.pending_by && `Pending ${n.pending_by}`,
+                n.pending_by === "Customer"
+                  ? "Menunggu bank/lokasi"
+                  : "Menunggu tindakan TM",
+              ],
           [
             "Dibuat oleh",
             n.created_by || "—",

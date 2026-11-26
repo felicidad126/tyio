@@ -819,6 +819,28 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     "Detail NPR: telepon PIC berupa link tel:, dropdown bernama",
     tel ?? "tanpa link",
   );
+  // f. Detail NPR Closed: kotak Pending kosong, tidak lagi "Menunggu …".
+  await page.goto(BASE + "/npr");
+  await page.waitForSelector("table tbody tr");
+  await page
+    .locator("table tbody tr")
+    .filter({ has: page.locator("td", { hasText: /^Closed$/ }) })
+    .first()
+    .click();
+  await page.waitForURL(/\/npr\/\d+$/);
+  await page.waitForTimeout(600);
+  const pendingTutup = (
+    await page
+      .locator("dl > div", { has: page.locator("dt", { hasText: "Pending" }) })
+      .innerText()
+  ).replace(/\s+/g, " ");
+  cek(
+    /—/.test(pendingTutup) &&
+      /NPR sudah ditutup/.test(pendingTutup) &&
+      !/Menunggu/.test(pendingTutup),
+    "Detail NPR Closed: kotak Pending kosong",
+    pendingTutup,
+  );
 
   // ---------- HP: Pixel 7 ----------
   const hp = await browser.newContext({
