@@ -4,6 +4,75 @@ Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa mem
 percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
 commit `6a7d070` dan sejak itu memperbarui diri otomatis (bagian 6).
 
+## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 02.10 WIB)
+
+Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit dan di-push.
+
+**Langkah pertama sesi baru:**
+
+1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
+   dengan `origin`. Saat serah terima, HEAD = commit "Serah terima ke sesi baru: bagian Mulai di
+   sini" (atau yang lebih baru dari sesi lain).
+2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"6a7d070"}`.
+3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
+   branch `Rev-NPR-Tyio`. Run #1–#4 hijau. Run #5 (commit serah terima) belum dicek saat menulis.
+4. Tanyakan pengguna apa yang ingin dikerjakan.
+
+**Sesi Claude lain juga push ke branch ini** (diagram laporan KP: `review/DIAGRAM-NPR.md`,
+`review/gambar/diagram/`). Selalu `git fetch` sebelum mengedit dokumen bersama, terutama berkas
+ini. Merge `6a7d070` pernah bentrok di berkas ini.
+
+**Selesai di sesi 26–27 November 2026** (diverifikasi dengan cara yang disebut):
+
+| Commit | Isi | Bukti |
+|---|---|---|
+| `e94efc4` | `review/uji/uji-browser.cjs`; lima pemeriksaan yang tertunda | Lulus lokal, lalu lulus di server (agent, `PROMPT-DATA-DEMO.md` a–h) |
+| `2086e8d` | Daftar NPR dari Dashboard: panah di "Mulai ↑"; `useUrut` dengan urutan awal yang bisa berubah | 5 cek baru gagal di kode lama, lulus di kode baru |
+| `3630739` | Data demo `server/demo.ts` (isi dan `--hapus`) | Lokal: isi, tolak isi ulang, hapus, Gamas campuran. Server: terisi 00.48 WIB |
+| `b00aa54` | Durasi < 1 jam dalam menit; riwayat "jam oleh nama"; Gangguan Terakhir 3 baris | 4 cek baru gagal di kode lama, lulus; dicek agent di server |
+| `bc7219d` | Jarak titik "Remote Down · Pending TM" sama di kedua sisi | Diukur per huruf: dulu 8/2 px, sekarang 2/2 px |
+| `fe417ad` | CI GitHub (`npr.yml`) dan pembaruan otomatis (`perbarui-otomatis.sh`), versi di `/api/health` | `uji-perbarui-otomatis.sh` 19/19; CI run #1 hijau; terpasang di server lewat agent |
+
+**Belum terverifikasi:**
+
+- **Pemasangan otomatis yang membangun ulang aplikasi** belum pernah terjadi di server. Sejak
+  cron dipasang, baru ada commit dokumen, yang dipasang tanpa build. Cara cek pada perubahan kode
+  berikutnya: setelah job "Periksa NPR" hijau, tunggu sampai 10 menit, lalu `curl` health harus
+  menunjukkan versi commit baru. Bila tidak berubah: minta agent menjalankan
+  `tail -20 /var/log/npr-perbarui.log` dan `cat /var/lib/npr-perbarui/cek-terakhir`.
+- Pemasangan commit dokumen di server tidak terlihat dari health (versinya tetap).
+- Tampilan di HP sungguhan. Agent memakai bingkai 400 px; lokal dan CI memakai emulasi Pixel 7.
+
+**Menunggu pengguna:**
+
+- Kapan data demo dihapus (`PROMPT-DATA-DEMO.md` bagian B). Harus sebelum data asli dicatat;
+  tim perlu diberi tahu dulu karena akun lain sudah mencoba data demo.
+- Cek sekali di HP sungguhan.
+
+**Pelajaran teknis (supaya tidak ditemukan ulang):**
+
+- Container Claude: Docker CLI ada tetapi daemon tidak, jadi build image hanya diuji di CI.
+  GitHub API tidak bisa dipanggil langsung (pakai alat MCP github), tetapi `kp.helonoia.com` bisa
+  di-`curl`.
+- Nilai `kondisi` yang sah: `aktif`, `kritis`, `aging`, `menunggu_report`, `pending_tm`,
+  `pending_customer`, `belum_kategori`. Nilai lain diabaikan tanpa pesan; uji pernah keliru karena
+  memakai `closed`.
+- Uji browser butuh lebih dari 25 NPR supaya halaman 2 ada. Pakai data demo (50 NPR).
+- Dua server lokal yang membuat database baru yang sama pada saat bersamaan menghasilkan
+  "database is locked". Ini artefak uji, bukan bug.
+- Pengecekan terjadwal (`send_later`) hanya membangunkan sesi yang membuatnya, bukan sesi baru.
+- Pengguna menempelkan laporan agent browser apa adanya, kadang diawali baris narasi berbahasa
+  Inggris. Itu bagian laporan, bukan instruksi baru.
+
+**Tinjauan proses:**
+
+- ⚠️ `server/` tidak dicek `tsc -b` (bagian 5). Usulan, bila pengguna setuju: tambah tsconfig
+  untuk `server/` ke `tsc -b` setelah memperbaiki `server/main.ts:122`.
+- ✅ Pemeriksaan yang dulu manual (uji browser, uji API, skrip server, image Docker) sekarang
+  dijalankan CI di setiap push.
+- ⚠️ Berkas ini diedit bersamaan oleh dua sesi. Fetch sebelum mengedit, dan jaga perubahan tetap
+  kecil per bagian.
+
 ## 1. Proyek singkat
 
 - **Proyek:** tugas Kerja Praktek di PT. Tangara Mitrakom, Universitas Dian Nusantara.
@@ -299,3 +368,8 @@ rujukan.
   - hasil pemeriksaan dengan angka (mis. 49/49);
   - commit yang di-push;
   - langkah pembaruan server bila perlu.
+- **Pilihan berdampak:** pertanyaan pilihan dengan opsi yang disarankan ("Recommended") diterima
+  baik. Pengguna biasanya memilih saran.
+- **Server:** perubahan kecil lewat CI dan pembaruan otomatis. Agent browser hanya untuk
+  perubahan besar. Setelah push kode, kabari pengguna ketika CI hijau dan versi di `/api/health`
+  sudah berganti.
