@@ -2,7 +2,7 @@
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
 percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
-commit `b00aa54`; commit sesudahnya hanya dokumen.
+commit `6a7d070` dan sejak itu memperbarui diri otomatis (bagian 6).
 
 ## 1. Proyek singkat
 
@@ -177,8 +177,12 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
 - **Container:** `npr-kp-app-1`.
 - **Folder:** `/opt/monitoring-vsat`, dengan `docker-compose.yml` di `monitoring-vsat/`.
 - **Volume data:** `npr-kp_npr-data`, dipasang di `/data`. Cadangan disimpan di `/data/cadangan/`.
-- **Commit yang berjalan:** `b00aa54`, sehat (diperbarui 27 November 2026 pukul 01.05 WIB,
-  pemeriksaan a–d lulus). Cadangan sebelum pembaruan: `npr-20261127-0105.sqlite`.
+- **Commit yang berjalan:** `6a7d070`, sehat (dipasang 27 November 2026 pukul 01.51 WIB lewat
+  `PROMPT-PASANG-CD.md`). Cadangan sebelum pemasangan: `npr-20261127-0151.sqlite`. Commit
+  sesudahnya dipasang otomatis.
+- **Cek dari sesi Claude:** `curl -s https://kp.helonoia.com/api/health` bisa dijalankan dari
+  container Claude dan menampilkan `{"ok":true,"versi":"<commit>"}`. Commit yang hanya mengubah
+  dokumen dipasang tanpa build, jadi versinya tetap commit build terakhir.
 - **Data:** berisi **data demo sementara** sejak 27 November 2026 pukul 00.48 WIB, dicatat atas
   nama akun admin "mimin": 6 customer, 20 remote, 50 NPR, 19 TT, 4 Gamas. Belum ada data asli.
   Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo **harus
@@ -198,8 +202,12 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   - **Manual lewat agent browser** (`review/PROMPT-PERBARUI-SERVER.md`) hanya untuk perubahan
     besar: `migrations/`, `schema.sql`, `Dockerfile`, `docker-compose.yml`, atau pesan commit
     berisi `[manual]`. Tambahkan di bawah prompt apa yang berubah dan apa yang dicek.
-  - **Status pemasangan otomatis:** prompt sudah dibuat, belum dijalankan di server. Tanyakan
-    pengguna. Sampai terpasang, `/api/health` di server masih menjawab `{"ok":true}` tanpa versi.
+  - **Status pemasangan otomatis:** terpasang 27 November 2026 sekitar pukul 01.55 WIB. Tugas
+    cron aaPanel "NPR pembaruan otomatis" (Shell Script, tiap 5 menit, user root). Cron terbukti
+    berjalan (`cek-terakhir` 02.00.01 WIB). Crontab juga berisi tugas lain (aaPanel dan pihak
+    lain); jangan diubah.
+  - **Jam server memakai UTC+8**, jadi waktu di daftar Cron aaPanel tampil satu jam lebih maju
+    daripada WIB. Log skrip, `cek-terakhir`, dan nama cadangan tetap memakai WIB.
 - **Reset password akun** (pengguna mengetik sendiri password barunya):
 
   ```bash
