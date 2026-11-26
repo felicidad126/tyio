@@ -798,7 +798,7 @@ export function GamasDetail() {
                           : "Perkembangan"}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {waktu(a.created_at)} · {a.created_by}
+                      {waktu(a.created_at)} oleh {a.created_by}
                     </span>
                   </div>
                   <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed">

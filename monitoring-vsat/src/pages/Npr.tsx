@@ -1148,7 +1148,7 @@ export function NprDetail() {
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                     <span className="text-sm font-semibold">{a.kind}</span>
                     <span className="text-xs text-muted-foreground">
-                      {waktu(a.occurred_at)} · {a.created_by}
+                      {waktu(a.occurred_at)} oleh {a.created_by}
                     </span>
                   </div>
                   <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed">

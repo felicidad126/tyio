@@ -1,8 +1,10 @@
 // Uji browser NPR dengan data: urut No. NPR dan Status, filter kondisi
 // (termasuk urutan dan panah saat dibuka dari Dashboard),
 // link /npr/<id> di tab baru, PDF TT dan Gamas, /sla?bulan=… lalu F5,
-// serta kartu di HP. Jalankan pada database uji yang sudah diisi data demo
-// (DB_PATH=<db-uji> node dist/server/demo.js).
+// durasi di bawah 1 jam dalam menit, riwayat "jam oleh nama", kolom
+// Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Jalankan pada
+// database uji yang sudah diisi data demo (DB_PATH=<db-uji> node
+// dist/server/demo.js).
 //
 //   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> \
 //     TEST_PASSWORD=<sandi> UJI_OUT=<folder-hasil> node review/uji/uji-browser.cjs
@@ -438,6 +440,90 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     "Back setelah ganti bulan kembali ke halaman sebelum SLA (ganti bulan tidak menambah riwayat)",
     page.url().replace(BASE, ""),
   );
+
+  // 6. Durasi di bawah 1 jam ditulis dalam menit (bukan "0 jam"), dan jam
+  // tidak lagi diikuti titik pemisah ("11.09 · …").
+  const teksSel = () =>
+    page.$$eval("table tbody td", (td) => td.map((t) => t.innerText.trim()));
+  await page.goto(BASE + "/");
+  await page.waitForTimeout(1000);
+  const selDashboard = await teksSel();
+  await page.goto(BASE + "/npr");
+  await page.waitForSelector("table tbody tr");
+  await page.waitForTimeout(400);
+  const selNpr = await teksSel();
+  const semuaSel = [...selDashboard, ...selNpr];
+  cek(
+    semuaSel.length > 0 && !semuaSel.some((t) => /(^|\n)0 jam/.test(t)),
+    'Dashboard dan daftar NPR: tidak ada durasi "0 jam"',
+    semuaSel
+      .flatMap((t) => t.split("\n"))
+      .filter((t) => /\d menit/.test(t))
+      .slice(0, 3)
+      .join("; ") || "tidak ada durasi di bawah 1 jam",
+  );
+  const barisWaktuRiwayat = () =>
+    page.$$eval("ol > li > div > span.text-xs", (s) =>
+      s.map((x) => x.innerText.trim()),
+    );
+  await page.goto(BASE + "/npr?kondisi=menunggu_report");
+  await page.waitForSelector("table tbody tr");
+  await page.locator("table tbody tr").first().click();
+  await page.waitForURL(/\/npr\/\d+$/);
+  await page.waitForTimeout(600);
+  const riwayatNpr = await barisWaktuRiwayat();
+  cek(
+    riwayatNpr.length > 1 &&
+      riwayatNpr.every(
+        (t) => /\d{2}\.\d{2} oleh \S/.test(t) && !t.includes("·"),
+      ),
+    'Riwayat NPR: jam lalu "oleh" nama, tanpa titik pemisah',
+    riwayatNpr[0],
+  );
+  await page.goto(BASE + "/gamas");
+  await page.waitForSelector("table tbody tr");
+  await page.locator("table tbody tr").first().click();
+  await page.waitForURL(/\/gamas\/\d+$/);
+  await page.waitForTimeout(600);
+  const riwayatGamas = await barisWaktuRiwayat();
+  cek(
+    riwayatGamas.length > 0 &&
+      riwayatGamas.every(
+        (t) => /\d{2}\.\d{2} oleh \S/.test(t) && !t.includes("·"),
+      ),
+    'Riwayat Gamas: jam lalu "oleh" nama, tanpa titik pemisah',
+    riwayatGamas[0],
+  );
+  // Kolom Gangguan Terakhir di Remote baru tampil mulai lebar 1880 px.
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(BASE + "/remote");
+  await page.waitForSelector("table tbody tr");
+  await page.waitForTimeout(600);
+  const kolomTerakhir = await page.$$eval("table thead th", (th) =>
+    th.findIndex((t) => t.innerText.trim() === "Gangguan Terakhir"),
+  );
+  const isiTerakhir = (
+    await page.$$eval(
+      `table tbody tr td:nth-child(${kolomTerakhir + 1})`,
+      (td) => td.map((t) => t.innerText.trim()),
+    )
+  ).filter((t) => t !== "Belum ada NPR");
+  const terakhirBenar = isiTerakhir.every((t) => {
+    const baris = t.split("\n");
+    return (
+      baris.length === 3 &&
+      !baris[1].includes("·") &&
+      /^(Selesai dalam \d+ (menit|jam|hari)|Masih aktif$)/.test(baris[2]) &&
+      !/(^|\s)0 jam/.test(t)
+    );
+  });
+  cek(
+    kolomTerakhir >= 0 && isiTerakhir.length > 0 && terakhirBenar,
+    "Remote 1920 px: Gangguan Terakhir tanpa titik setelah jam, lama di baris sendiri",
+    `${isiTerakhir.length} site; contoh: ${(isiTerakhir.find((t) => /menit/.test(t)) ?? isiTerakhir[0] ?? "").replaceAll("\n", " / ")}`,
+  );
+  await page.screenshot({ path: path.join(OUT, "laptop-remote-1920.png") });
+  await page.setViewportSize({ width: 1366, height: 820 });
 
   // ---------- HP: Pixel 7 ----------
   const hp = await browser.newContext({

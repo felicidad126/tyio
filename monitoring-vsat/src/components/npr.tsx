@@ -15,13 +15,17 @@ export function waktu(iso?: string | null) {
   });
 }
 
+/** Lama gangguan: "48 menit", "5 jam", "1 hari 2 jam". Di bawah 1 jam ditulis
+ *  dalam menit supaya gangguan singkat tidak tampil "0 jam". */
 export function lama(iso: string, sampai?: string | null) {
-  const jam = Math.max(
+  const menit = Math.max(
     0,
     Math.floor(
-      ((sampai ? Date.parse(sampai) : Date.now()) - Date.parse(iso)) / 3600_000,
+      ((sampai ? Date.parse(sampai) : Date.now()) - Date.parse(iso)) / 60_000,
     ),
   );
+  if (menit < 60) return `${menit} menit`;
+  const jam = Math.floor(menit / 60);
   const hari = Math.floor(jam / 24);
   if (!hari) return `${jam} jam`;
   return jam % 24 ? `${hari} hari ${jam % 24} jam` : `${hari} hari`;

@@ -138,15 +138,16 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   ```bash
   DB_PATH=<folder-uji>/npr.sqlite node dist/server/demo.js   # data demo, sebelum test:api
   TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
-    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 33/33
+    UJI_OUT=<folder-hasil> node ../review/uji/uji-browser.cjs   # harus 37/37
   ```
 
   `uji-browser.cjs` memeriksa urut No. NPR dan Status, filter `kondisi` (termasuk urutan dan
   panah saat dibuka dari Dashboard), link `/npr/<id>` di tab baru dan tanpa sesi, PDF TT dan
-  Gamas, `/sla?bulan=…` lalu F5, serta kartu di HP. Tangkapan layar dan PDF disimpan di
+  Gamas, `/sla?bulan=…` lalu F5, durasi di bawah 1 jam, riwayat "jam oleh nama", kolom
+  Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Tangkapan layar dan PDF disimpan di
   `UJI_OUT`.
 - **Hasil terakhir (27 November 2026):**
-  - `uji-browser.cjs` 33/33 di atas data demo, juga setelah `test:api` 49/49. "Urut Status
+  - `uji-browser.cjs` 37/37 di atas data demo, lalu `test:api` 49/49. "Urut Status
     (server)" yang dulu gagal karena hanya ada 1 NPR sekarang lulus.
   - Uji lengkap dan uji alamat sesi lalu (31/32 dan 21/21) skripnya hilang bersama container.
     Sebagian besar isinya sekarang tercakup di `uji-browser.cjs`.
@@ -206,6 +207,15 @@ dan pilihan urutan di HP tertulis "Mulai Gangguan, Terlama". `useUrut` sekarang 
 awal selama pengguna belum memilih, dan urutan awal itu boleh berubah. Sekalian membereskan bug
 lama: dulu "No. NPR terbaru" tidak bisa dipilih selama filter Dashboard aktif. Server masih
 menerima `urut=terlama` supaya tab lama yang belum dimuat ulang tidak rusak.
+
+Juga atas permintaan pengguna (tangkapan layar kolom Gangguan Terakhir):
+- `lama()` di `components/npr.tsx` menulis durasi di bawah 1 jam dalam menit ("48 menit"),
+  bukan "0 jam". Berlaku di Dashboard, daftar dan detail NPR, Gamas, dan Remote.
+- Tanda "·" tetap dipakai di antara label pendek, tetapi tidak lagi tepat setelah jam
+  ("11.09 ·" terbaca seperti salah ketik; strip terbaca seperti rentang waktu):
+  - riwayat NPR dan Gamas: "22 Nov 2026, 21.02 oleh Admin Uji";
+  - Gangguan Terakhir di Remote: jam dan "Selesai dalam …" / "Masih aktif" (oranye) di baris
+    sendiri.
 
 **Data demo** (`server/demo.ts`, atas permintaan pengguna, keputusan: di server, sementara,
 nama bank fiktif):
