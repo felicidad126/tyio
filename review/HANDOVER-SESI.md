@@ -121,7 +121,9 @@ build image Docker dan cek `/api/health`. Ringkasan hasil uji ada di halaman run
 cek hasilnya (`mcp__github__actions_list`, `branch: Rev-NPR-Tyio`). Server hanya memasang commit
 yang job ini lulus, jadi **jangan mengganti nama job** tanpa mengganti `NAMA_CEK` di
 `perbarui-otomatis.sh`. Workflow proyek lama `ci.yml` dimatikan untuk branch ini lewat
-`branches-ignore`; dulu selalu gagal di branch ini karena memeriksa proyek lama.
+`branches-ignore`; dulu selalu gagal di branch ini karena memeriksa proyek lama. Run pertama
+(commit `fe417ad`, 27 November 2026) lulus dalam 2 menit 40 detik: uji browser 38/38, `test:api`
+49/49, image Docker sehat dengan versi commit.
 
 Pemeriksaan yang sama bisa dijalankan lokal dari folder `monitoring-vsat/`:
 
