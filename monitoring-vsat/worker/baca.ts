@@ -15,7 +15,6 @@ const KONDISI: Record<string, string> = {
   menunggu_report: `${KONDISI_AKTIF} AND t.id IS NOT NULL AND t.report = ''`,
   pending_tm: `${KONDISI_AKTIF} AND n.pending_by = 'TM'`,
   pending_customer: `${KONDISI_AKTIF} AND n.pending_by = 'Customer'`,
-  belum_kategori: `${KONDISI_AKTIF} AND n.pending_by = ''`,
 };
 
 const KOLOM_NPR = `n.id, n.number, n.remote_id, n.remote_status, n.status, n.pending_by,
@@ -79,7 +78,7 @@ async function daftarNpr(db: DB, q: URLSearchParams) {
     mulai: "n.started_at",
     status:
       "CASE n.status WHEN 'OPEN' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'ESKALASI' THEN 2 ELSE 3 END",
-    pending: "CASE n.pending_by WHEN '' THEN 'zzz' ELSE n.pending_by END",
+    pending: "n.pending_by",
   };
   const arah = q.get("arah") === "naik" ? "ASC" : "DESC";
   const urut =
@@ -150,8 +149,7 @@ async function dashboard(db: DB) {
         SUM(${KONDISI.aging}) AS aging,
         SUM(${KONDISI.menunggu_report}) AS menunggu_report,
         SUM(${KONDISI.pending_tm}) AS pending_tm,
-        SUM(${KONDISI.pending_customer}) AS pending_customer,
-        SUM(${KONDISI.belum_kategori}) AS belum_kategori
+        SUM(${KONDISI.pending_customer}) AS pending_customer
        ${SUMBER_NPR}`,
     )
     .first<Record<string, number | null>>();

@@ -15,7 +15,7 @@ Aturan singkat (rincian di dokumen itu):
 - **Kode aplikasi** ada di `monitoring-vsat/`. Folder `apps/`, `packages/`, `deploy/` milik
   proyek lama.
 - **Pemeriksaan setelah perubahan:**
-  - `tsc -b`, lint, Prettier, build, build:server, `test:api` (49/49).
+  - `tsc -b`, lint, Prettier, build, build:server, `test:api` (50/50), uji browser (42/42).
   - Uji browser di lebar laptop dan HP.
   - Setelah push, pastikan job "Periksa NPR" (workflow NPR di GitHub Actions) lulus. Server
     hanya memasang commit yang lulus.

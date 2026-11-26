@@ -65,7 +65,6 @@ const KONDISI: Record<string, string> = {
   menunggu_report: "TT Menunggu Report",
   pending_tm: "Pending TM",
   pending_customer: "Pending Customer",
-  belum_kategori: "Belum Dikategorikan",
 };
 
 type KolomUrut =
@@ -533,11 +532,7 @@ export function NprList() {
                     </div>
                     <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                       <span>{waktu(n.started_at)}</span>
-                      <span>
-                        {n.pending_by
-                          ? `Pending ${n.pending_by}`
-                          : "Belum Dikategorikan"}
-                      </span>
+                      <span>{n.pending_by && `Pending ${n.pending_by}`}</span>
                     </div>
                   </button>
                 </li>
@@ -967,6 +962,41 @@ async function bacaLampiran(file: File | null) {
 
 type Jenis = "Problem" | "Eskalasi Service" | "Report Teknisi" | "Close";
 
+/**
+ * Pilihan "Pending oleh" di form tindakan. Pengingat muncul saat NPR dipindah
+ * dari Pending TM ke Pending Customer. Komponen ini ada di dalam form yang
+ * di-key, jadi pilihannya kembali ke kategori NPR setelah tindakan disimpan.
+ */
+function PilihPending({ awal, jenis }: { awal: string; jenis: Jenis }) {
+  const [nilai, setNilai] = useState(awal || "TM");
+  const pindahKeCustomer =
+    nilai === "Customer" && awal !== "Customer" && jenis !== "Eskalasi Service";
+  return (
+    <>
+      <div>
+        <FieldLabel>Pending oleh</FieldLabel>
+        <Select name="pending_by" value={nilai} onValueChange={setNilai}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TM">Pending TM</SelectItem>
+            <SelectItem value="Customer">Pending Customer</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {pindahKeCustomer && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:col-span-2">
+          Pending Customer hanya untuk penyebab di luar jaringan yang sudah
+          dicek teknisi, misalnya arah antena terhalang gedung atau pohon. Tulis
+          temuannya di catatan dan lampirkan buktinya. Waktu Pending Customer
+          tidak dihitung SLA.
+        </p>
+      )}
+    </>
+  );
+}
+
 export function NprDetail() {
   const { param, api, versi, kirim, sibuk, user, galat } = useApp();
   const { data, error } = useMuat<DataNprDetail>(
@@ -1104,12 +1134,10 @@ export function NprDetail() {
             : ["Durasi", lama(n.started_at), "Masih berjalan"],
           [
             "Pending",
-            n.pending_by ? `Pending ${n.pending_by}` : "Belum Dikategorikan",
-            n.pending_by === "TM"
-              ? "Menunggu tindakan TM"
-              : n.pending_by === "Customer"
-                ? "Menunggu bank/lokasi"
-                : "Pilih saat tindakan berikutnya",
+            n.pending_by && `Pending ${n.pending_by}`,
+            n.pending_by === "Customer"
+              ? "Menunggu bank/lokasi"
+              : "Menunggu tindakan TM",
           ],
           [
             "Dibuat oleh",
@@ -1224,31 +1252,7 @@ export function NprDetail() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <FieldLabel>Pending oleh</FieldLabel>
-                    {/* Problem wajib memilih pihak yang ditunggu. */}
-                    <Select
-                      name="pending_by"
-                      defaultValue={n.pending_by || undefined}
-                      required={jenisAktif === "Problem"}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={
-                            jenisAktif === "Problem"
-                              ? "Pilih Kategori"
-                              : "Belum Dikategorikan"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Customer">
-                          Pending Customer
-                        </SelectItem>
-                        <SelectItem value="TM">Pending TM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <PilihPending awal={n.pending_by} jenis={jenisAktif} />
                   <div>
                     <FieldLabel hint="WIB">Waktu Tindakan</FieldLabel>
                     <WaktuInput

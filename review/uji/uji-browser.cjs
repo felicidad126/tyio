@@ -2,7 +2,8 @@
 // (termasuk urutan dan panah saat dibuka dari Dashboard),
 // link /npr/<id> di tab baru, PDF TT dan Gamas, /sla?bulan=… lalu F5,
 // durasi di bawah 1 jam dalam menit, riwayat "jam oleh nama", kolom
-// Gangguan Terakhir di Remote (1920 px), serta kartu di HP. Jalankan pada
+// Gangguan Terakhir di Remote (1920 px), kategori pending hanya TM atau
+// Customer beserta pengingat Pending Customer, serta kartu di HP. Jalankan pada
 // database uji yang sudah diisi data demo (DB_PATH=<db-uji> node
 // dist/server/demo.js).
 //
@@ -202,7 +203,7 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     );
   const posAwal = await posisi();
   const jumlahAwal = await page.locator("table tbody tr").count();
-  for (const k of ["belum_kategori", "menunggu_report", "pending_tm"]) {
+  for (const k of ["pending_customer", "menunggu_report", "pending_tm"]) {
     await page.goto(BASE + "/npr?kondisi=" + k);
     await page.waitForTimeout(800);
     const pos = await posisi();
@@ -221,7 +222,7 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
       `Filter kondisi=${k} menyaring dan kolom tidak bergeser`,
       `${ringkas}, ${jumlah} baris dari ${jumlahAwal}`,
     );
-    if (k === "belum_kategori")
+    if (k === "pending_customer")
       await page.screenshot({ path: path.join(OUT, "laptop-npr-filter.png") });
   }
   await page.screenshot({ path: path.join(OUT, "laptop-npr.png") });
@@ -532,6 +533,63 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     'Riwayat Gamas: jam lalu "oleh" nama, tanpa titik pemisah',
     riwayatGamas[0],
   );
+  // 7. Kategori pending hanya TM atau Customer ("Belum Dikategorikan"
+  // dihapus). NPR Open tetap Pending TM. Memilih Pending Customer di form
+  // menampilkan pengingat bukti teknisi; form tidak dikirim.
+  await page.goto(BASE + "/");
+  await page.waitForTimeout(1000);
+  const teksDashboard = await page.locator("main").innerText();
+  await page.goto(BASE + "/npr");
+  await page.waitForSelector("table tbody tr");
+  await page.waitForTimeout(400);
+  const kolomPending = await page.$$eval("table thead th", (th) =>
+    th.findIndex((t) => t.innerText.trim().startsWith("Pending")),
+  );
+  const nilaiPending = await page.$$eval(
+    "table tbody tr",
+    (tr, i) => tr.map((r) => r.children[i]?.innerText.trim()),
+    kolomPending,
+  );
+  const teksNpr = await page.locator("main").innerText();
+  cek(
+    !/Belum Dikategorikan|Belum Dipilih/.test(teksDashboard + teksNpr) &&
+      nilaiPending.length > 0 &&
+      nilaiPending.every((v) => v === "TM" || v === "Customer"),
+    'Dashboard dan daftar NPR tanpa "Belum Dikategorikan"; kolom Pending hanya TM atau Customer',
+    [...new Set(nilaiPending)].join(", "),
+  );
+  // Sel status berisi persis "Open" (teks baris tersambung tanpa spasi).
+  await page
+    .locator("table tbody tr")
+    .filter({ has: page.locator("td", { hasText: /^Open$/ }) })
+    .first()
+    .click();
+  await page.waitForURL(/\/npr\/\d+$/);
+  await page.waitForTimeout(600);
+  const selPending = (
+    await page
+      .locator("dl > div", { has: page.locator("dt", { hasText: "Pending" }) })
+      .innerText()
+  ).replace(/\s+/g, " ");
+  cek(/Pending TM/.test(selPending), "Detail NPR Open: Pending TM", selPending);
+  const pilihPending = page.locator(
+    "xpath=//span[normalize-space(text())='Pending oleh']/..//button[@role='combobox']",
+  );
+  const pengingat = page.locator("text=/Pending Customer hanya untuk/");
+  const adaPengingatAwal = await pengingat.count();
+  await pilihPending.click();
+  await page.getByRole("option", { name: "Pending Customer" }).click();
+  await page.waitForTimeout(300);
+  const adaPengingat = await pengingat.isVisible();
+  await page.screenshot({ path: path.join(OUT, "laptop-npr-pengingat.png") });
+  await pilihPending.click();
+  await page.getByRole("option", { name: "Pending TM" }).click();
+  await page.waitForTimeout(300);
+  cek(
+    adaPengingatAwal === 0 && adaPengingat && (await pengingat.count()) === 0,
+    "Form tindakan: pengingat muncul saat memilih Pending Customer dan hilang saat kembali ke TM",
+  );
+
   // Kolom Gangguan Terakhir di Remote baru tampil mulai lebar 1880 px.
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto(BASE + "/remote");
@@ -604,6 +662,29 @@ async function unduhDanCek(page, pemicu, awalan, nama) {
     path: path.join(OUT, "hp-npr-detail.png"),
     fullPage: true,
   });
+  // Pengingat Pending Customer di HP (NPR Open), form tidak dikirim.
+  await p.goto(BASE + "/npr");
+  await p.waitForTimeout(800);
+  await kartu
+    .filter({ has: p.locator("span", { hasText: /^Open$/ }) })
+    .first()
+    .click();
+  await p.waitForURL(/\/npr\/\d+$/);
+  await p.waitForTimeout(600);
+  await p
+    .locator(
+      "xpath=//span[normalize-space(text())='Pending oleh']/..//button[@role='combobox']",
+    )
+    .click();
+  await p.getByRole("option", { name: "Pending Customer" }).click();
+  await p.waitForTimeout(300);
+  const pengingatHp = p.locator("text=/Pending Customer hanya untuk/");
+  await pengingatHp.scrollIntoViewIfNeeded();
+  cek(
+    (await pengingatHp.isVisible()) && (await tanpaGeserHorizontal(p)),
+    "Pengingat Pending Customer di HP tanpa geser horizontal",
+  );
+  await p.screenshot({ path: path.join(OUT, "hp-npr-pengingat.png") });
 
   // Dari Dashboard di HP: pilihan urutan (di panel Filter) sesuai urutan
   // yang tampil.

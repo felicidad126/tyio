@@ -248,13 +248,6 @@ export function Dashboard() {
       n: r.pending_customer ?? 0,
       cls: "bg-amber-500",
     },
-    {
-      key: "belum_kategori",
-      label: "Belum Dikategorikan",
-      ket: "Pihak yang ditunggu belum dipilih",
-      n: r.belum_kategori ?? 0,
-      cls: "bg-slate-400",
-    },
   ];
   const grafik = data.grafik.map((g, i) => {
     // "2026-11-25" dibaca sebagai tanggal WIB.
@@ -396,11 +389,7 @@ export function Dashboard() {
                               {lama(n.started_at)}
                             </td>
                             <td className="whitespace-nowrap px-3 py-3">
-                              {n.pending_by || (
-                                <span className="text-muted-foreground">
-                                  Belum Dipilih
-                                </span>
-                              )}
+                              {n.pending_by}
                             </td>
                             <td className="whitespace-nowrap px-5 py-3">
                               <StatusBadge status={n.status} />

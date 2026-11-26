@@ -235,8 +235,8 @@ const TERBARU: [number, string, number][] = [
   [9, "kabel-lan", 2], //    Eskalasi, menunggu report
   [5, "hujan", 1], //        Pending TM
   [2, "pln", 1], //          Pending Customer
-  [1.2, "router", 0], //     Open, belum dikategorikan
-  [0.4, "adaptor", 0], //    Open, belum dikategorikan
+  [1.2, "router", 0], //     Open, Pending TM
+  [0.4, "adaptor", 0], //    Open, Pending TM
 ];
 const JUMLAH_LAMA = 40;
 
