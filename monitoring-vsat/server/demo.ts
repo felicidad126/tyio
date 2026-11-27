@@ -2,8 +2,12 @@
 // (Open, Pending, Eskalasi, Closed) dengan kasus gangguan yang umum, TT, dan
 // TT Gamas, tersebar sejak awal bulan lalu sampai sekarang.
 //
-//   node dist/server/demo.js          isi data demo
-//   node dist/server/demo.js --hapus  hapus data demo saja
+//   node dist/server/demo.js               isi data demo
+//   node dist/server/demo.js --jika-kosong  isi hanya bila database belum
+//                                           berisi NPR/Gamas; bila sudah
+//                                           berisi, lewati tanpa galat
+//                                           (dipakai MULAI-WINDOWS.cmd)
+//   node dist/server/demo.js --hapus       hapus data demo saja
 //
 // - Data dimasukkan lewat logika aplikasi yang sama (worker/domain.ts), jadi
 //   nomor, status, dan SLA sama seperti bila diketik helpdesk.
@@ -349,6 +353,12 @@ async function isi() {
   const terpakai = await angka(
     "SELECT (SELECT COUNT(*) FROM nprs) + (SELECT COUNT(*) FROM gamas) AS n",
   );
+  if (terpakai && process.argv.includes("--jika-kosong")) {
+    console.log(
+      "Database sudah berisi NPR atau TT Gamas, data demo tidak diisi ulang.",
+    );
+    return;
+  }
   if (terpakai)
     berhenti(
       "Database sudah berisi NPR atau TT Gamas. Data demo hanya diisi ke database yang belum dipakai, supaya tidak tercampur dengan data asli.",

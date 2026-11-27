@@ -2,21 +2,21 @@
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
 percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
-commit `6f8da70`, dipasang otomatis (build ulang) oleh cron pembaruan; lihat bagian 6.
+commit "MULAI-WINDOWS.cmd langsung dengan data demo lengkap", dipasang otomatis (build ulang) oleh cron pembaruan; lihat bagian 6.
 
-## 0. Mulai di sini (serah terima terakhir: 27 November 2026, sekitar 04.00 WIB)
+## 0. Mulai di sini (serah terima terakhir: 28 November 2026, sekitar 02.10 WIB)
 
 Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan terpasang di server.
 
 **Langkah pertama sesi baru:**
 
 1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
-   dengan `origin`. Saat serah terima, HEAD = commit "Catat review UI/UX dan paket C" (atau yang
-   lebih baru dari sesi lain).
-2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: `{"ok":true,"versi":"6f8da70"}`.
-   Commit dokumen sesudahnya dipasang tanpa build, jadi versinya tetap `6f8da70`.
+   dengan `origin`. Saat serah terima, HEAD = commit "MULAI-WINDOWS.cmd langsung dengan data demo lengkap" (atau yang lebih baru
+   dari sesi lain).
+2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: versi = hash commit
+   "MULAI-WINDOWS.cmd langsung dengan data demo lengkap". Commit dokumen sesudahnya dipasang tanpa build, jadi versinya tetap.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
-   branch `Rev-NPR-Tyio`. Run #1–#13 hijau, kecuali #12 yang dibatalkan push berikutnya
+   branch `Rev-NPR-Tyio`. Run #1–#16 hijau, kecuali #12 yang dibatalkan push berikutnya
    (`cancel-in-progress`, wajar). Run untuk commit serah terima ini belum dicek saat
    menulis.
 4. Tanyakan pengguna apa yang ingin dikerjakan.
@@ -29,6 +29,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 | Commit | Isi | Bukti |
 |---|---|---|
+| `8818679` dan commit sesudahnya | ZIP untuk penilai: folder database dibuat otomatis, `npm run demo` (`--jika-kosong`), README "Jalankan lokal dengan data demo", `MULAI-WINDOWS.cmd` langsung menyiapkan data demo lengkap | Dari salinan bersih (seperti ZIP GitHub): setup, demo 50 NPR, demo ulang dilewati, start di :3000, login. Uji browser 53/53, `test:api` 51/51. Berkas `.cmd` belum dicoba di Windows |
 | `de98db7`, `6f8da70` | Review UI/UX paket C (rapikan kecil): warna durasi seragam dan durasi di kartu HP, Pending kosong untuk NPR Closed (daftar dan detail), "selisih … poin persen" di SLA, judul "TT Gamas", telepon PIC `tel:`, Data Site di antara Riwayat dan form di HP, "(opsional)", `aria-label` dropdown, ring fokus 2 px, angka+satuan durasi tidak terpisah, konfirmasi Batal NPR Baru, tombol × pencarian, filter Status "Aktif (belum Closed)" | Uji browser 53/53, `test:api` 51/51. Terpasang otomatis 03.55 WIB |
 | `e60a767` | Bundel dipecah per halaman (`components/halaman.tsx`, chunk React terpisah, penjaga 500 KB di CI); grafik Dashboard di atas NPR Aktif | Uji browser 45/45, `test:api` 50/50. JS awal di server 652 → 420 KB (188 → 132 KB gzip). Terpasang otomatis 03.00 WIB, 3,5 menit setelah CI hijau |
 | `d3299dd` | Kategori pending hanya TM dan Customer: "Belum Dikategorikan" dihapus, NPR baru Pending TM, pengingat saat pindah ke Pending Customer, migrasi `0003` | `test:api` 50/50, uji browser 42/42 (laptop dan Pixel 7). Migrasi diuji pada database buatan kode lama: SLA tidak berubah. Server: terpasang lewat agent 02.30 WIB, log "Migrasi dijalankan: 0003_pending_tm.sql", cek h–k lulus |
@@ -50,8 +51,10 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 **Menunggu pengguna:**
 
-- Kapan data demo dihapus (`PROMPT-DATA-DEMO.md` bagian B). Harus sebelum data asli dicatat;
-  tim perlu diberi tahu dulu karena akun lain sudah mencoba data demo.
+- Kapan penilaian KP selesai. Data demo di server **dipertahankan sampai penilaian selesai**
+  (keputusan pengguna 27 November, lihat P-2); baru sesudahnya dihapus (`PROMPT-DATA-DEMO.md`
+  bagian B), sebelum data asli dicatat.
+- Coba `MULAI-WINDOWS.cmd` versi baru sekali di Windows (belum bisa dijalankan di container).
 - Cek sekali di HP sungguhan. Sekalian lihat pengingat Pending Customer di form tindakan.
 
 **Pelajaran teknis (supaya tidak ditemukan ulang):**
@@ -140,6 +143,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 | T-6 | Temuan di luar D-1…D-8 tidak dikerjakan |
 | K-06 | Awalnya tidak dikerjakan (T-4). Akhirnya dikerjakan atas permintaan pengguna (commit `9741ddc`) |
 | UI | Opsi a: Tailwind 3.4 + shadcn/ui, dipindah dari prototipe `redesain-npr/` |
+| P-2 | 27 November 2026. Data demo dibutuhkan sampai penilaian KP selesai. Di server: dibiarkan apa adanya (tidak disegarkan, termasuk tindakan percobaan tim) dan tidak dihapus sampai penilaian selesai; data asli belum dicatat selama itu. Konsekuensi yang sudah dijelaskan ke pengguna: grafik "NPR Masuk per Hari" (7 hari) kosong mulai sekitar 4 Desember bila tidak ada NPR baru, dan durasi NPR aktif terus bertambah. Di ZIP: `MULAI-WINDOWS.cmd` langsung menyiapkan mode server Node dengan data demo lengkap (lihat bagian 7) |
 | P-1 | 27 November 2026, menggantikan X-02 bagian kategori. Pending hanya **Pending TM** (provider) dan **Pending Customer**. NPR baru langsung Pending TM, karena web ini milik TM. Pending Customer hanya bila penyebabnya di luar jaringan dan ada bukti pengecekan teknisi, mis. arah antena terhalang gedung atau pohon. Bukti cukup diingatkan di form, tidak diwajibkan sistem. Aturan SLA tetap: hanya NPR dengan TT Maintenance. "Reposisi Antena" yang biasa diajukan customer cukup ditulis di catatan, tidak jadi pilihan baru |
 
 Rincian keputusan ada di `review/RENCANA-REVISI.md`. Temuan review ada di `review/REVIEW-NPR.md`.
@@ -276,8 +280,9 @@ DB_PATH=<folder-uji>/npr.sqlite PORT=3100 HOST=127.0.0.1 node dist/server/main.j
   dokumen dipasang tanpa build, jadi versinya tetap commit build terakhir.
 - **Data:** berisi **data demo sementara** sejak 27 November 2026 pukul 00.48 WIB, dicatat atas
   nama akun admin "mimin": 6 customer, 20 remote, 50 NPR, 19 TT, 4 Gamas. Belum ada data asli.
-  Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo **harus
-  dihapus** (`review/PROMPT-DATA-DEMO.md` bagian B) sebelum data asli mulai dicatat.
+  Cadangan kosong sebelum demo: `npr-20261127-0048-sebelum-demo.sqlite`. Data demo
+  **dipertahankan sampai penilaian KP selesai** (P-2), lalu dihapus (`review/PROMPT-DATA-DEMO.md`
+  bagian B) sebelum data asli mulai dicatat.
 - **Sudah dicoba pengguna lain:** sejak 27 November pukul 01.02 WIB, akun helpdesk lain menambah
   tindakan di NPR demo dan menutup satu NPR demo. Itu wajar untuk masa percobaan. Semua
   NPR di site demo, termasuk tindakan mereka, ikut terhapus oleh `--hapus`. NPR yang dicatat di
@@ -353,9 +358,20 @@ nama bank fiktif):
 - Data masuk lewat `domain()` yang sama dengan API. `Date.now` dimundurkan ke waktu tiap
   kejadian, jadi nomor mengikuti bulan kejadian (gangguan Oktober = `NPR/2026/10/…`).
 - Menolak berjalan bila sudah ada NPR atau Gamas. Mencadangkan database lebih dulu.
+  `--jika-kosong` melewatinya tanpa galat (kode keluar 0); dipakai `MULAI-WINDOWS.cmd`.
+- `npm run demo` = `node dist/server/demo.js`. Folder database dibuat otomatis oleh
+  `DatabaseD1` (`server/d1.ts`, `8818679`); dulu `setup:server` gagal di salinan baru dari ZIP
+  karena `data/` belum ada. CI sengaja memakai folder database yang belum ada.
+- **ZIP untuk penilai** (`https://github.com/felicidad126/tyio/archive/refs/heads/Rev-NPR-Tyio.zip`,
+  repo publik, tanpa login): aplikasi di folder `monitoring-vsat/`. `MULAI-WINDOWS.cmd`
+  (CRLF) mengecek Node.js 22.13+, `npm install` dan build bila belum ada, `setup:server` (akun
+  admin saat pertama), `npm run demo -- --jika-kosong`, membuka http://127.0.0.1:3000, lalu
+  `npm start`. Tiap langkahnya diuji di Linux dari salinan bersih; berkas `.cmd`-nya sendiri
+  belum dijalankan di Windows. Mode pengembang (`npm run setup` + `npm run dev`, port 5173)
+  memakai database Cloudflare lokal terpisah yang hanya berisi 3 bank dan 6 site.
 - `--hapus` menghapus data demo saja (dikenali dari kode + nama customer demo), menyetel ulang
   penghitung nomor, dan membiarkan akun serta data lain. Gamas campuran hanya kehilangan site
-  demonya. **Harus dijalankan sebelum data asli mulai dicatat.**
+  demonya. Dijalankan di server setelah penilaian KP selesai, sebelum data asli dicatat (P-2).
 - `review/uji/isi-data-uji.mjs` dihapus karena sudah digantikan `demo.js`.
 
 `REVIEW-NPR.md` (baris 230 dan 628) masih memuat password demo lama dari kode asli, sebagai
