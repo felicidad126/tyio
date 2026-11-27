@@ -16,7 +16,22 @@ npm run setup
 npm run dev
 ```
 
-Saat `npm run setup` pertama kali, Anda diminta membuat akun admin (username, nama lengkap, dan password minimal 12 karakter). Akun lain dibuat oleh admin lewat menu Pengguna. Database baru berisi customer/remote fiktif; NPR dan TT dibuat melalui aplikasi.
+Saat `npm run setup` pertama kali, Anda diminta membuat akun admin (username, nama lengkap, dan password minimal 12 karakter). Akun lain dibuat oleh admin lewat menu Pengguna. Database baru berisi 3 bank dan 6 site fiktif; NPR, TT, dan Gamas dibuat melalui aplikasi.
+
+## Data demo lengkap
+
+ZIP hanya berisi kode, tanpa data dari server. Untuk mencoba dengan data contoh yang lengkap (6 bank, 20 site, 50 NPR, 19 TT, dan 4 TT Gamas, semuanya fiktif), jalankan aplikasi sebagai server Node (Node.js 22.13 atau lebih baru). Jalankan satu per satu di folder ini:
+
+```sh
+npm install
+npm run build
+npm run build:server
+npm run setup:server
+npm run demo
+npm start
+```
+
+Lalu buka http://127.0.0.1:3000 dan login dengan akun admin yang dibuat saat `setup:server`. Database tersimpan di `data/npr.sqlite` (folder dibuat otomatis) dan terpisah dari database `npm run dev`. `npm run demo` menolak berjalan bila sudah ada NPR atau TT Gamas, dan mencadangkan database lebih dulu ke `data/cadangan/`. Data demo bisa dihapus lagi dengan `npm run demo -- --hapus`; akun dan data lain tidak ikut terhapus.
 
 ## Server sendiri (Docker)
 

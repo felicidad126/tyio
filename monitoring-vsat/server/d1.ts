@@ -2,6 +2,8 @@
 // antarmuka D1 (prepare, bind, first, all, run, batch). Kelas di sini
 // menyediakan antarmuka yang sama di atas berkas SQLite biasa, sehingga
 // kode aplikasi tidak perlu diubah.
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { DatabaseSync, type StatementSync } from "node:sqlite";
 
 type Nilai = string | number | null;
@@ -76,6 +78,11 @@ export class DatabaseD1 {
   private readonly cache = new Map<string, StatementSync>();
 
   constructor(path: string) {
+    // Folder database dibuat bila belum ada, mis. data/ pada salinan baru
+    // dari ZIP. Tanpa ini SQLite gagal: "unable to open database file". Di
+    // Docker folder ini sudah disediakan volume.
+    if (path !== ":memory:")
+      mkdirSync(dirname(resolve(path)), { recursive: true });
     this.db = new DatabaseSync(path);
     // Sama seperti D1: foreign key aktif. WAL membuat baca dan tulis
     // bersamaan lebih lancar, busy_timeout menunggu jika berkas sedang dikunci.

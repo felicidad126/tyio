@@ -74,7 +74,9 @@ jobs:
           TEST_PASSWORD="$(openssl rand -hex 16)"
           echo "::add-mask::$TEST_PASSWORD"
           echo "TEST_PASSWORD=$TEST_PASSWORD" >> "$GITHUB_ENV"
-          export DB_PATH="$RUNNER_TEMP/npr/npr.sqlite"
+          # Folder data/ sengaja belum ada, seperti salinan baru dari ZIP:
+          # setup.js harus membuatnya sendiri.
+          export DB_PATH="$RUNNER_TEMP/npr/data/npr.sqlite"
           mkdir -p "$RUNNER_TEMP/npr"
           NPR_ADMIN_USERNAME="$TEST_USERNAME" NPR_ADMIN_NAMA="Admin Uji" \
             NPR_ADMIN_PASSWORD="$TEST_PASSWORD" node dist/server/setup.js

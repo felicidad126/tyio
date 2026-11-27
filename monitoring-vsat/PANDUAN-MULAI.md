@@ -25,6 +25,8 @@ npm run dev
 
 `npm run setup` membuat tabel, menjalankan migrasi database, mengisi bank/site fiktif, dan meminta data akun admin jika belum ada admin. Perintah ini aman diulang: tidak menghapus tiket dan tidak menimpa akun yang sudah ada. Tidak perlu Laragon/phpMyAdmin. Database lokal paket ini terpisah dari folder proyek lama. ZIP tidak membawa data sesi atau database lokal proyek lama.
 
+Ingin langsung mencoba dengan data contoh lengkap (50 NPR, TT, dan TT Gamas fiktif)? Ikuti bagian "Data demo lengkap" di README.md. Cara itu memakai `npm start` (alamat http://127.0.0.1:3000) dan database tersendiri, bukan `npm run dev`.
+
 ## B. Coba alur dari awal sampai selesai
 
 1. Buka Customer & Remote. Tambah customer bank fiktif, kemudian tambah remote VSAT atau M2M. Isikan alamat, kota, provinsi, IP LAN dummy, dan pengelola/PIC.
