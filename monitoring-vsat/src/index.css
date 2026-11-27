@@ -1,0 +1,82 @@
+/* Huruf disajikan sendiri (tidak memanggil Google Fonts). */
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warna dari logo PT. Tangara Mitrakom: navy #032459, biru muda #53e9fa */
+    --background: 216 33% 97%;
+    --foreground: 218 45% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 218 45% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 45% 14%;
+    --primary: 217 94% 18%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 30% 94%;
+    --secondary-foreground: 218 45% 14%;
+    --muted: 216 30% 95%;
+    --muted-foreground: 217 21% 41%;
+    --accent: 214 55% 95%;
+    --accent-foreground: 217 94% 18%;
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 24% 88%;
+    --input: 216 24% 84%;
+    --ring: 190 85% 40%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family:
+      "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Segoe UI", system-ui,
+      sans-serif;
+    font-feature-settings: "tnum" 1;
+  }
+  .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+}
+
+/* Ruang scrollbar selalu disediakan, supaya lebar halaman (dan posisi kolom
+   tabel) tidak berubah saat jumlah data membuat scrollbar muncul/hilang. */
+html {
+  scrollbar-gutter: stable;
+}
+/* Radix menambah margin kanan saat dropdown mengunci scroll; tidak perlu
+   lagi karena ruang scrollbar sudah disediakan. */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}

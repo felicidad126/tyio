@@ -4,6 +4,9 @@ name: CI
 # jadi pull request dari branch yang sama ikut menampilkan hasilnya.
 on:
   push:
+    # Rev-NPR-Tyio berisi aplikasi NPR (monitoring-vsat/) dan diperiksa
+    # workflow npr.yml. Pengecualian ini hanya ada di branch tersebut.
+    branches-ignore: [Rev-NPR-Tyio]
   workflow_dispatch:
 
 permissions:

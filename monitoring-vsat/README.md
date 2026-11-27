@@ -1,0 +1,56 @@
+# NPR — Network Problem Report
+
+Aplikasi tugas Kerja Praktek, Universitas Dian Nusantara.
+
+Baca **PANDUAN-MULAI.md** untuk panduan lengkap, dan **ATURAN-SLA.md** untuk aturan perhitungan simulasi SLA.
+
+## Jalankan lokal
+
+Windows: ekstrak ke folder baru dan klik dua kali **MULAI-WINDOWS.cmd**.
+
+Atau melalui terminal:
+
+```sh
+npm install
+npm run setup
+npm run dev
+```
+
+Saat `npm run setup` pertama kali, Anda diminta membuat akun admin (username, nama lengkap, dan password minimal 12 karakter). Akun lain dibuat oleh admin lewat menu Pengguna. Database baru berisi customer/remote fiktif; NPR dan TT dibuat melalui aplikasi.
+
+## Server sendiri (Docker)
+
+Untuk server Linux dengan Docker (misalnya dengan aaPanel), aplikasi berjalan sebagai server Node.js dengan database SQLite, tanpa Cloudflare. Langkah lengkapnya di **PASANG-SERVER.md**:
+
+```sh
+echo "ALAMAT_PUBLIK=https://npr.contoh.id" > .env
+docker compose up -d --build
+docker compose exec app node dist/server/setup.js
+```
+
+Tanpa Docker: `npm run build && npm run build:server`, lalu `npm run setup:server` dan `npm start` (Node.js 22.13 atau lebih baru).
+
+## Deployment Cloudflare
+
+```sh
+npx wrangler login
+npm run setup:remote
+npm run deploy
+```
+
+Isi `database_id` di wrangler.jsonc dengan ID database D1 Anda sebelum deploy. Setup remote meminta data akun admin jika belum ada admin. Setup aman diulang, tidak menghapus data, dan tidak menimpa akun yang sudah ada. Untuk mengganti password satu akun gunakan `npm run password:remote`.
+
+## Validasi
+
+```sh
+npm run build
+npm run lint
+```
+
+Untuk uji API dengan server lokal berjalan (membuat data QA lokal). Uji memakai akun admin lokal; isi lewat variabel lingkungan atau ketik saat diminta:
+
+```sh
+TEST_USERNAME=admin TEST_PASSWORD=... npm run test:api
+```
+
+Frontend React + TypeScript + Vite; backend Cloudflare Workers; database D1; PDF menggunakan jsPDF. Dua peran: admin (termasuk mengelola akun) dan helpdesk. Monitoring awal manual; tidak ada ping atau konfigurasi perangkat.
