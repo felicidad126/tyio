@@ -2,7 +2,7 @@
 
 Prompt untuk agent browser yang menguji NPR dari sisi pemakai: login, NPR dari dibuat sampai
 Close, TT, TT Gamas, Laporan SLA, akun pengguna, dan tampilan HP. Isinya sesuai aplikasi di commit
-`e60a767` (27 November 2026), termasuk kategori pending yang hanya Pending TM dan Pending Customer.
+`6f8da70` (27 November 2026), termasuk kategori pending yang hanya Pending TM dan Pending Customer.
 Setiap langkah dan harapan di bawah sudah dicoba di server lokal berisi data demo.
 
 Uji otomatis `review/uji/uji-browser.cjs` sudah dijalankan CI di setiap push. Prompt ini melengkapinya
@@ -114,13 +114,19 @@ LANGKAH UJI
    i. Pilih Report Teknisi, isi Nama Teknisi dan isi report, lalu simpan.
       Harapan: status masih Eskalasi; di bagian Trouble Ticket, Teknisi dan
       Report sudah terisi.
-   j. Pilih Close, isi catatan, lalu simpan. Harapan: status Closed, muncul
-      "Kembali Online" dan "Selesai dalam ...", dan panel Tambah Tindakan
-      hilang.
+   j. Pilih Close, isi catatan, lalu simpan.
+      Harapan:
+      - status Closed, muncul "Kembali Online" dan "Selesai dalam ...";
+      - kotak Pending berisi "—" dan "NPR sudah ditutup" (bukan lagi
+        "Menunggu tindakan TM");
+      - riwayat tetap menampilkan kategori pending setiap tindakan;
+      - panel Tambah Tindakan hilang.
 
 5. Daftar NPR
    a. Ketik nomor NPR kedua dari langkah 3 di kotak "Cari NPR, TT, Site,
       atau Lokasi". Harapan: tertulis "1 NPR" dan hanya NPR itu yang tampil.
+      Lalu cari NPR pertama (yang sudah Closed). Harapan: kolom Pending
+      berisi "—".
    b. Kosongkan pencarian. Klik "Filter", lalu coba Status, Customer, dan
       Tanggal Mulai Gangguan (Dari, Sampai). Harapan: jumlah dan isi tabel
       berubah sesuai filter. "Hapus Filter" mengembalikan semua NPR.
