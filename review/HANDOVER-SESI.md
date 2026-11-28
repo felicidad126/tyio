@@ -1,22 +1,22 @@
 # Serah terima sesi Claude Code: NPR (Network Problem Report)
 
 Dokumen ini untuk sesi Claude Code berikutnya, supaya bisa melanjutkan tanpa membaca ulang
-percakapan lama. Keadaan per 27 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
-commit "MULAI-WINDOWS.cmd langsung dengan data demo lengkap", dipasang otomatis (build ulang) oleh cron pembaruan; lihat bagian 6.
+percakapan lama. Keadaan per 28 November 2026 di branch `Rev-NPR-Tyio`. Server menjalankan
+commit `a7db2b6` (batas isian bersama), dipasang otomatis (build ulang) oleh cron pembaruan; lihat bagian 6.
 
-## 0. Mulai di sini (serah terima terakhir: 28 November 2026, sekitar 02.10 WIB)
+## 0. Mulai di sini (serah terima terakhir: 28 November 2026, sekitar 11.00 WIB)
 
 Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan terpasang di server.
 
 **Langkah pertama sesi baru:**
 
 1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
-   dengan `origin`. Saat serah terima, HEAD = commit "MULAI-WINDOWS.cmd langsung dengan data demo lengkap" (atau yang lebih baru
-   dari sesi lain).
-2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: versi = hash commit
-   "MULAI-WINDOWS.cmd langsung dengan data demo lengkap". Commit dokumen sesudahnya dipasang tanpa build, jadi versinya tetap.
+   dengan `origin`. Saat serah terima, HEAD = commit "Catat panduan penggunaan NPR di serah
+   terima" (atau yang lebih baru dari sesi lain).
+2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: versi = `a7db2b6`. Commit
+   dokumen sesudahnya dipasang tanpa build, jadi versinya tetap.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
-   branch `Rev-NPR-Tyio`. Run #1–#16 hijau, kecuali #12 yang dibatalkan push berikutnya
+   branch `Rev-NPR-Tyio`. Run #1–#20 hijau, kecuali #12 yang dibatalkan push berikutnya
    (`cancel-in-progress`, wajar). Run untuk commit serah terima ini belum dicek saat
    menulis.
 4. Tanyakan pengguna apa yang ingin dikerjakan.
@@ -24,6 +24,13 @@ Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan ter
 **Sesi Claude lain juga push ke branch ini** (diagram laporan KP: `review/DIAGRAM-NPR.md`,
 `review/gambar/diagram/`). Selalu `git fetch` sebelum mengedit dokumen bersama, terutama berkas
 ini. Merge `6a7d070` pernah bentrok di berkas ini.
+
+**Selesai di sesi 28 November 2026** (diverifikasi dengan cara yang disebut):
+
+| Commit | Isi | Bukti |
+|---|---|---|
+| `4369079`, `c29f139` | Panduan penggunaan untuk customer: `review/PANDUAN-PENGGUNAAN-NPR.pdf`, lalu bahasanya diperhalus sesuai kriteria H- di `REVIEW-NPR.md`. Cara memperbaruinya di bagian 7 | Isi dicocokkan dengan kode `a7db2b6`; 31 halaman diperiksa per halaman; teks PDF dipindai (tanpa email, ID akun, atau password). CI #19 dan #20 hijau, dipasang tanpa build |
+| `f7b3ef7` (merge `a7db2b6`) | Batas isian tampilan dan server disamakan lewat `shared/batas.ts`: kode customer tanpa "-", Nama Lokasi ATM 150, Nama Lengkap 100, Nama Teknisi 120, Alamat/Kota/Provinsi/IP LAN/PIC punya batas di layar, lampiran tanpa WebP dan ukurannya dihitung dari berkas asli (500 KB), nama file lampiran maks. 150, TT Gamas maks. 200 site di layar, server menolak password baru yang sama dengan yang lama. Daftar Remote Terdampak di form TT Gamas tidak lagi melebarkan dialog bila nama lokasi panjang | `test:api` 51/51, uji browser 53/53, uji batas lewat API 17/17, uji browser batas 50/50 (laptop dan Pixel 7), 9 halaman tanpa geser horizontal. CI #18 hijau, terpasang otomatis (health `a7db2b6`) |
 
 **Selesai di sesi 26–27 November 2026** (diverifikasi dengan cara yang disebut):
 
@@ -189,6 +196,7 @@ riwayat Back.
 |---|---|
 | `worker/` | API (Cloudflare Workers + D1): `index.ts` (rute), `baca.ts` (query baca), `domain.ts` (hitung SLA), `pengguna.ts` (akun), `sandi.ts` |
 | `server/` | Server Node 22 untuk Docker: `main.ts` memakai `node:sqlite` lewat `d1.ts`. Alamat non-API dikirimi `index.html`. Juga `setup.ts`, `cadangan.ts`, `migrasi.ts`, `demo.ts` (data demo, lihat bagian 7) |
+| `shared/` | Dipakai tampilan dan server: `waktu.ts` (tanggal dan bulan WIB) dan `batas.ts` (semua batas isian; ubah angka di sini saja, jangan menulis angka batas langsung di halaman atau di `worker/`) |
 | `migrations/` | Migrasi database. `0003_pending_tm.sql` (kategori kosong menjadi TM) adalah yang terbaru |
 | `scripts/` | `setup.mjs`, `test-api.mjs`, `perbarui-otomatis.sh` (pembaruan otomatis di server, lihat bagian 6) dan ujinya `uji-perbarui-otomatis.sh` |
 
@@ -410,6 +418,34 @@ poin persen, bukan persen), jadi ditulis "selisih 17,29 poin persen". Kolom "Pen
 bernama Pending (istilah kerja pengguna, keputusan P-1). Status bahasa Inggris (Open, Pending,
 Closed) vs Gamas "Ditangani" belum diubah (D-8: istilah kerja tetap).
 
+**Panduan penggunaan untuk customer** (`review/PANDUAN-PENGGUNAAN-NPR.pdf`, dibuat 28 November
+2026 atas permintaan pengguna untuk transfer knowledge):
+
+- **Isi:** 12 bagian dan daftar istilah (login, tampilan, alur kerja, Dashboard, NPR, TT, TT
+  Gamas, Laporan SLA, Customer dan Remote, Pengguna, tanya jawab dan perintah pengelola server).
+  A4, 31 halaman, 23 tangkapan layar, satu diagram alur. Sesuai kode `a7db2b6`.
+- **Sumber teks:** dokumen Claude Docs "Panduan Penggunaan NPR" di akun pengguna (privat; cari
+  lewat daftar artifact, edit lewat konektor Claude Docs). Diagram alur adalah widget di dokumen
+  itu. Ubah teks di dokumen dulu, lalu buat ulang PDF-nya.
+- **Membuat ulang PDF:** jangan pakai ekspor PDF konektor Docs: ke-23 gambar tidak ikut
+  ("kept_as_text", aset artifact tidak terbaca dari konektor). Cara yang dipakai:
+  1. Ekspor tab sebagai HTML lewat konektor.
+  2. Ganti `<img src="blob/…">` dengan tangkapan layar lokal, `<figure data-embed>` dengan PNG
+     diagram (screenshot widget), dan blok `latex` rumus SLA dengan pecahan HTML.
+  3. Tambah sampul (logo `review/aset/logo-tangara-mitrakom.png`) dan daftar isi; font Plus
+     Jakarta Sans dari `node_modules/@fontsource-variable/`.
+  4. Cetak A4 dengan Playwright `page.pdf`, kaki halaman "Halaman X dari Y".
+
+  Skripnya ada di scratchpad dan hilang bersama container, jadi buat ulang bila perlu.
+- **Tangkapan layar:** server lokal dengan data demo (`node dist/server/demo.js`), akun admin
+  bernama "Admin NPR" dan dua akun helpdesk, laptop 1366×820 dengan deviceScaleFactor 2, HP
+  "Pixel 7". Gambar dialog dan menu dicetak sebanding ukuran aslinya, tidak dilebarkan.
+- **Gaya bahasa:** sudah diperhalus sesuai kriteria H- (tanpa label tebal "Penting:", tanpa
+  titik tengah, keterangan data contoh hanya sekali di bagian 1). Pertahankan saat mengedit.
+- **Perlu diperbarui bila:** tampilan atau aturan berubah (termasuk bila paket A atau B review
+  UI/UX dikerjakan); data demo di server sudah dihapus (bagian 1 "Sebelum mulai" dan bagian 12
+  menyebut data demo); alamat aplikasi berubah (bagian 1 menyebut `kp.helonoia.com`).
+
 ## 8. Dokumen lain di `review/`
 
 | Berkas | Isi |
@@ -419,6 +455,7 @@ Closed) vs Gamas "Ditangani" belum diubah (D-8: istilah kerja tetap).
 | `RENCANA-REVISI.md` | Keputusan D-1…D-8, T-1…T-6, dan tahap pengerjaan |
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
 | `DIAGRAM-NPR.md` | Diagram perancangan untuk laporan KP (ERD, use case, activity, sequence, class, modul). Sumber draw.io (`.drawio`), PNG, SVG, dan skrip ekspor `render-drawio.mjs` di `gambar/diagram/` |
+| `PANDUAN-PENGGUNAAN-NPR.pdf` | Panduan penggunaan untuk customer (helpdesk dan admin). Sumber teks, cara membuat ulang, dan kapan perlu diperbarui ada di bagian 7 |
 | `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, pasang pembaruan otomatis (`PASANG-CD`), perbarui server manual, data demo |
 | `uji/` | Uji browser Playwright `uji-browser.cjs` (lihat bagian 5) |
 
