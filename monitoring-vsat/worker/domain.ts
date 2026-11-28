@@ -1,3 +1,8 @@
+import {
+  BATAS,
+  JENIS_LAMPIRAN,
+  PANJANG_DATA_LAMPIRAN,
+} from "../shared/batas.js";
 import { bulanWIB } from "../shared/waktu.js";
 import type { Pengguna } from "./pengguna.js";
 import { ApiError } from "./galat.js";
@@ -43,7 +48,7 @@ const labelIsian: Record<string, string> = {
 function text(
   body: Record<string, unknown>,
   key: string,
-  max = 4000,
+  max: number = BATAS.catatan,
   required = true,
 ) {
   const v = body[key];
@@ -128,10 +133,10 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
   if (!b || Array.isArray(b) || typeof b !== "object")
     return fail("Data tidak valid.");
   if (path === "/api/customers") {
-    const name = text(b, "name", 100),
-      code = text(b, "code", 12).toUpperCase();
-    if (!/^[A-Z0-9-]+$/.test(code))
-      return fail("Kode customer hanya huruf, angka, atau tanda minus.");
+    const name = text(b, "name", BATAS.namaCustomer),
+      code = text(b, "code", BATAS.kodeCustomer).toUpperCase();
+    if (!/^[A-Z0-9]+$/.test(code))
+      return fail("Kode customer hanya huruf dan angka.");
     const r = await db
       .prepare("INSERT INTO customers(name,code) VALUES (?,?)")
       .bind(name, code)
@@ -145,7 +150,7 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
     const jarkom = text(b, "jarkom", 8);
     if (!["VSAT", "M2M"].includes(jarkom))
       return fail("Jarkom harus VSAT atau M2M.");
-    const ip = text(b, "ip_lan", 15);
+    const ip = text(b, "ip_lan", BATAS.ipLan);
     if (
       !/^(\d{1,3}\.){3}\d{1,3}$/.test(ip) ||
       ip.split(".").some((v) => Number(v) > 255)
@@ -153,15 +158,15 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
       return fail("IP LAN tidak valid.");
     const vals = [
       customer,
-      text(b, "site_id", 60),
-      text(b, "location", 150),
-      text(b, "address", 500),
-      text(b, "city", 100),
-      text(b, "province", 100),
+      text(b, "site_id", BATAS.siteId),
+      text(b, "location", BATAS.lokasiAtm),
+      text(b, "address", BATAS.alamat),
+      text(b, "city", BATAS.kota),
+      text(b, "province", BATAS.provinsi),
       jarkom,
       ip,
-      text(b, "pic_name", 150),
-      text(b, "pic_phone", 50),
+      text(b, "pic_name", BATAS.namaPic),
+      text(b, "pic_phone", BATAS.teleponPic),
     ];
     const r = await db
       .prepare(
@@ -227,17 +232,31 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
     );
     if (occurred < n.started_at || (latest && occurred < latest.occurred_at))
       return fail("Waktu tindakan tidak boleh mendahului riwayat terakhir.");
-    const attachmentName = text(b, "attachment_name", 150, false),
-      attachmentData = text(b, "attachment_data", 700000, false);
-    if (
-      attachmentData &&
-      !/^data:(image\/(png|jpeg|webp)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(
-        attachmentData,
-      )
-    )
-      return fail("Lampiran harus PNG, JPEG, WebP, atau PDF maksimal 500 KB.");
-    if (attachmentData.length > 683000)
-      return fail("Lampiran maksimal 500 KB.");
+    const attachmentName = text(
+        b,
+        "attachment_name",
+        BATAS.namaLampiran,
+        false,
+      ),
+      // Batas kasar panjang teks; ukuran berkas yang tepat dicek di bawah.
+      attachmentData = text(
+        b,
+        "attachment_data",
+        PANJANG_DATA_LAMPIRAN * 2,
+        false,
+      );
+    const lampiran = /^data:([a-z/]+);base64,([A-Za-z0-9+/=]+)$/.exec(
+      attachmentData,
+    );
+    if (attachmentData && (!lampiran || !JENIS_LAMPIRAN.includes(lampiran[1])))
+      return fail("Lampiran harus PNG, JPG, atau PDF.");
+    // Ukuran berkas asli dihitung dari panjang base64, sama dengan cek di layar.
+    if (lampiran) {
+      const isi = lampiran[2];
+      const padding = isi.endsWith("==") ? 2 : isi.endsWith("=") ? 1 : 0;
+      if ((isi.length / 4) * 3 - padding > BATAS.lampiranByte)
+        return fail(`Lampiran maksimal ${BATAS.lampiranByte / 1024} KB.`);
+    }
     const ticket = await row<Ticket>(
       db,
       "SELECT * FROM tickets WHERE npr_id=?",
@@ -261,7 +280,7 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
     }
     if (kind === "Report Teknisi") {
       if (!ticket) return fail("NPR belum memiliki TT.");
-      const technician = text(b, "technician", 150);
+      const technician = text(b, "technician", BATAS.namaTeknisi);
       statements.push(
         db
           .prepare(
@@ -326,15 +345,15 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
     return { ok: true, id: pk, number: no };
   }
   if (path === "/api/gamas") {
-    const loc = text(b, "location", 200),
+    const loc = text(b, "location", BATAS.lokasiGamas),
       notes = text(b, "notes"),
       started = time(b.started_at);
     if (
       !Array.isArray(b.remote_ids) ||
       !b.remote_ids.length ||
-      b.remote_ids.length > 200
+      b.remote_ids.length > BATAS.siteGamas
     )
-      return fail("Pilih 1 sampai 200 remote terdampak.");
+      return fail(`Pilih 1 sampai ${BATAS.siteGamas} remote terdampak.`);
     const sites = [...new Set(b.remote_ids.map(num))];
     for (const remote of sites)
       if (!(await row(db, "SELECT id FROM remotes WHERE id=?", remote)))
@@ -375,7 +394,7 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
     if (!g) throw new ApiError("TT Gamas tidak ditemukan.", 404);
     if (g.status === "CLOSED") return fail("TT Gamas sudah ditutup.");
     const notes = text(b, "notes"),
-      report = text(b, "report", 4000, false),
+      report = text(b, "report", BATAS.catatan, false),
       occurred = time(b.occurred_at ?? new Date().toISOString()),
       close = b.close === true;
     const latest = await row<{ occurred_at: string }>(

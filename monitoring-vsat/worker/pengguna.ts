@@ -1,5 +1,6 @@
 // Pengelolaan akun: daftar dan ubah pengguna (khusus admin), reset password
 // oleh admin, dan ganti password sendiri.
+import { BATAS } from "../shared/batas.js";
 import { ApiError } from "./galat.js";
 import { buatSalt, hashPassword, hashesMatch } from "./sandi.js";
 
@@ -10,8 +11,6 @@ export type Pengguna = {
   full_name: string;
   peran: Peran;
 };
-
-const PANJANG_MIN_PASSWORD = 12;
 
 function gagal(message: string, status = 400): never {
   throw new ApiError(message, status);
@@ -36,12 +35,10 @@ function peranValid(nilai: unknown): Peran {
 }
 
 function passwordValid(nilai: unknown) {
-  if (
-    typeof nilai !== "string" ||
-    nilai.length < PANJANG_MIN_PASSWORD ||
-    nilai.length > 256
-  )
-    gagal(`Password minimal ${PANJANG_MIN_PASSWORD} karakter.`);
+  if (typeof nilai !== "string" || nilai.length < BATAS.passwordMin)
+    gagal(`Password minimal ${BATAS.passwordMin} karakter.`);
+  if (nilai.length > BATAS.passwordMaks)
+    gagal(`Password maksimal ${BATAS.passwordMaks} karakter.`);
   return nilai;
 }
 
@@ -106,6 +103,8 @@ export async function pengguna(
     if (!lama || !hashesMatch(hashLama, lama.password_hash))
       gagal("Password lama salah.");
     const baru = passwordValid(body.new_password);
+    if (baru === body.old_password)
+      gagal("Password baru harus berbeda dari password lama.");
     await db.batch([
       await simpanPassword(db, user.id, baru),
       db
@@ -146,12 +145,17 @@ export async function pengguna(
 
   if (path === "/api/users" && request.method === "POST") {
     const body = await bacaBody(request);
-    const username = teks(body, "username", "Username", 32).toLowerCase();
-    if (!/^[a-z0-9._-]{3,32}$/.test(username))
+    const username = teks(
+      body,
+      "username",
+      "Username",
+      BATAS.usernameMaks,
+    ).toLowerCase();
+    if (username.length < BATAS.usernameMin || !/^[a-z0-9._-]+$/.test(username))
       gagal(
-        "Username 3–32 karakter: huruf kecil, angka, titik, minus, atau garis bawah.",
+        `Username ${BATAS.usernameMin}–${BATAS.usernameMaks} karakter: huruf kecil, angka, titik, minus, atau garis bawah.`,
       );
-    const nama = teks(body, "full_name", "Nama lengkap", 100);
+    const nama = teks(body, "full_name", "Nama lengkap", BATAS.namaLengkap);
     const peran = peranValid(body.peran);
     const password = passwordValid(body.password);
     const ada = await db
@@ -181,7 +185,7 @@ export async function pengguna(
       .first<{ id: number; peran: Peran; aktif: number }>();
     if (!target) gagal("Pengguna tidak ditemukan.", 404);
     const body = await bacaBody(request);
-    const nama = teks(body, "full_name", "Nama lengkap", 100);
+    const nama = teks(body, "full_name", "Nama lengkap", BATAS.namaLengkap);
     const peran = peranValid(body.peran);
     if (body.aktif !== true && body.aktif !== false)
       gagal("Status aktif tidak valid.");

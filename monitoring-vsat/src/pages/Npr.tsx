@@ -54,6 +54,7 @@ import {
   type Remote,
 } from "@/lib/tipe";
 import { cn } from "@/lib/utils";
+import { BATAS, JENIS_LAMPIRAN } from "../../shared/batas";
 import { pdfTicket } from "@/pdf";
 import { useMuat, useTunda } from "@/useMuat";
 
@@ -845,7 +846,7 @@ export function NprBaru() {
                 name="notes"
                 rows={4}
                 required
-                maxLength={4000}
+                maxLength={BATAS.catatan}
                 placeholder="Mis. remote terpantau down dari NMS. Follow-up PIC untuk cek di lokasi."
               />
             </label>
@@ -904,7 +905,8 @@ export function NprBaru() {
 /* Detail NPR                                                          */
 /* ------------------------------------------------------------------ */
 
-const MAKS_LAMPIRAN = 500 * 1024;
+const MAKS_LAMPIRAN = BATAS.lampiranByte;
+const KB_LAMPIRAN = MAKS_LAMPIRAN / 1024;
 
 /** Pilih lampiran dengan tombol berbahasa Indonesia (bukan "Choose File"). */
 function PilihFile({ name }: { name: string }) {
@@ -922,7 +924,7 @@ function PilihFile({ name }: { name: string }) {
           ref={input}
           name={name}
           type="file"
-          accept="image/png,image/jpeg,application/pdf"
+          accept={JENIS_LAMPIRAN.join(",")}
           className="sr-only"
           onChange={(e) => setNama(e.target.files?.[0]?.name ?? "")}
         />
@@ -953,9 +955,13 @@ function PilihFile({ name }: { name: string }) {
 async function bacaLampiran(file: File | null) {
   if (!file || !file.size) return {};
   if (file.size > MAKS_LAMPIRAN)
-    throw new Error("Ukuran lampiran maksimal 500 KB.");
-  if (!["image/png", "image/jpeg", "application/pdf"].includes(file.type))
+    throw new Error(`Ukuran lampiran maksimal ${KB_LAMPIRAN} KB.`);
+  if (!JENIS_LAMPIRAN.includes(file.type))
     throw new Error("Lampiran harus PNG, JPG, atau PDF.");
+  if (file.name.length > BATAS.namaLampiran)
+    throw new Error(
+      `Nama file lampiran maksimal ${BATAS.namaLampiran} karakter. Ganti nama file, lalu pilih lagi.`,
+    );
   const data = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
@@ -1275,7 +1281,11 @@ export function NprDetail() {
                   {jenisAktif === "Report Teknisi" && (
                     <label>
                       <FieldLabel>Nama Teknisi</FieldLabel>
-                      <Input name="technician" required maxLength={120} />
+                      <Input
+                        name="technician"
+                        required
+                        maxLength={BATAS.namaTeknisi}
+                      />
                     </label>
                   )}
                   {jenisAktif === "Close" && (
@@ -1298,10 +1308,17 @@ export function NprDetail() {
                         ? "Report Teknisi"
                         : "Catatan Tindakan"}
                   </FieldLabel>
-                  <Textarea name="notes" rows={3} required maxLength={4000} />
+                  <Textarea
+                    name="notes"
+                    rows={3}
+                    required
+                    maxLength={BATAS.catatan}
+                  />
                 </label>
                 <div>
-                  <FieldLabel hint="JPG, PNG, atau PDF, maks. 500 KB">
+                  <FieldLabel
+                    hint={`JPG, PNG, atau PDF, maks. ${KB_LAMPIRAN} KB`}
+                  >
                     Lampiran
                   </FieldLabel>
                   <PilihFile name="attachment" />

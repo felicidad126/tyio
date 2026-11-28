@@ -39,6 +39,7 @@ import { useApp } from "@/lib/app";
 import type { Customer, Remote, Sla } from "@/lib/tipe";
 import { useMuat } from "@/useMuat";
 import { cn } from "@/lib/utils";
+import { BATAS, POLA_KODE_CUSTOMER } from "../../shared/batas";
 
 function Footer({ onBatal, sibuk }: { onBatal: () => void; sibuk: boolean }) {
   return (
@@ -458,12 +459,14 @@ export function CustomerPage() {
             }}
           >
             <label className="block">
-              <FieldLabel hint="Huruf dan angka, maks. 12">Kode</FieldLabel>
+              <FieldLabel hint={`Huruf dan angka, maks. ${BATAS.kodeCustomer}`}>
+                Kode
+              </FieldLabel>
               <Input
                 name="code"
                 required
-                maxLength={12}
-                pattern="[A-Za-z0-9]+"
+                maxLength={BATAS.kodeCustomer}
+                pattern={POLA_KODE_CUSTOMER}
                 placeholder="Mis. BRI"
                 className="uppercase placeholder:normal-case"
               />
@@ -473,7 +476,7 @@ export function CustomerPage() {
               <Input
                 name="name"
                 required
-                maxLength={100}
+                maxLength={BATAS.namaCustomer}
                 placeholder="Mis. Bank Rakyat Nusantara"
               />
             </label>
@@ -994,7 +997,7 @@ export function RemotePage() {
                   <Input
                     name="site_id"
                     required
-                    maxLength={60}
+                    maxLength={BATAS.siteId}
                     placeholder="Mis. BRI-SBY-014"
                   />
                 </label>
@@ -1003,7 +1006,7 @@ export function RemotePage() {
                   <Input
                     name="location"
                     required
-                    maxLength={200}
+                    maxLength={BATAS.lokasiAtm}
                     placeholder="Mis. ATM Pasar Atom"
                   />
                 </label>
@@ -1012,16 +1015,21 @@ export function RemotePage() {
             <Kelompok judul="Lokasi">
               <label className="block">
                 <FieldLabel>Alamat</FieldLabel>
-                <Textarea name="address" rows={2} required />
+                <Textarea
+                  name="address"
+                  rows={2}
+                  required
+                  maxLength={BATAS.alamat}
+                />
               </label>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label>
                   <FieldLabel>Kota</FieldLabel>
-                  <Input name="city" required />
+                  <Input name="city" required maxLength={BATAS.kota} />
                 </label>
                 <label>
                   <FieldLabel>Provinsi</FieldLabel>
-                  <Input name="province" required />
+                  <Input name="province" required maxLength={BATAS.provinsi} />
                 </label>
               </div>
             </Kelompok>
@@ -1032,17 +1040,23 @@ export function RemotePage() {
                   <Input
                     name="ip_lan"
                     required
+                    maxLength={BATAS.ipLan}
                     placeholder="192.0.2.10"
                     className="font-mono"
                   />
                 </label>
                 <label>
                   <FieldLabel>Nama PIC</FieldLabel>
-                  <Input name="pic_name" required />
+                  <Input name="pic_name" required maxLength={BATAS.namaPic} />
                 </label>
                 <label>
                   <FieldLabel>Telepon PIC</FieldLabel>
-                  <Input name="pic_phone" required inputMode="tel" />
+                  <Input
+                    name="pic_phone"
+                    required
+                    inputMode="tel"
+                    maxLength={BATAS.teleponPic}
+                  />
                 </label>
               </div>
             </Kelompok>

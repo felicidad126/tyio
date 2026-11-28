@@ -14,8 +14,9 @@ import { FieldLabel } from "@/components/npr";
 import { InputSandi } from "@/components/sandi";
 import { useApp } from "@/lib/app";
 import { cn } from "@/lib/utils";
+import { BATAS } from "../../shared/batas";
 
-const PANJANG_MIN = 12;
+const PANJANG_MIN = BATAS.passwordMin;
 
 /** Satu syarat password: tanda centang saat terpenuhi. */
 function Syarat({ ok, children }: { ok: boolean; children: string }) {
@@ -98,7 +99,7 @@ export function GantiPassword({
               onChange={(e) => setLama(e.target.value)}
               autoComplete="current-password"
               required
-              maxLength={256}
+              maxLength={BATAS.passwordMaks}
             />
           </label>
           <div className="border-t pt-4">
@@ -110,7 +111,7 @@ export function GantiPassword({
                 autoComplete="new-password"
                 required
                 minLength={PANJANG_MIN}
-                maxLength={256}
+                maxLength={BATAS.passwordMaks}
               />
             </label>
             <label className="mt-4 block">
@@ -120,13 +121,13 @@ export function GantiPassword({
                 onChange={(e) => setUlang(e.target.value)}
                 autoComplete="new-password"
                 required
-                maxLength={256}
+                maxLength={BATAS.passwordMaks}
                 aria-invalid={ulang.length > 0 && !sama}
               />
             </label>
             {/* Syarat diperiksa sambil mengetik, supaya tidak menebak kenapa gagal. */}
             <ul className="mt-3 space-y-1 text-xs">
-              <Syarat ok={panjang}>Minimal 12 karakter</Syarat>
+              <Syarat ok={panjang}>{`Minimal ${PANJANG_MIN} karakter`}</Syarat>
               <Syarat ok={beda}>Berbeda dari password lama</Syarat>
               <Syarat ok={sama}>Kedua isian password baru sama</Syarat>
             </ul>

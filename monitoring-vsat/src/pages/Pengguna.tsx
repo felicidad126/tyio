@@ -46,6 +46,7 @@ import { useApp } from "@/lib/app";
 import type { Akun } from "@/lib/tipe";
 import { useMuat } from "@/useMuat";
 import { cn } from "@/lib/utils";
+import { BATAS } from "../../shared/batas";
 
 /** Akun dari server, dengan status aktif sebagai boolean dan angka aktivitasnya. */
 type User = Omit<Akun, "aktif"> & { aktif: boolean };
@@ -547,8 +548,8 @@ export function PenggunaPage() {
                 <Input
                   name="username"
                   required
-                  minLength={3}
-                  maxLength={32}
+                  minLength={BATAS.usernameMin}
+                  maxLength={BATAS.usernameMaks}
                   pattern="[a-z0-9._\-]+"
                   autoComplete="off"
                   placeholder="Mis. rina"
@@ -562,7 +563,7 @@ export function PenggunaPage() {
                   <Input
                     name="full_name"
                     required
-                    maxLength={120}
+                    maxLength={BATAS.namaLengkap}
                     defaultValue={
                       form?.jenis === "ubah" ? form.akun.full_name : ""
                     }
@@ -594,15 +595,15 @@ export function PenggunaPage() {
             )}
             {form?.jenis !== "ubah" && (
               <label className="block">
-                <FieldLabel hint="Minimal 12 karakter">
+                <FieldLabel hint={`Minimal ${BATAS.passwordMin} karakter`}>
                   {form?.jenis === "reset" ? "Password Baru" : "Password"}
                 </FieldLabel>
                 <Input
                   name="password"
                   type="password"
                   required
-                  minLength={12}
-                  maxLength={256}
+                  minLength={BATAS.passwordMin}
+                  maxLength={BATAS.passwordMaks}
                   autoComplete="new-password"
                 />
               </label>

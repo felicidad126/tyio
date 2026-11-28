@@ -58,6 +58,7 @@ import {
 } from "@/lib/tipe";
 import { pdfGamas } from "@/pdf";
 import { useMuat } from "@/useMuat";
+import { BATAS } from "../../shared/batas";
 
 function FormGamas({
   open,
@@ -75,6 +76,7 @@ function FormGamas({
   );
   const remotes = master.data?.remotes ?? [];
   const [dipilih, setDipilih] = useState<number[]>([]);
+  const siteValid = dipilih.length > 0 && dipilih.length <= BATAS.siteGamas;
   return (
     <Dialog
       open={open}
@@ -91,12 +93,12 @@ function FormGamas({
           </DialogDescription>
         </DialogHeader>
         <form
-          className="space-y-4"
+          className="min-w-0 space-y-4"
           onSubmit={async (e) => {
             e.preventDefault();
             const f = new FormData(e.currentTarget);
             const mulai = String(f.get("started_at") ?? "");
-            if (!mulai || !dipilih.length) return;
+            if (!siteValid || !mulai) return;
             const hasil = await kirim<{ id: number; number: string }>(
               "/api/gamas",
               {
@@ -120,7 +122,7 @@ function FormGamas({
               <Input
                 name="location"
                 required
-                maxLength={200}
+                maxLength={BATAS.lokasiGamas}
                 placeholder="Mis. HUB Surabaya"
               />
             </label>
@@ -136,10 +138,17 @@ function FormGamas({
           </div>
           <label className="block">
             <FieldLabel>Catatan Problem</FieldLabel>
-            <Textarea name="notes" rows={3} required maxLength={4000} />
+            <Textarea
+              name="notes"
+              rows={3}
+              required
+              maxLength={BATAS.catatan}
+            />
           </label>
           <div>
-            <FieldLabel hint={`${dipilih.length} dipilih, minimal satu`}>
+            <FieldLabel
+              hint={`${dipilih.length} dipilih, minimal 1, maks. ${BATAS.siteGamas}`}
+            >
               Remote Terdampak
             </FieldLabel>
             <div className="max-h-52 divide-y overflow-y-auto rounded-md border">
@@ -161,11 +170,11 @@ function FormGamas({
                       )
                     }
                   />
-                  <span className="font-medium">{r.site_id}</span>
-                  <span className="truncate text-muted-foreground">
+                  <span className="shrink-0 font-medium">{r.site_id}</span>
+                  <span className="min-w-0 truncate text-muted-foreground">
                     {r.location}
                   </span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                     {r.jarkom}
                   </span>
                 </label>
@@ -180,7 +189,7 @@ function FormGamas({
             >
               Batal
             </Button>
-            <Button type="submit" disabled={!dipilih.length || sibuk}>
+            <Button type="submit" disabled={!siteValid || sibuk}>
               {sibuk ? "Menyimpan…" : "Kirim TT Gamas"}
             </Button>
           </DialogFooter>
@@ -869,13 +878,18 @@ export function GamasDetail() {
                 </div>
                 <label className="block">
                   <FieldLabel>Catatan Perkembangan</FieldLabel>
-                  <Textarea name="notes" rows={3} required maxLength={4000} />
+                  <Textarea
+                    name="notes"
+                    rows={3}
+                    required
+                    maxLength={BATAS.catatan}
+                  />
                 </label>
                 <label className="block">
                   <FieldLabel hint="Isi jika sudah diterima">
                     Report Teknisi
                   </FieldLabel>
-                  <Textarea name="report" rows={2} maxLength={4000} />
+                  <Textarea name="report" rows={2} maxLength={BATAS.catatan} />
                 </label>
                 <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <label className="flex items-center gap-2.5 text-sm">

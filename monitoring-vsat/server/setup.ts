@@ -10,12 +10,13 @@ import { pbkdf2Sync, randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
+import { BATAS } from "../shared/batas.js";
 import { DatabaseD1 } from "./d1.js";
 import { siapkanDatabase } from "./migrasi.js";
 
 const DB_PATH = process.env.DB_PATH ?? "data/npr.sqlite";
 const FOLDER_SQL = resolve(process.env.SQL_DIR ?? ".");
-const PANJANG_MIN_PASSWORD = 12;
+const PANJANG_MIN_PASSWORD = BATAS.passwordMin;
 const reset = process.argv.includes("--reset-password");
 const contoh = process.argv.includes("--contoh");
 
@@ -101,6 +102,8 @@ async function passwordBaru(label: string) {
     ));
   if (password.length < PANJANG_MIN_PASSWORD)
     berhenti(`Password minimal ${PANJANG_MIN_PASSWORD} karakter.`);
+  if (password.length > BATAS.passwordMaks)
+    berhenti(`Password maksimal ${BATAS.passwordMaks} karakter.`);
   if (dariEnv === undefined) {
     const ulang = await bacaRahasia("Ulangi password: ");
     if (ulang !== password)
