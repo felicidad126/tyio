@@ -11,8 +11,8 @@ Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan ter
 **Langkah pertama sesi baru:**
 
 1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
-   dengan `origin`. Saat serah terima, HEAD = commit "Catat panduan penggunaan NPR di serah
-   terima" (atau yang lebih baru dari sesi lain).
+   dengan `origin`. Saat serah terima, HEAD = commit "Simpan skrip pembuat PDF panduan di
+   review/panduan" (atau yang lebih baru dari sesi lain).
 2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: versi = `a7db2b6`. Commit
    dokumen sesudahnya dipasang tanpa build, jadi versinya tetap.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
@@ -29,7 +29,7 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 | Commit | Isi | Bukti |
 |---|---|---|
-| `4369079`, `c29f139` | Panduan penggunaan untuk customer: `review/PANDUAN-PENGGUNAAN-NPR.pdf`, lalu bahasanya diperhalus sesuai kriteria H- di `REVIEW-NPR.md`. Cara memperbaruinya di bagian 7 | Isi dicocokkan dengan kode `a7db2b6`; 31 halaman diperiksa per halaman; teks PDF dipindai (tanpa email, ID akun, atau password). CI #19 dan #20 hijau, dipasang tanpa build |
+| `4369079`, `c29f139` | Panduan penggunaan untuk customer: `review/PANDUAN-PENGGUNAAN-NPR.pdf`, lalu bahasanya diperhalus sesuai kriteria H- di `REVIEW-NPR.md`. Cara memperbaruinya (skrip di `review/panduan/`) di bagian 7 | Isi dicocokkan dengan kode `a7db2b6`; 31 halaman diperiksa per halaman; teks PDF dipindai (tanpa email, ID akun, atau password). CI #19 dan #20 hijau, dipasang tanpa build |
 | `f7b3ef7` (merge `a7db2b6`) | Batas isian tampilan dan server disamakan lewat `shared/batas.ts`: kode customer tanpa "-", Nama Lokasi ATM 150, Nama Lengkap 100, Nama Teknisi 120, Alamat/Kota/Provinsi/IP LAN/PIC punya batas di layar, lampiran tanpa WebP dan ukurannya dihitung dari berkas asli (500 KB), nama file lampiran maks. 150, TT Gamas maks. 200 site di layar, server menolak password baru yang sama dengan yang lama. Daftar Remote Terdampak di form TT Gamas tidak lagi melebarkan dialog bila nama lokasi panjang | `test:api` 51/51, uji browser 53/53, uji batas lewat API 17/17, uji browser batas 50/50 (laptop dan Pixel 7), 9 halaman tanpa geser horizontal. CI #18 hijau, terpasang otomatis (health `a7db2b6`) |
 
 **Selesai di sesi 26–27 November 2026** (diverifikasi dengan cara yang disebut):
@@ -428,18 +428,33 @@ Closed) vs Gamas "Ditangani" belum diubah (D-8: istilah kerja tetap).
   lewat daftar artifact, edit lewat konektor Claude Docs). Diagram alur adalah widget di dokumen
   itu. Ubah teks di dokumen dulu, lalu buat ulang PDF-nya.
 - **Membuat ulang PDF:** jangan pakai ekspor PDF konektor Docs: ke-23 gambar tidak ikut
-  ("kept_as_text", aset artifact tidak terbaca dari konektor). Cara yang dipakai:
-  1. Ekspor tab sebagai HTML lewat konektor.
-  2. Ganti `<img src="blob/…">` dengan tangkapan layar lokal, `<figure data-embed>` dengan PNG
-     diagram (screenshot widget), dan blok `latex` rumus SLA dengan pecahan HTML.
-  3. Tambah sampul (logo `review/aset/logo-tangara-mitrakom.png`) dan daftar isi; font Plus
-     Jakarta Sans dari `node_modules/@fontsource-variable/`.
-  4. Cetak A4 dengan Playwright `page.pdf`, kaki halaman "Halaman X dari Y".
+  ("kept_as_text", aset artifact tidak terbaca dari konektor). Pakai skrip di
+  `review/panduan/`, dijalankan dari `monitoring-vsat/` setelah build:
+  1. Server lokal dengan database uji baru: setup dengan admin bernama "Admin NPR" (nama ini
+     tampil di gambar), lalu `node dist/server/demo.js`.
+  2. Tangkapan layar (akun dari variabel lingkungan; dua akun helpdesk contoh dibuat otomatis
+     bila belum ada; contoh NPR dan Gamas dipilih otomatis):
 
-  Skripnya ada di scratchpad dan hilang bersama container, jadi buat ulang bila perlu.
-- **Tangkapan layar:** server lokal dengan data demo (`node dist/server/demo.js`), akun admin
-  bernama "Admin NPR" dan dua akun helpdesk, laptop 1366×820 dengan deviceScaleFactor 2, HP
-  "Pixel 7". Gambar dialog dan menu dicetak sebanding ukuran aslinya, tidak dilebarkan.
+     ```bash
+     TEST_BASE_URL=http://127.0.0.1:3100 TEST_USERNAME=<admin> TEST_PASSWORD=<sandi> \
+       UJI_OUT=<folder-gambar> node ../review/panduan/tangkap-layar.cjs
+     ```
+
+  3. Ekspor tab dokumen sebagai HTML lewat konektor Claude Docs, simpan sebagai berkas.
+  4. Susun PDF (gambar dikenali dari teks alt-nya; diagram dari `review/panduan/diagram-alur.png`;
+     tanggal versi dari baris penulis dokumen):
+
+     ```bash
+     node ../review/panduan/susun-pdf.cjs <ekspor.html> <folder-gambar> ../review/PANDUAN-PENGGUNAAN-NPR.pdf
+     ```
+
+  Butuh ImageMagick (`convert`, `identify`) dan poppler (`pdftoppm`); keduanya ada di container
+  Claude. Diuji 28 November 2026 dari database baru: 32 berkas gambar, PDF 31 halaman. Bila alt
+  gambar di dokumen diubah atau gambar ditambah, perbarui daftar `GAMBAR` di `susun-pdf.cjs`. Bila
+  diagram di dokumen diubah, ganti `diagram-alur.png` dengan screenshot widget-nya (`read`
+  widget dengan `kind: "screenshot"`).
+- **Tangkapan layar:** laptop 1366×820 dengan deviceScaleFactor 2, HP "Pixel 7". Gambar dialog
+  dan menu dicetak sebanding ukuran aslinya, tidak dilebarkan.
 - **Gaya bahasa:** sudah diperhalus sesuai kriteria H- (tanpa label tebal "Penting:", tanpa
   titik tengah, keterangan data contoh hanya sekali di bagian 1). Pertahankan saat mengedit.
 - **Perlu diperbarui bila:** tampilan atau aturan berubah (termasuk bila paket A atau B review
@@ -456,6 +471,7 @@ Closed) vs Gamas "Ditangani" belum diubah (D-8: istilah kerja tetap).
 | `REDESAIN-NPR.md` | Aturan visual, pola tabel, ringkasan per halaman, catatan pemindahan UI |
 | `DIAGRAM-NPR.md` | Diagram perancangan untuk laporan KP (ERD, use case, activity, sequence, class, modul). Sumber draw.io (`.drawio`), PNG, SVG, dan skrip ekspor `render-drawio.mjs` di `gambar/diagram/` |
 | `PANDUAN-PENGGUNAAN-NPR.pdf` | Panduan penggunaan untuk customer (helpdesk dan admin). Sumber teks, cara membuat ulang, dan kapan perlu diperbarui ada di bagian 7 |
+| `panduan/` | Skrip pembuat PDF panduan: `tangkap-layar.cjs` (tangkapan layar dari server lokal berisi data demo), `susun-pdf.cjs` (HTML ekspor Docs + gambar menjadi PDF), dan `diagram-alur.png` |
 | `PROMPT-*.md` | Prompt untuk agent browser: uji, cek server, pasang server, pasang pembaruan otomatis (`PASANG-CD`), perbarui server manual, data demo |
 | `uji/` | Uji browser Playwright `uji-browser.cjs` (lihat bagian 5) |
 
