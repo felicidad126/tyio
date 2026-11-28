@@ -11,14 +11,15 @@ Tidak ada pekerjaan yang setengah jalan. Semua sudah di-commit, di-push, dan ter
 **Langkah pertama sesi baru:**
 
 1. `git fetch origin Rev-NPR-Tyio && git status -sb`. Harus di branch `Rev-NPR-Tyio` dan sama
-   dengan `origin`. Saat serah terima, HEAD = commit "Simpan skrip pembuat PDF panduan di
-   review/panduan" (atau yang lebih baru dari sesi lain).
+   dengan `origin`. Saat serah terima, HEAD = commit "Catat pembuatan ulang PDF panduan di
+   serah terima" (atau yang lebih baru dari sesi lain).
 2. `curl -s https://kp.helonoia.com/api/health`. Saat serah terima: versi = `a7db2b6`. Commit
    dokumen sesudahnya dipasang tanpa build, jadi versinya tetap.
 3. Cek CI terakhir: `mcp__github__actions_list`, `list_workflow_runs`, `resource_id: npr.yml`,
-   branch `Rev-NPR-Tyio`. Run #1–#20 hijau, kecuali #12 yang dibatalkan push berikutnya
-   (`cancel-in-progress`, wajar). Run untuk commit serah terima ini belum dicek saat
-   menulis.
+   branch `Rev-NPR-Tyio`. Run #1–#22 hijau, kecuali #12 yang dibatalkan push berikutnya
+   (`cancel-in-progress`, wajar). Run #23 (PDF dibuat ulang) masih berjalan dan run untuk
+   commit serah terima ini belum dicek saat menulis. Bila #23 dibatalkan oleh push sesudahnya,
+   itu wajar: run commit serah terima memeriksa isi yang sama.
 4. Tanyakan pengguna apa yang ingin dikerjakan.
 
 **Sesi Claude lain juga push ke branch ini** (diagram laporan KP: `review/DIAGRAM-NPR.md`,
@@ -29,7 +30,8 @@ ini. Merge `6a7d070` pernah bentrok di berkas ini.
 
 | Commit | Isi | Bukti |
 |---|---|---|
-| `4369079`, `c29f139` | Panduan penggunaan untuk customer: `review/PANDUAN-PENGGUNAAN-NPR.pdf`, lalu bahasanya diperhalus sesuai kriteria H- di `REVIEW-NPR.md`. Cara memperbaruinya (skrip di `review/panduan/`) di bagian 7 | Isi dicocokkan dengan kode `a7db2b6`; 31 halaman diperiksa per halaman; teks PDF dipindai (tanpa email, ID akun, atau password). CI #19 dan #20 hijau, dipasang tanpa build |
+| `4369079`, `c29f139` | Panduan penggunaan untuk customer: `review/PANDUAN-PENGGUNAAN-NPR.pdf`, lalu bahasanya diperhalus sesuai kriteria H- di `REVIEW-NPR.md`. Cara memperbaruinya di bagian 7 | Isi dicocokkan dengan kode `a7db2b6`; 31 halaman diperiksa per halaman; teks PDF dipindai (tanpa email, ID akun, atau password). CI #19 dan #20 hijau, dipasang tanpa build |
+| `292d819`, `ff36e24` | Skrip pembuat PDF di `review/panduan/` (`tangkap-layar.cjs`, `susun-pdf.cjs`, `diagram-alur.png`), lalu PDF dibuat ulang dengan skrip itu. Ke-23 gambar di dokumen Claude Docs diganti dengan set tangkapan layar yang sama, jadi dokumen dan PDF kini cocok. Contoh lokasi di form TT Gamas kini "Hub Jakarta" tanpa "(simulasi)" | Skrip diuji dari database baru dengan data demo (32 berkas gambar, PDF 31 halaman, folder kerja sementara selalu terhapus); hasil diperiksa per halaman. CI #22 hijau; #23 masih berjalan saat catatan ini ditulis |
 | `f7b3ef7` (merge `a7db2b6`) | Batas isian tampilan dan server disamakan lewat `shared/batas.ts`: kode customer tanpa "-", Nama Lokasi ATM 150, Nama Lengkap 100, Nama Teknisi 120, Alamat/Kota/Provinsi/IP LAN/PIC punya batas di layar, lampiran tanpa WebP dan ukurannya dihitung dari berkas asli (500 KB), nama file lampiran maks. 150, TT Gamas maks. 200 site di layar, server menolak password baru yang sama dengan yang lama. Daftar Remote Terdampak di form TT Gamas tidak lagi melebarkan dialog bila nama lokasi panjang | `test:api` 51/51, uji browser 53/53, uji batas lewat API 17/17, uji browser batas 50/50 (laptop dan Pixel 7), 9 halaman tanpa geser horizontal. CI #18 hijau, terpasang otomatis (health `a7db2b6`) |
 
 **Selesai di sesi 26–27 November 2026** (diverifikasi dengan cara yang disebut):
@@ -455,6 +457,19 @@ Closed) vs Gamas "Ditangani" belum diubah (D-8: istilah kerja tetap).
   widget dengan `kind: "screenshot"`).
 - **Tangkapan layar:** laptop 1366×820 dengan deviceScaleFactor 2, HP "Pixel 7". Gambar dialog
   dan menu dicetak sebanding ukuran aslinya, tidak dilebarkan.
+- **Keadaan sekarang (`ff36e24`):** PDF dan ke-23 gambar di dokumen Docs berasal dari satu set
+  tangkapan layar (28 November 2026, `tangkap-layar.cjs`). PDF disusun dengan `susun-pdf.cjs` dari
+  ekspor dokumen terbaru.
+- **Saat memperbarui, ganti juga gambar di dokumen** dengan set yang sama supaya dokumen dan PDF
+  tetap cocok:
+  1. Kecilkan gambar (lebar maks. 2000 px) ke folder di dalam repo yang tidak di-commit;
+     unggah banyak berkas sekaligus hanya bisa dari folder kerja.
+  2. Unggah ke artifact dokumen sebagai aset (maks. 25 berkas sekali unggah).
+  3. Buat blob dari tiap aset lewat konektor (`create`, `object: "blob"`).
+  4. Ganti paragraf gambar dengan `![alt](blob/<id>)`. Alt harus tetap sama, karena
+     `susun-pdf.cjs` mengenali gambar dari alt-nya.
+
+  Hapus folder gambar sementara setelah selesai.
 - **Gaya bahasa:** sudah diperhalus sesuai kriteria H- (tanpa label tebal "Penting:", tanpa
   titik tengah, keterangan data contoh hanya sekali di bagian 1). Pertahankan saat mengedit.
 - **Perlu diperbarui bila:** tampilan atau aturan berubah (termasuk bila paket A atau B review
