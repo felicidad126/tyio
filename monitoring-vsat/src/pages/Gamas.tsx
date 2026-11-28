@@ -27,6 +27,7 @@ import {
   StatusBadge,
   lama,
   waktu,
+  warnaDurasi,
 } from "@/components/npr";
 import {
   BarisRingkasan,
@@ -206,6 +207,7 @@ const LABEL_STATUS: Record<string, string> = {
   OPEN: "Open",
   "IN PROGRESS": "Ditangani",
   CLOSED: "Closed",
+  AKTIF: "Aktif (belum Closed)",
 };
 const LABEL_REPORT: Record<string, string> = {
   menunggu: "Menunggu Report",
@@ -295,7 +297,10 @@ export function GamasList() {
           `${g.number} ${g.location} ${g.notes} ${situs}`
             .toLowerCase()
             .includes(q) &&
-          (status === "semua" || g.status === status) &&
+          (status === "semua" ||
+            (status === "AKTIF"
+              ? g.status !== "CLOSED"
+              : g.status === status)) &&
           (report === "semua" || (report === "sudah") === !!g.report) &&
           (!dari || tgl >= dari) &&
           (!sampai || tgl <= sampai)
@@ -344,7 +349,7 @@ export function GamasList() {
   return (
     <>
       <PageHeader
-        title="Trouble Ticket Gamas"
+        title="TT Gamas"
         desc="Gangguan massal yang mengenai banyak site sekaligus."
         actions={tombolBaru}
       />
@@ -365,6 +370,7 @@ export function GamasList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="semua">Semua Status</SelectItem>
+                <SelectItem value="AKTIF">{LABEL_STATUS.AKTIF}</SelectItem>
                 {URUTAN_STATUS.map((s) => (
                   <SelectItem key={s} value={s}>
                     {LABEL_STATUS[s]}
@@ -522,7 +528,15 @@ export function GamasList() {
                         <div className="tabular-nums">
                           {waktu(g.started_at)}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div
+                          className={cn(
+                            "text-xs",
+                            (!g.online_at &&
+                              warnaDurasi(g.started_at) &&
+                              `font-medium ${warnaDurasi(g.started_at)}`) ||
+                              "text-muted-foreground",
+                          )}
+                        >
                           {g.online_at
                             ? `Selesai dalam ${lama(g.started_at, g.online_at)}`
                             : `${lama(g.started_at)} berjalan`}
@@ -807,7 +821,7 @@ export function GamasDetail() {
                           : "Perkembangan"}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {waktu(a.created_at)} · {a.created_by}
+                      {waktu(a.created_at)} oleh {a.created_by}
                     </span>
                   </div>
                   <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed">
@@ -886,7 +900,7 @@ export function GamasDetail() {
                   />
                 </label>
                 <label className="block">
-                  <FieldLabel hint="Isi jika sudah diterima">
+                  <FieldLabel hint="Wajib sebelum menutup" opsional>
                     Report Teknisi
                   </FieldLabel>
                   <Textarea name="report" rows={2} maxLength={BATAS.catatan} />

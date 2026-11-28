@@ -1,18 +1,17 @@
-# Prompt pembaruan NPR di server (tampilan baru)
+# Prompt pembaruan manual NPR di server
 
 Prompt untuk agent browser yang punya akses ke Terminal aaPanel di server pemilik.
-Tujuannya memasang tampilan baru (Tailwind + shadcn/ui) di **kp.helonoia.com**.
 
-Yang berubah:
+Pembaruan rutin di **kp.helonoia.com** sudah otomatis (lihat `PROMPT-PASANG-CD.md`).
+Prompt ini dipakai untuk **perubahan besar** yang sengaja tidak dipasang otomatis:
 
-- **Tampilan:** seluruh tampilan aplikasi diganti.
-- **Alamat per halaman:** setiap halaman punya alamat sendiri, mis.
-  `kp.helonoia.com/npr/12`. Refresh tetap di halaman yang sama dan tombol Back
-  kembali ke halaman sebelumnya. Tidak ada perubahan server untuk ini.
-- **Server:**
-  - Daftar NPR sekarang bisa diurutkan per kolom.
-  - Ada angka tambahan untuk Customer, Remote, Pengguna, dan Gamas.
-  - Tidak ada perubahan struktur database, jadi tidak ada migrasi baru.
+- perubahan di `migrations/` atau `schema.sql` (struktur database);
+- perubahan `Dockerfile` atau `docker-compose.yml`;
+- commit yang pesannya berisi `[manual]`.
+
+Log `/var/log/npr-perbarui.log` di server mencatat "Perlu pembaruan lewat agent browser"
+untuk commit seperti itu. Sebelum memberikan prompt ini, tambahkan di bawahnya apa yang
+berubah dan apa yang perlu diperiksa di browser.
 
 ---
 
@@ -38,7 +37,8 @@ LANGKAH 1. Catat keadaan awal
   cd /opt/monitoring-vsat && git log --oneline -1
 Catat daftar container dan commit saat ini untuk laporan.
 
-LANGKAH 2. Cadangkan database sebelum memperbarui
+LANGKAH 2. Jeda pembaruan otomatis, lalu cadangkan database
+  mkdir -p /var/lib/npr-perbarui && touch /var/lib/npr-perbarui/jeda
   cd /opt/monitoring-vsat/monitoring-vsat
   docker compose exec -T app node dist/server/cadangan.js
 Harapan: pesan cadangan berhasil dibuat beserta nama berkasnya.
@@ -57,12 +57,13 @@ daftar berkasnya.
 
 LANGKAH 4. Build ulang dan jalankan
   cd /opt/monitoring-vsat/monitoring-vsat
-  docker compose up -d --build
-(Build beberapa menit karena ada pustaka tampilan baru.) Lalu:
+  NPR_VERSI=$(git rev-parse --short=7 HEAD) docker compose up -d --build
   docker compose ps
   curl -s http://127.0.0.1:3000/api/health
+  git rev-parse --short=7 HEAD
 Harapan: npr-kp-app-1 berstatus "healthy" (ulangi setelah 30 detik jika
-masih "starting") dan curl menampilkan {"ok":true}. Pastikan container
+masih "starting") dan curl menampilkan {"ok":true,"versi":"<commit>"}
+dengan <commit> sama dengan keluaran git rev-parse. Pastikan container
 lain dari LANGKAH 1 masih berjalan:
   docker ps --format '{{.Names}} {{.Status}}'
 
@@ -90,7 +91,12 @@ g. Alamat per halaman:
      buka di tab baru: NPR yang sama langsung tampil.
    - Buka https://kp.helonoia.com/alamat-asal: kembali ke Dashboard.
 
-LANGKAH 6. Laporan
+LANGKAH 6. Lanjutkan pembaruan otomatis
+  rm /var/lib/npr-perbarui/jeda
+  /opt/monitoring-vsat/monitoring-vsat/scripts/perbarui-otomatis.sh --coba
+Harapan: "Sudah terbaru: <commit>."
+
+LANGKAH 7. Laporan
 Laporkan untuk setiap langkah: berhasil atau tidak, keluaran penting
 (commit, status container, hasil health), dan temuan dari pemeriksaan
 browser beserta halaman tempat ditemukan. Jangan sertakan password atau
@@ -99,6 +105,7 @@ isi cookie.
 Jika pembaruan gagal dan aplikasi tidak bisa dibuka, kembalikan ke commit
 sebelumnya (dari LANGKAH 1) lalu build ulang:
   cd /opt/monitoring-vsat && git checkout <commit-langkah-1>
-  cd monitoring-vsat && docker compose up -d --build
-lalu laporkan. Data tetap aman karena volume tidak dihapus.
+  cd monitoring-vsat && NPR_VERSI=$(git rev-parse --short=7 HEAD) docker compose up -d --build
+lalu laporkan. Biarkan berkas jeda tetap ada sampai pemilik memutuskan.
+Data tetap aman karena volume tidak dihapus.
 ```

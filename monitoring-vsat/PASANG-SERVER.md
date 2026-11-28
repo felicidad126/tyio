@@ -64,6 +64,24 @@ Ganti password satu akun dari terminal (misalnya admin lupa password):
 docker compose exec app node dist/server/setup.js --reset-password
 ```
 
+### Data demo
+
+Untuk mencoba aplikasi sebelum data asli masuk: 6 customer bank fiktif,
+20 remote, sekitar 50 NPR (Open, Pending, Eskalasi, Closed) dengan kasus
+gangguan yang umum, TT, dan 4 TT Gamas, sejak awal bulan lalu.
+
+```sh
+docker compose exec -T app node dist/server/demo.js          # isi
+docker compose exec -T app node dist/server/demo.js --hapus  # hapus
+```
+
+- Pengisian hanya berjalan bila database belum berisi NPR atau TT Gamas.
+- Data dicatat atas nama akun admin pertama.
+- `--hapus` menghapus customer demo beserta remote, NPR, TT, dan Gamas-nya,
+  lalu nomor dokumen kembali mulai dari 0001. Akun pengguna dan data lain
+  tidak ikut terhapus. Jalankan sebelum data asli mulai dicatat.
+- Kedua perintah membuat cadangan lebih dulu di `/data/cadangan/`.
+
 ## 5. Situs di aaPanel
 
 1. DNS: buat A record untuk subdomain, mengarah ke IP server.
@@ -93,9 +111,41 @@ Agar berjalan otomatis setiap hari, tambahkan perintah pertama di menu
 
 ## 7. Memperbarui aplikasi
 
+### Otomatis (disarankan)
+
+Setiap push ke branch `Rev-NPR-Tyio` diperiksa workflow **NPR** di GitHub
+Actions: cek tipe, lint, build, uji API, uji browser dengan data demo, dan
+build image Docker. Server memeriksa GitHub setiap 5 menit dan memasang commit
+baru yang lulus: cadangan database, `git pull`, build ulang, lalu
+`/api/health` harus sehat dan menunjukkan commit baru. Bila tidak sehat, server
+kembali ke commit sebelumnya.
+
+Pasang sekali di menu **Cron** aaPanel (jenis Shell Script, setiap 5 menit):
+
 ```sh
+/opt/monitoring-vsat/monitoring-vsat/scripts/perbarui-otomatis.sh
+```
+
+- Coba tanpa mengubah apa pun: tambahkan `--coba`.
+- Catatan kejadian: `/var/log/npr-perbarui.log`. Waktu cek terakhir:
+  `/var/lib/npr-perbarui/cek-terakhir`.
+- Commit yang terpasang: `curl -s http://127.0.0.1:3000/api/health` menampilkan
+  `{"ok":true,"versi":"<commit>"}`.
+- Jeda sementara: `mkdir -p /var/lib/npr-perbarui && touch /var/lib/npr-perbarui/jeda`.
+  Lanjutkan dengan `rm /var/lib/npr-perbarui/jeda`.
+- **Tidak dipasang otomatis** (perlu cara manual di bawah): perubahan di
+  `migrations/`, `schema.sql`, `Dockerfile`, `docker-compose.yml`, atau commit
+  yang pesannya berisi `[manual]`. Log mencatat "Perlu pembaruan lewat agent
+  browser".
+
+### Manual
+
+```sh
+mkdir -p /var/lib/npr-perbarui && touch /var/lib/npr-perbarui/jeda
 cd /opt/monitoring-vsat && git pull --ff-only
-cd monitoring-vsat && docker compose up -d --build
+cd monitoring-vsat && docker compose exec -T app node dist/server/cadangan.js
+NPR_VERSI=$(git rev-parse --short=7 HEAD) docker compose up -d --build
+rm /var/lib/npr-perbarui/jeda
 ```
 
 Perubahan struktur database (folder `migrations/`) dijalankan otomatis saat

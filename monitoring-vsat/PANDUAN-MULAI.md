@@ -4,9 +4,11 @@ Proyek Kerja Praktek: Perancangan Sistem Monitoring dan Pelaporan Gangguan Jarin
 
 ## Cara cepat di Windows
 
-Ekstrak ZIP ke folder baru, lalu klik dua kali `MULAI-WINDOWS.cmd`. Skrip memasang dependensi pada penggunaan pertama, menyiapkan database lokal, dan menjalankan web. Buka alamat Local yang dicetak. Cara manual melalui VS Code ada di bawah.
+Pasang Node.js 22.13 atau lebih baru. Ekstrak ZIP ke folder baru, lalu klik dua kali `MULAI-WINDOWS.cmd`. Saat pertama, skrip memasang dependensi dan menyiapkan aplikasi (beberapa menit), meminta akun admin, lalu mengisi data demo lengkap: 6 bank, 20 site, 50 NPR, 19 TT, dan 4 TT Gamas, semuanya fiktif. Browser terbuka di http://127.0.0.1:3000 (tekan F5 bila belum tampil). Biarkan jendela skrip terbuka selama aplikasi dipakai; berikutnya cukup klik dua kali lagi, data yang sudah ada tidak ditimpa. Cara lewat terminal ada di README.md, bagian "Jalankan lokal dengan data demo".
 
-## A. Buka proyek lengkap
+Bagian A di bawah adalah mode pengembang (`npm run dev`), dengan database terpisah yang hanya berisi bank dan site contoh, tanpa NPR.
+
+## A. Buka proyek lengkap (mode pengembang)
 
 1. Pada terminal proyek lama, tekan Ctrl+C untuk menghentikan web.
 2. Ekstrak ZIP ini ke folder BARU, misalnya Documents/monitoring-vsat-lengkap. Simpan proyek lama sebagai cadangan; tidak perlu menyalin file satu per satu.

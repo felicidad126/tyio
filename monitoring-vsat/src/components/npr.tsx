@@ -15,16 +15,33 @@ export function waktu(iso?: string | null) {
   });
 }
 
+/** Lama gangguan: "48 menit", "5 jam", "1 hari 2 jam". Di bawah 1 jam ditulis
+ *  dalam menit supaya gangguan singkat tidak tampil "0 jam". */
 export function lama(iso: string, sampai?: string | null) {
-  const jam = Math.max(
+  const menit = Math.max(
     0,
     Math.floor(
-      ((sampai ? Date.parse(sampai) : Date.now()) - Date.parse(iso)) / 3600_000,
+      ((sampai ? Date.parse(sampai) : Date.now()) - Date.parse(iso)) / 60_000,
     ),
   );
+  // Spasi tak terpisah (\u00a0) antara angka dan satuan, supaya "22 jam"
+  // tidak terpecah di akhir baris dan menyisakan "jam" sendirian.
+  if (menit < 60) return `${menit}\u00a0menit`;
+  const jam = Math.floor(menit / 60);
   const hari = Math.floor(jam / 24);
-  if (!hari) return `${jam} jam`;
-  return jam % 24 ? `${hari} hari ${jam % 24} jam` : `${hari} hari`;
+  if (!hari) return `${jam}\u00a0jam`;
+  return jam % 24
+    ? `${hari}\u00a0hari ${jam % 24}\u00a0jam`
+    : `${hari}\u00a0hari`;
+}
+
+/**
+ * Warna durasi gangguan yang masih berjalan, sama di semua daftar:
+ * merah lebih dari 48 jam, oranye 24–48 jam.
+ */
+export function warnaDurasi(mulai: string) {
+  const jam = (Date.now() - Date.parse(mulai)) / 3_600_000;
+  return jam > 48 ? "text-rose-700" : jam >= 24 ? "text-amber-700" : "";
 }
 
 // Status ditulis sebagai teks berwarna dengan penanda kotak kecil.
@@ -204,16 +221,44 @@ export function InfoList({ items }: { items: [string, ReactNode][] }) {
   );
 }
 
+/**
+ * Nomor telepon yang bisa diketuk (di HP langsung membuka panggilan).
+ * Klik tidak diteruskan ke baris tabel atau kartu yang juga bisa diklik.
+ */
+export function Telepon({ nomor }: { nomor: string }) {
+  const angka = nomor.replace(/[^\d+]/g, "");
+  if (!angka) return <>{nomor}</>;
+  return (
+    <a
+      href={`tel:${angka}`}
+      onClick={(e) => e.stopPropagation()}
+      className="tabular-nums text-navy underline-offset-2 hover:underline"
+    >
+      {nomor}
+    </a>
+  );
+}
+
 export function FieldLabel({
   children,
   hint,
+  opsional,
 }: {
   children: ReactNode;
   hint?: string;
+  /** Isian boleh kosong. Hampir semua isian wajib, jadi yang ditandai yang opsional. */
+  opsional?: boolean;
 }) {
   return (
     <span className="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-medium">
-      {children}
+      {opsional ? (
+        <span>
+          {children}{" "}
+          <span className="font-normal text-muted-foreground">(opsional)</span>
+        </span>
+      ) : (
+        children
+      )}
       {hint && (
         <span className="text-xs font-normal text-muted-foreground">
           {hint}

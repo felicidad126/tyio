@@ -8,4 +8,24 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 export default defineConfig({
   plugins: [react(), cloudflare()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
+  environments: {
+    client: {
+      build: {
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                // React jarang berubah: berkasnya terpisah supaya tetap
+                // tersimpan di browser walaupun kode aplikasi diperbarui.
+                {
+                  name: "react",
+                  test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+  },
 });

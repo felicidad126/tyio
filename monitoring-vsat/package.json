@@ -19,7 +19,8 @@
     "format:check": "prettier --check .",
     "build:server": "vite build --config vite.server.config.ts",
     "start": "node dist/server/main.js",
-    "setup:server": "node dist/server/setup.js"
+    "setup:server": "node dist/server/setup.js",
+    "demo": "node dist/server/demo.js"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",

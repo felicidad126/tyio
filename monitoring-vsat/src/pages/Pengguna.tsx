@@ -572,6 +572,7 @@ export function PenggunaPage() {
                 <div>
                   <FieldLabel>Peran</FieldLabel>
                   <ToggleGroup
+                    aria-label="Peran"
                     type="single"
                     value={peranBaru}
                     onValueChange={(v) => v && setPeranBaru(v)}

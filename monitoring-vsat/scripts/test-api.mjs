@@ -182,15 +182,30 @@ check(
   new RegExp(`^${prefix("NPR")}\\d{4}$`).test(customerNpr.number),
   "NPR number is sequential per WIB month of input (NPR/YYYY/MM/0001)",
 );
-check(customerNpr.pending_by === "", "new NPR starts without pending category");
-const uncategorised = await request(`/api/nprs/${customerNpr.id}/actions`, {
+check(customerNpr.pending_by === "TM", "new NPR starts as Pending TM");
+const unknownCategory = await request(`/api/nprs/${customerNpr.id}/actions`, {
   kind: "Problem",
-  notes: "No category",
+  notes: "Unknown category",
+  remote_status: customerNpr.remote_status,
+  pending_by: "Belum",
+  occurred_at: at(0.2),
+});
+check(
+  !unknownCategory.response.ok,
+  "pending category other than TM or Customer is rejected",
+);
+const emptyCategory = await request(`/api/nprs/${customerNpr.id}/actions`, {
+  kind: "Problem",
+  notes: "Empty category",
   remote_status: customerNpr.remote_status,
   pending_by: "",
   occurred_at: at(0.25),
 });
-check(!uncategorised.response.ok, "Problem action requires a pending category");
+check(
+  emptyCategory.response.ok &&
+    (await nprDetail(customerNpr.id)).npr.pending_by === "TM",
+  "empty pending category keeps the NPR's current category",
+);
 await action(customerNpr, "Problem", 0.5);
 await action(customerNpr, "Close", 1, { online_at: at(1) });
 check(
@@ -405,6 +420,12 @@ check(
   active.rows.some((row) => row.id === withFile.id) &&
     active.rows.every((row) => row.status !== "CLOSED"),
   "NPR list filters active NPRs for the dashboard",
+);
+const statusActive = await get("/api/nprs?status=AKTIF&per=100");
+check(
+  statusActive.total === active.total &&
+    statusActive.rows.every((row) => row.status !== "CLOSED"),
+  "status filter AKTIF lists every NPR that is not closed",
 );
 const dashboard = await get("/api/dashboard");
 check(

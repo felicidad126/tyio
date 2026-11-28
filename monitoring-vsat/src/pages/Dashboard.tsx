@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Panel, StatusBadge, lama, waktu } from "@/components/npr";
+import {
+  PageHeader,
+  Panel,
+  StatusBadge,
+  lama,
+  waktu,
+  warnaDurasi,
+} from "@/components/npr";
 import { useApp } from "@/lib/app";
-import type { Dashboard as DataDashboard, NprRow } from "@/lib/tipe";
+import type { Dashboard as DataDashboard } from "@/lib/tipe";
 import { cn } from "@/lib/utils";
 import { useMuat } from "@/useMuat";
-
-const jamBerjalan = (n: NprRow) =>
-  (Date.now() - Date.parse(n.started_at)) / 3600_000;
 
 // Ringkasan: satu strip bersekat empat. Angka diberi warna hanya jika
 // perlu perhatian.
@@ -248,13 +252,6 @@ export function Dashboard() {
       n: r.pending_customer ?? 0,
       cls: "bg-amber-500",
     },
-    {
-      key: "belum_kategori",
-      label: "Belum Dikategorikan",
-      ket: "Pihak yang ditunggu belum dipilih",
-      n: r.belum_kategori ?? 0,
-      cls: "bg-slate-400",
-    },
   ];
   const grafik = data.grafik.map((g, i) => {
     // "2026-11-25" dibaca sebagai tanggal WIB.
@@ -325,7 +322,22 @@ export function Dashboard() {
       />
 
       <div className="mt-5 grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Kolom kiri: grafik di atas daftar NPR Aktif, supaya bagian atas
+            Dashboard berisi visualisasi (di layar ≥1536 px sejajar dengan
+            panel Pihak yang Ditunggu). */}
         <div className="grid min-w-0 gap-5">
+          <Panel
+            title="NPR Masuk per Hari"
+            desc="7 hari terakhir, menurut tanggal mulai gangguan (WIB)"
+          >
+            {grafik.some((d) => d.nilai > 0) ? (
+              <GrafikHarian data={grafik} />
+            ) : (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Belum ada NPR dalam 7 hari terakhir.
+              </p>
+            )}
+          </Panel>
           <Panel
             title="NPR Aktif"
             desc="Urut dari yang paling lama terganggu"
@@ -359,7 +371,6 @@ export function Dashboard() {
                     </thead>
                     <tbody className="divide-y">
                       {terlama.map((n) => {
-                        const jam = jamBerjalan(n);
                         return (
                           <tr
                             key={n.id}
@@ -386,21 +397,13 @@ export function Dashboard() {
                             <td
                               className={cn(
                                 "whitespace-nowrap px-3 py-3 font-semibold tabular-nums",
-                                jam > 48
-                                  ? "text-rose-700"
-                                  : jam >= 24
-                                    ? "text-amber-700"
-                                    : "",
+                                warnaDurasi(n.started_at),
                               )}
                             >
                               {lama(n.started_at)}
                             </td>
                             <td className="whitespace-nowrap px-3 py-3">
-                              {n.pending_by || (
-                                <span className="text-muted-foreground">
-                                  Belum Dipilih
-                                </span>
-                              )}
+                              {n.pending_by}
                             </td>
                             <td className="whitespace-nowrap px-5 py-3">
                               <StatusBadge status={n.status} />
@@ -414,7 +417,6 @@ export function Dashboard() {
                 {/* HP: daftar kartu */}
                 <ul className="divide-y md:hidden">
                   {terlama.map((n) => {
-                    const jam = jamBerjalan(n);
                     return (
                       <li key={n.id}>
                         <button
@@ -428,11 +430,7 @@ export function Dashboard() {
                             <span
                               className={cn(
                                 "text-sm font-semibold tabular-nums",
-                                jam > 48
-                                  ? "text-rose-700"
-                                  : jam >= 24
-                                    ? "text-amber-700"
-                                    : "",
+                                warnaDurasi(n.started_at),
                               )}
                             >
                               {lama(n.started_at)}
@@ -466,18 +464,6 @@ export function Dashboard() {
                   <Plus className="size-4" /> NPR Baru
                 </Button>
               </div>
-            )}
-          </Panel>
-          <Panel
-            title="NPR Masuk per Hari"
-            desc="7 hari terakhir, menurut tanggal mulai gangguan (WIB)"
-          >
-            {grafik.some((d) => d.nilai > 0) ? (
-              <GrafikHarian data={grafik} />
-            ) : (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                Belum ada NPR dalam 7 hari terakhir.
-              </p>
             )}
           </Panel>
         </div>

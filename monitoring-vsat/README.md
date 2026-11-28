@@ -4,11 +4,28 @@ Aplikasi tugas Kerja Praktek, Universitas Dian Nusantara.
 
 Baca **PANDUAN-MULAI.md** untuk panduan lengkap, dan **ATURAN-SLA.md** untuk aturan perhitungan simulasi SLA.
 
-## Jalankan lokal
+## Jalankan lokal dengan data demo
 
-Windows: ekstrak ke folder baru dan klik dua kali **MULAI-WINDOWS.cmd**.
+ZIP hanya berisi kode, tanpa data dari server. Cara di bawah menyiapkan database lokal berisi data demo lengkap: 6 bank, 20 site, 50 NPR, 19 TT, dan 4 TT Gamas, semuanya fiktif. Butuh Node.js 22.13 atau lebih baru.
 
-Atau melalui terminal:
+**Windows:** ekstrak ZIP ke folder baru, lalu klik dua kali **MULAI-WINDOWS.cmd**. Saat pertama, skrip memasang dependensi dan menyiapkan aplikasi (beberapa menit), meminta akun admin (username, nama lengkap, dan password minimal 12 karakter), lalu mengisi data demo. Browser terbuka di http://127.0.0.1:3000; bila halaman belum tampil, tekan F5. Biarkan jendela skrip terbuka selama aplikasi dipakai. Berikutnya cukup klik dua kali lagi; data yang sudah ada tidak ditimpa.
+
+**Terminal:** jalankan satu per satu di folder ini, lalu buka http://127.0.0.1:3000.
+
+```sh
+npm install
+npm run build
+npm run build:server
+npm run setup:server
+npm run demo
+npm start
+```
+
+Database tersimpan di `data/npr.sqlite` (folder dibuat otomatis). Akun lain dibuat oleh admin lewat menu Pengguna. `npm run demo` menolak berjalan bila database sudah berisi NPR atau TT Gamas (`npm run demo -- --jika-kosong` melewatinya tanpa galat, dipakai skrip Windows), dan mencadangkan database lebih dulu ke `data/cadangan/`. Data demo bisa dihapus lagi dengan `npm run demo -- --hapus`; akun dan data lain tidak ikut terhapus.
+
+## Mode pengembang
+
+Untuk mengubah kode dengan tampilan yang langsung diperbarui (http://localhost:5173):
 
 ```sh
 npm install
@@ -16,7 +33,7 @@ npm run setup
 npm run dev
 ```
 
-Saat `npm run setup` pertama kali, Anda diminta membuat akun admin (username, nama lengkap, dan password minimal 12 karakter). Akun lain dibuat oleh admin lewat menu Pengguna. Database baru berisi customer/remote fiktif; NPR dan TT dibuat melalui aplikasi.
+Mode ini memakai database lokal Cloudflare yang terpisah dari `data/npr.sqlite`, dan hanya berisi 3 bank dan 6 site fiktif; NPR, TT, dan Gamas dibuat melalui aplikasi. Saat `npm run setup` pertama kali, Anda diminta membuat akun admin.
 
 ## Server sendiri (Docker)
 

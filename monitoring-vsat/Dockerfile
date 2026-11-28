@@ -25,4 +25,8 @@ VOLUME /data
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+# Commit yang dibangun, tampil di /api/health. Diletakkan di akhir supaya
+# lapisan di atasnya tetap bisa memakai cache saat commit berganti.
+ARG NPR_VERSI=""
+ENV NPR_VERSI=$NPR_VERSI
 CMD ["node", "dist/server/main.js"]

@@ -184,18 +184,18 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
       s = status(b),
       notes = text(b, "notes"),
       nomor = nomorBaru(db, "NPR");
-    // NPR baru belum punya kategori pending (pending_by kosong) sampai
-    // helpdesk memilih Pending Customer atau Pending TM.
+    // NPR baru langsung Pending TM: selama belum ada bukti pengecekan teknisi
+    // bahwa penyebabnya di luar jaringan, gangguan menjadi tanggung jawab TM.
     const hasil = await db.batch<{ id: number; number: string }>([
       nomor.naikkan,
       db
         .prepare(
-          `INSERT INTO nprs(number,remote_id,remote_status,pending_by,started_at,user_id,last_action) VALUES (${nomor.sql},?,?,'',?,?,?) RETURNING id, number`,
+          `INSERT INTO nprs(number,remote_id,remote_status,pending_by,started_at,user_id,last_action) VALUES (${nomor.sql},?,?,'TM',?,?,?) RETURNING id, number`,
         )
         .bind(...nomor.args, remote, s, started, user.id, notes),
       db
         .prepare(
-          `INSERT INTO actions(npr_id,kind,notes,remote_status,pending_by,occurred_at,user_id) VALUES ((SELECT id FROM nprs WHERE number=${nomor.sql}),?,?,?,'',?,?)`,
+          `INSERT INTO actions(npr_id,kind,notes,remote_status,pending_by,occurred_at,user_id) VALUES ((SELECT id FROM nprs WHERE number=${nomor.sql}),?,?,?,'TM',?,?)`,
         )
         .bind(...nomor.args, "Create NPR", notes, s, started, user.id),
     ]);
@@ -216,13 +216,10 @@ export async function domain(request: Request, env: Env, user: Pengguna) {
       return fail("Tindakan tidak valid.");
     const notes = text(b, "notes"),
       s = status(b, n.remote_status),
-      pending = String(b.pending_by ?? n.pending_by ?? "");
-    // Problem wajib menentukan siapa yang ditunggu. Tindakan lain boleh
-    // meneruskan kategori sebelumnya, termasuk yang belum dikategorikan.
-    if (
-      !["TM", "Customer"].includes(pending) &&
-      !(pending === "" && kind !== "Problem")
-    )
+      // Kategori pending hanya TM atau Customer. Bila tidak dikirim (atau
+      // kosong dari tab lama), kategori NPR saat ini diteruskan.
+      pending = String(b.pending_by || n.pending_by || "TM");
+    if (!["TM", "Customer"].includes(pending))
       return fail("Kategori pending tidak valid.");
     const occurred = time(b.occurred_at ?? new Date().toISOString());
     const latest = await row<{ occurred_at: string }>(
